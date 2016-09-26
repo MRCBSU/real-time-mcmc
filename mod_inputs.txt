@@ -1,0 +1,102 @@
+##### ALL VALUES GIVEN IN THIS FILE ARE ALSO THE HARD-WIRED DEFAULT VALUES
+##### THESE VALUES ARE THOSE BASED ON THE SINGLE-REGION ANALYSIS PRESENTED
+##### AT THE EPIDEMICS 2009 CONFERENCE
+
+##### DATA FLAGS AND FILENAMES
+GP_consultation_flag 1
+Hospitalisation_flag 1
+Deaths_flag	     0
+Sero_data_flag	     1
+Viro_data_flag	     1
+
+
+## file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
+## values for REGION specified in the REGIONAL INFORMATION section
+## values for VARIABLE specified by the following possible variables specified in the space below: filename_for_GP_consultation_data, filename_for_Hospitalisation_data, filename_for_Seropoepidemiology_data, filename_for_Positivity_data
+
+##### ARE ANY CODE PATCHES NEEDED? Currently only a patch for the GP consultation parameters is available
+Use_GP_reparam_patch	   1
+
+### DATA FEATURES
+gp_count_likelihood		   1	## 0 FOR POISSON DATA, 1 FOR NEGATIVE BINOMIAL DATA, 2 FOR BINOMIAL DATA
+transmission_kernel		   0   ## 0 FOR THE REED-FROST FORMULATION (struggles with small expected numbers) AND 1 FOR THE MASS ACTION FORMULATION (struggles with large expected numbers)
+transmission_time_steps_per_day	   2	## DELTA T FOR THE TRANSMISSION MODEL
+reporting_time_steps_per_day	   2	## DELTA T FOR THE REPORTING MODEL
+duration_of_runs_in_days	   245	## THE NUMBER OF DAYS OF EPIDEMIC DATA (EPIDEMIC TIME)
+projection_days			   250	## THE NUMBER OF DAYS OF EPIDEMIC PROJECTION REQUIRED
+day_of_start			   121	## THE CALENDAR DAY CORRESPONDING TO DAY 1 OF THE EPIDEMIC MODEL
+start_day_of_week		   5	## THE CALENDAR DAY OF start_week 
+start_week			   18	## THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
+num_regions			   1	## THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
+GP_likelihood_start_day		   1	## THE BELOW GIVE THE RANGE OF DAYS OVER WHICH TO CALCULATE THE VARIOUS LIKELIHOODS
+GP_likelihood_end_day		   245
+Hosp_likelihood_start_day	   1
+Hosp_likelihood_end_day		   50
+Deaths_likelihood_start_day	   1
+Deaths_likelihood_end_day	   1
+Sero_likelihood_start_day	   75
+Sero_likelihood_end_day		   245
+Viro_likelihood_start_day	   1
+Viro_likelihood_end_day		   245
+
+
+
+##### GLOBAL DATA
+
+## READ IN THE POLYMOD MATRICES
+mixing_model = { time_breakpoints = 23, 30, 78, 129, 177, 184, 233;
+	       	 base_matrices = /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_hol_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_hol_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_hol_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_commuting_expanded_eta0.36_Nr_scaled.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_hol_commuting_expanded_eta0.36_Nr_scaled.txt;
+	       	 multiplier_indices_matrices = /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_ht_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_summer_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_ht_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_nh_metreg_expanded_multiplier.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_metaregion/polymod_ht_metreg_expanded_multiplier.txt;
+	       }
+
+##### REGIONAL DATA
+
+## DO NOT USE SPACES IN REGION NAMES, the space is used as a delimiter
+## regions_population must be specified as a (number of regions) x (number of age groups) matrix
+
+study_region = { regions_used = meta4reg;
+      	       	 regions_population = 119967, 410926, 840309, 924809.834282399, 64663.1657176011, 2530268.56267077, 217285.437329227, 1465535.67177029, 100909.328229712, 750115.724272603, 132140.275727397,
+		 		    68285, 259069, 651598, 698560.409955819, 31848.5900441811, 1369148.85023452, 74775.1497654831, 1290051.34812271, 53671.6518772864, 861778.118861271, 23058.8811387288, 
+				    227677, 864277, 2217602, 2604717.18115422, 72065.8188457836, 4943157.13992563, 158755.860074368, 4715295.57392258, 108173.426077415, 3048736.23237211, 45158.7676278887,
+				    224805, 863397, 2251281, 2276217.80834998, 139113.191650017, 4643584.1925706, 523216.807429402, 4553290.60152081, 374378.398479193, 3149228.9936084, 149128.0063916; ## reads these in such that the first named seven populations correspond to the first region, the next seven to the second named region and so on.
+
+		 regions_gp_aggregation = 2, 3, 5, 7, 9, 11, 13, 14, 16, 18, 20, 22, 24, 25, 27, 29, 31, 33, 35, 36, 38, 40, 42;
+		 regions_gp_count_data = /project/pandemic_flu/Data/QSurveillance/Data28_03_10/Reported_GP_Consultations_meta4reg_expanded_28_03_10.txt;
+
+		 regions_gp_coverage_data = /project/pandemic_flu/Data/QSurveillance/Data28_03_10/Reported_GP_Coverage_meta4reg_expanded_28_03_10.txt;
+
+		 regions_hosp_aggregation = 1, 2, 3, 5, 7, 9, 11, 12, 13, 14, 16, 18, 20, 22, 23, 24, 25, 27, 29, 31, 33, 34, 35, 36, 38, 40, 42;
+		 regions_hosp_data = /project/pandemic_flu/Data/Confirmed.Cases/whiteboard_04_08_09/TrialData04_09_08/Reported_WB_meta4reg_09_04_08.txt;
+
+		 regions_death_data = NULL; ##### this null comment doesn't have to be here, I've just put it in to be explicit
+
+		 regions_sero_aggregation = 1, 2, 3, 5, 7, 9, 11, 12, 13, 14, 16, 18, 20, 22, 23, 24, 25, 27, 29, 31, 33, 34, 35, 36, 38, 40, 42;
+		 regions_seropositives_data = /project/pandemic_flu/Data/Seroprevalence/Sero11_05_10/Sero245days_young/Serology_positive_meta4reg.txt;
+		 regions_serosamples_data = /project/pandemic_flu/Data/Seroprevalence/Sero11_05_10/Sero245days_young/Serology_sample_meta4reg.txt;
+
+		 regions_viro_aggregation = 1, 2, 3, 5, 7, 9, 11, 12, 13, 14, 16, 18, 20, 22, 23, 24, 25, 27, 29, 31, 33, 34, 35, 36, 38, 40, 42;
+		 regions_viropositives_data = /project/pandemic_flu/Data/Positivity/Virology290910/Viro245days/Virology_positives_meta4reg.txt;
+		 regions_virosamples_data = /project/pandemic_flu/Data/Positivity/Virology290910/Viro245days/Virology_sample_meta4reg.txt;
+	       
+	       }
+
+##### 
+
+
+#### MCMC SIMULATION PARAMETERS
+
+num_iterations	     700000
+output_type	     0
+thin_output_every    100
+thin_stats_every     5000
+adaptive_phase	     100000
+adapt_every	     100
+burn_in		     200000
+num_progress_reports 10
+mixing_threshold_ub  0.3
+mixing_threshold_lb  0.2
+prop_var_inflation   1.1
+prop_var_shrinkage   0.9
+maximum_block_size   9
+random_seed	     80
+max_threads	     8
