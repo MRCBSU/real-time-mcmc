@@ -184,7 +184,7 @@ void gsl_matrix_int_sscanf(const string in_string, gsl_matrix_int* m, const char
 }
 
 // ---- Memory Allocation
-void gsl_matrix_realloc(gsl_matrix* Mat, const int& new_dim1, const int& new_dim2)
+void gsl_matrix_realloc(gsl_matrix*& Mat, const int& new_dim1, const int& new_dim2)
 {
   gsl_matrix_free(Mat);
   Mat = gsl_matrix_alloc(new_dim1, new_dim2);

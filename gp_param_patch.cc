@@ -4,19 +4,10 @@
 
 void gp_param_fn(gsl_vector* dest, const gsl_vector* src)
 {
-  int inti = 0;
-  for(; inti < 8; inti++)
-    gsl_vector_set(dest, inti, gsl_vector_get(src, inti));
-  
-  for(; inti < 16; inti++)
-  gsl_vector_set(dest, inti, gsl_vector_get(src, inti - 8) * gsl_vector_get(src, inti));
-
-  for(; inti < 24; inti++)
-  gsl_vector_set(dest, inti, gsl_vector_get(src, inti - 16) * gsl_vector_get(src, inti));
-
-  for(; inti < dest->size; inti++)
-  gsl_vector_set(dest, inti, gsl_vector_get(src, inti - 24) * gsl_vector_get(src, inti));
-
+  gsl_vector_set(dest, 0, gsl_vector_get(src, 0));
+  gsl_vector_set(dest, 1, gsl_vector_get(src, 1));
+  gsl_vector_set(dest, 2, gsl_vector_get(src, 0) * gsl_vector_get(src, 2));
+  gsl_vector_set(dest, 3, gsl_vector_get(src, 1) * gsl_vector_get(src, 3));
 }
 
 

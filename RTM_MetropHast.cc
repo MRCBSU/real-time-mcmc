@@ -290,18 +290,12 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
 
-      //**DEBUGGING MEASURE... TO BE DELETED**//
-      //      cout << "Iteration number " << int_iter << endl;
-
       // LOOP THROUGH EACH OF THE UPDATEABLE PARAMETERS
       for(int_param = 0; int_param < theta.size_param_list; int_param++)
 	{
 
 	  if(theta.param_list[int_param].flag_update)
 	    {
-
-	      //**DEBUGGING MEASURE... TO BE DELETED**//
-	      //	      cout << "Updating parameter: " << theta.param_list[int_param].param_name << endl;
 
 	      // SET UP THE FLAGCLASS TO TELL evaluate_regional_parameters WHICH COMPONENTS NEED UPDATING
 	      // SHOULD BE CONSTANT WHILST UPDATING THIS ONE PARAMETER GROUP
@@ -420,6 +414,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 		  if(dbl_U < dbl_A) // PROPOSAL IS ACCEPTED
 		    {
+		      
 		      // UPDATE THE UPDATEABLE_MODEL_PARAMETER STRUCTURE
 		      for(int int_component = 0; int_component < gsl_vector_int_get(block_size, int_param); int_component++)
 			{
