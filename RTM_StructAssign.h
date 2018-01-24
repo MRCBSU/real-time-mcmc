@@ -13,7 +13,7 @@
 
 typedef enum { EGR_HYPER_INDEX, LPL0_HYPER_INDEX, PROP_SUS_HYPER_INDEX, GP_OVERDISP_INDEX, ALP_INDEX, AIP_INDEX, REL_INFECT_INDEX, PROP_SYMP_INDEX, CONTACT_INDEX, R0_AMP_INDEX, R0_PEAKDAY_INDEX, EGR_INDEX, LPL0_INDEX, PROP_SUS_INDEX, PROP_HI_GEQ_32_INDEX, PROP_GP_INDEX, PROP_HOSP_INDEX, PROP_DEATH_INDEX, IMPORTATION_INDEX, BGR_INDEX, SENS_INDEX, SPEC_INDEX, DOW_EFFECTS_INDEX } updateable_parameter_index;
 
-#define GLOBAL_MODEL_PARAMETERS_MEMBERS "exponential_growth_rate_hyper : l_p_lambda_0_hyper : prop_susceptible_hyper : negbin_overdispersion : latent_period : average_infectious_period : relative_infectiousness : prop_symptomatic : contact_parameters : R0_amplitude_kA : R0_seasonal_peakday : exponential_growth_rate : log_p_lambda_0 : prop_susceptible : prop_HI_32_to_HI_8 : prop_case_to_GP_consultation_params : prop_case_to_hosp : prop_case_to_death : importation_rates : background_GP_params : test_sensitivity : test_specificity : day_of_week_effects"
+#define GLOBAL_MODEL_PARAMETERS_MEMBERS "exponential_growth_rate_hyper : l_p_lambda_0_hyper : prop_susceptible_hyper : negbin_overdispersion : latent_period : infectious_period : relative_infectiousness : prop_symptomatic : contact_parameters : R0_amplitude_kA : R0_seasonal_peakday : exponential_growth_rate : log_p_lambda_0 : prop_susceptible : prop_HI_32_to_HI_8 : prop_case_to_GP_consultation : prop_case_to_hosp : prop_case_to_death : importation_rates : background_GP : test_sensitivity : test_specificity : day_of_week_effects"
 
 #define GLOBAL_MODEL_PARAMETERS_DEFAULT_FIXED_VALS "0.15 : -15.0 : 0.8 : 1.0 : 2.0 : 2.5 : 1.0 : 0.45 : 1.0 : 0.0 : 355 : 0.15 : -15.0 : 0.8 : 0.5 : 0.0 : 0.1 : 0.001 : 0.0 : 5.7 : 0.95 : 0.95 : 1.0"
 

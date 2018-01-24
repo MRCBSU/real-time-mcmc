@@ -553,6 +553,7 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 	for(int intj = 0; intj < mat_counts->size2; intj++)
 	  {
 	    mu = gsl_matrix_get(mat_expected_counts, inti, intj);
+<<<<<<< HEAD
 	    if(mu > 0){
 	      x = (int) round(gsl_matrix_get(mat_counts, inti, intj));
 	      eta = gsl_matrix_get(mat_dispersion_params, inti, intj);
@@ -563,6 +564,16 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 		lfx += ((r * gsl_sf_log(1 - p)) + (x * gsl_sf_log(p)));
 	      } else 
 		lfx += (x * gsl_sf_log(mu)) - mu; // Dispersion is so small, likelihood is practically Poisson. Any differences in likelihood would be small in comparison to prior/proposal differences and would lead to acceptance anyway.
+=======
+	    eta = gsl_matrix_get(mat_dispersion_params, inti, intj);
+	    if(eta > 1.5e-08){
+	      double r = mu / eta;
+	      lfx += gsl_sf_lngamma(x + r) - gsl_sf_lngamma(r);
+	      double p = 1 - (1 / (eta + 1));
+	      lfx += ((r * gsl_sf_log(1 - p)) + (x * gsl_sf_log(p)));
+	    } else 
+	      lfx += (x * gsl_sf_log(mu)) - mu; // Dispersion is so small, likelihood is practically Poisson. Any differences in likelihood would be small in comparison to prior/proposal differences and would lead to acceptance anyway.
+>>>>>>> 5814a423ca2f3071e18fe840ef556bc412bd3405
 	  }
       }
   }
