@@ -45,8 +45,8 @@ void rtmData::alloc(int& t, int& a)
 {
   counts = gsl_matrix_alloc(t, a);
   denoms = gsl_matrix_alloc(t, a);
+  data_population = gsl_vector_alloc(a);
   if(a < NUM_AGE_GROUPS){
-    data_population = gsl_vector_alloc(a);
     if(likelihood_type == cBINOMIAL)
       popn_weights = gsl_vector_alloc(NUM_AGE_GROUPS);
   }
@@ -100,7 +100,7 @@ void rtmData::data_population_sizes(const gsl_vector* ptr_vec_popn)
       cout << "Input vector shorter than output vector, cannot contract over indices." << endl;
       exit(2);
     }
-  }
+  } else gsl_vector_memcpy(data_population, ptr_vec_popn);
 }
 void rtmData::normalise(const gsl_vector* ptr_vec_popn)
 {
