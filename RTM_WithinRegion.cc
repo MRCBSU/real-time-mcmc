@@ -16,13 +16,15 @@
 void vec_breakpoint_cut(gsl_vector* dest, const gsl_vector_int* vec_breakpoints, const gsl_vector* src)
 {
   gsl_vector_view dest_sub;
-  int offset = 0, sub_length = gsl_vector_int_get(vec_breakpoints, 0);
+  int offset = 0, sub_length = (vec_breakpoints == 0) ? dest->size : gsl_vector_int_get(vec_breakpoints, 0);
+  int dim = (vec_breakpoints == 0) ? 1 : vec_breakpoints->size + 1;
+
   for(int inti = 0; inti < src->size; )
     {
       dest_sub = gsl_vector_subvector(dest, offset, sub_length);
       gsl_vector_set_all(&dest_sub.vector, gsl_vector_get(src, inti++));
       offset += sub_length;
-      sub_length = ((inti >= vec_breakpoints->size) ? dest->size : gsl_vector_int_get(vec_breakpoints, inti)) - offset;
+      sub_length = ((inti < (dim - 1)) ? gsl_vector_int_get(vec_breakpoints, inti) : dest->size) - offset;
     }
 
 }

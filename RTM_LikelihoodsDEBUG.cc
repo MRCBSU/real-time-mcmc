@@ -464,20 +464,19 @@ void fn_background_model(gsl_matrix* total_expected, gsl_matrix* viropositivity,
 // LOG-LIKELIHOOD OF BINOMIAL "POSITIVITY" DATA
 double fn_log_lik_positivity(const gsl_matrix* mat_nsample,
 			     const gsl_matrix* mat_npositive,
-			     const gsl_matrix* mat_model_positivity,
-			     const likelihood_bounds& lbounds)
+			     const gsl_matrix* mat_model_positivity)
 {
 
   double lfx = 0.0;
   double x, n, p; // THESE REALLY SHOULD BE INTEGERS, BUT CURRENTLY THERE ARE NO GUARANTEES OF INTEGER COUNTS DUE TO THE NON-SPLITTING OF THE UNDER 4S.
 
-  gsl_matrix_const_view mat_prob_check = gsl_matrix_const_submatrix(mat_model_positivity, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_model_positivity->size2);
+  // gsl_matrix_const_view mat_prob_check = gsl_matrix_const_submatrix(mat_model_positivity, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_model_positivity->size2);
 
-  if(gsl_matrix_min(&mat_prob_check.matrix) < 0 || gsl_matrix_max(&mat_prob_check.matrix) > 1)
+  if(gsl_matrix_min(mat_model_positivity) < 0 || gsl_matrix_max(mat_model_positivity) > 1)
     lfx += GSL_NEGINF;
   else {
 
-    for(int inti = lbounds.lower - 1; inti < lbounds.upper; inti++)
+    for(int inti = 0; inti < mat_nsample->size1; inti++)
       {
 
 	for(int intj = 0; intj < mat_nsample->size2; intj++)
@@ -499,21 +498,20 @@ double fn_log_lik_positivity(const gsl_matrix* mat_nsample,
 
 // LOG-LIKELIHOOD OF POISSON "COUNT" DATA
 double fn_log_lik_countdata(const gsl_matrix* mat_counts,
-			    const gsl_matrix* mat_expected_counts,
-			    const likelihood_bounds& lbounds)
+			    const gsl_matrix* mat_expected_counts)
 {
 
   double lfx = 0.0;
   double x, mu;
 
   // Check there are no negative expected counts.
-  gsl_matrix_const_view mat_count_check = gsl_matrix_const_submatrix(mat_expected_counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected_counts->size2);
+  // gsl_matrix_const_view mat_count_check = gsl_matrix_const_submatrix(mat_expected_counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected_counts->size2);
 
-  if(gsl_matrix_min(&mat_count_check.matrix) < 0)
+  if(gsl_matrix_min(mat_expected_counts) < 0)
     lfx += GSL_NEGINF;
   else{
 
-    for(int inti = lbounds.lower - 1; inti < lbounds.upper; inti++)
+    for(int inti = 0; inti < mat_counts->size1; inti++)
       {
 	for(int intj = 0; intj < mat_counts->size2; intj++)
 	  {
@@ -530,8 +528,7 @@ double fn_log_lik_countdata(const gsl_matrix* mat_counts,
 
 double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 			     const gsl_matrix* mat_expected_counts,
-			     const gsl_matrix* mat_dispersion_params,
-			     const likelihood_bounds& lbounds)
+			     const gsl_matrix* mat_dispersion_params)
 {
 
   double lfx = 0.0;
@@ -539,12 +536,12 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
   int x;
 
   // Check there are no negative expected counts.
-  gsl_matrix_const_view mat_count_check = gsl_matrix_const_submatrix(mat_expected_counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected_counts->size2);
+  // gsl_matrix_const_view mat_count_check = gsl_matrix_const_submatrix(mat_expected_counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected_counts->size2);
 
-  if(gsl_matrix_min(&mat_count_check.matrix) < 0)
+  if(gsl_matrix_min(mat_expected_counts) < 0)
     lfx += GSL_NEGINF;
   else{
-    for(int inti = lbounds.lower - 1; inti < lbounds.upper; inti++)
+    for(int inti = 0; inti < mat_counts->size1; inti++)
       {
 	for(int intj = 0; intj < mat_counts->size2; intj++)
 	  {

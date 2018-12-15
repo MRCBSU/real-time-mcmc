@@ -116,17 +116,21 @@ void rtmData::normalise(const gsl_vector* ptr_vec_popn)
 }
 double rtmData::lfx(gsl_matrix* mat_expected, const gsl_matrix* mat_dispersion)
 { // Note this function will alter the contents of mat_expected after scaling by denoms.
-  if(likelihood_type != cBINOMIAL){
-    gsl_matrix_view mu = gsl_matrix_submatrix(mat_expected, lbounds.lower - 1, 0, lbounds.upper, mat_expected->size2);
-    gsl_matrix_mul_elements(&mu.matrix, denoms);
-  }
+  gsl_matrix_view N = gsl_matrix_submatrix(denoms, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, denoms->size2);
+  gsl_matrix_view mu = gsl_matrix_submatrix(mat_expected, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected->size2);
+  if(likelihood_type != cBINOMIAL)
+    gsl_matrix_mul_elements(&mu.matrix, &N.matrix);
+  gsl_matrix_view X = gsl_matrix_submatrix(counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, counts->size2);
   switch(likelihood_type){
   case cPOISSON :
-    return fn_log_lik_countdata(counts, mat_expected, lbounds);
+    return fn_log_lik_countdata(&X.matrix, &mu.matrix);
   case cNEGBIN :
-    return fn_log_lik_negbindata(counts, mat_expected, mat_dispersion, lbounds);
+    {
+      gsl_matrix_const_view eta = gsl_matrix_const_submatrix(mat_dispersion, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_dispersion->size2);
+      return fn_log_lik_negbindata(&X.matrix, &mu.matrix, &eta.matrix);
+    }
   case cBINOMIAL :
-    return fn_log_lik_positivity(denoms, counts, mat_expected, lbounds);
+    return fn_log_lik_positivity(&N.matrix, &X.matrix, &mu.matrix);
   default :
     DEFAULT_NO_LIKELIHOOD;
   }
