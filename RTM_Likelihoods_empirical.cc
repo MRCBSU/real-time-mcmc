@@ -519,13 +519,19 @@ double fn_log_lik_countdata(const gsl_matrix* mat_counts,
       {
 	for(int intj = 0; intj < mat_counts->size2; intj++)
 	  {
-	    x = gsl_matrix_get(mat_counts, inti, intj);
 	    mu = gsl_matrix_get(mat_expected_counts, inti, intj);
-	    lfx += ((x * gsl_sf_log(mu)) - mu);
+	    x = gsl_matrix_get(mat_counts, inti, intj);
+	    if((mu == 0) && (x == 0)){
+	      lfx += 0;
+	    } else if((mu == 0) && (x > 0)){
+	      lfx = GSL_NEGINF;
+	    } else {
+	      lfx += ((x * gsl_sf_log(mu)) - mu);
+	    }
 	  }
       }
-  }
 
+  }
   return lfx;
 }
 
@@ -550,8 +556,12 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 	for(int intj = 0; intj < mat_counts->size2; intj++)
 	  {
 	    mu = gsl_matrix_get(mat_expected_counts, inti, intj);
-	    if(mu > 0){
-	      x = (int) round(gsl_matrix_get(mat_counts, inti, intj));
+	    x = (int) round(gsl_matrix_get(mat_counts, inti, intj));
+	    if((mu == 0) && (x == 0)){
+	      lfx += 0;
+	    } else if((mu == 0) && (x == 0)){
+	      lfx += GSL_NEGINF;
+	    } else {
 	      eta = gsl_matrix_get(mat_dispersion_params, inti, intj);
 	      if(eta > 1.5e-08){
 		double r = mu / eta;

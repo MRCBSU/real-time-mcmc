@@ -169,9 +169,9 @@ double R_proposenew2(double& newparam,
   if(trunc_flag)
     {
       if((trunc_flag==cTRUNC) || (trunc_flag==cTRUNC_LO))
-	  ratio = (newparam - trunc_lo) / (oldparam - trunc_lo);
+	ratio = (newparam - trunc_lo) / (oldparam - trunc_lo);
       if((trunc_flag==cTRUNC) || (trunc_flag==cTRUNC_UP))
-	  ratio *= (trunc_up - newparam) / (trunc_up - oldparam);
+	ratio *= (trunc_up - newparam) / (trunc_up - oldparam);
     }
   return ratio;
 }
@@ -246,18 +246,21 @@ double R_proposenew(double& newparam,
 double random_walk_proposal(double& proposal, const double& currentval, const distribution_type& dist, const double& proposal_var, gsl_rng* r, const double& trunclo, const double& trunchi)
 {
   int lower_bound, upper_bound;
-
+  double out;
   switch(dist) {
   case cMVNORMAL :
   case cNORMAL :
     return gsl_sf_log(R_proposenew2(proposal, currentval, proposal_var, r, cNO_TRUNC));
   case cGAMMA :
   case cHALFNORMAL :
-    return gsl_sf_log(R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC_LO, 0));
+    out = R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC_LO, std::numeric_limits<double>::min());
+    return ((out == 0) ? GSL_NEGINF : gsl_sf_log(out));
   case cBETA :
-    return gsl_sf_log(R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC));
+    out = R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC);
+    return ((out == 0) ? GSL_NEGINF : gsl_sf_log(out));
   case cUNIFORM :
-    return gsl_sf_log(R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC, trunclo, trunchi));
+    out = R_proposenew2(proposal, currentval, proposal_var, r, cTRUNC, trunclo, trunchi);
+    return ((out == 0) ? GSL_NEGINF : gsl_sf_log(out));
   case cCONSTANT :
     proposal = currentval;
     return 0;

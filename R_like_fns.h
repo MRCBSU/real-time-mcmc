@@ -6,7 +6,7 @@
 #include "gsl_vec_ext.h"
 
 #define MAX_ZERO_ONE_PROPOSAL_VARIANCE 0.1
-#define MAX_UNBOUNDED_PROPOSAL_VARIANCE 500
+#define MAX_UNBOUNDED_PROPOSAL_VARIANCE 5
 
 // Some error messages
 #define DEFAULT_NO_LIKELIHOOD printf("Unrecognised likelihood function\n"); \

@@ -254,6 +254,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
   gsl_vector_int_set_1ton(adaptive_progress_report_iterations, 1);
   gsl_vector_int_scale(adaptive_progress_report_iterations, simulation_parameters.adaptive_phase / simulation_parameters.num_progress_reports); // NOTE THE INTEGRAL DIVISION
+  gsl_vector_int_set(adaptive_progress_report_iterations, adaptive_progress_report_iterations->size - 1, simulation_parameters.adaptive_phase); // Ensure the adaptive phase runs for the full specified number of iterations.
   gsl_vector_int_set_1ton(chain_progress_report_iterations, 1);
   gsl_vector_int_scale(chain_progress_report_iterations, CHAIN_LENGTH / simulation_parameters.num_progress_reports); // NOTE THE INTEGRAL DIVISION
   gsl_vector_int_add_constant(chain_progress_report_iterations, simulation_parameters.burn_in);
@@ -341,73 +342,78 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 							    r, trunclo, trunchi);
 
 			  // EVALUATE THE LOG PRIOR DENSITY - CAN ONLY DO THIS HERE IF UNIVARIATE PRIOR IS SPECIFIED
-			  if(gsl_vector_int_get(theta_i->prior_distribution, a_component) != (int) cMVNORMAL)
-			    theta_i->proposal_log_prior_dens += univariate_prior_ratio(*theta_i, a_component);
-
+			  if(log_accep > GSL_NEGINF){
+			    if(gsl_vector_int_get(theta_i->prior_distribution, a_component) != (int) cMVNORMAL)
+			      theta_i->proposal_log_prior_dens += univariate_prior_ratio(*theta_i, a_component);
+			  }
 			}
 
 		    }
 
 		  // EVALUATE THE LOG PRIOR DENSITY - MULTIVARIATE CASE
-		  if(gsl_vector_int_get(theta_i->prior_distribution, 0) == (int) cMVNORMAL)
-		    theta_i->proposal_log_prior_dens = (*theta_i->prior_multivariate_norm).ld_mvnorm_ratio(theta_i->proposal_value, theta_i->param_value);
+		  if(log_accep > GSL_NEGINF){
+		    if(gsl_vector_int_get(theta_i->prior_distribution, 0) == (int) cMVNORMAL)
+		      theta_i->proposal_log_prior_dens = (*theta_i->prior_multivariate_norm).ld_mvnorm_ratio(theta_i->proposal_value, theta_i->param_value);
 
-		  log_accep += theta_i->proposal_log_prior_dens;
+		    log_accep += theta_i->proposal_log_prior_dens;
 
-		  // IS THIS PARAMETER A MODEL PARAMETER OR A HYPERPARAMETER?
-		  // HYPERPARAMETER IF IT HAS ANY CHILD NODES
-		  if(theta_i->flag_any_child_nodes)
-		    {
+		    if(log_accep > GSL_NEGINF){
+		    // IS THIS PARAMETER A MODEL PARAMETER OR A HYPERPARAMETER?
+		    // HYPERPARAMETER IF IT HAS ANY CHILD NODES
+		      if(theta_i->flag_any_child_nodes)
+		      {
 
-		      // THE "LIKELIHOOD" COMES FROM THE PRIOR DENSITIES OF THE CHILD NODES
-		      for(int int_child_node = 0; int_child_node < theta.size_param_list; int_child_node++)
-			{
-			  if(int_child_node != int_param)
-			    if(theta_i->flag_child_nodes[int_child_node])
-			      {
-				updateable_model_parameter theta_child = theta.param_list[int_child_node];
+			// THE "LIKELIHOOD" COMES FROM THE PRIOR DENSITIES OF THE CHILD NODES
+			for(int int_child_node = 0; int_child_node < theta.size_param_list; int_child_node++)
+			  {
+			    if(int_child_node != int_param)
+			      if(theta_i->flag_child_nodes[int_child_node])
+				{
+				  updateable_model_parameter theta_child = theta.param_list[int_child_node];
 
-				theta_child.proposal_log_prior_dens = 0;
+				  theta_child.proposal_log_prior_dens = 0;
 
-				for(int int_j = 0; int_j < theta_child.param_value->size; int_j++)
-				  theta_child.proposal_log_prior_dens += R_univariate_prior_log_density(gsl_vector_get(theta_child.param_value, int_j),
-													(distribution_type) gsl_vector_int_get(theta_child.prior_distribution, 0),
-													theta_i->proposal_value);
+				  for(int int_j = 0; int_j < theta_child.param_value->size; int_j++)
+				    theta_child.proposal_log_prior_dens += R_univariate_prior_log_density(gsl_vector_get(theta_child.param_value, int_j),
+													  (distribution_type) gsl_vector_int_get(theta_child.prior_distribution, 0),
+													  theta_i->proposal_value);
 
-				log_accep += theta_child.proposal_log_prior_dens - theta_child.log_prior_dens;
-			      }
+				  log_accep += theta_child.proposal_log_prior_dens - theta_child.log_prior_dens;
+				}
 
-			}
-
-		    }
-		  else
-		    {
+			  }
+		      }
+		    
+		    else
+		      {
 		       
-		      // ADJUST THE COPIED REGION STRUCTURES TO THE PROPOSED VALUE
-		      // evaluate_regional_parameters work by using the param_value... need to temporarily switch the two
-		      gsl_vector* tempvec = theta_i->param_value;
-		      theta_i->param_value = theta_i->proposal_value; // temporarily switch the value of the pointer
-		      for(int int_reg = 0; int_reg < nregions; ++int_reg)
+			// ADJUST THE COPIED REGION STRUCTURES TO THE PROPOSED VALUE
+			// evaluate_regional_parameters work by using the param_value... need to temporarily switch the two
+			gsl_vector* tempvec = theta_i->param_value;
+			theta_i->param_value = theta_i->proposal_value; // temporarily switch the value of the pointer
+			for(int int_reg = 0; int_reg < nregions; ++int_reg)
     
-			evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
+			  evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
     
-		      theta_i->param_value = tempvec; // and then re-set to the original address
+			theta_i->param_value = tempvec; // and then re-set to the original address
 
-		      // EVALUATE THE NEW LIKELIHOOD (ESSENTIALLY, ADJUST THE LIKELIHOOD STRUCTURE FOR THE PROPOSED VALUES)
-		      fn_log_likelihood(prop_lfx, 
-					prop_country,
-					0,
-					theta_i->flag_transmission_model,
-					theta_i->flag_reporting_model,
-					theta_i->flag_GP_likelihood,
-					theta_i->flag_Hosp_likelihood,
-					theta_i->flag_Viro_likelihood,
-					gmip,
-					theta);
+			// EVALUATE THE NEW LIKELIHOOD (ESSENTIALLY, ADJUST THE LIKELIHOOD STRUCTURE FOR THE PROPOSED VALUES)
+			fn_log_likelihood(prop_lfx, 
+					  prop_country,
+					  0,
+					  theta_i->flag_transmission_model,
+					  theta_i->flag_reporting_model,
+					  theta_i->flag_GP_likelihood,
+					  theta_i->flag_Hosp_likelihood,
+					  theta_i->flag_Viro_likelihood,
+					  gmip,
+					  theta);
 
-		      log_accep += prop_lfx.total_lfx - lfx.total_lfx;
+			log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 
+		      }
 		    }
+		  }
 		  // dbl_A and dbl_U variables need to be defined to govern acceptance.
 		  double dbl_A = (log_accep < 0.0) ? log_accep : 0.0;
 		  double dbl_U = (log_accep < 0.0) ? gsl_sf_log(gsl_rng_uniform(r)) : -1.0;
