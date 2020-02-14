@@ -3,7 +3,7 @@
 
 
 
-negbin_overdispersion = { param_value = 3.29005933124239e-53, 0.0102846959686683;
+negbin_overdispersion = { param_value = 3.29005933124239e-20, 0.0102846959686683;
 prior_distribution = 2, 2;
 prior_parameters = 0.01, 0.01, 0.01, 0.01;
 proposal_variance = 0.14, 0.073;
