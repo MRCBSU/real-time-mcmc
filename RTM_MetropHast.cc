@@ -354,6 +354,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		  if(log_accep > GSL_NEGINF){
 		    if(gsl_vector_int_get(theta_i->prior_distribution, 0) == (int) cMVNORMAL)
 		      theta_i->proposal_log_prior_dens = (*theta_i->prior_multivariate_norm).ld_mvnorm_ratio(theta_i->proposal_value, theta_i->param_value);
+		    if (!std::isfinite(theta_i->proposal_log_prior_dens)) {
+		    	fprintf(stderr, "Non-finite proposal log prior value %f during iteration int_iter %d int_param %d\n",
+			        theta_i->proposal_log_prior_dens, int_iter, int_param);
+		    }
 
 		    log_accep += theta_i->proposal_log_prior_dens;
 
@@ -408,6 +412,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					  theta_i->flag_Viro_likelihood,
 					  gmip,
 					  theta);
+
+			if (!std::isfinite(lfx.total_lfx)) {
+				fprintf(stderr, "Non-finite proposal log likelihood %f during iteration int_iter %d int_param %d\n",
+				        prop_lfx.total_lfx, int_iter, int_param);
+			}
 
 			log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 
