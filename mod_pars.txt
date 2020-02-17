@@ -3,7 +3,7 @@
 
 
 
-negbin_overdispersion = { param_value = 3.29005933124239e-20, 0.0102846959686683;
+negbin_overdispersion = { param_value = 3.29005933124239e-53, 0.0102846959686683;
 prior_distribution = 2, 2;
 prior_parameters = 0.01, 0.01, 0.01, 0.01;
 proposal_variance = 0.14, 0.073;
@@ -22,7 +22,7 @@ importation_rates = { param_value = 0.0;
 prior_distribution = 1;
 }
 
-average_infectious_period = { param_value = 1.37775600247971;
+infectious_period = { param_value = 1.37775600247971;
 prior_distribution = 2;
 prior_parameters = 517.6839, 357.0234;
 proposal_variance = 0.0076;
@@ -72,7 +72,7 @@ prior_distributions = 1, 1, 1, 1, 1, 1, 1;
 age_breakpoints = true;
 }
 
-prop_case_to_GP_consultation_params = { param_value = -0.467828825487895, -0.316046913140681, 0.106060971302494, 0.475184840496332;
+prop_case_to_GP_consultation = { param_value = -0.467828825487895, -0.316046913140681, 0.106060971302494, 0.475184840496332;
 prior_distributions = 4, 4, 4, 4;
 prior_parameters = 0.0, 0.4074365, 0.0, 0.4074365, 0.0, 0.9640366, 0.0, 0.9640366;
 proposal_variance = 0.000184, 0.000463, 0.005780, 0.003083;
@@ -90,7 +90,7 @@ prop_case_to_death = { param_value = 0.01;
 prior_distributions = 1;
 }
 
-background_GP_params = { param_value = -5.20529772459634, 4.29757898495379, -1.55244499863378, -3.55715144741148, 2.56930101555115, -0.29696921056415, 1.27759818437553, -5.21458239683191, 2.20587576390497;
+background_GP = { param_value = -5.20529772459634, 4.29757898495379, -1.55244499863378, -3.55715144741148, 2.56930101555115, -0.29696921056415, 1.27759818437553, -5.21458239683191, 2.20587576390497;
 prior_distributions = 5, 5, 5, 5, 5, 5, 5, 5, 5;
 proposal_variance = 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04;
 prior_parameters = 0, 20.202138, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12.121283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18.181924, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.16171, -8.080855, 0, 0, 0, 0, 0, 0, 0, 0, -8.080855, 16.16171, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18.181924, -6.060641, -6.060641, 0, 0, 0, 0, 0, 0, 0, -6.060641, 18.181924, -6.060641, 0, 0, 0, 0, 0, 0, 0, -6.060641, -6.060641, 18.181924, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12.121283;
