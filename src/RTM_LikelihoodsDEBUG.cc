@@ -577,7 +577,7 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 	    x = (int) round(gsl_matrix_get(mat_counts, inti, intj));
 	    if((mu == 0) && (x == 0)){
 	      lfx += 0;
-	    } else if((mu == 0) && (x == 0)){
+	    } else if((mu == 0) && (x > 0)){
 	      lfx += GSL_NEGINF;
 	    } else {
 	      eta = gsl_matrix_get(mat_dispersion_params, inti, intj);
@@ -588,7 +588,7 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
                 if (p == 1 || p == 0) {
                         lfx += GSL_NEGINF;
                 } else {
-		lfx += ((r * gsl_sf_log(1 - p)) + (x * gsl_sf_log(p)));
+			lfx += ((r * gsl_sf_log(1 - p)) + (x * gsl_sf_log(p)));
                 }
 	      } else 
 		lfx += (x * gsl_sf_log(mu)) - mu; // Dispersion is so small, likelihood is practically Poisson. Any differences in likelihood would be small in comparison to prior/proposal differences and would lead to acceptance anyway.
