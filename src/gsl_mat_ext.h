@@ -1,7 +1,11 @@
 #ifndef HEADER_gslmat_
 #define HEADER_gslmat_
 
+
 // FUNCTIONS IN gsl_matrix_exts.cc
+#include <string>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 
 using namespace std;
 using std::string;

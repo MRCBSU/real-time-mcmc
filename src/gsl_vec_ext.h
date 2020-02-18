@@ -3,6 +3,11 @@
 #ifndef HEADER_gslvec_
 #define HEADER_gslvec_
 
+#include <string>
+#include <vector>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_complex.h>
+
 using namespace std;
 using std::string;
 
