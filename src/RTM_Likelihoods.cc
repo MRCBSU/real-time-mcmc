@@ -467,33 +467,55 @@ double fn_log_lik_positivity(const gsl_matrix* mat_nsample,
 			     const gsl_matrix* mat_model_positivity)
 {
 
-  double lfx = 0.0;
-  double x, n, p; // THESE REALLY SHOULD BE INTEGERS, BUT CURRENTLY THERE ARE NO GUARANTEES OF INTEGER COUNTS DUE TO THE NON-SPLITTING OF THE UNDER 4S.
+	double lfx = 0.0;
+	double x, n, p; // THESE REALLY SHOULD BE INTEGERS, BUT CURRENTLY THERE ARE NO GUARANTEES OF INTEGER COUNTS DUE TO THE NON-SPLITTING OF THE UNDER 4S.
 
-  // gsl_matrix_const_view mat_prob_check = gsl_matrix_const_submatrix(mat_model_positivity, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_model_positivity->size2);
+	// gsl_matrix_const_view mat_prob_check = gsl_matrix_const_submatrix(mat_model_positivity, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_model_positivity->size2);
 
-  if(gsl_matrix_min(mat_model_positivity) < 0 || gsl_matrix_max(mat_model_positivity) > 1)
-    lfx += GSL_NEGINF;
-  else {
+	if(gsl_matrix_min(mat_model_positivity) < 0 || gsl_matrix_max(mat_model_positivity) > 1) {
+		return GSL_NEGINF;
+	}
 
-    for(int inti = 0; inti < mat_nsample->size1; inti++)
-      {
+	for(int inti = 0; inti < mat_nsample->size1; inti++)
+	{
 
-	for(int intj = 0; intj < mat_nsample->size2; intj++)
-	  {
-	    x = gsl_matrix_get(mat_npositive, inti, intj);
-	    n = gsl_matrix_get(mat_nsample, inti, intj);
-	    p = gsl_matrix_get(mat_model_positivity, inti, intj);
+		for(int intj = 0; intj < mat_nsample->size2; intj++)
+		{
+			x = gsl_matrix_get(mat_npositive, inti, intj);
+			n = gsl_matrix_get(mat_nsample, inti, intj);
+			p = gsl_matrix_get(mat_model_positivity, inti, intj);
 
-	    lfx += (p == 0.0 || p == 1.0 ? (p == 0 ? (x == 0 ? 0 : GSL_NEGINF) : (x == n ? 0 : GSL_NEGINF)) : (x * gsl_sf_log(p)) + ((n - x) * gsl_sf_log(1 - p)));
+			// Cannot have more than n successes in n trials!
+			if (x > n) {
+				return GSL_NEGINF;
+			}
 
-	  }
+			// Calculation takes log of p and (1-p) so issues if p is exactly or 1
+			if (p == 0.0) {
+				if (x == 0.0) {
+					// No chance of success and no successes, hence probability 1, log(1) = 0, no need to add anything
+					continue; 
+				} else {
+					// Cannot have successes when p = 0
+					return GSL_NEGINF; 
+				}
+			}
+			if (p == 1.0) {
+				if (x == n) {
+					// Guaranteed chance of success and all successes, hence probability 1, log(1) = 0, no need to add anything
+					continue; 
+				} else {
+					// Must be only successes if p = 1
+					return GSL_NEGINF; 
+				}
+			}
 
-      }
-
-  }
-
-  return lfx;
+			// Finish sanity checks
+			// No special case, calculate and add log likelihood normally
+			lfx += x*gsl_sf_log(p) + (n - x)*gsl_sf_log(1 - p);
+		}
+	}
+	return lfx;
 }
 
 // LOG-LIKELIHOOD OF POISSON "COUNT" DATA
