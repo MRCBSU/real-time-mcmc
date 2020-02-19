@@ -400,7 +400,9 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   gsl_matrix_set_zero(modelled_events);
 
   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
+#if USE_THREADS
 #pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
+#endif
   for (int k = 0; k < (max_days_data * in_gmip.l_reporting_time_steps_per_day); ++k)
     {  
       for (int j = 0; j < NUM_AGE_GROUPS; ++j)

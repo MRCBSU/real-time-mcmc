@@ -61,7 +61,10 @@ void rtmData::setDim(const bool& missing_data, const string& str_source, const s
     dim_s = smax;
   } else {
     string temp_string;
-    read_string_from_instruct(temp_string, str_property, str_source);
+    if (!read_string_from_instruct(temp_string, str_property, str_source)) {
+      std::cerr << "Could not read " << str_property << " from " << str_source << std::endl;
+      exit(2);
+    }
     stl_vector_sscanf<int>(temp_string, col_grouping);
     dim_s = col_grouping.size() + 1;
   }
