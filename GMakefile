@@ -3,7 +3,7 @@ OBJ = $(SRC:%.cc:build/%.o)
 rtm_gnu: CXXFLAGS := $(CXXFLAGS) -fopenmp
 
 
-LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp
+LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp -lstdc++fs
 
 
 
