@@ -15,7 +15,7 @@ prior_distribution = 1;
 }
 
 relative_infectiousness = { param_value = 1.0;
-prior distribution = 1;
+prior_distribution = 1;
 }
 
 importation_rates = { param_value = 0.0;
