@@ -592,12 +592,15 @@ void fn_log_likelihood(likelihood& llhood,
   double temp_log_likelihood;
   double lfx_increment = 0.0;
 
+#ifdef USE_THREADS
   omp_set_nested(1);
   omp_set_dynamic(1);
 
   int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
   int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
-  // int num_subthread_teams = 1;
+#else
+  int num_subthread_teams = 1;
+#endif
 
 #pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
   for(int int_region = low_region; int_region < hi_region; int_region++)

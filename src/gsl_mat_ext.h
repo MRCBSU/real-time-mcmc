@@ -2,6 +2,8 @@
 #define HEADER_gslmat_
 
 // FUNCTIONS IN gsl_matrix_exts.cc
+#include <string>
+#include <gsl/gsl_matrix.h>
 
 using namespace std;
 using std::string;
