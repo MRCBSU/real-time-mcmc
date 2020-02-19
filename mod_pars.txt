@@ -45,7 +45,7 @@ prior_distribution = 1;
 }
 
 R0_seasonal_peakday = { param_value = 355;
-prior_distirbution = 1;
+prior_distribution = 1;
 }
 
 exponential_growth_rate = { param_value = 0.0717618932661773;
