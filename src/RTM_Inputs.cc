@@ -217,70 +217,87 @@ bool read_string_from_instruct(string& out_string, const string& var_name, const
 {  
   DEBUG(DEBUG_ALL, "Reading " << var_name << " from " << var_string);
   int var_dec_start = var_string.find(var_name);
-  if(var_dec_start == string::npos)
-    out_string = "";
-  else{
-    int var_dec_end = var_string.find(";", ++var_dec_start);
-    var_dec_start = var_string.find("=", var_dec_start);
-    if(++var_dec_start < var_dec_end){
-      out_string = TrimStr(var_string.substr(var_dec_start, var_dec_end - var_dec_start));
-    } else {
-      printf("No string found for %s in %s\n", var_name.c_str(), var_string.c_str());
-      exit(2);
-    }
+  if(var_dec_start == string::npos) {
+    return false;
   }
+  int var_dec_end = var_string.find(";", ++var_dec_start);
+  var_dec_start = var_string.find("=", var_dec_start);
+  if(++var_dec_start < var_dec_end) {
+     out_string = TrimStr(var_string.substr(var_dec_start, var_dec_end - var_dec_start));
+     return true;
+  }
+  return false;
 }
 
 double read_double(const string var_name, const string var_string, const double default_value = 0.0)
 {
   string var_substring;
-  read_string_from_instruct(var_substring, var_name, var_string);
-  if(var_substring.compare("") != 0)
+  if (read_string_from_instruct(var_substring, var_name, var_string)) {
+    DEBUG(DEBUG_ALL, "No double found for " << var_name << " returning default value of" << default_value)
     return atof(var_substring.c_str());
-  else return default_value;
+  } else {
+    return default_value;
+  }
 }
 
 int read_int(const string var_name, const string var_string, const int default_value = 0)
 {
   string var_substring;
-  read_string_from_instruct(var_substring, var_name, var_string);
-  if(var_substring.compare("") != 0)
+  if (read_string_from_instruct(var_substring, var_name, var_string)) {
     return atoi(var_substring.c_str());
-  else return default_value;
+  } else {
+    DEBUG(DEBUG_ALL, "No int found for " << var_name << " returning default value of" << default_value)
+    return default_value;
+  }
 }
 
 void read_gsl_vector(gsl_vector* out_gslvec, const string var_name, const string var_string)
 {
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
+    DEBUG(DEBUG_ERROR, "No value found for " << var_name << " in " << var_string);
+    exit(2);
+  }
   gsl_vector_sscanf(var_var_string, out_gslvec);
 }
 
 void read_gsl_vector_int(gsl_vector_int* out_gslvec_int, const string var_name, const string var_string)
 {
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
+    DEBUG(DEBUG_ERROR, "No value found for " << var_name << " in " << var_string);
+    exit(2);
+  }
   gsl_vector_int_sscanf(var_var_string, out_gslvec_int);
 }
 
 void read_gsl_matrix(gsl_matrix* out_gslmat, const string var_name, const string var_string)
 {
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
+    DEBUG(DEBUG_ERROR, "Could not read " << var_name << " from string " << var_string);
+    exit(2);
+  }
   gsl_matrix_sscanf(var_var_string, out_gslmat);
 }
 
 void read_gsl_matrix_int(gsl_matrix_int* out_gslmat_int, const string var_name, const string var_string)
 {
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
+    DEBUG(DEBUG_ERROR, "Could not read " << var_name << " from string " << var_string);
+    exit(2);
+  }
   gsl_matrix_int_sscanf(var_var_string, out_gslmat_int);
 }
 
 void read_string_array(string* out_strarray, const int n, const string var_name, const string var_string)
 {
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
+    DEBUG(DEBUG_ERROR, "Could not read " << var_name << " from string " << var_string);
+    exit(2);
+  }
   int indx = 0;
   for(int i = 0; i < n; i++)
     out_strarray[i].assign(read_from_delim_string<string>(var_var_string, ",;", indx));
@@ -289,16 +306,16 @@ void read_string_array(string* out_strarray, const int n, const string var_name,
 int flag_int_or_string(const string var_name, const string var_string, int default_return = 0)
 { // INDICATES WHETHER A NAME OR A VECTOR OF VALUES IS TO BE READ IN FROM THE INPUT var_string
   string var_var_string;
-  read_string_from_instruct(var_var_string, var_name, var_string);
-  if(var_var_string.compare("") == 0)
+  if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
     // VARIABLE NAME DOESN'T APPEAR IN INPUT STRING, RETURN DEFAULT VALUE
     return default_return;
-  else if(var_var_string.find_first_of("1234567890-", 0) > 1)
+  } else if(var_var_string.find_first_of("1234567890-", 0) > 1) {
     // IT'S A STRING
     return 1;
-  else
+  } else {
     // IT'S A NUMERICAL VECTOR
     return 0;
+  }
 }
 
 /////////// GET A PARAMETER SUBSTRING FROM A FILE STRING
@@ -410,13 +427,16 @@ void read_param_regression(regression_def& reg_def,
       // TO ALLOCATE THE MATRIX, EITHER A FILENAME SHOULD BE GIVEN OR A VECTOR OF NUMBERS
       bool flag_infile = (bool) flag_int_or_string("regression_design", str_source);
       if(flag_infile){
-	string str_filename;
-	read_string_from_instruct(str_filename, "regression_design", str_source);
-	FILE* design_file = fopen(str_filename.c_str(), "r");
+        string str_filename;
+        if (!read_string_from_instruct(str_filename, "regression_design", str_source)) {
+          DEBUG(DEBUG_ERROR, "Could not read regression_design from string " << str_source);
+          exit(2);
+        }
+        FILE* design_file = fopen(str_filename.c_str(), "r");
 
-	gsl_matrix_fscanf(design_file, reg_def.design_matrix);
+        gsl_matrix_fscanf(design_file, reg_def.design_matrix);
 
-	fclose(design_file);
+        fclose(design_file);
 
       } else if(str_source.find("regression_design") != string::npos) // READ IN THE MATRIX AS A VECTOR
 	read_gsl_matrix(reg_def.design_matrix, "regression_design", str_source);
@@ -455,7 +475,10 @@ void read_modpar(updateable_model_parameter& modpar,
   if(num_strings > 0){ // THE STRING IS FOUND
     
     /// GET PARAMETER DIMENSION
-    read_string_from_instruct(var_var_string, "param_value", var_string);
+    if (!read_string_from_instruct(var_var_string, "param_value", var_string)) {
+      DEBUG(DEBUG_ERROR, "No value found for param_value in " << var_string);
+      exit(2);
+    }
     /// NUMBER OF VALUE DELIMITERS (COMMAS) + 1 SHOULD GIVE THE DIMENSION
     var_dimension = count_delims_in_string(var_var_string, ",") + 1;
     /// 
@@ -492,9 +515,9 @@ void read_modpar(updateable_model_parameter& modpar,
 	modpar.prior_params = (gsl_vector **) calloc(var_dimension, sizeof(gsl_vector *));
 
 	// DETERMINE WHETHER OR NOT THE PARAMETER HAS A HYPERPRIOR (it will have the property prior_hyper set to a value > 0 if so
-	string tempstring;
-	read_string_from_instruct(tempstring, "prior_hyper", var_string);
-	modpar.flag_hyperprior = ((tempstring.compare("") == 0) || (atoi(tempstring.c_str()) <= 0)) ? false : true; // NOTE THE DEFAULT IS TO ASSUME THAT THE PRIOR IS NOT A HYPERPRIOR
+  string tempstring;
+	modpar.flag_hyperprior = read_string_from_instruct(tempstring, "prior_hyper", var_string);
+  modpar.flag_hyperprior = modpar.flag_hyperprior && atoi(tempstring.c_str()) > 0;
 
 	// ERROR IF HYPERPRIOR IS SPECIFIED FOR A MULTIVARIATE PARAMETER
 	if(modpar.flag_hyperprior && (gsl_vector_int_get(modpar.prior_distribution, 0) == (int) cMVNORMAL)){
@@ -657,8 +680,8 @@ void node_links(globalModelParams& in_pars,
 	    if(num_strings > 0)
 	      {
 
-		// FIND THE PRIOR_PARAMS VALUE
-		read_string_from_instruct(temp_prior_param, "prior_parameters", temp_param);
+		// FIND THE PRIOR_PARAMS VALUE, they are expected to be missing sometimes
+		(void)!read_string_from_instruct(temp_prior_param, "prior_parameters", temp_param);
 
 		// IS THE TRIMMED STRING EQUAL TO THE NAME OF PARAMETER i
 		// TRIM FIRST AND LAST CHARACTERS (i.e. QUOTATION MARKS)
@@ -995,14 +1018,13 @@ void fetch_filenames(string* out_string,
 
   // find the array of filenames
   if(!var_name.empty())
-    read_string_from_instruct(var_filenames, var_name, str_file);
-  
-  if(var_filenames.compare("") == 0){
+    if (!read_string_from_instruct(var_filenames, var_name, str_file)) {
     // ERROR_FILE_EXIT("Required data structure %s no specified\n", var_name.c_str());
     for(int int_i = 0; int_i < num_strings;) // THIS CATERS FOR THE CASE OF NO MATCHING STRING.. WHAT IF THERE ARE INSUFFICIENT FILENAMES SPECIFIED? NEED TO CONSIDER THAT CASE.
       out_string[int_i++] = "";
-  } else
+  } else {
   read_string_array(out_string, num_strings, var_name, str_file);
+  }
 
 }
 
