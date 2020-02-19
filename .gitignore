@@ -5,3 +5,4 @@ rtm_gnu_empirical_debug
 **.swp
 build/**
 outputs/**
+.vscode
