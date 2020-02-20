@@ -1,7 +1,5 @@
 rtm_gnu
 rtm_gnu_debug
-rtm_gnu_empirical
-rtm_gnu_empirical_debug
 **.swp
 build/**
 outputs/**
