@@ -1,5 +1,5 @@
-rtm_gnu
-rtm_gnu_debug
+rtm
+rtm_debug
 **.swp
 build/**
 outputs/**
