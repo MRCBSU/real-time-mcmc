@@ -470,8 +470,6 @@ double fn_log_lik_positivity(const gsl_matrix* mat_nsample,
 	double lfx = 0.0;
 	double x, n, p; // THESE REALLY SHOULD BE INTEGERS, BUT CURRENTLY THERE ARE NO GUARANTEES OF INTEGER COUNTS DUE TO THE NON-SPLITTING OF THE UNDER 4S.
 
-	// gsl_matrix_const_view mat_prob_check = gsl_matrix_const_submatrix(mat_model_positivity, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_model_positivity->size2);
-
 	if(gsl_matrix_min(mat_model_positivity) < 0 || gsl_matrix_max(mat_model_positivity) > 1) {
 		return GSL_NEGINF;
 	}
@@ -618,12 +616,15 @@ void fn_log_likelihood(likelihood& llhood,
   double temp_log_likelihood;
   double lfx_increment = 0.0;
 
+#ifdef USE_THREADS
   omp_set_nested(1);
   omp_set_dynamic(1);
 
   int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
   int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
-  // int num_subthread_teams = 1;
+#else
+  int num_subthread_teams = 1;
+#endif
 
 #pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
   for(int int_region = low_region; int_region < hi_region; int_region++)
