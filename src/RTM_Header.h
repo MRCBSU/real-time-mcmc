@@ -51,4 +51,18 @@
 #define cTRUE 1
 #define cFALSE 0
 
+// DEBUGGING_LEVELS
+#define DEBUG_ALL 20
+#define DEBUG_DETAIL 17
+#define DEBUG_PROGRESS  15
+#define DEBUG_WARNING 10
+#define DEBUG_ERROR 5
+#define DEBUG_OFF 0
+
+#ifndef DEBUG_LEVEL
+#define DEBUG_LEVEL DEBUG_ALL
+#endif
+
+#define DEBUG(level, x) if (DEBUG_LEVEL >= level) {std::cout << __FILE__ << ":" << __LINE__ << " " << x << std::endl;}
+
 #endif
