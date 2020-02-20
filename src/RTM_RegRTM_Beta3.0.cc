@@ -1,12 +1,44 @@
+#include "args.h"
 #include "RTM_StructDefs.h" // provides RTM_Header.h
 #include "RTM_StructAssign.h"
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
 
+#include <iostream>
+
 using namespace std;
 using std::string;
 
-int main(void){
+/// Parse command line arguments for the input and output directories.
+/// Returns a tuple of {input directory, output directory}, which will be strings.
+/// Prints help string and exits if that is requested.
+/// Also causes exit if error in arguments.
+std::tuple<string,string> parse_command_line_arguments(int argc, char **argv) {
+  args::ArgumentParser parser("Implmentation of Birrel et al. 2016");
+  args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+  args::ValueFlag<string> input_dir(parser, "input",
+    "The directory containing the input files mod_pars.txt and mod_input.txt",
+    {'i', "input"}, "inputs"
+  );
+  args::ValueFlag<string> output_dir(parser, "output",
+    "The directory that outputs will be placed in."
+    "The directory be created if it doesn't exist.",
+    {'o', "output"}, "outputs"
+  );
+
+  try {
+    parser.ParseCLI(argc, argv);
+  } catch (args::Help) {
+    std::cout << parser;
+    exit(0);
+  } catch (args::Error e) {
+    std::cerr << e.what() << std::endl << parser;
+    exit(1);
+  }
+  return {input_dir.Get(), output_dir.Get()};
+}
+
+int main(int argc, char **argv) {
 
   global_model_instance_parameters global_fixedpars;
   globalModelParams global_modpars;
@@ -18,6 +50,11 @@ int main(void){
   // SET :"TIMER" RUNNING
   tval = time(NULL);
   now = localtime(&tval);
+
+  auto [input_dir, output_dir] = parse_command_line_arguments(argc, argv);
+  DEBUG(DEBUG_DETAIL, "Putting inputs in: " << input_dir);
+  DEBUG(DEBUG_DETAIL, "Putting outputs in: " << output_dir);
+
 
   // GET FILES CONTAINING USER INPUT, IF ANY EXIST OR USE DEFAULT FILENAMES.
   // SPECIFIED FILENAMES SHOULD BE FOUND IN THE FILE rtm_input_files.txt
