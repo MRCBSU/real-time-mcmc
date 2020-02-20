@@ -109,7 +109,9 @@ int main(void){
   		       str_mcmc_parameter_defaults);
 
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
+  #ifdef USE_THREADS
   omp_set_num_threads(sim_pars.max_num_threads);
+  #endif
 
   // INITIALISE THE LIKELIHOOD STRUCTURE
   likelihood_alloc(llhood, global_fixedpars);
