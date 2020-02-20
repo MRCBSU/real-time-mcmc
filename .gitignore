@@ -1,5 +1,6 @@
 rtm
 rtm_debug
+rtm_optim
 **.swp
 build/**
 outputs/**
