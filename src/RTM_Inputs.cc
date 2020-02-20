@@ -209,9 +209,13 @@ void read_global_fixed_parameters(register global_model_instance_parameters& fix
 
 }
 
-
-void read_string_from_instruct(string& out_string, const string& var_name, const string& var_string)
-{  // READ IN A VARIABLE VALUE FROM A INPUT STRUCTURE STRING. RETURNS AN ERROR IF DESIRED PROPERTY DEFINTION NOT PRESENT IN STRING
+/*
+ * Read a form of `<key> = <value>;` from `var_string`. Put `<value>` into `out_string`.
+ * Return true on success or false on failure.
+ */
+bool read_string_from_instruct(string& out_string, const string& var_name, const string& var_string)
+{  
+  DEBUG(DEBUG_ALL, "Reading " << var_name << " from " << var_string);
   int var_dec_start = var_string.find(var_name);
   if(var_dec_start == string::npos)
     out_string = "";
@@ -437,7 +441,7 @@ void read_modpar(updateable_model_parameter& modpar,
 		 const int num_days,
 		 const int num_ages)
 {
-
+  DEBUG(DEBUG_DETAIL, "Reading parameters for " << param_name);
   string var_string, var_var_string;
   int int_marker = 0;
   int var_dimension;
@@ -494,12 +498,13 @@ void read_modpar(updateable_model_parameter& modpar,
 
 	// ERROR IF HYPERPRIOR IS SPECIFIED FOR A MULTIVARIATE PARAMETER
 	if(modpar.flag_hyperprior && (gsl_vector_int_get(modpar.prior_distribution, 0) == (int) cMVNORMAL)){
-	  perror("Multivariate normal hyperparameters specified\n");
+	  DEBUG(DEBUG_ERROR, "Multivariate normal selected for the hyperprior " << param_name);
 	  exit(2);
 	}
 
 	// COMPONENTWISE ALLOCATATION OF MEMORY FOR THE PRIORS... HYPERPRIORS SHOULD HAVE THEIR PARAMETERS SET ELSEWHERE
 	if(!modpar.flag_hyperprior){
+    DEBUG(DEBUG_ALL, "Has a hyperprior")
 
 	  for(int_marker = 0; int_marker < var_dimension;){
 	    int nparam = num_parameters_by_distribution((distribution_type) gsl_vector_int_get(modpar.prior_distribution, int_marker), var_dimension);
@@ -554,6 +559,7 @@ void read_modpar(updateable_model_parameter& modpar,
 
   
   } else { // THE STRING IS NOT FOUND
+    DEBUG(DEBUG_WARNING, "No parameter structure found.")
 
     /// SET EQUAL TO THE DEFAULT (TIME AND AGE INVARIANT VALUE)
     modpar.param_value = gsl_vector_alloc(1);

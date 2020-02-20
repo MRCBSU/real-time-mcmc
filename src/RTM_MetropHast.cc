@@ -290,6 +290,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	{output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);}
     }
 
+  DEBUG(DEBUG_PROGRESS, "Starting main MCMC loop")
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
