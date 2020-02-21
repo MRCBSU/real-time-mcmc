@@ -33,7 +33,7 @@ void input_filenames(
 
 // SWAPS DEFAULT VARIABLE DEFAULT VALUES (VARIABLE NAMES
 // READ IN AS A DELIMITED STRING) WITH VALUES READ IN FROM FILE
-void read_variable_value(const string str_varnames, string& str_var_values, char* str_filename)
+void read_variable_value(const string str_varnames, string& str_var_values, const char* str_filename)
 {
 
   // IS THE REQUIRED FILE PRESENT? IF NOT, AUTOMATICALLY USE DEFAULT VALUES
@@ -113,7 +113,7 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
 
 void read_mcmc_parameters(register mcmcPars &mcmc_pars,
-			  char* source_file,
+			  const char* source_file,
 			  const string str_varnames,
 			  string& str_vardefaults)
 {
@@ -145,7 +145,7 @@ void read_mcmc_parameters(register mcmcPars &mcmc_pars,
 }
 
 void read_global_fixed_parameters(register global_model_instance_parameters& fixed_pars,
-				  char* source_file,
+				  const char* source_file,
 				  const string str_varnames,
 				  string& str_vardefaults)
 {
