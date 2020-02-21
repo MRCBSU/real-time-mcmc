@@ -54,26 +54,13 @@ int main(int argc, char **argv) {
   auto [input_dir, output_dir] = parse_command_line_arguments(argc, argv);
   DEBUG(DEBUG_DETAIL, "Putting inputs in: " << input_dir);
   DEBUG(DEBUG_DETAIL, "Putting outputs in: " << output_dir);
-
-
-  // GET FILES CONTAINING USER INPUT, IF ANY EXIST OR USE DEFAULT FILENAMES.
-  // SPECIFIED FILENAMES SHOULD BE FOUND IN THE FILE rtm_input_files.txt
-  // DEFAULTS FOUND IN ARGUMENT DECLARATION FOR input_filenames IN RTM_Inputs.cc
-  char str_filename_inputs[120] = "mod_inputs.txt";
-  char str_filename_modpars[120] = "mod_pars.txt";
-
-  // INSTRUCT THE PROGRAM AS TO WHERE TO LOOK FOR VARIOUS GROUPS OF MODEL INPUTS
-  input_filenames(str_filename_inputs,
-  		  str_filename_modpars,
-  		  120);
-  // //
-
-  // // READ IN THE VARIOUS INPUTS.
+  string str_filename_modpars = input_dir + "/mod_pars.txt";
 
   /// ALLOCATE STRUCTURES FEATURED IN read_model_inputs
   string str_global_model_instance_members(GLOBAL_MODEL_INSTANCE_MEMBERS);
   string str_global_model_instance_defaults(GLOBAL_MODEL_INSTANCE_DEFAULTS);
 
+  string str_filename_inputs = input_dir + "/mod_inputs.txt";
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
   read_global_fixed_parameters(global_fixedpars,
   			       str_filename_inputs,
