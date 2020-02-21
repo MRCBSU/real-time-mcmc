@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   string str_filename_inputs = input_dir + "/mod_inputs.txt";
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
   read_global_fixed_parameters(global_fixedpars,
-  			       str_filename_inputs,
+  			       str_filename_inputs.c_str(),
   			       str_global_model_instance_members,
   			       str_global_model_instance_defaults);
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
   read_global_model_parameters(global_modpars,
-  			       str_filename_modpars,
+  			       str_filename_modpars.c_str(),
   			       str_global_model_parameters_members,
   			       str_global_model_parameters_initvals,
   			       str_global_model_parameters_likflags,
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
   string str_mcmc_parameter_defaults(MCMC_PARAMETER_DEFAULT_VALUES);
 
   read_mcmc_parameters(sim_pars,
-  		       str_filename_inputs,
+  		       str_filename_inputs.c_str(),
   		       str_mcmc_parameter_names,
   		       str_mcmc_parameter_defaults);
 
