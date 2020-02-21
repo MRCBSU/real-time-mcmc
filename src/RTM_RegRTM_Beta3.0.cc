@@ -54,18 +54,23 @@ int main(int argc, char **argv) {
   auto [input_dir, output_dir] = parse_command_line_arguments(argc, argv);
   DEBUG(DEBUG_DETAIL, "Putting inputs in: " << input_dir);
   DEBUG(DEBUG_DETAIL, "Putting outputs in: " << output_dir);
-  string str_filename_modpars = input_dir + "/mod_pars.txt";
 
   /// ALLOCATE STRUCTURES FEATURED IN read_model_inputs
   string str_global_model_instance_members(GLOBAL_MODEL_INSTANCE_MEMBERS);
   string str_global_model_instance_defaults(GLOBAL_MODEL_INSTANCE_DEFAULTS);
 
   string str_filename_inputs = input_dir + "/mod_inputs.txt";
-  // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
-  read_global_fixed_parameters(global_fixedpars,
-  			       str_filename_inputs.c_str(),
-  			       str_global_model_instance_members,
-  			       str_global_model_instance_defaults);
+  try{ 
+    // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
+    read_global_fixed_parameters(global_fixedpars,
+                str_filename_inputs.c_str(),
+                str_global_model_instance_members,
+                str_global_model_instance_defaults);
+  } catch (std::fstream::failure e) {
+    DEBUG(DEBUG_ERROR, "Cannot read " << str_filename_inputs << " :" << e.what());
+    DEBUG(DEBUG_ERROR, strerror(errno));
+    exit(2);
+  }
 
   // // //
 
@@ -79,20 +84,26 @@ int main(int argc, char **argv) {
   string str_global_model_delay_sds(GLOBAL_MODEL_PARAMETERS_DELAY_SDS);
   string str_global_model_delay_flags(GLOBAL_MODEL_PARAMETERS_DELAY_FLAGS);
 
-  // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
-  read_global_model_parameters(global_modpars,
-  			       str_filename_modpars.c_str(),
-  			       str_global_model_parameters_members,
-  			       str_global_model_parameters_initvals,
-  			       str_global_model_parameters_likflags,
-  			       str_global_model_delay_members,
-  			       str_global_model_delay_means,
-  			       str_global_model_delay_sds,
-  			       str_global_model_delay_flags,
-  			       global_fixedpars.l_num_regions,
-  			       global_fixedpars.l_duration_of_runs_in_days,
-  			       NUM_AGE_GROUPS,
-  			       global_fixedpars.l_reporting_time_steps_per_day);
+  string str_filename_modpars = input_dir + "/mod_pars.txt";
+  try{
+    // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
+    read_global_model_parameters(global_modpars,
+                str_filename_modpars.c_str(),
+                str_global_model_parameters_members,
+                str_global_model_parameters_initvals,
+                str_global_model_parameters_likflags,
+                str_global_model_delay_members,
+                str_global_model_delay_means,
+                str_global_model_delay_sds,
+                str_global_model_delay_flags,
+                global_fixedpars.l_num_regions,
+                global_fixedpars.l_duration_of_runs_in_days,
+                NUM_AGE_GROUPS,
+                global_fixedpars.l_reporting_time_steps_per_day);
+  } catch (std::fstream::failure e) {
+    DEBUG(DEBUG_ERROR, "Cannot read " << str_filename_modpars << " :" << e.what());
+    exit(2);
+  }
   // //
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION

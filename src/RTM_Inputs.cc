@@ -436,6 +436,10 @@ void read_param_regression(regression_def& reg_def,
         }
         str_filename = basedir + str_filename;
         FILE* design_file = fopen(str_filename.c_str(), "r");
+        if (design_file == nullptr) {
+          DEBUG(DEBUG_ERROR, "Error reading " << str_filename << ": " << strerror(errno))
+          exit(2);
+        }
 
         gsl_matrix_fscanf(design_file, reg_def.design_matrix);
 
