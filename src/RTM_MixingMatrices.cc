@@ -109,6 +109,10 @@ int max_mm_param_int(const char *filename, const int nbreakpoints)
   char str_dummy[20];
 
   fl_filename = fopen(filename, "r");
+  if (fl_filename == nullptr) {
+    DEBUG(DEBUG_ERROR, "Error reading " << filename << ": " << strerror(errno))
+    exit(2);
+  }
 
   for(i = 0; i < nbreakpoints; i++){
 
@@ -147,6 +151,10 @@ void input_mixing_matrix_model(mixing_model &l_MIXMAT, const char* infile, const
 
   age_mixing_matrix = fopen(infile, "r");
   age_mixing_matrix_param = fopen(in_param_file, "r");
+  if (age_mixing_matrix == nullptr || age_mixing_matrix_param == nullptr) {
+    DEBUG(DEBUG_ERROR, "Error reading " << infile << " or " << in_param_file << ": " << strerror(errno))
+    exit(2);
+  }
 
   // READ IN CONTACT MATRICES
 
