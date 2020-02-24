@@ -1,0 +1,154 @@
+
+
+
+
+
+negbin_overdispersion = { param_value = 3.29005933124239e-53, 0.0102846959686683;
+prior_distribution = 2, 2;
+prior_parameters = 0.01, 0.01, 0.01, 0.01;
+proposal_variance = 0.14, 0.073;
+time_breakpoints = 83;
+}
+
+latent_period = { param_value = 0.0;
+prior_distribution = 1;
+}
+
+relative_infectiousness = { param_value = 1.0;
+prior_distribution = 1;
+}
+
+importation_rates = { param_value = 0.0;
+prior_distribution = 1;
+}
+
+infectious_period = { param_value = 1.37775600247971;
+prior_distribution = 2;
+prior_parameters = 517.6839, 357.0234;
+proposal_variance = 0.0076;
+}
+
+prop_symptomatic = { param_value = 0.297817156067507;
+prior_distribution = 3;
+prior_parameters = 18.5, 32.5;
+proposal_variance = 3.4e-05;
+}
+
+contact_parameters = { param_value = 1, 0.43858857662417, 0.724507526960224, 0.588647233787924, 0.780295671895146, 0.103841193486005;
+prior_distribution = 1, 3, 3, 3, 3, 3;
+prior_parameters = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
+proposal_variance = 0, 4.4e-05, 3.9e-04, 1.9e-05, 1.5e-02, 3.1e-05;
+} ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
+
+R0_amplitude_kA = { param_value = 0.0;
+prior_distribution = 1;
+}
+
+R0_seasonal_peakday = { param_value = 355;
+prior_distribution = 1;
+}
+
+exponential_growth_rate = { param_value = 0.0717618932661773;
+prior_distribution = 2;
+prior_hyper = 0;
+prior_parameters = 6.31775, 56.61066;
+proposal_variance = 4.9e-08;
+}
+
+log_p_lambda_0 = { param_value = -17.6305930497793;
+prior_distribution = 4;
+prior_parameters = -19.1495, 4.05411;
+proposal_variance = 3.2e-04;
+prior_hyper = 0;
+}
+
+prop_susceptible = { param_value = 1.0, 0.980, 0.969, 0.845, 0.92, 0.865, 0.762;
+prior_distributions = 1, 1, 1, 1, 1, 1, 1;
+age_breakpoints = true;
+}
+
+prop_HI_32_to_HI_8 = { param_value = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
+prior_distributions = 1, 1, 1, 1, 1, 1, 1;
+age_breakpoints = true;
+}
+
+prop_case_to_GP_consultation = { param_value = -0.467828825487895, -0.316046913140681, 0.106060971302494, 0.475184840496332;
+prior_distributions = 4, 4, 4, 4;
+prior_parameters = 0.0, 0.4074365, 0.0, 0.4074365, 0.0, 0.9640366, 0.0, 0.9640366;
+proposal_variance = 0.000184, 0.000463, 0.005780, 0.003083;
+time_breakpoints = 83;
+age_breakpoints = 3;
+regression_link = 2;
+regression_design = p_GP_design.txt;
+}
+
+prop_case_to_hosp = { param_value = 0.05;
+prior_distributions = 1;
+}
+
+prop_case_to_death = { param_value = 0.01;
+prior_distributions = 1;
+}
+
+background_GP = { param_value = -5.20529772459634, 4.29757898495379, -1.55244499863378, -3.55715144741148, 2.56930101555115, -0.29696921056415, 1.27759818437553, -5.21458239683191, 2.20587576390497;
+prior_distributions = 5, 5, 5, 5, 5, 5, 5, 5, 5;
+proposal_variance = 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04;
+prior_parameters = 0, 20.202138, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12.121283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18.181924, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.16171, -8.080855, 0, 0, 0, 0, 0, 0, 0, 0, -8.080855, 16.16171, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18.181924, -6.060641, -6.060641, 0, 0, 0, 0, 0, 0, 0, -6.060641, 18.181924, -6.060641, 0, 0, 0, 0, 0, 0, 0, -6.060641, -6.060641, 18.181924, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12.121283;
+time_breakpoints = true;
+age_breakpoints = 3;
+regression_link = 1;
+regression_design = bg_design.txt;
+}
+
+day_of_week_effects = { param_value = 1;
+prior_distributions = 1;
+}
+
+test_sensitivity = { param_value = 1;
+prior_distributions = 1;
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+test_specificity = { param_value = 1;
+prior_distributions = 1;
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+exponential_growth_rate_hyper = { param_value = 6.3, 57;
+prior_distribution = 1, 1;
+}
+
+l_p_lambda_0_hyper = { param_value = -19.1495, 4.05411;
+prior_distribution = 1, 1;
+}
+
+prop_susceptible_hyper = { param_value = 0, 0, 0, 0, 0, 0, 0;
+prior_distribution = 1, 1, 1, 1, 1, 1, 1;
+}
+
+incubation_distribution = { gamma_mean = 1.620;
+gamma_sd = 1.791;
+}
+
+symp_to_gp_distribution = { gamma_mean = 1.968;
+gamma_sd = 1.199;
+}
+
+symp_to_hosp_distribution = { gamma_mean = 0.0;
+gamma_sd = 0.0;
+}
+
+symp_to_death_distribution = { gamma_mean = 10.75;
+gamma_sd = 8.336;
+}
+
+gp_reporting_distribution = { gamma_mean = 0.5;
+gamma_sd = 0.5;
+}
+
+hosp_reporting_distribution = { gamma_mean = 6.577;
+gamma_sd = 3.722;
+}
+
+death_reporting_distribution = { gamma_mean = 75.89;
+gamma_sd = 133.8;
+}
+

@@ -1,0 +1,99 @@
+
+
+
+
+
+##### ALL VALUES GIVEN IN THIS FILE ARE ALSO THE HARD-WIRED DEFAULT VALUES
+##### THESE VALUES ARE THOSE BASED ON THE SINGLE-REGION ANALYSIS PRESENTED
+##### AT THE EPIDEMICS 2009 CONFERENCE
+
+##### DATA FLAGS AND FILENAMES
+GP_consultation_flag 1
+Hospitalisation_flag 0
+Deaths_flag 0
+Sero_data_flag 1
+Viro_data_flag 1
+
+## file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
+## values for REGION specified in the REGIONAL INFORMATION section
+## values for VARIABLE specified by the following possible variables specified in the space below: filename_for_GP_consultation_data, filename_for_Hospitalisation_data, filename_for_Seropoepidemiology_data, filename_for_Positivity_data
+
+##### ARE ANY CODE PATCHES NEEDED? Currently only a patch for the GP consultation parameters is available
+Use_GP_reparam_patch 1
+
+### DATA FEATURES
+gp_count_likelihood 1 ## 0 FOR POISSON DATA, 1 FOR NEGATIVE BINOMIAL DATA. UNDEFINED BEHAVIOUR OTHERWISE
+transmission_kernel 0 ## 0 FOR THE REED-FROST FORMULATION (struggles with small expected numbers) AND 1 FOR THE MASS ACTION FORMULATION (struggles with large expected numbers)
+transmission_time_steps_per_day 2 ## DELTA T FOR THE TRANSMISSION MODEL
+reporting_time_steps_per_day 2 ## DELTA T FOR THE REPORTING MODEL
+duration_of_runs_in_days 245 ## THE NUMBER OF DAYS OF EPIDEMIC DATA (EPIDEMIC TIME)
+projection_days 250 ## THE NUMBER OF DAYS OF EPIDEMIC PROJECTION REQUIRED
+day_of_start 121 ## THE CALENDAR DAY CORRESPONDING TO DAY 1 OF THE EPIDEMIC MODEL
+start_day_of_week 5 ## THE CALENDAR DAY OF start_week
+start_week 18 ## THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
+num_regions 1 ## THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
+GP_likelihood_start_day 1 ## THE BELOW GIVE THE RANGE OF DAYS OVER WHICH TO CALCULATE THE VARIOUS LIKELIHOODS
+GP_likelihood_end_day 245
+Hosp_likelihood_start_day 1
+Hosp_likelihood_end_day 1
+Deaths_likelihood_start_day 1
+Deaths_likelihood_end_day 1
+Sero_likelihood_start_day 75
+Sero_likelihood_end_day 245
+Viro_likelihood_start_day 1
+Viro_likelihood_end_day 245
+
+##### GLOBAL DATA
+
+## READ IN THE POLYMOD MATRICES
+mixing_model = { time_breakpoints = 23, 30, 78, 129, 177, 184, 233;
+base_matrices = /project/pandemic_flu/RTM.code/polymod_matrices/polymod_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_holiday.txt;
+multiplier_indices_matrices = /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_halfterm_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_summer_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_halfterm_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_non_holiday.txt, /project/pandemic_flu/RTM.code/polymod_matrices/polymod_multiplier_halfterm_holiday.txt;
+}
+
+##### REGIONAL DATA
+
+## DO NOT USE SPACES IN REGION NAMES, the space is used as a delimiter
+## regions_population must be specified as a (number of regions) x (number of age groups) matrix
+
+study_region = { regions_used = London;
+regions_population = 119967, 410926, 840309, 989473, 2747554, 1566445, 882256;
+
+regions_gp_count_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/sim_ili_London.txt;
+
+regions_gp_coverage_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/gp_denom_London.txt;
+
+regions_hosp_data = NULL;
+
+regions_death_data = NULL; ##### this null comment doesn’t have to be here, I’ve just put it in to be explicit
+
+regions_seropositives_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/sim_seropos_London.txt;
+
+regions_serosamples_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/sero_denom_London.txt;
+
+regions_viropositives_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/sim_viropos_London.txt;
+
+regions_virosamples_data = /project/pandemic_flu/Real_Time_Modelling/SMC/Rcode_repository/data/simdata10Dec14/viro_denom_London.txt;
+
+}
+
+#####
+
+#### MCMC SIMULATION PARAMETERS
+
+num_iterations 450000
+output_type 1
+thin_output_every 25
+thin_stats_every 25
+adaptive_phase 100000
+adapt_every 100
+burn_in 200000
+num_progress_reports 10
+mixing_threshold_ub 0.3
+mixing_threshold_lb 0.2
+prop_var_inflation 1.1
+prop_var_shrinkage 0.9
+maximum_block_size 1
+random_seed 483
+max_threads 3
+
