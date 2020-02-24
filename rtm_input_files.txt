@@ -1,2 +1,0 @@
-xmodel_inputs: ModelInputs.txt
-xsimulation_parameters: SimulationParameters.txt
