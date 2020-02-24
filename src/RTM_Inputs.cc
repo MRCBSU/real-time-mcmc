@@ -960,13 +960,11 @@ void data_matrices_fscanf(const string& infilestring,
 
     for(intj = 0; intj < (reported_data->size2 + col_skip); intj++){
 
-      if((inti < row_skip) || (intj < col_skip))
-
-	fscanf(infile, "%s", str_row_date);
-    
-      else
-	
-	fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
+      if((inti < row_skip) || (intj < col_skip)) {
+        fscanf(infile, "%s", str_row_date);
+      } else {
+        fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
+      }
  
     }
 
