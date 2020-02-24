@@ -22,7 +22,7 @@ void input_filenames(
   filenames = fopen(IN_FILE, "r");
   if(filenames == NULL)
     { // IF rtm_input_files DOES NOT EXIST, THEN SET *ALL* INPUTS TO DEFAULT VALUES. USER IS ALERTED.
-      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.");
+      DEBUG(DEBUG_WARNING, "Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.")
     }
   else
     {
@@ -39,9 +39,12 @@ void read_variable_value(const string str_varnames, string& str_var_values, cons
 
   // IS THE REQUIRED FILE PRESENT? IF NOT, AUTOMATICALLY USE DEFAULT VALUES
   FILE* tempfile = fopen(str_filename, "r");
-  if(tempfile == NULL)
+  if(tempfile == NULL) {
+    DEBUG(DEBUG_WARNING, "Cannot open " << str_filename << ". Using default values for " << str_varnames);
     return;
-  else fclose(tempfile);
+  } else {
+    fclose(tempfile);
+  }
 
   // FIND NUMBER OF INSTANCE OF VARIABLE NAME DELIMITER IN str_varnames
   int num_instances = count_instances_in_string(str_varnames, ":");
@@ -965,6 +968,10 @@ void data_matrices_fscanf(const string& infilestring,
   double dbl_dummy;
 
   FILE *infile = fopen(infilestring.c_str(), "r");
+  if (infile == nullptr) {
+      DEBUG(DEBUG_ERROR, "Could not read " << infilestring << ": "<< strerror(errno));
+      exit(2);
+  }
 
   for(inti = 0; inti < (reported_data->size1 + row_skip); inti++){
 
@@ -994,6 +1001,10 @@ void data_int_matrices_fscanf(string infilestring,
   double dbl_dummy;
 
 FILE *infile = fopen(infilestring.c_str(), "r");
+if (infile == nullptr) {
+    DEBUG(DEBUG_ERROR, "Could not read " << infilestring << ": " << strerror(errno));
+    exit(2);
+}
 
   for(inti = 0; inti < (reported_data->size1 + row_skip); inti++){
 
