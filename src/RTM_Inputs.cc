@@ -976,13 +976,22 @@ void data_matrices_fscanf(const string& infilestring,
   for(inti = 0; inti < (reported_data->size1 + row_skip); inti++){
 
     for(intj = 0; intj < (reported_data->size2 + col_skip); intj++){
+      int matches;
 
       if((inti < row_skip) || (intj < col_skip)) {
-        fscanf(infile, "%s", str_row_date);
+        matches = fscanf(infile, "%s", str_row_date);
       } else {
-        fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
+        matches = fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
       }
  
+      if (matches == EOF) {
+        DEBUG(DEBUG_ERROR, "Error reading from " << infilestring);
+        exit(2);
+      }
+      if (matches != 0) {
+        DEBUG(DEBUG_WARNING, "Did not read a successful value from " << infilestring 
+              << " at position (" << inti << ", " << intj << ")");
+      }
     }
 
   }
