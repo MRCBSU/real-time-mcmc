@@ -3,6 +3,7 @@
 #include "gsl_vec_ext.h"
 #include "gsl_mat_ext.h"
 
+#include <experimental/filesystem>
 using namespace std;
 using std::string;
 
@@ -390,7 +391,8 @@ void read_param_regression(regression_def& reg_def,
 			   const string str_source,
 			   const int num_regions,
 			   const int num_days,
-			   const int num_ages)
+			   const int num_ages,
+         const string basedir)
 {
 
   int dim_r = 1, dim_t = 1, dim_a = 1;
@@ -432,6 +434,7 @@ void read_param_regression(regression_def& reg_def,
           DEBUG(DEBUG_ERROR, "Could not read regression_design from string " << str_source);
           exit(2);
         }
+        str_filename = basedir + str_filename;
         FILE* design_file = fopen(str_filename.c_str(), "r");
 
         gsl_matrix_fscanf(design_file, reg_def.design_matrix);
@@ -459,7 +462,8 @@ void read_modpar(updateable_model_parameter& modpar,
 		 const string likelihood_flags,
 		 const int num_regions,
 		 const int num_days,
-		 const int num_ages)
+		 const int num_ages,
+     const string basedir)
 {
   DEBUG(DEBUG_DETAIL, "Reading parameters for " << param_name);
   string var_string, var_var_string;
@@ -594,7 +598,7 @@ void read_modpar(updateable_model_parameter& modpar,
   }
 
   // ESTABLISH THE MAPS FROM THE PARAMETER VALUES TO THE VALUES PASSED TO THE REGIONAL STRUCTURES
-  read_param_regression(modpar.map_to_regional, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
+  read_param_regression(modpar.map_to_regional, modpar.param_value->size, var_string, num_regions, num_days, num_ages, basedir);
 
 }
 
@@ -811,6 +815,8 @@ void read_global_model_parameters(globalModelParams& in_pars,
   // LOAD THE INPUT FILE INTO A STRING VARIABLE
   fn_load_file(&str_source, source_file);
 
+  const string basedir = std::experimental::filesystem::path(source_file).parent_path().string() + "/";
+
   // READ IN PARAMETER STRUCTURES OR SET TO DEFAULT.
   for(inti = 0; inti < num_instances; inti++){
 
@@ -824,7 +830,7 @@ void read_global_model_parameters(globalModelParams& in_pars,
     string str_param_flags = read_from_delim_string<string>(str_var_likflags, ":", int_delim_flag_position);
 
     // POPULATE THE STRUCTURE
-    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages);
+    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, basedir);
 
   }
 
