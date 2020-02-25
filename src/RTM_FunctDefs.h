@@ -46,6 +46,6 @@ double fn_log_lik_countdata(const gsl_matrix*, const gsl_matrix*);
 double fn_log_lik_negbindata(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 
 // FUNCTIONS IN RTM_MetropHast.cc
-void metrop_hast(const mcmcPars&, globalModelParams&, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
+void metrop_hast(const mcmcPars&, globalModelParams&, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*, string);
 
 #endif
