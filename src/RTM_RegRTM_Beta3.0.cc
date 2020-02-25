@@ -166,7 +166,8 @@ int main(int argc, char **argv) {
   	      llhood,
   	      global_fixedpars,
   	      mixmod_struct,
-  	      sim_pars.r);
+  	      sim_pars.r,
+          output_dir);
 
   ////////////////////////////////////////////////////////////////////////////////////////
 

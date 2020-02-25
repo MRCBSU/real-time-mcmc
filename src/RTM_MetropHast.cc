@@ -17,13 +17,13 @@ using std::string;
 
 // //
 // INITIALISES model_state OUTPUT FILES
-void fstream_model_statistics_open(ofstream *&infiles, const string& filenames, const int& num_files, const Region* reg_name)
+void fstream_model_statistics_open(string dir, ofstream *&infiles, const string& filenames, const int& num_files, const Region* reg_name)
 {
 
   infiles = new ofstream[num_files];
   for(int int_reg = 0; int_reg < num_files; int_reg++)
     {
-      string full_filename = "outputs/" + filenames + "_" + reg_name[int_reg].name;
+      string full_filename = dir + "/" + filenames + "_" + reg_name[int_reg].name;
       infiles[int_reg].open(full_filename.c_str(), ios::out|ios::trunc|ios::binary);
     }
 }
@@ -197,7 +197,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 likelihood& lfx,
 		 const global_model_instance_parameters& gmip,
 		 const mixing_model& base_mix,
-		 gsl_rng* r)
+		 gsl_rng* r,
+         string output_dir)
 {
 
   register int int_iter = 0;
@@ -232,24 +233,24 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   int maximum_block_size = simulation_parameters.maximum_block_size;
 
   // Outputs
-  std::experimental::filesystem::create_directory("outputs");
+  std::experimental::filesystem::create_directory(output_dir);
   ofstream* output_codas = new ofstream[num_component_updates->size];
-  ofstream output_coda_lfx("outputs/coda_lfx", ios::out|ios::trunc|ios::binary);
+  ofstream output_coda_lfx(output_dir+"/coda_lfx", ios::out|ios::trunc|ios::binary);
   ofstream *file_NNI, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_state;
 
-  fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, state_country);
+  fstream_model_statistics_open(output_dir, file_NNI, "NNI", gmip.l_num_regions, state_country);
   if(simulation_parameters.oType == cMCMC)
     {
-      fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, state_country);
+      fstream_model_statistics_open(output_dir, file_Sero, "Sero", gmip.l_num_regions, state_country);
       if(gmip.l_GP_consultation_flag){
-	fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, state_country);
-	fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, state_country);
+	fstream_model_statistics_open(output_dir, file_GP, "GP", gmip.l_num_regions, state_country);
+	fstream_model_statistics_open(output_dir, file_Viro, "Viro", gmip.l_num_regions, state_country);
       }
-      if(gmip.l_Hospitalisation_flag) 
-	fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, state_country);
+      if(gmip.l_Hospitalisation_flag)  
+	fstream_model_statistics_open(output_dir, file_Hosp, "Hosp", gmip.l_num_regions, state_country);
     }
   if(simulation_parameters.oType == cSMC)
-    fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, state_country);
+    fstream_model_statistics_open(output_dir, file_state, "state", gmip.l_num_regions, state_country);
 
   gsl_matrix** output_NNI = new gsl_matrix*[nregions];
   for(int int_reg = 0; int_reg < nregions; ++int_reg)
@@ -284,7 +285,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	gsl_vector_int_set_1ton(a[int_param]);
 
       // OPEN PARAMETER OUTPUT FILES...
-      string filename("outputs/coda_");
+      string filename(output_dir+"/coda_");
       filename += theta.param_list[int_param].param_name;
       if(theta.param_list[int_param].flag_update)
 	{output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);}
@@ -577,11 +578,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // OUTPUT MCMC SAMPLER PROGRESS REPORTS...
       if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-	write_progress_report("outputs/adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
+	write_progress_report(output_dir+"/adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
 			      theta, lfx, false, true, true);
       if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
       if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
-	write_progress_report("outputs/posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+	write_progress_report(output_dir+"/posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
 			      theta, lfx, true, true, false);
 
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase
