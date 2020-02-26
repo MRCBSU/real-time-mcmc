@@ -17,6 +17,9 @@ void fn_load_file(string *out_string, const char *filename)
   ifstream textstream(filename);
   textstream.exceptions(ifstream::badbit);
   while(getline(textstream, line)){
+    size_t comment_starts_at = line.find('#');
+    // if second arg to substr is npos then whole string returned
+    line = line.substr(0, comment_starts_at); 
     text.push_back(line + "\n");
   }
   textstream.close();
