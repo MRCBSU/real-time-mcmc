@@ -8,12 +8,14 @@ using namespace std;
 
 // LOADS THE ENTIRE CONTENTS OF THE FILE filename INTO THE
 // CHARACTER ARRAY POINTED TO BY OUT_STRING
+// Throws std::ios_base::failure on error
 void fn_load_file(string *out_string, const char *filename)
 {
 
   vector<string> text;
   string line;
   ifstream textstream(filename);
+  textstream.exceptions(ifstream::badbit);
   while(getline(textstream, line)){
     text.push_back(line + "\n");
   }

@@ -1,12 +1,44 @@
+#include "args.h"
 #include "RTM_StructDefs.h" // provides RTM_Header.h
 #include "RTM_StructAssign.h"
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
 
+#include <iostream>
+
 using namespace std;
 using std::string;
 
-int main(void){
+/// Parse command line arguments for the input and output directories.
+/// Returns a tuple of {input directory, output directory}, which will be strings.
+/// Prints help string and exits if that is requested.
+/// Also causes exit if error in arguments.
+std::tuple<string,string> parse_command_line_arguments(int argc, char **argv) {
+  args::ArgumentParser parser("Implmentation of Birrel et al. 2016");
+  args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+  args::ValueFlag<string> input_dir(parser, "input",
+    "The directory containing the input files mod_pars.txt and mod_input.txt",
+    {'i', "input"}, "inputs"
+  );
+  args::ValueFlag<string> output_dir(parser, "output",
+    "The directory that outputs will be placed in."
+    "The directory be created if it doesn't exist.",
+    {'o', "output"}, "outputs"
+  );
+
+  try {
+    parser.ParseCLI(argc, argv);
+  } catch (args::Help) {
+    std::cout << parser;
+    exit(0);
+  } catch (args::Error e) {
+    std::cerr << e.what() << std::endl << parser;
+    exit(1);
+  }
+  return {input_dir.Get(), output_dir.Get()};
+}
+
+int main(int argc, char **argv) {
 
   global_model_instance_parameters global_fixedpars;
   globalModelParams global_modpars;
@@ -19,29 +51,26 @@ int main(void){
   tval = time(NULL);
   now = localtime(&tval);
 
-  // GET FILES CONTAINING USER INPUT, IF ANY EXIST OR USE DEFAULT FILENAMES.
-  // SPECIFIED FILENAMES SHOULD BE FOUND IN THE FILE rtm_input_files.txt
-  // DEFAULTS FOUND IN ARGUMENT DECLARATION FOR input_filenames IN RTM_Inputs.cc
-  char str_filename_inputs[120] = "mod_inputs.txt";
-  char str_filename_modpars[120] = "mod_pars.txt";
-
-  // INSTRUCT THE PROGRAM AS TO WHERE TO LOOK FOR VARIOUS GROUPS OF MODEL INPUTS
-  input_filenames(str_filename_inputs,
-  		  str_filename_modpars,
-  		  120);
-  // //
-
-  // // READ IN THE VARIOUS INPUTS.
+  auto [input_dir, output_dir] = parse_command_line_arguments(argc, argv);
+  DEBUG(DEBUG_DETAIL, "Putting inputs in: " << input_dir);
+  DEBUG(DEBUG_DETAIL, "Putting outputs in: " << output_dir);
 
   /// ALLOCATE STRUCTURES FEATURED IN read_model_inputs
   string str_global_model_instance_members(GLOBAL_MODEL_INSTANCE_MEMBERS);
   string str_global_model_instance_defaults(GLOBAL_MODEL_INSTANCE_DEFAULTS);
 
-  // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
-  read_global_fixed_parameters(global_fixedpars,
-  			       str_filename_inputs,
-  			       str_global_model_instance_members,
-  			       str_global_model_instance_defaults);
+  string str_filename_inputs = input_dir + "/mod_inputs.txt";
+  try{ 
+    // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_FIXEDPARS
+    read_global_fixed_parameters(global_fixedpars,
+                str_filename_inputs.c_str(),
+                str_global_model_instance_members,
+                str_global_model_instance_defaults);
+  } catch (std::fstream::failure e) {
+    DEBUG(DEBUG_ERROR, "Cannot read " << str_filename_inputs << " :" << e.what());
+    DEBUG(DEBUG_ERROR, strerror(errno));
+    exit(2);
+  }
 
   // // //
 
@@ -55,20 +84,26 @@ int main(void){
   string str_global_model_delay_sds(GLOBAL_MODEL_PARAMETERS_DELAY_SDS);
   string str_global_model_delay_flags(GLOBAL_MODEL_PARAMETERS_DELAY_FLAGS);
 
-  // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
-  read_global_model_parameters(global_modpars,
-  			       str_filename_modpars,
-  			       str_global_model_parameters_members,
-  			       str_global_model_parameters_initvals,
-  			       str_global_model_parameters_likflags,
-  			       str_global_model_delay_members,
-  			       str_global_model_delay_means,
-  			       str_global_model_delay_sds,
-  			       str_global_model_delay_flags,
-  			       global_fixedpars.l_num_regions,
-  			       global_fixedpars.l_duration_of_runs_in_days,
-  			       NUM_AGE_GROUPS,
-  			       global_fixedpars.l_reporting_time_steps_per_day);
+  string str_filename_modpars = input_dir + "/mod_pars.txt";
+  try{
+    // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
+    read_global_model_parameters(global_modpars,
+                str_filename_modpars.c_str(),
+                str_global_model_parameters_members,
+                str_global_model_parameters_initvals,
+                str_global_model_parameters_likflags,
+                str_global_model_delay_members,
+                str_global_model_delay_means,
+                str_global_model_delay_sds,
+                str_global_model_delay_flags,
+                global_fixedpars.l_num_regions,
+                global_fixedpars.l_duration_of_runs_in_days,
+                NUM_AGE_GROUPS,
+                global_fixedpars.l_reporting_time_steps_per_day);
+  } catch (std::fstream::failure e) {
+    DEBUG(DEBUG_ERROR, "Cannot read " << str_filename_modpars << " :" << e.what());
+    exit(2);
+  }
   // //
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
@@ -104,7 +139,7 @@ int main(void){
   string str_mcmc_parameter_defaults(MCMC_PARAMETER_DEFAULT_VALUES);
 
   read_mcmc_parameters(sim_pars,
-  		       str_filename_inputs,
+  		       str_filename_inputs.c_str(),
   		       str_mcmc_parameter_names,
   		       str_mcmc_parameter_defaults);
 
@@ -131,7 +166,8 @@ int main(void){
   	      llhood,
   	      global_fixedpars,
   	      mixmod_struct,
-  	      sim_pars.r);
+  	      sim_pars.r,
+          output_dir);
 
   ////////////////////////////////////////////////////////////////////////////////////////
 

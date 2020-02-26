@@ -60,9 +60,22 @@
 #define DEBUG_OFF 0
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL DEBUG_ALL
+#define DEBUG_LEVEL DEBUG_DETAIL
 #endif
 
-#define DEBUG(level, x) if (DEBUG_LEVEL >= level) {std::cout << __FILE__ << ":" << __LINE__ << " " << x << std::endl;}
+#define DEBUG(level, x) \
+{\
+    if (DEBUG_LEVEL >= level) {\
+        std::string warning;\
+        if (level == DEBUG_ERROR) {\
+            warning = "ERROR: ";\
+        }\
+        if (level == DEBUG_WARNING) {\
+            warning = "WARNING: ";\
+        }\
+        std::cout << "(" << __FILE__ << \
+            ":" << __LINE__ << ") " << warning << x << std::endl;\
+    }\
+}
 
 #endif

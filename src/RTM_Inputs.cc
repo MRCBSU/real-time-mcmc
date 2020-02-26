@@ -3,6 +3,7 @@
 #include "gsl_vec_ext.h"
 #include "gsl_mat_ext.h"
 
+#include <experimental/filesystem>
 using namespace std;
 using std::string;
 
@@ -21,7 +22,7 @@ void input_filenames(
   filenames = fopen(IN_FILE, "r");
   if(filenames == NULL)
     { // IF rtm_input_files DOES NOT EXIST, THEN SET *ALL* INPUTS TO DEFAULT VALUES. USER IS ALERTED.
-      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.");
+      DEBUG(DEBUG_WARNING, "Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.")
     }
   else
     {
@@ -33,14 +34,17 @@ void input_filenames(
 
 // SWAPS DEFAULT VARIABLE DEFAULT VALUES (VARIABLE NAMES
 // READ IN AS A DELIMITED STRING) WITH VALUES READ IN FROM FILE
-void read_variable_value(const string str_varnames, string& str_var_values, char* str_filename)
+void read_variable_value(const string str_varnames, string& str_var_values, const char* str_filename)
 {
 
   // IS THE REQUIRED FILE PRESENT? IF NOT, AUTOMATICALLY USE DEFAULT VALUES
   FILE* tempfile = fopen(str_filename, "r");
-  if(tempfile == NULL)
+  if(tempfile == NULL) {
+    DEBUG(DEBUG_WARNING, "Cannot open " << str_filename << ". Using default values for " << str_varnames);
     return;
-  else fclose(tempfile);
+  } else {
+    fclose(tempfile);
+  }
 
   // FIND NUMBER OF INSTANCE OF VARIABLE NAME DELIMITER IN str_varnames
   int num_instances = count_instances_in_string(str_varnames, ":");
@@ -113,7 +117,7 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
 
 void read_mcmc_parameters(register mcmcPars &mcmc_pars,
-			  char* source_file,
+			  const char* source_file,
 			  const string str_varnames,
 			  string& str_vardefaults)
 {
@@ -145,7 +149,7 @@ void read_mcmc_parameters(register mcmcPars &mcmc_pars,
 }
 
 void read_global_fixed_parameters(register global_model_instance_parameters& fixed_pars,
-				  char* source_file,
+				  const char* source_file,
 				  const string str_varnames,
 				  string& str_vardefaults)
 {
@@ -390,7 +394,8 @@ void read_param_regression(regression_def& reg_def,
 			   const string str_source,
 			   const int num_regions,
 			   const int num_days,
-			   const int num_ages)
+			   const int num_ages,
+         const string basedir)
 {
 
   int dim_r = 1, dim_t = 1, dim_a = 1;
@@ -432,7 +437,12 @@ void read_param_regression(regression_def& reg_def,
           DEBUG(DEBUG_ERROR, "Could not read regression_design from string " << str_source);
           exit(2);
         }
+        str_filename = basedir + str_filename;
         FILE* design_file = fopen(str_filename.c_str(), "r");
+        if (design_file == nullptr) {
+          DEBUG(DEBUG_ERROR, "Error reading " << str_filename << ": " << strerror(errno))
+          exit(2);
+        }
 
         gsl_matrix_fscanf(design_file, reg_def.design_matrix);
 
@@ -459,7 +469,8 @@ void read_modpar(updateable_model_parameter& modpar,
 		 const string likelihood_flags,
 		 const int num_regions,
 		 const int num_days,
-		 const int num_ages)
+		 const int num_ages,
+     const string basedir)
 {
   DEBUG(DEBUG_DETAIL, "Reading parameters for " << param_name);
   string var_string, var_var_string;
@@ -594,7 +605,7 @@ void read_modpar(updateable_model_parameter& modpar,
   }
 
   // ESTABLISH THE MAPS FROM THE PARAMETER VALUES TO THE VALUES PASSED TO THE REGIONAL STRUCTURES
-  read_param_regression(modpar.map_to_regional, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
+  read_param_regression(modpar.map_to_regional, modpar.param_value->size, var_string, num_regions, num_days, num_ages, basedir);
 
 }
 
@@ -811,6 +822,8 @@ void read_global_model_parameters(globalModelParams& in_pars,
   // LOAD THE INPUT FILE INTO A STRING VARIABLE
   fn_load_file(&str_source, source_file);
 
+  const string basedir = std::experimental::filesystem::path(source_file).parent_path().string() + "/";
+
   // READ IN PARAMETER STRUCTURES OR SET TO DEFAULT.
   for(inti = 0; inti < num_instances; inti++){
 
@@ -824,7 +837,7 @@ void read_global_model_parameters(globalModelParams& in_pars,
     string str_param_flags = read_from_delim_string<string>(str_var_likflags, ":", int_delim_flag_position);
 
     // POPULATE THE STRUCTURE
-    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages);
+    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, basedir);
 
   }
 
@@ -955,19 +968,30 @@ void data_matrices_fscanf(const string& infilestring,
   double dbl_dummy;
 
   FILE *infile = fopen(infilestring.c_str(), "r");
+  if (infile == nullptr) {
+      DEBUG(DEBUG_ERROR, "Could not read " << infilestring << ": "<< strerror(errno));
+      exit(2);
+  }
 
   for(inti = 0; inti < (reported_data->size1 + row_skip); inti++){
 
     for(intj = 0; intj < (reported_data->size2 + col_skip); intj++){
+      int matches;
 
-      if((inti < row_skip) || (intj < col_skip))
-
-	fscanf(infile, "%s", str_row_date);
-    
-      else
-	
-	fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
+      if((inti < row_skip) || (intj < col_skip)) {
+        matches = fscanf(infile, "%s", str_row_date);
+      } else {
+        matches = fscanf(infile, "%lf", gsl_matrix_ptr(reported_data, inti - row_skip, intj - col_skip));
+      }
  
+      if (matches == EOF) {
+        DEBUG(DEBUG_ERROR, "Error reading from " << infilestring);
+        exit(2);
+      }
+      if (matches != 0) {
+        DEBUG(DEBUG_WARNING, "Did not read a successful value from " << infilestring 
+              << " at position (" << inti << ", " << intj << ")");
+      }
     }
 
   }
@@ -986,6 +1010,10 @@ void data_int_matrices_fscanf(string infilestring,
   double dbl_dummy;
 
 FILE *infile = fopen(infilestring.c_str(), "r");
+if (infile == nullptr) {
+    DEBUG(DEBUG_ERROR, "Could not read " << infilestring << ": " << strerror(errno));
+    exit(2);
+}
 
   for(inti = 0; inti < (reported_data->size1 + row_skip); inti++){
 
