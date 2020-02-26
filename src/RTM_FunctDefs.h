@@ -10,8 +10,6 @@ using namespace std;
 using std::string;
 
 // FUNCTIONS IN RTM_Inputs.cc
-void input_filenames(char *,
-		     char *, const int);
 void read_global_fixed_parameters(register global_model_instance_parameters&,
 				  const char*, const string, string&);
 void read_global_model_parameters(globalModelParams&, const char*, const string,
