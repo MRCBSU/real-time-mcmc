@@ -7,30 +7,8 @@
 using namespace std;
 using std::string;
 
-#define IN_FILE "rtm_input_files.txt"
-
 #define ERROR_FILE_EXIT(err_string, ptr_filename) printf(err_string, ptr_filename);	\
   exit(2);
-
-void input_filenames(
-		     char *model_inputs,
-		     char *model_parameters,
-		    const int max_string_length)
-{
-
-  FILE *filenames;
-  filenames = fopen(IN_FILE, "r");
-  if(filenames == NULL)
-    { // IF rtm_input_files DOES NOT EXIST, THEN SET *ALL* INPUTS TO DEFAULT VALUES. USER IS ALERTED.
-      DEBUG(DEBUG_WARNING, "Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.")
-    }
-  else
-    {
-      fclose(filenames);
-      read_char_input(model_inputs, IN_FILE, "model_inputs:", max_string_length);
-      read_char_input(model_parameters, IN_FILE, "model_parameters:", max_string_length);
-    }
-}
 
 // SWAPS DEFAULT VARIABLE DEFAULT VALUES (VARIABLE NAMES
 // READ IN AS A DELIMITED STRING) WITH VALUES READ IN FROM FILE
