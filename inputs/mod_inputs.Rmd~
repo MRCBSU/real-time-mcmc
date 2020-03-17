@@ -1,0 +1,166 @@
+\#\#\#\#\# DATA FLAGS AND FILENAMES
+
+GP_consultation_flag 1
+
+Hospitalisation_flag 1
+
+Deaths_flag	     0
+
+Sero_data_flag	     0
+
+Viro_data_flag	     0
+<br>
+<br>
+
+\#\# file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
+
+\#\# values for REGION specified in the REGIONAL INFORMATION section
+
+\#\# values for VARIABLE specified by the following possible variables specified in the space below: filename_for_GP_consultation_data, filename_for_Hospitalisation_data, filename_for_Seropoepidemiology_data, filename_for_Positivity_data
+<br>
+<br>
+
+\#\#\#\#\# ARE ANY CODE PATCHES NEEDED? Currently only a patch for the GP consultation parameters is available
+
+Use_GP_reparam_patch	   0
+<br>
+<br>
+
+\#\#\# DATA FEATURES
+
+gp_count_likelihood		   1	\#\# 0 FOR POISSON DATA, 1 FOR NEGATIVE BINOMIAL DATA, 2 FOR BINOMIAL DATA
+
+transmission_kernel		   0   \#\# 0 FOR THE REED-FROST FORMULATION (struggles with small expected numbers) AND 1 FOR THE MASS ACTION FORMULATION (struggles with large expected numbers)
+
+transmission_time_steps_per_day	   2	\#\# DELTA T FOR THE TRANSMISSION MODEL
+
+reporting_time_steps_per_day	   2	\#\# DELTA T FOR THE REPORTING MODEL
+
+duration_of_runs_in_days	   `r ndays`	\#\# THE NUMBER OF DAYS OF EPIDEMIC DATA (EPIDEMIC TIME)
+
+projection_days			   `r ndays`	\#\# THE NUMBER OF DAYS OF EPIDEMIC PROJECTION REQUIRED
+
+day_of_start			   38	\#\# THE CALENDAR DAY CORRESPONDING TO DAY 1 OF THE EPIDEMIC MODEL
+
+start_day_of_week		   5	\#\# THE CALENDAR DAY OF start_week
+
+start_week			   6	\#\# THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
+
+num_regions			   `r nregs`	\#\# THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
+
+GP_likelihood_start_day		   1	\#\# THE BELOW GIVE THE RANGE OF DAYS OVER WHICH TO CALCULATE THE VARIOUS LIKELIHOODS
+
+GP_likelihood_end_day		   `r ndays.gp`
+
+Hosp_likelihood_start_day	   1
+
+Hosp_likelihood_end_day		   `r ndays.hosp`
+
+Deaths_likelihood_start_day	   1
+
+Deaths_likelihood_end_day	   1
+
+Sero_likelihood_start_day	   1
+
+Sero_likelihood_end_day		   1
+
+Viro_likelihood_start_day	   1
+
+Viro_likelihood_end_day		   1
+<br>
+<br>
+
+
+
+\#\#\#\#\# GLOBAL DATA
+<br>
+<br>
+
+\#\# READ IN THE POLYMOD MATRICES
+
+mixing_model = { time_breakpoints = `r paste(as.character(cm.breaks), collapse = ", ")`;
+
+	       	 base_matrices = `r paste(cm.bases, collapse = ", ")`;
+		 
+	       	 multiplier_indices_matrices = `r paste(cm.mults, collapse = ", ")`;
+		 
+	       }
+<br>
+<br>
+
+\#\#\#\#\# REGIONAL DATA
+<br>
+<br>
+
+\#\# DO NOT USE SPACES IN REGION NAMES, the space is used as a delimiter
+
+\#\# regions_population must be specified as a (number of regions) x (number of age groups) matrix
+<br>
+<br>
+
+study_region = { regions_used = `r paste(regions, collapse = ", ")`;
+
+      	       	 regions_population = `r paste(pop.input, collapse = ", ")`;
+<br>
+<br>
+		 regions_gp_count_data = `r paste(gp.data, collapse = ", ")`;
+<br>
+<br>
+		 regions_gp_coverage_data = `r paste(gp.denom, collapse = ", ")`;
+<br>
+<br>
+		 regions_hosp_data = `r paste(gp.data, collapse = ", ")`;
+<br>
+<br>
+		 regions_death_data = NULL; \#\#\#\#\# this null comment doesn't have to be here, I've just put it in to be explicit
+<br>
+<br>
+		 regions_seropositives_data = NULL;
+		 regions_serosamples_data = NULL;
+<br>
+<br>
+		 regions_viropositives_data = NULL;
+		 regions_virosamples_data = NULL;
+<br>
+<br>	       
+	       }
+<br>
+<br>
+
+\#\#\#\#\# 
+<br>
+<br>
+
+\#\#\#\# MCMC SIMULATION PARAMETERS
+<br>
+<br>
+
+num_iterations	     450000
+
+output_type	     0
+
+thin_output_every    25
+
+thin_stats_every     250
+
+adaptive_phase	     100000
+
+adapt_every	     100
+
+burn_in		     200000
+
+num_progress_reports 10
+
+mixing_threshold_ub  0.3
+
+mixing_threshold_lb  0.2
+
+prop_var_inflation   1.1
+
+prop_var_shrinkage   0.9
+
+maximum_block_size   9
+
+random_seed	     80
+
+max_threads	     2
