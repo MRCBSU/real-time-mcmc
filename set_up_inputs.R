@@ -3,8 +3,13 @@ gp.denom <- "../../data/Linelist/ll_denom20200313.txt"
 start.gp <- 15
 ndays.gp <- 26
 
+#hosp.flag <- 1
+#hosp.data <- "../../data/RTM_deaths.txt"
+#start.hosp <- 15
+#ndays.hosp <- 26
 hosp.flag <- 0
 hosp.data <- "NULL"
+start.hosp <- 1
 ndays.hosp <- 1
 
 viro.data <- NULL
@@ -34,17 +39,7 @@ flg.createfile <- !file.exists(out.dir)
 if(flg.createfile) system(paste("mkdir", out.dir))
 
 ## Get the population sizes
-require(readr)
-require(tidyr)
-setwd("~/Documents/PHE/stats/Wuhan 2019 Coronavirus/Data/population/")
-pop <- read_csv("popn2018_all.csv")
-setwd(cur.dir)
-pop.input <- NULL
-for(reg in regions){
-    pop.full <- pop[pop$Name == reg & !is.na(pop$Name), ]
-    if(age.grps == "All")
-        pop.input <- c(pop.input, pop.full$`All ages`)
-    }
+pop.input <- c(66435550)
 ## source("get_popn.R")
 ## Remove spaces from region name.
 regions <- gsub(" ", "_", regions, fixed = TRUE)
