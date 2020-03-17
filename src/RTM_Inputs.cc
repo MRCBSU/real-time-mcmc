@@ -821,6 +821,9 @@ void load_delays(st_delay &out_delay, const string str_name, const double mean,
         out_delay.gamma_mean = read_double("gamma_mean", var_string, mean);
 
         out_delay.gamma_sd = read_double("gamma_sd", var_string, sd);
+    } else {
+        DEBUG(DEBUG_WARNING, "Using default value for distribution of "
+                                 << out_delay->delay_name)
     }
 }
 
@@ -922,6 +925,8 @@ void read_global_model_parameters(
     int gp_delay_counter = 0, hosp_delay_counter = 0, death_delay_counter = 0;
 
     for (inti = 0; inti < num_instances; inti++) {
+        // Each function call in this loop does the following:
+        //
 
         // get the name
         string str_param_name = read_from_delim_string<string>(
