@@ -4,7 +4,6 @@
 #include "RTM_Header.h"
 #include "gsl_vec_ext.h"
 
-void I0_patch(gsl_vector*);
+void I0_patch(gsl_vector *);
 
 #endif
-
