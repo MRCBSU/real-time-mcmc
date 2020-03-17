@@ -823,7 +823,7 @@ void load_delays(st_delay &out_delay, const string str_name, const double mean,
         out_delay.gamma_sd = read_double("gamma_sd", var_string, sd);
     } else {
         DEBUG(DEBUG_WARNING, "Using default value for distribution of "
-                                 << out_delay->delay_name)
+                                 << out_delay.delay_name)
     }
 }
 
