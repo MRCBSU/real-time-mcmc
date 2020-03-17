@@ -36,8 +36,8 @@ double R_univariate_prior_log_density_nonnorm(const double &x,
         // SECOND PARAMETER IS THE SECOND SHAPE PARAMETER, 'b'
         return (((gsl_vector_get(params, 0) - 1) * gsl_sf_log(x)) +
                 ((gsl_vector_get(params, 1) - 1) * gsl_sf_log(1 - x)));
-    case cNORMAL: // FIRST PARAMETER IS THE MEAN, SECOND PARAMETER IS THE
-                  // STANDARD DEVIATION
+    case cNORMAL:     // FIRST PARAMETER IS THE MEAN, SECOND PARAMETER IS THE
+                      // STANDARD DEVIATION
     case cHALFNORMAL: // AS THE NORMAL DISTRIBUTION, BUT CONSTRAINED TO BE
                       // GREATER THAN ZERO
         return gsl_pow_2((x - gsl_vector_get(params, 0)) /
@@ -103,8 +103,8 @@ double R_univariate_prior_log_density_ratio(const double &x1, const double &x2,
         return (((gsl_vector_get(params, 0) - 1) * gsl_sf_log(x1 / x2)) +
                 ((gsl_vector_get(params, 1) - 1) *
                  gsl_sf_log((1 - x1) / (1 - x2))));
-    case cNORMAL: // FIRST PARAMETER IS THE MEAN, SECOND PARAMETER IS THE
-                  // STANDARD DEVIATION
+    case cNORMAL:     // FIRST PARAMETER IS THE MEAN, SECOND PARAMETER IS THE
+                      // STANDARD DEVIATION
     case cHALFNORMAL: // SEE ABOVE
         return (-1 / (2 * gsl_pow_2(gsl_vector_get(params, 1)))) *
                (gsl_pow_2(x1 - gsl_vector_get(params, 0)) -
