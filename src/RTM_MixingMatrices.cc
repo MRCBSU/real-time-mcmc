@@ -75,7 +75,7 @@ void mixing_model_memcpy(mixing_model &mix_dest, const mixing_model& mix_src)
 int maximal_index(const mixing_model src_mix)
 {
   int max_index = 0;
-  for(int int_i = 0; int_i < src_mix.num_breakpoints; int_i++)
+  for(int int_i = 0; int_i <= src_mix.num_breakpoints; int_i++)
     max_index = FN_MAX(max_index, gsl_matrix_int_max(src_mix.MIXMAT_param[int_i]));
 
   return max_index;
