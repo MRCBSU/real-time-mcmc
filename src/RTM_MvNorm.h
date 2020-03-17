@@ -8,20 +8,19 @@ using std::string;
 
 // DEFINE A CLASS FOR HANDLING MULTIVARIATE NORMAL RANDOM VARIABLES
 
-class mvnorm
-{
-private:
-  gsl_vector* mean;
-  double log_cov_det;
-  gsl_matrix* covariance_inverse;
-public:
-  mvnorm();
-  mvnorm(const gsl_vector*, const gsl_matrix*);
-  ~mvnorm();
-  double ld_mvnorm(const gsl_vector*);
-  double ld_mvnorm_nonnorm(const gsl_vector*);
-  double ld_mvnorm_ratio(const gsl_vector*, const gsl_vector*);
-};
+class mvnorm {
+  private:
+    gsl_vector *mean;
+    double log_cov_det;
+    gsl_matrix *covariance_inverse;
 
+  public:
+    mvnorm();
+    mvnorm(const gsl_vector *, const gsl_matrix *);
+    ~mvnorm();
+    double ld_mvnorm(const gsl_vector *);
+    double ld_mvnorm_nonnorm(const gsl_vector *);
+    double ld_mvnorm_ratio(const gsl_vector *, const gsl_vector *);
+};
 
 #endif
