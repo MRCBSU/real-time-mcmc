@@ -12,6 +12,10 @@ out.dir <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario
 source("set_up_inputs.R")
 source("set_up_pars.R")
 
+plain_document <- output_format(
+    knitr = knitr_options(),
+    pandoc = pandoc_options(to = "plain", ext = ".txt"),
+)
 
 pars.template.loc <- file.path(proj.dir, "inputs", "mod_pars.Rmd")
 inputs.template.loc <- file.path(proj.dir, "inputs", "mod_inputs.Rmd")
@@ -19,9 +23,4 @@ render(pars.template.loc, output_dir = out.dir, output_format = plain_document)
 render(inputs.template.loc, output_dir = out.dir, output_format = plain_document)
 
 setwd(out.dir)
-system("html2text -width 9999 -o ./mod_pars.txt ./mod_pars.html")
-system("html2text -width 9999 -o ./mod_inputs.txt ./mod_inputs.html")
-
-system("nice -19 ./rtm_gnu > runtime.txt", intern = TRUE)
-
-setwd(cur.dir)
+system("./rtm_gnu > runtime.txt", intern = TRUE)
