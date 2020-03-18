@@ -290,8 +290,15 @@ void read_gsl_matrix_int(gsl_matrix_int *out_gslmat_int, const string var_name,
     gsl_matrix_int_sscanf(var_var_string, out_gslmat_int);
 }
 
+/// Reads an array of strings delimited by "," or ";".
+/// Params:
+/// 	out_strarry: array to put output in
+///		n: how many strings to read
+///		var_name: the variable in `var_string` to read
+/// 	var_string: the string to read from
+///		prepend: a string to prepend to each string outputted
 void read_string_array(string *out_strarray, const int n, const string var_name,
-                       const string var_string) {
+                       const string var_string, const string prepend = "") {
     string var_var_string;
     if (!read_string_from_instruct(var_var_string, var_name, var_string)) {
         DEBUG(DEBUG_ERROR,
@@ -300,7 +307,7 @@ void read_string_array(string *out_strarray, const int n, const string var_name,
     }
     int indx = 0;
     for (int i = 0; i < n; i++)
-        out_strarray[i].assign(
+        out_strarray[i].assign(prepend +
             read_from_delim_string<string>(var_var_string, ",;", indx));
 }
 
@@ -617,7 +624,7 @@ void read_modpar(updateable_model_parameter &modpar, const char *param_name,
         }
 
     } else { // THE STRING IS NOT FOUND
-        DEBUG(DEBUG_WARNING, "No parameter structure found.")
+        DEBUG(DEBUG_WARNING, "No parameter structure found for " << param_name)
 
         /// SET EQUAL TO THE DEFAULT (TIME AND AGE INVARIANT VALUE)
         modpar.param_value = gsl_vector_alloc(1);
@@ -1040,7 +1047,7 @@ void data_matrices_fscanf(
                 DEBUG(DEBUG_ERROR, "Error reading from " << infilestring);
                 exit(2);
             }
-            if (matches != 0) {
+            if (matches != 1) {
                 DEBUG(DEBUG_WARNING, "Did not read a successful value from "
                                          << infilestring << " at position ("
                                          << inti << ", " << intj << ")");
@@ -1087,7 +1094,7 @@ void data_int_matrices_fscanf(
 
 // ERROR CHECKING WRAPPER FOR read_string_array
 void fetch_filenames(string *out_string, const int &num_strings,
-                     const string var_name, const string str_file) {
+                     const string var_name, const string str_file, const string base_dir) {
 
     string var_filenames("");
 
@@ -1103,19 +1110,19 @@ void fetch_filenames(string *out_string, const int &num_strings,
                                        // TO CONSIDER THAT CASE.
                 out_string[int_i++] = "";
         } else {
-            read_string_array(out_string, num_strings, var_name, str_file);
+            read_string_array(out_string, num_strings, var_name, str_file, base_dir);
         }
 }
 
 // READ THE FILENAMES TO A TEMP VECTOR
 void read_filenames_and_data_matrices(
     gsl_matrix **data_matrices, const int num_regions, const string var_name,
-    const string var_string, const int col_skip = 0, const int row_skip = 0) {
+    const string var_string, const string base_dir, const int col_skip = 0, const int row_skip = 0) {
 
     string *str_vec_filenames = new string[num_regions];
 
     // find the array of filenames
-    fetch_filenames(str_vec_filenames, num_regions, var_name, var_string);
+    fetch_filenames(str_vec_filenames, num_regions, var_name, var_string, base_dir);
 
     for (int int_i = 0; int_i < num_regions; int_i++)
 
@@ -1131,13 +1138,14 @@ void read_filenames_and_data_int_matrices(gsl_matrix_int **data_matrices,
                                           const int num_regions,
                                           const string var_name,
                                           const string var_string,
+										  const string base_dir,
                                           const int col_skip = 0,
                                           const int row_skip = 0) {
 
     string *str_vec_filenames = new string[num_regions];
 
     // find the array of filenames
-    fetch_filenames(str_vec_filenames, num_regions, var_name, var_string);
+    fetch_filenames(str_vec_filenames, num_regions, var_name, var_string, base_dir);
 
     for (int int_i = 0; int_i < num_regions; int_i++)
 
@@ -1151,12 +1159,12 @@ void read_filenames_and_data_int_matrices(gsl_matrix_int **data_matrices,
 /// FUNCTIONS UNIQUE TO READING IN THE DATA-LIKE INPUTS
 void read_metaregion_datatype(
     rtmData **obj_data, const gsl_matrix *population, string *countfiles,
-    string *denomfiles, const int &num_regions, const string str_var_count,
+    string *denomfiles, const string base_dir, const int &num_regions, const string str_var_count,
     const string str_var_denom, const string str_var_agg,
     const string &str_source, const bool &normalise_flag) {
 
-    fetch_filenames(countfiles, num_regions, str_var_count, str_source);
-    fetch_filenames(denomfiles, num_regions, str_var_denom, str_source);
+    fetch_filenames(countfiles, num_regions, str_var_count, str_source, base_dir);
+    fetch_filenames(denomfiles, num_regions, str_var_denom, str_source, base_dir);
     // Get the required level of data aggregation
     bool missing_data = (str_source.find(str_var_agg) != string::npos);
 
@@ -1176,7 +1184,7 @@ void read_metaregion_datatype(
     }
 }
 
-void read_data_inputs(Region *meta_region, const string str_input_filename,
+void read_data_inputs(Region *meta_region, const string str_input_filename, const string base_dir,
                       const int &num_regions) {
 
     string *temp_string = new string[num_regions];
@@ -1230,7 +1238,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
         for (int_i = 0; int_i < num_regions; int_i++)
             meta_data_type[int_i] = meta_region[int_i].GP_data;
         read_metaregion_datatype(
-            meta_data_type, tempmat, countfiles, denomfiles, num_regions,
+            meta_data_type, tempmat, countfiles, denomfiles, base_dir, num_regions,
             "regions_gp_count_data", "regions_gp_coverage_data",
             "regions_gp_aggregation", str_var, cTRUE);
         for (int_i = 0; int_i < num_regions;
@@ -1245,7 +1253,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
         for (int_i = 0; int_i < num_regions; int_i++)
             meta_data_type[int_i] = meta_region[int_i].Hospitalisation_data;
         read_metaregion_datatype(meta_data_type, tempmat, countfiles,
-                                 denomfiles, num_regions, "regions_hosp_data",
+                                 denomfiles, base_dir, num_regions, "regions_hosp_data",
                                  "", "regions_hosp_aggregation", str_var,
                                  cFALSE);
     }
@@ -1254,7 +1262,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
         for (int_i = 0; int_i < num_regions; int_i++)
             meta_data_type[int_i] = meta_region[int_i].Death_data;
         read_metaregion_datatype(meta_data_type, tempmat, countfiles,
-                                 denomfiles, num_regions, "regions_death_data",
+                                 denomfiles, base_dir, num_regions, "regions_death_data",
                                  "", "regions_death_aggregation", str_var,
                                  cFALSE);
     } // IF SERO DATA?
@@ -1262,7 +1270,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
         for (int_i = 0; int_i < num_regions; int_i++)
             meta_data_type[int_i] = meta_region[int_i].Serology_data;
         read_metaregion_datatype(
-            meta_data_type, tempmat, countfiles, denomfiles, num_regions,
+            meta_data_type, tempmat, countfiles, denomfiles, base_dir, num_regions,
             "regions_seropositives_data", "regions_serosamples_data",
             "regions_sero_aggregation", str_var, cFALSE);
     }
@@ -1271,7 +1279,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
         for (int_i = 0; int_i < num_regions; int_i++)
             meta_data_type[int_i] = meta_region[int_i].Virology_data;
         read_metaregion_datatype(
-            meta_data_type, tempmat, countfiles, denomfiles, num_regions,
+            meta_data_type, tempmat, countfiles, denomfiles, base_dir, num_regions,
             "regions_viropositives_data", "regions_virosamples_data",
             "regions_viro_aggregation", str_var, cFALSE);
     }
@@ -1284,7 +1292,7 @@ void read_data_inputs(Region *meta_region, const string str_input_filename,
 }
 
 void read_mixmod_structure_inputs(
-    mixing_model &base_mm, const string str_input_filename,
+    mixing_model &base_mm, const string str_input_filename, const string base_dir,
     const global_model_instance_parameters src_gmp) {
 
     // READ THE FILE INTO A FILE CONTENTS STRING
@@ -1326,8 +1334,9 @@ void read_mixmod_structure_inputs(
 
     // read in the sub-variables base_matrices and multiplier_indices_matrix
     read_filenames_and_data_matrices(
-        base_mm.MIXMAT, base_mm.num_breakpoints + 1, "base_matrices", str_var);
+        base_mm.MIXMAT, base_mm.num_breakpoints + 1, "base_matrices", str_var,
+		base_dir);
     read_filenames_and_data_int_matrices(
         base_mm.MIXMAT_param, base_mm.num_breakpoints + 1,
-        "multiplier_indices_matrices", str_var);
+        "multiplier_indices_matrices", str_var, base_dir);
 }

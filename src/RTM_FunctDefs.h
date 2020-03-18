@@ -19,8 +19,8 @@ void read_global_model_parameters(globalModelParams &, const char *,
                                   const int, const int, const double);
 int param_list_index(const globalModelParams, string);
 bool read_string_from_instruct(string &, const string &, const string &);
-void read_data_inputs(Region *, const string, const int &);
-void read_mixmod_structure_inputs(mixing_model &, const string,
+void read_data_inputs(Region *, const string, const string, const int &);
+void read_mixmod_structure_inputs(mixing_model &, const string, const string base_dir,
                                   const global_model_instance_parameters);
 void read_mcmc_parameters(register mcmcPars &, const char *, const string,
                           string &);
