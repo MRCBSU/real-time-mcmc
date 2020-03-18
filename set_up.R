@@ -15,4 +15,3 @@ render("inputs/mod_pars.Rmd", output_dir = out.dir, output_format = plain_docume
 render("inputs/mod_inputs.Rmd", output_dir = out.dir, output_format = plain_document)
 setwd(out.dir)
 
-system("./rtm_gnu > runtime.txt", intern = TRUE)
