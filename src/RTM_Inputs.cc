@@ -1044,7 +1044,10 @@ void data_matrices_fscanf(
             }
 
             if (matches == EOF) {
-                DEBUG(DEBUG_ERROR, "Error reading from " << infilestring);
+                DEBUG(DEBUG_ERROR, "Error reading from " << infilestring << " at position ("
+                                         << inti << ", " << intj << "), possibly fewer than "
+										 << reported_data->size1 + row_skip << " rows.");
+;
                 exit(2);
             }
             if (matches != 1) {
