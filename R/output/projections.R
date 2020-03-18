@@ -66,7 +66,7 @@ for(reg in regions){
     q.NNI[[reg]] <- apply(NNI[[reg]], 2:3, sum)
     q.NNI[[reg]] <- apply(q.NNI[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(paste0("NNI_projections_", reg, ".pdf"))
+    pdf(file.path(target.dir, paste0("NNI_projections_", reg, ".pdf")))
     
     plot(dates.used, q.NNI[[reg]][2, ], type = "l", main = paste("Reconstructed (daily) Infections -", reg), ylab = "New Infections", xlab = "Day", ylim = c(0, max(q.NNI[[reg]])))
     lines(dates.used, q.NNI[[reg]][1, ], lty = 3)
@@ -74,7 +74,7 @@ for(reg in regions){
     abline(v = dates.used[nt], col = "red")
     dev.off()
 
-    pdf(paste0("log_NNI_projections_", reg, ".pdf"))
+    pdf(file.path(target.dir, paste0("log_NNI_projections_", reg, ".pdf")))
     
     plot(dates.used, log(q.NNI[[reg]][2, ]), type = "l", main = paste("Reconstructed (daily) Infections -", reg), ylab = "New Infections", xlab = "Day", ylim = c(0, log(max(q.NNI[[reg]]))))
     lines(dates.used, log(q.NNI[[reg]][1, ]), lty = 3)
@@ -120,7 +120,7 @@ for(reg in regions){
     q.ICU[[reg]] <- apply(q.ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
     q.D[[reg]] <- apply(q.D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(paste0("ICU_projections_", reg, ".pdf"))
+    pdf(file.path(target.dir, paste0("ICU_projections_", reg, ".pdf")))
 
     plot(dates.used, q.ICU[[reg]][2, ], type = "l", main = paste("Projected (daily) ICU Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.ICU[[reg]])))
     lines(dates.used, q.ICU[[reg]][1, ], lty = 3)
@@ -128,7 +128,7 @@ for(reg in regions){
     abline(v = dates.used[nt], col = "red")
     dev.off()
 
-    pdf(paste0("Deaths_projections_", reg, ".pdf"))
+    pdf(paste0(file.path(target.dir, "Deaths_projections_", reg, ".pdf")))
 
     plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.D[[reg]])))
     lines(dates.used, q.D[[reg]][1, ], lty = 3)
