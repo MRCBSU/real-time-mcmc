@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 
     // FIRST, WANT TO READ IN THE MIXING MODEL
     mixing_model mixmod_struct;
-    read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs,
+    read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs, input_dir,
                                  global_fixedpars);
 
     // ALLOCATE MEMORY TO REGIONAL SUBSTRUCTURES
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
         Region_alloc(country[int_i], global_fixedpars, mixmod_struct);
 
     // ESTABLISH THE POINTER TO ALL THE REGIONS WHICH WILL STORE ALL THE DATA.
-    read_data_inputs(country, str_filename_inputs,
+    read_data_inputs(country, str_filename_inputs, input_dir,
                      global_fixedpars.l_num_regions);
 
     // NOW NEED TO INITIALISE THE MODEL TO MAKE AN INITIAL CALCULATION OF THE
