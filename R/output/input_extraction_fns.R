@@ -11,7 +11,7 @@ get.input.names <- function(inDir, iStrVar, iIntEquals, nr = NULL)
 {
     if(is.null(nr))
         nr <- as.integer(system(paste("ls", inDir, "| grep -n \"NNI_\" | wc -l"), intern = T))
-    pp <- readLines(paste0(inDir, "mod_inputs.txt"))
+    pp <- readLines(file.path(inDir, "mod_inputs.txt"))
     intpp <- grep(paste(iStrVar,"= "), pp)
     regionsAll <- word(pp[intpp], iIntEquals + 1, sep = "=")
     ## Have we got all the variable information
@@ -32,7 +32,7 @@ get.input.names <- function(inDir, iStrVar, iIntEquals, nr = NULL)
 }
 get.variable.value <- function(inDir, iStrVar, iFile = "mod_inputs.txt", eq.delim = TRUE)
 {
-    pp <- readLines(paste0(inDir, iFile))
+    pp <- readLines(file.path(inDir, iFile))
     intpp <- grep(iStrVar, pp)
     intpp <- intpp[-grep("#", pp[intpp])]
     oStrVar <- remove.excess.space.tabs(pp[intpp])

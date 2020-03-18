@@ -16,7 +16,31 @@ R.dir <- "../../R/output/"
 
 ## nitr <- 10000
 
-load("mcmc.RData")
+###### WHERE IS THE PROJECT ROUTE DIRECTORY
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+file.loc <- dirname(thisFile())
+proj.dir <- dirname(dirname(file.loc))
+## proj.dir <- "/Volumes/Pandemic_flu/"
+## proj.dir <- "~/bsu_pandemic/"
+
+###### WHERE IS THE R FILE DIRECTORY
+rfile.dir <- file.loc
+target.dir <- file.path(proj.dir, "model_runs", "initial_run_linelist_egr")
+source(file.path(rfile.dir, "input_extraction_fns.R"))
+
+###### DIRECTORY CONTAINING MCMC OUTPUT
+load(file.path(target.dir, "mcmc.RData"))
 
 ## Last day of data
 nt <- 26
