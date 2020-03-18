@@ -12,8 +12,12 @@ out.dir <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario
 source("set_up_inputs.R")
 source("set_up_pars.R")
 
-render("inputs/mod_pars.Rmd", output_dir = out.dir)
-render("inputs/mod_inputs.Rmd", output_dir = out.dir)
+
+pars.template.loc <- file.path(proj.dir, "inputs", "mod_pars.Rmd")
+inputs.template.loc <- file.path(proj.dir, "inputs", "mod_inputs.Rmd")
+render(pars.template.loc, output_dir = out.dir, output_format = plain_document)
+render(inputs.template.loc, output_dir = out.dir, output_format = plain_document)
+
 setwd(out.dir)
 system("html2text -width 9999 -o ./mod_pars.txt ./mod_pars.html")
 system("html2text -width 9999 -o ./mod_inputs.txt ./mod_inputs.html")

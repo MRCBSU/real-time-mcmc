@@ -1,5 +1,5 @@
 ## Load in convolution functions for estimating Hospitalisations, ICUs and Deaths
-dyn.load("~/R/C-exts/convolve/convolve.so")
+dyn.load(file.path(proj.dir, "C-exts", "convolve", "convolve.so"))
 ## Define a convolution function (coded in C++)
 conv <- function(a, b)
     .C("convolute",

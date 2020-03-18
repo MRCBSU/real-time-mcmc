@@ -18,10 +18,42 @@ region.def.str <- "\"ENGLAND\""
 if(!exists("death.col.name"))
     death.col.name <- "Date of death"
 
-dth.dat <- read_csv(paste0("../../../Data/Deaths/", date.data, " COVID19 Deaths.csv"))
+####################################################################
+## BELOW THIS LINE SHOULD NOT NEED EDITING
+####################################################################
+
+## Location of this script
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+
+## Where are various directories?
+file.loc <- dirname(thisFile())
+proj.dir <- dirname(dirname(file.loc))
+dir.data <- file.path(proj.dir, "data")
+source(file.path(file.loc, "utils.R"))
+
+## Which columns are we interested in?
+death.col.args <- list()
+death.col.args[[col.names[["death_date"]]]] <- col_character()
+death.col.args[[col.names[["finalid"]]]] <- col_double()
+death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 
 ## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
+dth.dat <- read_csv(paste0("../../../Data/Deaths/", date.data, " COVID19 Deaths.csv"))
 dth.dat$dod <- lubridate::as_date(dth.dat$dod, format = "%d/%m/%Y", tz = "GMT")
 dth.dat$dod_NHSE <- lubridate::as_date(dth.dat$dod_NHSE, format = "%m/%d/%Y", tz = "GMT")
 x <- dth.dat$dod

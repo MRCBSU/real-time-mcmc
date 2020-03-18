@@ -2,7 +2,6 @@
 ## region.index <- 4
 ## reg <- regions[region.index]
 ## wk <- 4
-R.dir <- "../../R/output/"
 
 ## negbin <- file.exists("coda_negbin_overdispersion")
 ## outputfile <- "./projection"
@@ -16,7 +15,35 @@ R.dir <- "../../R/output/"
 
 ## nitr <- 10000
 
-load("mcmc.RData")
+###### WHERE IS THE PROJECT ROUTE DIRECTORY
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+file.loc <- dirname(thisFile())
+proj.dir <- dirname(dirname(file.loc))
+## proj.dir <- "/Volumes/Pandemic_flu/"
+## proj.dir <- "~/bsu_pandemic/"
+
+###### WHERE IS THE R FILE DIRECTORY
+rfile.dir <- file.loc
+R.dir <- rfile.dir
+target.dir <- file.path(proj.dir, "model_runs", "initial_run_deaths_LondonSep20200319")
+source(file.path(rfile.dir, "input_extraction_fns.R"))
+
+###### DIRECTORY CONTAINING MCMC OUTPUT
+load(file.path(target.dir, "mcmc.RData"))
 
 ## Last day of data
 nt <- 29
@@ -60,9 +87,9 @@ for(reg in regions){
 
 }
 
-source(paste0(R.dir, "convolution.R"))
-source(paste0(R.dir, "gamma_fns.R"))
 ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
+source(file.path(R.dir, "convolution.R"))
+source(file.path(R.dir, "gamma_fns.R"))
 ifi <- 0.025
 delay.to.ICU <- list(
                     incub.mean = 4,
@@ -108,7 +135,7 @@ for(reg in regions){
     abline(v = dates.used[nt], col = "red")
     dev.off()
 
-    pdf(paste0("Deaths_projections_", reg, ".pdf"))
+    pdf(file.path(target.dir, paste0("Deaths_projections_", reg, ".pdf")))
 
     plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.D[[reg]])))
     lines(dates.used, q.D[[reg]][1, ], lty = 3)

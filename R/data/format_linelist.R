@@ -10,8 +10,45 @@ dir.data <- "../../../Data/"
 
 ## Inputs that are dependent on the form of the data and the precise output required.
 reporting.lag <- 2
-## Get the format the dates are printed in in the input file.
-date.format <- "%m/%d/%Y"
+####################################################################
+## BELOW THIS LINE SHOULD NOT NEED EDITING
+####################################################################
+
+## Location of this script
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+
+## Where are various directories?
+file.loc <- dirname(thisFile())
+proj.dir <- dirname(dirname(file.loc))
+dir.data <- file.path(proj.dir, "data")
+source(file.path(file.loc, "utils.R"))
+
+## Which columns are we interested in?
+ll.col.args <- list()
+ll.col.args[[col.names[["Lab_Report_Date"]]]] <- col_character()
+ll.col.args[[col.names[["Onsetdate"]]]] <- col_character()
+ll.cols <- do.call(cols, ll.col.args)	# Calling with a list so use do.call
+
+## Read the file and rename columns
+ll.dat <- read_csv(
+		build.data.filepath(subdir = "raw", date.data, " - Anonymised Line List.csv"),
+		col_types = ll.cols
+	) %>%
+	rename(!!!col.names)
 
 ## Hopefully the following shouldn't change too frequently.
 ll.dat <- read_csv(paste0(dir.data, "LineList/", date.data, " - Anonymised Line List.csv"))
