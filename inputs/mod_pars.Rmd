@@ -1,4 +1,4 @@
-negbin_overdispersion = { param_value = `r value.eta`;
+gp_negbin_overdispersion = { param_value = `r value.eta`;
 
 prior_distribution = 2;
 

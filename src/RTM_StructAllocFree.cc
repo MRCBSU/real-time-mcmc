@@ -212,6 +212,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
 
   new_rmp.l_background_gps_counts = gsl_matrix_calloc(num_days, num_ages);
   new_rmp.l_gp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
+  new_rmp.l_hosp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
   new_rmp.l_day_of_week_effect = gsl_matrix_calloc(num_days, num_ages);
 }
 void regional_model_params_alloc(regional_model_params& dest_rmp,
@@ -234,9 +235,10 @@ void regional_model_params_alloc(regional_model_params& dest_rmp,
 		     src_rmp.l_MIXMOD.num_breakpoints,
 		     src_rmp.l_MIXMOD.scalants->size,
 		     src_rmp.l_MIXMOD.evector_MIXMAT_normalised[0]->size);
-
   dest_rmp.l_background_gps_counts = gsl_matrix_calloc(src_rmp.l_background_gps_counts->size1, src_rmp.l_background_gps_counts->size2);
   dest_rmp.l_gp_negbin_overdispersion = gsl_matrix_calloc(src_rmp.l_gp_negbin_overdispersion->size1, src_rmp.l_gp_negbin_overdispersion->size2);
+  dest_rmp.l_hosp_negbin_overdispersion = gsl_matrix_calloc(src_rmp.l_hosp_negbin_overdispersion->size1, src_rmp.l_hosp_negbin_overdispersion->size2);
+  
   dest_rmp.l_day_of_week_effect = gsl_matrix_calloc(src_rmp.l_day_of_week_effect->size1, src_rmp.l_day_of_week_effect->size2);
 }
 void regional_model_params_free(regional_model_params& old_rmp)
@@ -256,6 +258,7 @@ void regional_model_params_free(regional_model_params& old_rmp)
   mixing_model_free(old_rmp.l_MIXMOD);
   gsl_matrix_free(old_rmp.l_background_gps_counts);
   gsl_matrix_free(old_rmp.l_gp_negbin_overdispersion);
+  gsl_matrix_free(old_rmp.l_hosp_negbin_overdispersion);
   gsl_matrix_free(old_rmp.l_day_of_week_effect);
 }
 
@@ -303,6 +306,8 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     rmp_dest.l_specificity = rmp_src.l_specificity;
   if(update_flags.getFlag("l_gp_negbin_overdispersion"))
     gsl_matrix_memcpy(rmp_dest.l_gp_negbin_overdispersion, rmp_src.l_gp_negbin_overdispersion);
+  if(update_flags.getFlag("l_hosp_negbin_overdispersion"))
+    gsl_matrix_memcpy(rmp_dest.l_hosp_negbin_overdispersion, rmp_src.l_hosp_negbin_overdispersion);
   if(update_flags.getFlag("l_day_of_week_effect"))
     gsl_matrix_memcpy(rmp_dest.l_day_of_week_effect, rmp_src.l_day_of_week_effect);
 }
@@ -365,7 +370,7 @@ void Region_alloc(Region& new_reg,
   new_reg.population = gsl_vector_calloc(num_ages);
   if(src_gmip.l_GP_consultation_flag) new_reg.GP_data = new rtmData(src_gmip.l_GP_likelihood, src_gmip.l_gp_count_likelihood);
   else new_reg.GP_data = 0;
-  if(src_gmip.l_Hospitalisation_flag) new_reg.Hospitalisation_data = new rtmData(src_gmip.l_Hosp_likelihood, cPOISSON);
+  if(src_gmip.l_Hospitalisation_flag) new_reg.Hospitalisation_data = new rtmData(src_gmip.l_Hosp_likelihood, src_gmip.l_hosp_count_likelihood);
   else new_reg.Hospitalisation_data = 0;
   if(src_gmip.l_Deaths_flag) new_reg.Death_data = new rtmData(src_gmip.l_Deaths_likelihood, cPOISSON);
   else new_reg.Death_data = 0;

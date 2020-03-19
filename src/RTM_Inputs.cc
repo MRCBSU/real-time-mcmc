@@ -157,6 +157,7 @@ void read_global_fixed_parameters(register global_model_instance_parameters& fix
 
   // VALUES WHICH CAN BE DETERMINED BY USER INPUT
   fixed_pars.l_gp_count_likelihood = (data_type) READ_NEXT_VARIABLE_VALUE;
+  fixed_pars.l_hosp_count_likelihood = (data_type) READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_tk = (transmission_kernel) READ_NEXT_VARIABLE_VALUE; // 0 FOR REED-FROST, 1 FOR MASS ACTION
   fixed_pars.l_transmission_time_steps_per_day = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_reporting_time_steps_per_day = READ_NEXT_VARIABLE_VALUE;
@@ -1142,6 +1143,10 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
 			       "regions_hosp_data",
 			       "",
 			       "regions_hosp_aggregation", str_var, cFALSE);
+      for(int_i = 0; int_i < num_regions; int_i++) // CHECK the actions of the following:
+	gsl_matrix_realloc(meta_region[int_i].det_model_params.l_hosp_negbin_overdispersion,
+			   meta_data_type[int_i]->getDim1(),
+			   meta_data_type[int_i]->getDim2());
     }
   // IF DEATHS DATA?
   if(meta_region->Death_data != 0)
