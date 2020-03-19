@@ -1,2 +1,8 @@
-*Make*
-*.txt
+rtm
+rtm_debug
+rtm_optim
+**.swp
+build/**
+outputs/**
+.vscode
+model_runs/**
