@@ -5,3 +5,4 @@ rtm_optim
 build/**
 outputs/**
 .vscode
+model_runs/**
