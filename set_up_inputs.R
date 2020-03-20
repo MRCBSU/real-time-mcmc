@@ -36,9 +36,7 @@ if(flg.createfile) system(paste("mkdir", out.dir))
 ## Get the population sizes
 require(readr)
 require(tidyr)
-setwd("~/Documents/PHE/stats/Wuhan 2019 Coronavirus/Data/population/")
-pop <- read_csv("popn2018_all.csv")
-setwd(cur.dir)
+pop <- read_csv("data/population/popn2018_all.csv")
 pop.input <- NULL
 for(reg in regions){
     pop.full <- pop[pop$Name == reg & !is.na(pop$Name), ]
