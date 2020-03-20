@@ -63,9 +63,7 @@ setwd(cur.dir)
 ## Get the population sizes
 require(readr)
 require(tidyr)
-setwd("~/Documents/PHE/stats/Wuhan 2019 Coronavirus/Data/population/")
-pop <- read_csv("popn2018_all.csv")
-setwd(cur.dir)
+pop <- read_csv("data/population/popn2018_all.csv")
 pop.input <- NULL
 for(reg in regions){
     pop.full <- pop[pop$Name %in% ons.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
