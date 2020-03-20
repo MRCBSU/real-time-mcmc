@@ -53,7 +53,8 @@ i.summary <- 1000 ## number of iterations of summary statistics stored on file
 dates.used <- start.date + (0:(d - 1))
 
 ## regions <- c("London", "WestMidlands", "North", "South")
-regions <- get.input.names(target.dir, "regions_used", 2)
+#regions <- get.input.names(target.dir, "regions_used", 2)
+regions <- "UNITED_KINGDOM"
 r <- length(regions)
 
 regions.total.population <- get.variable.value(target.dir, "regions_population")
