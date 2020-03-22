@@ -1,16 +1,29 @@
 require(coda)
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
 
 ###### WHERE IS THE PROJECT ROUTE DIRECTORY
-proj.dir <- "~/Documents/PHE/stats/Wuhan 2019 Coronavirus/RTModelling/"
+file.loc <- dirname(thisFile())
+proj.dir <- dirname(dirname(file.loc))
 ## proj.dir <- "/Volumes/Pandemic_flu/"
 ## proj.dir <- "~/bsu_pandemic/"
 
 ###### WHERE IS THE R FILE DIRECTORY
-rfile.dir <- paste(proj.dir, "R/output/", sep = "")
-source(paste0(rfile.dir, "input_extraction_fns.R"))
+rfile.dir <- file.loc
+source(file.path(rfile.dir, "input_extraction_fns.R"))
 
 ###### DIRECTORY CONTAINING MCMC OUTPUT
-target.dir <- "./"
+target.dir <- file.path(proj.dir, "model_runs", "initial_run_linelist_egr")
 
 ###### HOW IS THE DATA ORGANISED
 weekly.data <- FALSE
@@ -40,7 +53,8 @@ i.summary <- 1000 ## number of iterations of summary statistics stored on file
 dates.used <- start.date + (0:(d - 1))
 
 ## regions <- c("London", "WestMidlands", "North", "South")
-regions <- get.input.names(target.dir, "regions_used", 2)
+#regions <- get.input.names(target.dir, "regions_used", 2)
+regions <- "UNITED_KINGDOM"
 r <- length(regions)
 
 regions.total.population <- get.variable.value(target.dir, "regions_population")
@@ -58,11 +72,11 @@ var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgam
                                      c(21.6, 3070) / 4, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.
-save(var.names, var.priors, file = paste(target.dir, "prior.spec.RData", sep = ""))
+save(var.names, var.priors, file = file.path(target.dir, "prior.spec.RData"))
 ## ## ######################################################
 
 ###### READ IN THE MCMC CHAIN from binary output files
-source(paste(rfile.dir, "readingbinaryfiles.R", sep = ""))
+source(file.path(rfile.dir, "readingbinaryfiles.R"))
 
 var.priors <- lapply(var.priors, function(x) x[stochastic.flags])
 
@@ -100,7 +114,7 @@ for(var.string in var.names[stochastic.flags])
     params[[var.string]] <- as.mcmc(t(params[[var.string]]))
 
 ## ## DRAW CODA PLOTS
-pdf(paste(target.dir, "codas.pdf", sep = ""))
+pdf(file.path(target.dir, "codas.pdf"))
 par(mfrow = c(1, 2))
 for(inti in 1:npar)
   {
@@ -275,4 +289,4 @@ dev.off()
     
 ##   }
 
-save.image(paste(target.dir, "mcmc.RData", sep = ""))
+save.image(file.path(target.dir, "mcmc.RData"))

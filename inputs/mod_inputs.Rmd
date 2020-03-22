@@ -9,22 +9,22 @@ Deaths_flag	     0
 Sero_data_flag	     0
 
 Viro_data_flag	     0
-<br>
-<br>
+
+
 
 \#\# file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
 
 \#\# values for REGION specified in the REGIONAL INFORMATION section
 
 \#\# values for VARIABLE specified by the following possible variables specified in the space below: filename_for_GP_consultation_data, filename_for_Hospitalisation_data, filename_for_Seropoepidemiology_data, filename_for_Positivity_data
-<br>
-<br>
+
+
 
 \#\#\#\#\# ARE ANY CODE PATCHES NEEDED? Currently only a patch for the GP consultation parameters is available
 
 Use_GP_reparam_patch	   0
-<br>
-<br>
+
+
 
 \#\#\# DATA FEATURES
 
@@ -69,14 +69,14 @@ Sero_likelihood_end_day		   1
 Viro_likelihood_start_day	   1
 
 Viro_likelihood_end_day		   1
-<br>
-<br>
+
+
 
 
 
 \#\#\#\#\# GLOBAL DATA
-<br>
-<br>
+
+
 
 \#\# READ IN THE POLYMOD MATRICES
 
@@ -87,55 +87,55 @@ mixing_model = { time_breakpoints = `r paste(as.character(cm.breaks), collapse =
 	       	 multiplier_indices_matrices = `r paste(cm.mults, collapse = ", ")`;
 		 
 	       }
-<br>
-<br>
+
+
 
 \#\#\#\#\# REGIONAL DATA
-<br>
-<br>
+
+
 
 \#\# DO NOT USE SPACES IN REGION NAMES, the space is used as a delimiter
 
 \#\# regions_population must be specified as a (number of regions) x (number of age groups) matrix
-<br>
-<br>
+
+
 
 study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 
       	       	 regions_population = `r paste(pop.input, collapse = ", ")`;
-<br>
-<br>
+
+
 		 regions_gp_count_data = `r paste(gp.data, collapse = ", ")`;
-<br>
-<br>
+
+
 		 regions_gp_coverage_data = `r paste(gp.denom, collapse = ", ")`;
-<br>
-<br>
+
+
 		 regions_hosp_data = `r paste(hosp.data, collapse = ", ")`;
-<br>
-<br>
+
+
 		 regions_death_data = NULL; \#\#\#\#\# this null comment doesn't have to be here, I've just put it in to be explicit
-<br>
-<br>
+
+
 		 regions_seropositives_data = NULL;
 		 regions_serosamples_data = NULL;
-<br>
-<br>
+
+
 		 regions_viropositives_data = NULL;
 		 regions_virosamples_data = NULL;
-<br>
-<br>	       
+
+	       
 	       }
-<br>
-<br>
+
+
 
 \#\#\#\#\# 
-<br>
-<br>
+
+
 
 \#\#\#\# MCMC SIMULATION PARAMETERS
-<br>
-<br>
+
+
 
 num_iterations	     450000
 

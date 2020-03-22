@@ -3,12 +3,14 @@
 #ifndef HEADER_stlvec_
 #define HEADER_stlvec_
 
-#include <vector>
 #include <string>
+#include <vector>
 
 using namespace std;
 using std::string;
 
-template <typename D> void stl_vector_sscanf(const string&, vector<D>&, const char* chr_delim = ",;");
+template <typename D>
+void stl_vector_sscanf(const string &, vector<D> &,
+                       const char *chr_delim = ",;");
 
 #endif

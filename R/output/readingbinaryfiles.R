@@ -25,10 +25,10 @@ if(exists("var.priors")){
   names(var.priors$distribution) <- names(var.priors$parameters) <- var.names
   
   
-  stochastic.flags <- file.exists(paste(target.dir, "coda_", var.names, sep = ""))
+  stochastic.flags <- file.exists(file.path(target.dir, paste0("coda_", var.names)))
   
   parameter.names <- var.names[stochastic.flags]
-  parameter.files <- paste(target.dir, "coda_", parameter.names, sep = "")
+  parameter.files <- file.path(target.dir, paste0("coda_", parameter.names))
   parameter.dims <- sapply(var.priors$distribution[stochastic.flags], length)
   
   npar <- length(parameter.files)
@@ -40,16 +40,16 @@ if(exists("var.priors")){
   ## NNI files
   for(intr in 1:r)
     {
-      NNI.files[[intr]] <- file(paste(target.dir, "NNI_", regions[intr], sep = ""), "rb")
+      NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
       if(SMC.output)
         ## state files
-        state.files[[intr]] <- file(paste(target.dir, "state_", regions[intr], sep = ""), "rb")
+        state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
     }
   names(NNI.files) <- regions
   if(SMC.output) names(state.files) <- regions
   
   ## lfx files
-  lfx.files <- file(paste(target.dir, "coda_lfx", sep = ""), "rb")
+  lfx.files <- file(file.path(target.dir, "coda_lfx"), "rb")
   ## coda files
   params <- coda.files <- list()
   for(inti in 1:npar)
