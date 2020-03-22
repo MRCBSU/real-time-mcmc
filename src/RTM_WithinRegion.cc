@@ -298,6 +298,9 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
   if(update_flags.getFlag("l_gp_negbin_overdispersion")){
     regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, in_umps[GP_OVERDISP_INDEX].param_value, in_umps[GP_OVERDISP_INDEX].map_to_regional, region_index, 1); // Only want this per day rather per delta t
   }
+  if(update_flags.getFlag("l_hosp_negbin_overdispersion")){
+    regional_matrix_parameter(out_rmp.l_hosp_negbin_overdispersion, in_umps[HOSP_OVERDISP_INDEX].param_value, in_umps[HOSP_OVERDISP_INDEX].map_to_regional, region_index, 1); // Again, only valid per observation, rather than per timestep.
+  }
   if(update_flags.getFlag("l_day_of_week_effect"))
     regional_matrix_parameter(out_rmp.l_day_of_week_effect, in_umps[DOW_EFFECTS_INDEX].param_value, in_umps[DOW_EFFECTS_INDEX].map_to_regional, region_index, 1); // Only want this per day rather per delta t
   if(update_flags.getFlag("l_init_prop_sus"))

@@ -48,6 +48,8 @@ string flagclass::UPItoRMP(const int& iUPI_index)
   switch(iUPI_index){
   case GP_OVERDISP_INDEX :
     return "l_gp_negbin_overdispersion";
+  case HOSP_OVERDISP_INDEX :
+    return "l_hosp_negbin_overdispersion";
   case ALP_INDEX : 
     return "l_latent_period : l_R0_init : l_R0_Amplitude : l_I0";
   case AIP_INDEX :

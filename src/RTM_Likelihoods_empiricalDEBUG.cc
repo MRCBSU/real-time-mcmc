@@ -813,7 +813,17 @@ void fn_log_likelihood(likelihood& llhood,
 						 meta_region[int_region].Hospitalisation_data->access_groups());
 		  }
 	      } else gsl_matrix_memcpy(mu_hosp_counts, meta_region[int_region].region_modstats.d_Reported_Hospitalisations);
-	      temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts, NULL);
+	      data_type dlfx = meta_region[int_region].Hospitalisation_data->get_likelihood_type();
+	      if(dlfx == cPOISSON)
+		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+											NULL);
+	      else if(dlfx == cNEGBIN)
+		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+											meta_region[int_region].det_model_params.l_hosp_negbin_overdispersion);
+	      else {
+		perror("Unrecognised likelihood selected\n");
+		exit(2);
+	      }
 	    } else temp_log_likelihood = GSL_NEGINF;
 	  
 	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.Hosp_lfx, int_region));

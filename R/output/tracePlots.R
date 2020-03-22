@@ -33,7 +33,7 @@ SMC.output <- FALSE
 
 ## run details
 a <- 1  ## number of age classes
-d <- 39  ## length in days of the run
+d <- 85  ## length in days of the run
 i.saved <- 10000 ## number of iterations saved in coda files
 i.summary <- 1000 ## number of iterations of summary statistics stored on file
 
@@ -45,15 +45,17 @@ r <- length(regions)
 
 regions.total.population <- get.variable.value(target.dir, "regions_population")
 ## regions.total.population <- sum(regions.total.population) ### TO BE COMMENTED OUT WHEN NOT LOOKING AT ENGLAND ALONE.
-regions.total.population <- regions.total.population[1]
+## regions.total.population <- regions.total.population[1]
 
 ## ## DEFINE PRIOR MODEL ###################################
 
 ### WHICH VARIABLES ARE STOCHASTIC?
-var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "day_of_week_effects")
+var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "day_of_week_effects")
 ### PRIOR INFORMATION
-var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), NULL, list(dgamma), NULL, NULL, NULL, NULL, NULL, list(dgamma), list(dnorm), NULL, NULL, list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-                   parameters = list(NA, NA, NA, c(1, 0.2), NA, c(1.43, 0.549), NA, NA, NA, NA, NA, c(31.36, 224), c(-17.5, 1.25), NA, NA, c(2.12, 15.8), NA, NA, NA, NA, NA, NA, NA)
+var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, NULL, NULL, NULL, list(dgamma), list(dnorm), NULL, NULL, list(dbeta),
+                                       list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
+                   parameters = list(NA, NA, NA, c(1, 0.2), c(1, 0.2), NA, c(1.43, 0.549), NA, NA, NA, NA, NA, c(31.36, 224), c(-17.5, 1.25), NA, NA, c(2.12, 15.8),
+                                     c(21.6, 3070) / 4, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.
 save(var.names, var.priors, file = paste(target.dir, "prior.spec.RData", sep = ""))
@@ -151,7 +153,7 @@ if(ncol(posterior.aip) != ncol(posterior.egr))
   {
     posterior.R0 <- apply(posterior.egr, 2, R0.func, aip = posterior.aip, lp = posterior.lp)
   } else posterior.R0 <- R0.func(posterior.egr, posterior.aip, posterior.lp)
-
+while(ncol(posterior.R0) < r) posterior.R0 <- cbind(posterior.R0, posterior.R0[, ncol(posterior.R0)])
 prior.egr <- rgamma(i.saved, var.priors$parameters$exponential_growth_rate[1], rate = var.priors$parameters$exponential_growth_rate[2])
 prior.lp <- min.waiting.time
 prior.R0 <- R0.func(prior.egr, prior.aip, prior.lp)
@@ -170,10 +172,14 @@ I0.func <- function(aip, nu, R0, pGP, popn)
 prior.nu <- rnorm(i.saved, var.priors$parameters$log_p_lambda_0[1], sd = var.priors$parameters$log_p_lambda_0[2])
 posterior.nu <- params$log_p_lambda_0 ## Again, presuming one column for each region
 ## pGP - only the initial propensity in children
-prior.pGP <- exp(fninvit(rnorm(i.saved, var.priors$parameters$prop_case_to_GP_consultation[1], sd = var.priors$parameters$prop_case_to_GP_consultation[2])))
-nc <- ncol(params$prop_case_to_GP_consultation) 
-posterior.pGP <- exp(fninvit(params$prop_case_to_GP_consultation[, seq(1, nc, by = nc / r)]))
-## N
+if(!is.null(params$prop_case_to_GP_consultation)){
+    prior.pGP <- exp(fninvit(rnorm(i.saved, var.priors$parameters$prop_case_to_GP_consultation[1], sd = var.priors$parameters$prop_case_to_GP_consultation[2])))
+    nc <- ncol(params$prop_case_to_GP_consultation) 
+    posterior.pGP <- exp(fninvit(params$prop_case_to_GP_consultation[, seq(1, nc, by = nc / r)]))
+} else {
+    prior.pGP <- array(0.1, dim = dim(posterior.R0))
+    posterior.pGP <- array(0.1, dim = dim(posterior.R0))
+}    ## N
 
 ## I0
 if(ncol(posterior.aip) == ncol(posterior.nu)){
