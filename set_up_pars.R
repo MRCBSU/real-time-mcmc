@@ -21,6 +21,10 @@ pars.egr <- c(31.36, 224)
 value.pgp <- 0.1
 pars.pgp <- c(2.12, 15.8)
 
+## Infection to fatality ratio
+value.ifr <- 0.007
+pars.ifr <- c(21.6, 3070) / 4
+
 ## Initial seeding
 value.nu <- -19
 pars.nu <- c(-17.5, 1.25)
@@ -29,5 +33,13 @@ pars.nu <- c(-17.5, 1.25)
 value.eta <- 1.0;
 pars.eta <- c(1.0, 0.2);
 
+## Hosp Overdispersion
+value.eta.h <- 1.0
+pars.eta.h <- c(1.0, 0.2)
+
+## Delay to death
+ddelay.mean <- 9.63
+ddelay.sd <- 2.96
+
 ## Contact model
-contact.reduction <- rep(1, 2)
+contact.reduction <- c(1, 0.52)

@@ -19,7 +19,7 @@ R.dir <- "../../R/output/"
 load("mcmc.RData")
 
 ## Last day of data
-nt <- 26
+nt <- 29
 
 ## start.date <- as.Date("02/10/2017", format = "%d/%m/%Y")
 ## dates <- start.date + 0:(time.horizon - 1)
@@ -62,8 +62,8 @@ for(reg in regions){
 
 source(paste0(R.dir, "convolution.R"))
 source(paste0(R.dir, "gamma_fns.R"))
-ifr <- 0.007
-ifi <- 0.05
+ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
+ifi <- 0.025
 delay.to.ICU <- list(
                     incub.mean = 4,
                     incub.sd = 1.41,
@@ -84,17 +84,21 @@ delay.to.death <- list(
     )
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
+ICU <- list()
+D <- list()
 q.ICU <- list()
 q.D <- list()
 for(reg in regions){
-    q.ICU[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.icu)[1:(dim(NNI[[reg]])[2]), , , drop = F]
-    q.D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
-
-    q.ICU[[reg]] <- apply(q.ICU[[reg]], c(1, 3), sum)
-    q.D[[reg]] <- apply(q.D[[reg]], c(1, 3), sum)
+    ICU[[reg]] <- ifi * apply(NNI[[reg]], c(1, 3), conv, b = F.icu)[1:(dim(NNI[[reg]])[2]), , , drop = F]
+    D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
+    D[[reg]] <- apply(D[[reg]], 1, function(x) x * t(ifr))
+    D[[reg]] <- array(D[[reg]], dim = dim(ICU[[reg]]))
     
-    q.ICU[[reg]] <- apply(q.ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
-    q.D[[reg]] <- apply(q.D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+    ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
+    D[[reg]] <- apply(D[[reg]], c(1, 3), sum)
+    
+    q.ICU[[reg]] <- apply(ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+    q.D[[reg]] <- apply(D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
 
     pdf(paste0("ICU_projections_", reg, ".pdf"))
 
@@ -165,3 +169,5 @@ for(reg in regions){
 ## points((nt+1):nt.proj, data.proj[(nt+1):nt.proj], pch = 19, col = plotcol)
 
 ## dev.off()
+
+save(q.ICU, q.D, q.NNI, dates.used, file = "plotted_summaries.RData")

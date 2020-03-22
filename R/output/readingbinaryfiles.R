@@ -17,6 +17,7 @@ if(!exists("i.saved")) i.saved <- 10000 ## number of iterations saved in coda fi
 if(!exists("i.summary")) i.summary <- 100 ## number of iterations of summary statistics stored on file
 ## regions <- c("London", "WestMidlands", "North", "South")
 if(!exists("regions")) regions <- "London"
+regions <- regions[!is.na(regions)]
 r <- length(regions)
 ## ### ####### # #### ####### ######
 

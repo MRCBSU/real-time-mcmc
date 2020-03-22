@@ -3,44 +3,42 @@ library(dplyr)
 library(lubridate)
 
 ## Get case data
-date.data <- "20200313"
-ll.dat <- read_csv("~/stats_drive/COVID-19/LineList/Anon- 20200313 Linelist of UK cases (Cumulative) 0900h.csv")
+date.data <- "20200319"
+reporting.lag <- 3
+
+ll.dat <- read_csv(paste0("../../../Data/LineList/", date.data, " - Anonymised Line List.csv"))
 ## Get population data
 cur.dir <- getwd()
-setwd("/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan 2019 Coronavirus/Data/population")
+setwd("../../../Data/population")
 source("get_popn.R")
 setwd(cur.dir)
 UK.pop <- sum(as.integer(gsub(",","",as.character(unlist(pop[pop$Name == "UNITED KINGDOM", -(1:4)])))))
 
-age.grps <- c(0, 5, 15, 25, 45, seq(60, 80, by = 10))
-age.labs <- c("<5yr", "5-14", "15-24", "25-44", "45-59", "60-69", "70-79", "80+")
-## Currently latest date for age-independent modelling 12/3, latest date for age-dependent modelling 10/3
-latest.date <- lubridate::as_date(date.data)
-earliest.date <- lubridate::as_date("2020-03-02")
+## age.grps <- c(0, 5, 15, 25, 45, seq(60, 80, by = 10))
+## age.labs <- c("<5yr", "5-14", "15-24", "25-44", "45-59", "60-69", "70-79", "80+")
+## ## Currently latest date for age-independent modelling 12/3, latest date for age-dependent modelling 10/3
+latest.date <- lubridate::as_date(date.data)-reporting.lag
+earliest.date <- lubridate::as_date("2020-02-17")
+all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 ll.dat <- ll.dat %>%
-    filter(!is.na(as.integer(`Cumulative count`))) %>%
-    mutate(Date = as.Date(`CMO Announce Date`, format = "%d/%m/%Y")) %>%
-    filter(!is.na(Date)) %>%
+    filter(!is.na(lab_report_date))
+
+ll.dat <- ll.dat %>%
+    mutate(Date = lubridate::as_date(apply(ll.dat, 1, function(x) as.Date(as.character(x["lab_report_date"]), format = "%d/%m/%Y")))) %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
     mutate(fDate = factor(Date))
-levels(ll.dat$fDate) <- c(levels(ll.dat$fDate), as.character(seq(earliest.date - 14, earliest.date, by = 1)))
+levels(ll.dat$fDate) <- c(levels(ll.dat$fDate), all.dates[!(all.dates %in% levels(ll.dat$fDate))])
 
-
-
-## ll.dat should be the maximal dataset now.
-## Use these to get the reduced datasets
-
-## Whole UK data.
 rtm.dat <- ll.dat %>%
     group_by(fDate, .drop = FALSE) %>%
-    summarise(count = n()) ## %>%
-    ## mutate(fDate = as.factor(Date))## , levels = seq(earliest.date, latest.date, by = 1)))
+    summarise(count = n())
 
 rtm.dat$fDate <- lubridate::as_date(rtm.dat$fDate)
 
 rtm.dat <- arrange(rtm.dat, fDate)
+
 
 rtm.denom <- data.frame(fDate = rtm.dat$fDate,
                         count = rep(UK.pop, nrow(rtm.dat))
@@ -49,12 +47,12 @@ rtm.denom <- data.frame(fDate = rtm.dat$fDate,
 
 ## Write rtm.dat and rtm.denom to data files
 write.table(rtm.dat,
-            file = paste0("../data/Linelist/linelist", date.data, ".txt"),
+            file = paste0("../../data/Linelist/linelist", date.data, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
 write.table(rtm.denom,
-            file = paste0("../data/Linelist/ll_denom", date.data, ".txt"),
+            file = paste0("../../data/Linelist/ll_denom", date.data, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
@@ -64,3 +62,48 @@ write.table(rtm.denom,
 ##                          breaks = c(age.grps, Inf),
 ##                          right = FALSE))
                          
+ons.dat <- ll.dat %>%
+    filter(!is.na(onset_date))
+
+ons.dat <- ons.dat %>%
+    mutate(ODate = lubridate::as_date(apply(ons.dat, 1, function(x) as.Date(as.character(x["onset_date"]), format = "%d/%m/%Y")))) %>%
+    mutate(Interval = Date - ODate) %>%
+    mutate(Truncate = (lubridate::as_date(date.data)-3) - ODate)
+
+ ## truncated gamma distribution available in heavy package
+require(heavy)
+require(survival)
+
+## but ptgamma in heavy package doesn't handle Inf correctly (see Chris Jackson's email 21/02/2020), so redefine it here
+ptgamma <- function(q, shape, scale=1, truncation=1, lower.tail=TRUE){
+                                        # vectorise everything  
+    n <- max(length(q), length(shape), length(scale), length(truncation))
+    q <- rep(q, length=n)
+    shape <- rep(shape, length=n)
+    scale <- rep(scale, length=n)
+    truncation <- rep(truncation, length=n)
+    res <- numeric(n)
+    res[q==Inf] <- 1
+    sub <- q != Inf
+    res[sub] <- heavy::ptgamma(q=q[sub], shape=shape[sub], scale=scale[sub], truncation=truncation[sub], lower.tail=lower.tail)
+    res
+}
+
+## create environment for custom distribution to pass to flexsurvreg
+custom.tgamma <- list(name="tgamma",
+                      pars=c("shape","scale"),
+                      location="scale",
+                      transforms=c(log, log),
+                      inv.transforms=c(exp, exp),
+                      inits=function(t) { c(1.5, (2/3)*median(t)) })
+
+
+require(flexsurv)
+
+ons.dat <- ons.dat %>%
+    mutate(report.min = Interval + 0.01 - ((1 - (Interval == 0)) * 0.51))
+
+Sdf <- Surv(time = ons.dat$report.min,
+            time2 = ons.dat$Interval + 0.5,
+            type = "interval2")
+(gamfit <- flexsurvreg(Sdf ~ 1, data = ons.dat, dist = custom.tgamma, aux = list(truncation = ons.dat$Truncate + 0.5)))

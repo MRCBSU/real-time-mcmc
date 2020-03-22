@@ -1,7 +1,7 @@
 require(rmarkdown)
 
 ## Give the run a name - will be used to save a directory for outputs.
-out.dir <- "initial_run_linelist_egr/"
+out.dir <- "initial_run_deaths_LondonSep20200319/"
 
 source("set_up_inputs.R")
 source("set_up_pars.R")
