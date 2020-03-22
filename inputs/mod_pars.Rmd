@@ -7,8 +7,8 @@ prior_parameters = `r paste(pars.eta, collapse = ", ")`;
 proposal_variance = 1;
 
 } 
-<br>
-<br>
+
+
 hosp_negbin_overdispersion = { param_value = `r value.eta.h`;
 
 prior_distribution = 2;
@@ -18,29 +18,29 @@ prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
 proposal_variance = 1;
 
 } 
-<br>
-<br>
+
+
 latent_period = { param_value = `r value.dl`;
 
 prior_distribution = 1;
 
 }
-<br>
-<br>
+
+
 relative_infectiousness = { param_value = 1.0;
 
 prior distribution = 1;
 			    
 }
-<br>
-<br>
+
+
 importation_rates = { param_value = 0.0;
 
 prior_distribution = 1;
 
 }
-<br>
-<br>
+
+
 infectious_period = { param_value = `r value.dI`;
 
 prior_distribution = 2;
@@ -50,8 +50,8 @@ prior_parameters = `r paste(pars.dI, collapse = ", ")`;
 proposal_variance = 0.03;
 
 }
-<br>
-<br>
+
+
 prop_case_to_GP_consultation = { param_value = `r value.pgp`;
 
 prior_distribution = 1;
@@ -61,29 +61,29 @@ prior_parameters = `r paste(pars.pgp, collapse = ", ")`;
 proposal_variance = 0.002;
 
 }
-<br>
-<br>
+
+
 contact_parameters = { param_value = `r paste(as.character(contact.reduction), collapse = ", ")`;
 
 prior_distribution = `r paste(rep(1, length(contact.reduction)), collapse = ", ")`;
 
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
-<br>
-<br>
+
+
 R0_amplitude_kA = { param_value = 0.0;
 
 prior_distribution = 1;
 
 }
-<br>
-<br>
+
+
 R0_seasonal_peakday = { param_value = 355;
 
 prior_distirbution = 1;
 
 }
-<br>
-<br>
+
+
 exponential_growth_rate = { param_value = `r value.egr`;
 
 prior_distribution = 2;
@@ -93,8 +93,8 @@ prior_parameters = `r paste(pars.egr, collapse = ", ")`;
 proposal_variance = 0.0001;
 
 }
-<br>
-<br>
+
+
 log_p_lambda_0 = { param_value = `r rep(value.nu, 2)`;
 
 prior_distribution = 4, 4;
@@ -106,29 +106,29 @@ proposal_variance = 0.005;
 region_breakpoints = true;
 
 }
-<br>
-<br>
+
+
 prop_susceptible = { param_value = 1.0;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 prop_HI_32_to_HI_8 = {	param_value = 1.0;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 prop_symptomatic = { param_value = 1.0;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 prop_case_to_hosp = { param_value = `r value.ifr`;
 
 prior_distributions = 3;
@@ -138,106 +138,106 @@ prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
 proposal_variance = 0.005;
 
 }
-<br>
-<br>
+
+
 prop_case_to_death = { param_value = 0.01;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 background_GP = { param_value = 0.0;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 day_of_week_effects = { param_value = 1;
 
 prior_distributions = 1;
 
 }
-<br>
-<br>
+
+
 test_sensitivity = { param_value = 1;
 
 prior_distributions = 1;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
-<br>
-<br>
+
+
 test_specificity = { param_value = 1;
 
 prior_distributions = 1;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
-<br>
-<br>
+
+
 exponential_growth_rate_hyper = { param_value = 6.3, 57;
 
 prior_distribution = 1, 1;
 
 }
-<br>
-<br>
+
+
 l_p_lambda_0_hyper = { param_value = -19.1495, 4.05411;
 
 prior_distribution = 1, 1;
 
 }
-<br>
-<br>
+
+
 prop_susceptible_hyper = { param_value = 0, 0, 0, 0, 0, 0, 0;
 
 prior_distribution = 1, 1, 1, 1, 1, 1, 1;
 
 }
-<br>
-<br>
+
+
 incubation_distribution = { gamma_mean = 4.0;
 
 gamma_sd = 1.41;
 
 }
-<br>
-<br>
+
+
 symp_to_gp_distribution = { gamma_mean = 0.0;
 
 gamma_sd = 0.0;
 
 }
-<br>
-<br>
+
+
 symp_to_hosp_distribution = { gamma_mean = 0.0;
 
 gamma_sd = 0.0;
 
 }
-<br>
-<br>
+
+
 symp_to_death_distribution = { gamma_mean = 0.0;
 
 gamma_sd = 0.0;
 
 }
-<br>
-<br>
+
+
 gp_reporting_distribution = { gamma_mean = `r ldelay.mean`;
 
 gamma_sd = `r ldelay.sd`;
 
 }
-<br>
-<br>
+
+
 hosp_reporting_distribution = { gamma_mean = `r ddelay.mean`;
 
 gamma_sd = `r ddelay.sd`;
 
 }
-<br>
-<br>
+
+
 death_reporting_distribution = { gamma_mean = 0.0;
 
 gamma_sd = 0.0;
