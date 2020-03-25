@@ -3,19 +3,43 @@ library(lubridate)
 library(dplyr)
 
 ## Get deaths data
-date.data <- "20200319"
+
+## Inputs that should change on a daily basis.
+date.data <- "20200324"
+dir.data <- "../../../Data/"
+
+## Inputs that are dependent on the output required.
+reporting.delay <- 2
+## region.def.str <- "ifelse(nhsregionname == \"London\", \"London\", \"Outside_London\")"
+region.def.str <- "\"ENGLAND\""
+## death.col.name <- "PATIENT_DEATH_DATE"
+
+## Column name that contains the date of event
+if(!exists("death.col.name"))
+    death.col.name <- "Date of death"
+
 dth.dat <- read_csv(paste0("../../../Data/Deaths/", date.data, " COVID19 Deaths.csv"))
 
-latest.date <- lubridate::as_date(date.data) - 4
+
+## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
+dth.dat$dod <- lubridate::as_date(dth.dat$dod, format = "%d/%m/%Y", tz = "GMT")
+dth.dat$dod_NHSE <- lubridate::as_date(dth.dat$dod_NHSE, format = "%m/%d/%Y", tz = "GMT")
+x <- dth.dat$dod
+x[is.na(x)] <- dth.dat$dod_NHSE[is.na(x)]
+dth.dat <- dth.dat %>%
+    mutate(Date = x)
+## ## 
+
+latest.date <- lubridate::as_date(date.data) - reporting.delay
 earliest.date <- lubridate::as_date("2020-02-17")
 all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 dth.dat <- dth.dat %>%
-    mutate(Date = lubridate::as_date(apply(dth.dat, 1, function(x) as.Date(as.character(x["Date of death"]), format = "%d/%m/%Y")))) %>%
+    ## mutate(Date = lubridate::as_date(apply(dth.dat, 1, function(x) as.Date(as.character(x[death.col.name]), format = "%d/%m/%Y")))) %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
     mutate(fDate = factor(Date)) %>%
-    mutate(Region = as.factor(ifelse(Region == "London", "London", "Outside_London")))
+    mutate(Region = as.factor(eval(parse(text = region.def.str))))
 levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
 
 rtm.dat <- dth.dat %>%
