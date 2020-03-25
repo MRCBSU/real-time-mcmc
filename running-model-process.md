@@ -31,4 +31,28 @@ The below steps do not have to be adhered to, rather they are my current workflo
 
 * Open up the R files beginning `set_up*`.
 
+* In ``set_up.R``:
+  * Change the date of the runs to the date being used for the data.
+  * List the regions in which you're running the model. These much match to a geographical unit specified in ``set_up_inputs.R``. These will be typically the same as in the ONS population data (contained within the repository). Country-level units are typically written in capitals. Use underscores for spaces.
+  * Use these in the variable ``out.dir`` to give a name to the run.
+  * If you want to run the code from within R, uncomment the system command, the penultimate command in the file.
+
+* In ``set_up_inputs.R``:
+  * This file will create an output directory in which the code will be run. This will be in the directory specified by ``out.dir``.
+  * Use ``gp.flag`` and ``hosp.flag`` to specify which data inputs are being used. Confusingly, currently I am using ``gp.flag`` to indicate if the line listing data is being used, and ``hosp.flag`` to indicate if the deaths data is being used.
+  * The above variables then have ``start`` and ``end`` variables indicating the range of numbered days over which these data items should be included in the likelihood. Unfortunately the range has to be continuous.
+  * ``Age.grps`` allows you to specify the age groups being considered, code will have to be written here when this is anything other than ``All``.
+  * ``ndays`` is the number of days for the run. This should include the number of days covered by the data, plus a suitable projection period.
+  * The contact model variables, those prefixed ``cm.`` indicate the timing of any changepoints in the contact patterns (e.g. such as due to a school holiday or a social distancing intervention), and the matrices that should be used in the periods that straddle the breakpoints. The breakpoint gives the last day that uses the current contact matrix, prior to changing. You need to specify the contact matrix and a multiplier matrix, which gives the parameterisation. See the PNAS paper for how these work - the multiplier matrix just gives a matrix of (base 0) parameter indices for the contact model parameter which will multiply the corresponding component of the contact matrix at that time.
+
+* In ``set_up_pars.R``:
+  * Specify either fixed values for certain parameters, or their initial conditions and prior parameters.
+  * If a new parameter is to be estimated, or conversely, is to be held fixed, this might need some editing of the ``mod_pars.Rmd`` file contained in ``./inputs/mod_pars.Rmd``.
+  * Refer to presentation for more details on how to specify parameters in ``mod_pars`` files.
+
+* Run the model either from the command line, via batch submission script, or even from within R.
+
+* Complain about my coding when you immediately hit a bug.
+  
+
 [PHE gitlab]: https://gitlab.phe.gov.uk/Paul.Birrell/real-time-mcmc
