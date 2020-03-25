@@ -55,6 +55,18 @@ The below steps do not have to be adhered to, rather they are my current workflo
 * Run the model either from the command line, via batch submission script, or even from within R.
 
 * Complain about my coding when you immediately hit a bug.
-  
+
+* Navigate to the directory earlier specifed by the R variable ``out.dir``. Here, whilst running, output is generated and stored. In particular, you should check that numbered files named ``adaptive_report`` and then following that ``posterior_report`` are being saved. These files allow you to peak at the acceptance ratio of proposals, and in-running parameter means and standard deviations, to check that sensible output is being generated.
+
+* Remaining in the same directory, open R and open the files (from the directory ``./R/output/`` given relative to the root directory in the repository) ``traceplots.R`` and ``projections.R``.
+
+* In ``traceplots.R``:
+  * Update the variable ``d`` to give the total number of days (analysis of data + projection) over which the model was run.
+  * The ``var.priors`` list defines the prior distributions and corresponding prior parameters for each of the parameters in the model. This is a paired list, with one list containing the distributions, and the other having a vector of parameters. This needs to match with the prior information contained within the ``mod_pars.txt`` file.
+  * Running this file will give traceplots and density estimates for each of the free parameters within the model.
+
+* In ``projections.R``:
+  * Change variable ``nt`` to give the last day on which data were available in the model run.
+
 
 [PHE gitlab]: https://gitlab.phe.gov.uk/Paul.Birrell/real-time-mcmc
