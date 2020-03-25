@@ -1,6 +1,6 @@
 \#\#\#\#\# DATA FLAGS AND FILENAMES
 
-GP_consultation_flag `r gp.flag`
+GP_consultation_flag 1
 
 Hospitalisation_flag `r hosp.flag`
 

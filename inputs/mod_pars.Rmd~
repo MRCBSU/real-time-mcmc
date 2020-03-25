@@ -224,9 +224,9 @@ gamma_sd = 0.0;
 }
 <br>
 <br>
-gp_reporting_distribution = { gamma_mean = `r ldelay.mean`;
+gp_reporting_distribution = { gamma_mean = 8.54;
 
-gamma_sd = `r ldelay.sd`;
+gamma_sd = 5.82;
 
 }
 <br>
