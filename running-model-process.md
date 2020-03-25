@@ -22,8 +22,13 @@ The below steps do not have to be adhered to, rather they are my current workflo
 
 * Bearing in mind the above points, run format_deaths.R and format_linelist.R. These will save data outputs in the repository in './data/deaths/' and in './data/Linelist/'.
   * Common bugs that may arise usually centre on the way in which the dates are being read in from the input (.csv) data file. This can cause functions such as ``lubridate::as_date()`` to return ``NA`` values. In this event, it might be necessary to adapt the code to convert them to character string and then back again to dates.
+  * Currently ``format_linelist.R`` is currently set up to format data for the United Kingdom as a whole. Output files will carry the date stamp. There will also be a trivial denominator file which sets the population from which it is possible to appear in the dataset.
+  * ``format_linelist.R`` also carries some code that will estimate the distribution of times from date of onset to date of lab reporting. You may wish to use this to specify the delay distribution in the code input files, discussed later. This bit of code will undoubtedly fail due to the presence of negative survival times - these are entirely possible (diagnosis while sub-clinical). Currently, I manually set these intervals to be zero.
+  * In ``format_deaths.R`` be careful to check the matching of the region and date of death fields.
 <br>
 
+* Return to the root of the repository.
 
+* Open up the R files beginning `set_up*`.
 
 [PHE gitlab]: https://gitlab.phe.gov.uk/Paul.Birrell/real-time-mcmc
