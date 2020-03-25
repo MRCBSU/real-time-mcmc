@@ -1,29 +1,31 @@
-regions <- c("London", "Outside_London")
-gp.data <- "../../data/Linelist/linelist20200319.txt"
-gp.denom <- "../../data/Linelist/ll_denom20200319.txt"
-hosp.data <- paste0("../../data/deaths/deaths20200319_", regions, ".txt")
+gp.data <- paste0("../../data/Linelist/linelist", date.of.runs, ".txt")
+gp.denom <- paste0("../../data/Linelist/ll_denom", date.of.runs, ".txt")
+hosp.data <- paste0("../../data/deaths/deaths", date.of.runs, "_", regions, ".txt")
 
 gp.flag <- 0
 start.gp <- 15
-end.gp <- 29
+end.gp <- 35
 
 hosp.flag <- 1
 start.hosp <- 1
-end.hosp <- 28
+end.hosp <- 35
 
 viro.data <- NULL
 viro.denom <- NULL
 
 ## ## Number of regions (country-level regions in capitals)
 ons.regions <- list("London" = "LONDON",
-                    "Outside_London" = c("NORTH EAST", "NORTH WEST", "YORKSHIRE AND THE HUMBER", "EAST MIDLANDS", "WEST MIDLANDS", "EAST", "SOUTH EAST", "SOUTH WEST")
+                    "Outside_London" = c("NORTH EAST", "NORTH WEST", "YORKSHIRE AND THE HUMBER", "EAST MIDLANDS", "WEST MIDLANDS", "EAST", "SOUTH EAST", "SOUTH WEST"),
+                    "UNITED_KINGDOM" = "UNITED KINGDOM",
+                    "ENGLAND" = "ENGLAND"
                     )
+
 ## ## Vector of age-group descriptions
 age.grps <- "All";
 ## ## Number of days, including lead-in time, analysis of data and short-term projection
-ndays <- 85
+ndays <- 91
 ## Timing of changes to the contact pattern
-cm.breaks <- 34
+cm.breaks <- 36
 cm.bases <- rep("single_age.txt", 2)
 cm.mults <- c(paste0("single_age_mult", 0:1, ".txt"))
 

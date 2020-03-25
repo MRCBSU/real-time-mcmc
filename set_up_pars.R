@@ -1,5 +1,9 @@
 ## Incubation period - best working estimate - mean 5.2 (4.1-7.0)
 ## Use these as simulation parameters for the latent period
+
+int.effect <- c(0.76, 0.52, 0.36)
+names(int.effect) <- c("lo", "med", "hi")
+
 ## shape.dL <- 35.1
 ## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
 value.dl <-2
@@ -38,8 +42,12 @@ value.eta.h <- 1.0
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
-ddelay.mean <- 9.63
-ddelay.sd <- 2.96
+ddelay.mean <- 17.8
+ddelay.sd <- 8.9
+
+## Delays in the line listing data
+ldelay.mean <- 5.22
+ldelay.sd <- 3.59
 
 ## Contact model
-contact.reduction <- c(1, 0.52)
+contact.reduction <- c(1, int.effect[scenario.name])

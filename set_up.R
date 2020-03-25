@@ -1,7 +1,13 @@
 require(rmarkdown)
 
+date.of.runs <- "20200324"
+
+## ## Regions under study
+regions <- c("ENGLAND")
+## Which intervention scenario
+scenario.name <- "med"
 ## Give the run a name - will be used to save a directory for outputs.
-out.dir <- "initial_run_deaths_LondonSep20200319/"
+out.dir <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario.name, "/")
 
 source("set_up_inputs.R")
 source("set_up_pars.R")
