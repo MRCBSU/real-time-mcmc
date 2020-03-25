@@ -44,11 +44,13 @@ The below steps do not have to be adhered to, rather they are my current workflo
   * ``Age.grps`` allows you to specify the age groups being considered, code will have to be written here when this is anything other than ``All``.
   * ``ndays`` is the number of days for the run. This should include the number of days covered by the data, plus a suitable projection period.
   * The contact model variables, those prefixed ``cm.`` indicate the timing of any changepoints in the contact patterns (e.g. such as due to a school holiday or a social distancing intervention), and the matrices that should be used in the periods that straddle the breakpoints. The breakpoint gives the last day that uses the current contact matrix, prior to changing. You need to specify the contact matrix and a multiplier matrix, which gives the parameterisation. See the PNAS paper for how these work - the multiplier matrix just gives a matrix of (base 0) parameter indices for the contact model parameter which will multiply the corresponding component of the contact matrix at that time.
+<br>
 
 * In ``set_up_pars.R``:
   * Specify either fixed values for certain parameters, or their initial conditions and prior parameters.
   * If a new parameter is to be estimated, or conversely, is to be held fixed, this might need some editing of the ``mod_pars.Rmd`` file contained in ``./inputs/mod_pars.Rmd``.
   * Refer to presentation for more details on how to specify parameters in ``mod_pars`` files.
+<br>
 
 * Run the model either from the command line, via batch submission script, or even from within R.
 
