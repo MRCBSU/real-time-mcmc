@@ -8,7 +8,4 @@ The below steps do not have to be adhered to, rather they are my current workflo
 
 - From the original data files, I save local .csv copies of the sheets containing the data needed.
 
-
-
-
 [PHE gitlab]: https://gitlab.phe.gov.uk/Paul.Birrell/real-time-mcmc
