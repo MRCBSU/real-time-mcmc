@@ -6,3 +6,4 @@ build/**
 outputs/**
 .vscode
 model_runs/**
+.Rhistory
