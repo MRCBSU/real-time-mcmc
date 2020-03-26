@@ -197,4 +197,4 @@ for(reg in regions){
 
 ## dev.off()
 
-save(q.ICU, q.D, q.NNI, dates.used, file = "plotted_summaries.RData")
+save(q.ICU, q.D, q.NNI, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
