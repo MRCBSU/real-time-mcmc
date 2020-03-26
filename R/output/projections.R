@@ -105,8 +105,8 @@ delay.to.death <- list(
     incub.sd = 1.41,
     disease.mean = 0,
     disease.sd = 0,
-    report.mean = 17.8,
-    report.sd = 8.9
+    report.mean = ddelay.mean,
+    report.sd = ddelay.sd
     )
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
