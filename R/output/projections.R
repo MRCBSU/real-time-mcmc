@@ -33,20 +33,19 @@ thisFile <- function() {
 }
 file.loc <- dirname(thisFile())
 proj.dir <- dirname(dirname(file.loc))
-## proj.dir <- "/Volumes/Pandemic_flu/"
-## proj.dir <- "~/bsu_pandemic/"
+source(file.path(proj.dir, "set_up_inputs.R"))
 
 ###### WHERE IS THE R FILE DIRECTORY
 rfile.dir <- file.loc
 R.dir <- rfile.dir
-target.dir <- file.path(proj.dir, "model_runs", "initial_run_deaths_LondonSep20200319")
+target.dir <- out.dir
 source(file.path(rfile.dir, "input_extraction_fns.R"))
 
 ###### DIRECTORY CONTAINING MCMC OUTPUT
 load(file.path(target.dir, "mcmc.RData"))
 
 ## Last day of data
-nt <- 29
+nt <- max(end.gp, end.hosp)
 
 ## start.date <- as.Date("02/10/2017", format = "%d/%m/%Y")
 ## dates <- start.date + 0:(time.horizon - 1)

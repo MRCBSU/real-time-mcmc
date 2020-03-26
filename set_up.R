@@ -1,14 +1,5 @@
 require(rmarkdown)
 
-date.of.runs <- "20200325"
-
-## ## Regions under study
-regions <- c("ENGLAND")
-## Which intervention scenario
-scenario.name <- "med"
-## Give the run a name - will be used to save a directory for outputs.
-out.dir <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario.name)
-
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -26,10 +17,27 @@ thisFile <- function() {
 ## Where are various directories?
 file.loc <- dirname(thisFile())
 proj.dir <- file.loc
-out.dir <- file.path(proj.dir, "model_runs", out.dir)
 
 source(file.path(proj.dir, "set_up_inputs.R"))
 source(file.path(proj.dir, "set_up_pars.R"))
+
+## Make the output directory if necessary
+flg.createfile <- !file.exists(out.dir)
+if(flg.createfile) system(paste("mkdir", out.dir))
+
+## Get the population sizes
+require(readr)
+require(tidyr)
+pop <- read_csv(build.data.filepath("", "popn2018_all.csv"))
+pop.input <- NULL
+for(reg in regions){
+    pop.full <- pop[pop$Name %in% ons.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+    pop.full <- apply(pop.full, 2, sum)
+    if(age.grps == "All")
+        pop.input <- c(pop.input, pop.full["All ages"])
+    }
+## Remove spaces from region name.
+regions <- gsub(" ", "_", regions, fixed = TRUE)
 
 plain_document <- output_format(
     knitr = knitr_options(),

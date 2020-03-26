@@ -18,15 +18,14 @@ thisFile <- function() {
 ###### WHERE IS THE PROJECT ROUTE DIRECTORY
 file.loc <- dirname(thisFile())
 proj.dir <- dirname(dirname(file.loc))
-## proj.dir <- "/Volumes/Pandemic_flu/"
-## proj.dir <- "~/bsu_pandemic/"
+source(file.path(proj.dir, "set_up_inputs.R"))
 
 ###### WHERE IS THE R FILE DIRECTORY
 rfile.dir <- file.loc
 source(file.path(rfile.dir, "input_extraction_fns.R"))
 
 ###### DIRECTORY CONTAINING MCMC OUTPUT
-target.dir <- file.path(proj.dir, "model_runs", "initial_run_deaths_LondonSep20200319")
+target.dir <- out.dir
 
 ###### HOW IS THE DATA ORGANISED
 weekly.data <- FALSE
@@ -48,16 +47,13 @@ min.waiting.time <- 2
 SMC.output <- FALSE
 
 ## run details
-a <- 1  ## number of age classes
-d <- 85  ## length in days of the run
+a <- nages  ## number of age classes
+d <- ndays  ## length in days of the run
 i.saved <- 10000 ## number of iterations saved in coda files
 i.summary <- 1000 ## number of iterations of summary statistics stored on file
 
 dates.used <- start.date + (0:(d - 1))
 
-## regions <- c("London", "WestMidlands", "North", "South")
-#regions <- get.input.names(target.dir, "regions_used", 2)
-regions <- c("London")
 r <- length(regions)
 
 regions.total.population <- get.variable.value(target.dir, "regions_population")
