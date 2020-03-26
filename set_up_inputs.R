@@ -42,24 +42,8 @@ nages <- length(age.grps)
 nregs <- length(regions)
 
 ## Make the output directory if necessary
-cur.dir <- getwd()
 flg.createfile <- !file.exists(out.dir)
 if(flg.createfile) system(paste("mkdir", out.dir))
-## Populate the directory with the necessary C++ files and compile it
-setwd(out.dir)
-if(flg.createfile){
-    system(paste0("ln -s ", c.loc, "*.cc ./"))
-    system(paste0("ln -s ", c.loc, "*.h ./"))
-    system(paste0("ln -s ", c.loc, "GMakefile ./"))
-    ## Change the hard-wiring of the number of age groups.
-    header <- readLines("RTM_Header.h")
-    intHea <- grep("NUM_AGE_GROUPS", header)
-    header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nages, ")")
-    write(header, file = "RTM_Header.h", append = F)
-}
-## And compile the code to get an executable
-system("make -f GMakefile")
-setwd(cur.dir)
 
 ## Get the population sizes
 require(readr)
