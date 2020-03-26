@@ -1,15 +1,24 @@
+library(assertr)
 library(readr)
 library(dplyr)
 library(lubridate)
 
-## Get case data
+#########################################################
+## Inputs that should (or may) change on a daily basis
+#########################################################
 
-## Inputs that should change on a daily basis
-date.data <- "20200324"
-dir.data <- "../../../Data/"
-
-## Inputs that are dependent on the form of the data and the precise output required.
+## Map our names for columns (LHS) to data column names (RHS)
+col.names <- list(
+	Lab_Report_Date = "Lab_Report_Date",
+	Onsetdate = "Onsetdate"
+)
+## YYYYMMDD string, used in filenames and reporting lag
+date.data <- "20200325"
+## How long should the reporting lag be?
+## Suggestion: overlay today's and yesterday's data
 reporting.lag <- 2
+
+
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
 ####################################################################
@@ -50,27 +59,26 @@ ll.dat <- read_csv(
 	) %>%
 	rename(!!!col.names)
 
-## Hopefully the following shouldn't change too frequently.
-ll.dat <- read_csv(paste0(dir.data, "LineList/", date.data, " - Anonymised Line List.csv"))
 ## Get population data
-cur.dir <- getwd()
-setwd("../../../Data/population")
-source("get_popn.R")
-setwd(cur.dir)
+source(file.path(proj.dir, "R", "data", "get_popn.R"))
 UK.pop <- sum(as.integer(gsub(",","",as.character(unlist(pop[pop$Name == "UNITED KINGDOM", -(1:4)])))))
 
 ## age.grps <- c(0, 5, 15, 25, 45, seq(60, 80, by = 10))
 ## age.labs <- c("<5yr", "5-14", "15-24", "25-44", "45-59", "60-69", "70-79", "80+")
 ## ## Currently latest date for age-independent modelling 12/3, latest date for age-dependent modelling 10/3
-latest.date <- lubridate::as_date(date.data)-reporting.lag
-earliest.date <- lubridate::as_date("2020-02-17")
+latest.date <- ymd(date.data)-reporting.lag
+earliest.date <- ymd("2020-02-17")
 all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 ll.dat <- ll.dat %>%
     filter(!is.na(Lab_Report_Date))
 
 ll.dat <- ll.dat %>%
-    mutate(Date = as.Date(Lab_Report_Date, format = date.format)) %>%
+    mutate(Date = fuzzy_date_parse(Lab_Report_Date)) %>%
+	## Check plausibility (should flag parsing errors)
+	verify(Date >= ymd("2020-01-01")) %>%
+	verify(Date <= today()) %>%
+	## Remore dates outside period of interest
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
     mutate(fDate = factor(Date))
@@ -92,17 +100,18 @@ rtm.denom <- data.frame(fDate = rtm.dat$fDate,
 
 ## Write rtm.dat and rtm.denom to data files
 write.table(rtm.dat,
-            file = paste0("../../data/Linelist/linelist", date.data, ".txt"),
+            file = build.data.filepath(subdir = "RTM_format", "linelist", date.data, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
 write.table(rtm.denom,
-            file = paste0("../../data/Linelist/ll_denom", date.data, ".txt"),
+            file = build.data.filepath(subdir = "RTM_format", "ll_denom", date.data, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
 
-if("Onsetdate" %in% names(ll.dat))
+## This appears to be broken
+if(FALSE & "Onsetdate" %in% names(ll.dat))
     {
         ## ll.dat <- ll.dat %>%
         ##     mutate(Age_Grp = cut(Age,
@@ -113,9 +122,9 @@ if("Onsetdate" %in% names(ll.dat))
             filter(!is.na(Onsetdate))
         
         ons.dat <- ons.dat %>%
-            mutate(ODate = lubridate::as_date(apply(ons.dat, 1, function(x) as.Date(as.character(x["Onsetdate"]), format = "%m/%d/%Y")))) %>%
+            mutate(ODate = fuzzy_date_parse(Onsetdate)) %>%
             mutate(Interval = Date - ODate) %>%
-            mutate(Truncate = (lubridate::as_date(date.data)-3) - ODate)
+            mutate(Truncate = ymd(date.data)-3 - ODate)
         ons.dat$Interval[ons.dat$Interval < 0] <- 0
         ## truncated gamma distribution available in heavy package
         require(heavy)
