@@ -20,14 +20,17 @@ deaths.loc <- "20200403 COVID19 Deaths.csv" ## NULL
 col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
-	onset_date = "onsetdate"
+	onset_date = "onsetdate",
+	nhs_region = "nhser_name",
+	phe_region = "phec_name"
 )
 
 ## Inputs that are dependent on the output required.
-reporting.delay <- 0
-region.def.str <- "ifelse(nhser_name == \"London\", \"London\", \"Outside_London\")"
-## region.def.str <- "\"ENGLAND\""
-## death.col.name <- "PATIENT_DEATH_DATE"
+reporting.delay <- 2
+
+# Keep if either PHE or NHS region matches, set to NULL for no filter
+phe_regions <- c("East of England")
+nhs_regions <- phe_regions
 
 
 ####################################################################
@@ -62,6 +65,8 @@ death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
 death.col.args[[col.names[["onset_date"]]]] <- col_character()
 death.col.args[[col.names[["finalid"]]]] <- col_double()
+death.col.args[[col.names[["nhs_region"]]]] <- col_character()
+death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -145,8 +150,17 @@ all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
-    mutate(fDate = factor(Date)) %>%
-    mutate(Region = as.factor(eval(parse(text = region.def.str))))
+    mutate(fDate = factor(Date))
+
+# Region filter
+if ((length(phe_regions) > 0) && (length(nhs_regions) > 0)) {
+	dth.dat <- dth.dat %>% filter(phe_region %in% phe_regions | nhs_region %in% nhs_regions)
+} else if (length(phe_regions) > 0 || length(nhs_regions) > 0) {
+	stop("Set both PHE and NHS regions or neither")
+}
+
+dth.dat$Region <- "East_England"
+
 levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
 
 rtm.dat <- dth.dat %>%
