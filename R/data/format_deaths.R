@@ -1,4 +1,3 @@
-library(assertr)
 library(readr)
 library(lubridate)
 library(dplyr)
@@ -17,7 +16,8 @@ linelist.loc <- NULL
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
 	death_date = "dod",
-	finalid = "finalid"
+	finalid = "finalid",
+	onset_date = "onsetdate"
 )
 
 ## Inputs that are dependent on the output required.
@@ -57,8 +57,29 @@ source(file.path(file.loc, "utils.R"))
 ## Which columns are we interested in?
 death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
+death.col.args[[col.names[["onset_date"]]]] <- col_character()
 death.col.args[[col.names[["finalid"]]]] <- col_double()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
+
+plausible.death.date <- function(x) {
+	within.range <- x$Date <= today() & x$Date >= ymd("2020-01-01")
+	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
+	return(within.range & after.onset)
+}
+
+## Some patients are known to have the month and day swapped
+## Fix these here...
+fix.dates <- function(df) {
+	finalid.swapped.onset <- c(2507, 2727, 3159, 3284, 3767, 6969, 35367, 39214)
+	finalid.swapped.death <- c(2507)
+	df <- df %>% mutate(
+		swap_onset = finalid %in% finalid.swapped.onset,
+		swap_death = finalid %in% finalid.swapped.death
+	)
+	df[df$swap_death,]$Date  = swap.day.and.month(df[df$swap_death,]$Date)
+	df[df$swap_onset,]$Onset = swap.day.and.month(df[df$swap_onset,]$Onset)
+	return(df)
+}
 
 ## Read the file and rename columns
 if (is.null(linelist.loc)) {
@@ -66,17 +87,23 @@ if (is.null(linelist.loc)) {
 } else {
 	input.loc = build.data.filepath(subdir = "raw", linelist.loc)
 }
+print(paste("Reading from", input.loc))
 dth.dat <- read_csv(
 		input.loc,
 		col_types = death.cols
 	) %>%
 	rename(!!!col.names) %>%
-    mutate(Date = fuzzy_date_parse(death_date)) %>%
-	## Remove two lines with implausible death dates
-	filter(finalid != 9425 & finalid != 30609) %>%
-	## Check plausibility (should flag parsing errors)
-	verify(Date >= ymd("2020-01-01")) %>%
-	verify(Date <= today())
+    mutate(Date = fuzzy_date_parse(death_date),
+		   Onset = fuzzy_date_parse(onset_date)) %>%
+	fix.dates %>%
+	mutate(plausible_death_date = plausible.death.date(.))
+
+if (!all(dth.dat$plausible_death_date)) {
+	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
+	print("WARNING: The following rows have implausible death dates and have been excluded: ")
+	print(implausible.dates %>% select(c(finalid, Date, Onset, swap_death, swap_onset)))
+	dth.dat <- dth.dat %>% filter(plausible_death_date)
+}
 
 ## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
 #dth.dat$dod <- lubridate::as_date(dth.dat$dod, format = "%d/%m/%Y", tz = "GMT")

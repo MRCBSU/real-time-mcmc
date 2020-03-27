@@ -12,4 +12,6 @@ fuzzy_date_parse <- function(date) {
 	as_date(parse_date_time(date, c('dmyT', 'ymdT', 'dmyR', 'ymdR'), truncated=1))
 }
 
-
+swap.day.and.month <- function(date) {
+	return(ymd(paste(year(date), day(date), month(date))))
+}
