@@ -7,13 +7,18 @@ library(lubridate)
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
+## YYYYMMDD string, used in filenames and reporting lag
+date.data <- "20200325"
+
+## Where to find the data, if NULL use command line argument
+linelist.loc <- NULL
+# linelist.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
+
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
 	Lab_Report_Date = "Lab_Report_Date",
 	Onsetdate = "Onsetdate"
 )
-## YYYYMMDD string, used in filenames and reporting lag
-date.data <- "20200325"
 ## How long should the reporting lag be?
 ## Suggestion: overlay today's and yesterday's data
 reporting.lag <- 2
@@ -53,8 +58,13 @@ ll.col.args[[col.names[["Onsetdate"]]]] <- col_character()
 ll.cols <- do.call(cols, ll.col.args)	# Calling with a list so use do.call
 
 ## Read the file and rename columns
+if (is.null(linelist.loc)) {
+	input.loc = commandArgs(trailingOnly = TRUE)[1]
+} else {
+	input.loc = build.data.filepath(subdir = "raw", linelist.loc)
+}
 ll.dat <- read_csv(
-		build.data.filepath(subdir = "raw", date.data, " - Anonymised Line List.csv"),
+		input.loc,
 		col_types = ll.cols
 	) %>%
 	rename(!!!col.names)
