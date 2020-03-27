@@ -20,12 +20,17 @@ linelist.loc <- NULL
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
 	Lab_Report_Date = "Lab_Report_Date",
-	Onsetdate = "Onsetdate"
+	Onsetdate = "Onsetdate",
+	nhs_region = "NHSER_name",
+	phe_region = "PHEC18Name"
 )
 ## How long should the reporting lag be?
 ## Suggestion: overlay today's and yesterday's data
 reporting.lag <- 2
 
+# Keep if either PHE or NHS region matches, set to NULL for no filter
+phe_regions <- c("East of England")
+nhs_regions <- phe_regions
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -58,6 +63,8 @@ source(file.path(file.loc, "utils.R"))
 ll.col.args <- list()
 ll.col.args[[col.names[["Lab_Report_Date"]]]] <- col_character()
 ll.col.args[[col.names[["Onsetdate"]]]] <- col_character()
+ll.col.args[[col.names[["nhs_region"]]]] <- col_character()
+ll.col.args[[col.names[["phe_region"]]]] <- col_character()
 ll.cols <- do.call(cols, ll.col.args)	# Calling with a list so use do.call
 
 ## Read the file and rename columns
@@ -96,6 +103,13 @@ ll.dat <- ll.dat %>%
     filter(Date >= earliest.date) %>%
     mutate(fDate = factor(Date))
 levels(ll.dat$fDate) <- c(levels(ll.dat$fDate), all.dates[!(all.dates %in% levels(ll.dat$fDate))])
+
+# Region filter
+if ((length(phe_regions) > 0) && (length(nhs_regions) > 0)) {
+	ll.dat <- ll.dat %>% filter(phe_region %in% phe_regions | nhs_region %in% nhs_regions)
+} else if (length(phe_regions) > 0 || length(nhs_regions) > 0) {
+	stop("Set both PHE and NHS regions or neither")
+}
 
 rtm.dat <- ll.dat %>%
     group_by(fDate, .drop = FALSE) %>%

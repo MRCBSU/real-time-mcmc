@@ -1,35 +1,16 @@
 #######################################################################
-## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
-#######################################################################
-
-date.of.runs <- "20200403"    	# What date is in the input file names?
-regions <- c("London", "Outside_London")	# Regions under study
-
-# How big an effect should be assumed for the introduction of lockdown?
-# Options are "lo", "med", or "high"
-scenario.name <- "L_OL_variable"
-
-# Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.of.runs, "/", scenario.name)
-out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
-
-# Number of days to run the simulation for.
-# Including lead-in time, analysis of data and short-term projection
-ndays <- 99
-
-#######################################################################
 ## INPUT SETTINGS
 #######################################################################
 
 # The 'gp' stream in the code is linked to confirmed cases data
 gp.flag <- 0					# 0 = off, 1 = on
 start.gp <- 15					# What day to start running the likelihood on
-end.gp <- 15					# Total days of data, or NULL to infer from length of file
+end.gp <- NULL					# Total days of data, or NULL to infer from length of file
 
 # The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 start.hosp <- 1					# What day to start running the likelihood on
-end.hosp <- 43				# Total days of data, or NULL to infer from length of file
+end.hosp <- NULL				# Total days of data, or NULL to infer from length of file
 
 viro.data <- NULL
 viro.denom <- NULL
@@ -46,10 +27,10 @@ cm.mults <- c(paste0("single_age_mult", 0:1, ".txt"))
 
 
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############
-source(file.path(proj.dir, "R/data/utils.R"))
-
-## Where are the data files?
 dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+source(file.path(proj.dir, "config.R"))
+date.of.runs <- date.data
 
 ## Map what we call regions (LHS) to the NHS region(s) they contain
 ## These no longer calculated `on the fly' and should be handled within the data/population folder.
@@ -63,9 +44,63 @@ for (region in regions) {
 	}
 } 
 
+<<<<<<< HEAD
 ## Where to store the data outputs.
 # If end.gp and/or end.hosp are NULL then read from data files
+||||||| parent of 3030bc6... Generalise files for multiple regions
+# If end.gp and/or end.hosp are none then read from data files
 set.end.date <- function(user.value, data.file) {
+	if (is.null(user.value)) {
+		return(max(length(readLines(data.file))))
+	} else {
+		return(user.value)
+	}
+}
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+gp.data <- NULL
+gp.denom <- NULL
+if (gp.flag == 1) {
+	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
+	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
+	end.gp <- set.end.date(end.gp, gp.data)
+}
+hosp.data <- NULL
+if (hosp.flag == 1) {
+	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
+	end.hosp <- set.end.date(end.hosp, hosp.data)
+}
+
+# If end.gp and/or end.hosp are none then read from data files
+=======
+# If end.gp and/or end.hosp are none then read from data files
+set.end.date <- function(user.value, data.file) {
+	if (is.null(user.value)) {
+		return(max(length(readLines(data.file))))
+	} else {
+		return(user.value)
+	}
+}
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+gp.data <- NULL
+gp.denom <- NULL
+if (gp.flag == 1) {
+	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
+	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
+	end.gp <- set.end.date(end.gp, gp.data)
+}
+hosp.data <- NULL
+if (hosp.flag == 1) {
+	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
+	end.hosp <- set.end.date(end.hosp, hosp.data)
+}
+# If end.gp and/or end.hosp are none then read from data files
+>>>>>>> 3030bc6... Generalise files for multiple regions
+set.end.date <- function(user.value, data.file) {
+	if (length(data.file) > 1) data.file <- data.file[1]
 	if (is.null(user.value)) {
 		return(length(readLines(data.file)))
 	} else {
