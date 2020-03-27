@@ -75,8 +75,22 @@ if(exists("var.priors")){
     }
   
   for(inti in 1:npar){
-    params[[inti]] <- readBin(coda.files[[inti]], double(), n = i.saved * parameter.dims[inti])
-    params[[inti]] <- array(params[[inti]], dim = c(parameter.dims[inti], i.saved))
+	seek(coda.files[[inti]], -8, origin="end")
+	num.params <- readBin(coda.files[[inti]], "integer")
+	num.samples <- readBin(coda.files[[inti]], "integer")
+	if (num.params != parameter.dims[inti]) {
+		print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
+					"but", num.params, "found. Discarding the extra ones."))
+	}
+	expected.num.samples <- parameter.dims[inti] * i.saved
+	if (num.samples != expected.num.samples) {
+		print(paste("WARNING: Expected", expected.num.samples, "samples for", parameter.names[inti],
+					"but", num.samples, "found. Discarding the extra ones."))
+	}
+	seek(coda.files[[inti]], 0)
+	params[[inti]] <- readBin(coda.files[[inti]], "double", num.samples * num.params)
+ 	params[[inti]] <- array(params[[inti]], dim = c(num.params, num.samples))
+	params[[inti]] <- params[[inti]][1:parameter.dims[inti], 1:i.saved, drop=FALSE]
   }
   names(params) <- parameter.names
   ## ## ## ##
