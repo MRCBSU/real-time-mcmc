@@ -5,8 +5,11 @@
 date.of.runs <- "20200325"    	# What date is in the input file names?
 regions <- c("ENGLAND")			# Regions under study
 
+# How big an effect should be assumed for the introduction of lockdown?
+# Options are "lo", "med", or "high"
+scenario.name <- "med"
+
 # Choose the name of the subdirectory in model_runs to use
-scenario.name <- "med" # Optional component of output directory
 subdir.name <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario.name)
 out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
