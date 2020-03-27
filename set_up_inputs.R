@@ -10,7 +10,7 @@ regions <- c("ENGLAND")			# Regions under study
 scenario.name <- "med"
 
 # Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0("initial_run_deaths_delaysensENG", date.of.runs, "_", scenario.name)
+subdir.name <- paste0(date.of.runs, "_", scenario.name)
 out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
 # Number of days to run the simulation for.
