@@ -1,7 +1,7 @@
-library(assertr)
-library(readr)
-library(dplyr)
-library(lubridate)
+suppressMessages(library(assertr))
+suppressMessages(library(readr))
+suppressMessages(library(dplyr))
+suppressMessages(library(lubridate))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis
@@ -9,7 +9,7 @@ library(lubridate)
 
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
-date.data <- today() - days(1) %>% format("%Y%m%d")
+date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 

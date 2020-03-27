@@ -1,6 +1,6 @@
-library(readr)
-library(lubridate)
-library(dplyr)
+suppressMessages(library(readr))
+suppressMessages(library(lubridate))
+suppressMessages(library(dplyr))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis
@@ -8,7 +8,7 @@ library(dplyr)
 
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
-date.data <- today() - days(1) %>% format("%Y%m%d")
+date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 
