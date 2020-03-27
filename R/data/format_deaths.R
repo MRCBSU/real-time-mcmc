@@ -7,14 +7,18 @@ library(dplyr)
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
+## YYYYMMDD string, used in filenames and reporting lag
+date.data <- "20200325"
+
+## Where to find the data, if NULL use command line argument
+linelist.loc <- NULL
+# linelist.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
+
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
 	death_date = "dod",
 	finalid = "finalid"
 )
-
-## YYYYMMDD string, used in filenames and reporting lag
-date.data <- "20200325"
 
 ## Inputs that are dependent on the output required.
 reporting.delay <- 2
@@ -57,8 +61,13 @@ death.col.args[[col.names[["finalid"]]]] <- col_double()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 ## Read the file and rename columns
+if (is.null(linelist.loc)) {
+	input.loc = commandArgs(trailingOnly = TRUE)[1]
+} else {
+	input.loc = build.data.filepath(subdir = "raw", linelist.loc)
+}
 dth.dat <- read_csv(
-		build.data.filepath(subdir = "raw", date.data, " COVID19 Deaths.csv"),
+		input.loc,
 		col_types = death.cols
 	) %>%
 	rename(!!!col.names) %>%
