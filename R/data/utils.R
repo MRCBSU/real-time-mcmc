@@ -9,7 +9,7 @@ build.data.filepath <- function(subdir, ...) {
 
 ## Parse dates which might be in weird formats or even have times
 fuzzy_date_parse <- function(date) {
-	floor_date(parse_date_time(date, c('dmyT', 'ymdT', 'dmyR', 'ymdR'), truncated=1))
+	as_date(parse_date_time(date, c('dmyT', 'ymdT', 'dmyR', 'ymdR'), truncated=1))
 }
 
 
