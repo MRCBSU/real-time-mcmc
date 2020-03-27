@@ -95,11 +95,11 @@ proposal_variance = 0.0001;
 }
 
 
-log_p_lambda_0 = { param_value = `r rep(value.nu, 2)`;
+log_p_lambda_0 = { param_value = `r rep(value.nu, nregs)`;
 
-prior_distribution = 4, 4;
+prior_distribution = `r paste(rep(4, nregs), collapse = ", ")`;
 
-prior_parameters = `r paste(rep(pars.nu, 2), collapse = ", ")`;
+prior_parameters = `r paste(rep(pars.nu, nregs), collapse = ", ")`;
 
 proposal_variance = 0.005;
 
