@@ -42,7 +42,11 @@ target.dir <- out.dir
 source(file.path(rfile.dir, "input_extraction_fns.R"))
 
 ###### DIRECTORY CONTAINING MCMC OUTPUT
-load(file.path(target.dir, "mcmc.RData"))
+mcmc.file <- file.path(target.dir, "mcmc.RData")
+if (!file.exists(mcmc.file)) {
+	source(file.path(rfile.dir, "tracePlots.R"))
+}
+load(mcmc.file)
 
 ## Last day of data
 nt <- max(end.gp, end.hosp)
