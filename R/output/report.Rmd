@@ -1,0 +1,13 @@
+---
+title: Real-time modelling results
+---
+
+## Numerical summaries
+`r knitr::kable(numerical.summary %>% select(-c(quantile_list)))`
+Median (95% CrI) values for projection of relevant quantities.
+
+## Projections
+```r
+#library(ggplot2)
+
+```
