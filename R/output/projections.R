@@ -91,7 +91,6 @@ for(reg in regions){
 }
 
 ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
-#ifr <- params$prop_case_to_hosp
 source(file.path(R.dir, "convolution.R"))
 source(file.path(R.dir, "gamma_fns.R"))
 ifh <- (3*ifr) + 0.02
@@ -136,7 +135,7 @@ for(reg in regions){
     ICU[[reg]] <- apply(ICU[[reg]], 1, conv, b = F.icu)[1:(dim(ICU[[reg]])[2]), , drop = F]
     D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
     D[[reg]] <- apply(D[[reg]], 1, function(x) x * t(ifr))
-    D[[reg]] <- array(t(D[[reg]]), dim = dim(ICU[[reg]]))
+    D[[reg]] <- t(D[[reg]])
     
     ## ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
     ## D[[reg]] <- apply(D[[reg]], c(1, 3), sum)

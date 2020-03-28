@@ -44,21 +44,45 @@ for (region in regions) {
 	}
 } 
 
-<<<<<<< HEAD
-## Where to store the data outputs.
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+
+# If end.gp and/or end.hosp are none then read from data files
+set.end.date <- function(user.value, data.file) {
+	if (is.null(user.value)) {
+		return(max(length(readLines(data.file))))
+	} else {
+		return(user.value)
+	}
+}
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+gp.data <- NULL
+gp.denom <- NULL
+if (gp.flag == 1) {
+	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
+	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
+	end.gp <- set.end.date(end.gp, gp.data)
+}
+hosp.data <- NULL
+if (hosp.flag == 1) {
+	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
+	end.hosp <- set.end.date(end.hosp, hosp.data)
+}
+
+set.end.date <- function(user.value, data.file) {
+	if (is.null(user.value)) {
+		return(max(length(readLines(data.file))))
+	} else {
+		return(user.value)
+	}
+}
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
 # If end.gp and/or end.hosp are NULL then read from data files
-||||||| parent of 3030bc6... Generalise files for multiple regions
-# If end.gp and/or end.hosp are none then read from data files
-set.end.date <- function(user.value, data.file) {
-	if (is.null(user.value)) {
-		return(max(length(readLines(data.file))))
-	} else {
-		return(user.value)
-	}
-}
-# Where are the data files?
-dir.data <- file.path(proj.dir, "data")
-source(file.path(proj.dir, "R/data/utils.R"))
 gp.data <- NULL
 gp.denom <- NULL
 if (gp.flag == 1) {
@@ -72,68 +96,9 @@ if (hosp.flag == 1) {
 	end.hosp <- set.end.date(end.hosp, hosp.data)
 }
 
-# If end.gp and/or end.hosp are none then read from data files
-=======
-# If end.gp and/or end.hosp are none then read from data files
-set.end.date <- function(user.value, data.file) {
-	if (is.null(user.value)) {
-		return(max(length(readLines(data.file))))
-	} else {
-		return(user.value)
-	}
-}
-# Where are the data files?
-dir.data <- file.path(proj.dir, "data")
-source(file.path(proj.dir, "R/data/utils.R"))
-gp.data <- NULL
-gp.denom <- NULL
-if (gp.flag == 1) {
-	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
-	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
-	end.gp <- set.end.date(end.gp, gp.data)
-}
-hosp.data <- NULL
-if (hosp.flag == 1) {
-	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
-	end.hosp <- set.end.date(end.hosp, hosp.data)
-}
-# If end.gp and/or end.hosp are none then read from data files
->>>>>>> 3030bc6... Generalise files for multiple regions
-set.end.date <- function(user.value, data.file) {
-	if (length(data.file) > 1) data.file <- data.file[1]
-	if (is.null(user.value)) {
-		return(length(readLines(data.file)))
-	} else {
-		return(user.value)
-	}
-}
-
-gp.data <- ifelse(gp.flag,
-                  build.data.filepath("RTM_format", "linelist", date.of.runs, "_", regions, ".txt"),
-                  "NULL")
-gp.denom <- ifelse(gp.flag,
-                   build.data.filepath("RTM_format", "ll_denom", date.of.runs, "_", regions, ".txt"),
-                   "NULL")
-if(is.null(end.gp))
-    end.gp <- ifelse(gp.flag, set.end.date(end.gp, gp.data), start.gp)
-
-hosp.data <- ifelse(hosp.flag,
-                    build.data.filepath("RTM_format/deaths",
-                                        "deaths",
-                                        date.of.runs,
-                                        "_",
-                                        regions,
-                                        ".txt"),
-                    "NULL")
-if(is.null(end.hosp))
-    end.hosp <- ifelse(hosp.flag, set.end.date(end.hosp, hosp.data), start.hosp)
-
-## Data file locations: shouldn't need to be changed, calculated based on above
-dir.data <- file.path(proj.dir, "data")
 ## Get the number of age groups and regions
 nages <- length(age.grps)
 nregs <- length(regions)
-
 
 ## Contact Model
 if(!exists("cm.breaks")) cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
