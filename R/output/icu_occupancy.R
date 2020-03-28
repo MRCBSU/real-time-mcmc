@@ -57,3 +57,13 @@ lines(dates.used, q.NNI.cum[3, ], lty = 3)
 abline(v = dates.used[nt], col = "red")
 dev.off()
 
+pdf(file.path(target.dir, "Deaths_cum.pdf"))
+D.cum <- apply(D$East, 2, cumsum)
+q.D.cum <- apply(D.cum, 1, quantile, probs = c(0.025, 0.5, 0.975))
+plot(dates.used, q.D.cum[2, ], type = "l", main = "Cumulative deaths count", ylab = "Cumulative deaths", xlab = "Day", ylim = c(0, max(q.D.cum)))
+lines(dates.used, q.D.cum[1, ], lty = 3)
+lines(dates.used, q.D.cum[3, ], lty = 3)
+abline(v = dates.used[nt], col = "red")
+dev.off()
+
+save(q.occupancy, q.NNI.cum, q.D.cum, file = file.path(target.dir, "occupancy_results.RData"))
