@@ -13,8 +13,8 @@ date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-linelist.loc <- NULL
-# linelist.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
+deaths.loc <- NULL
+# deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
@@ -85,10 +85,10 @@ fix.dates <- function(df) {
 }
 
 ## Read the file and rename columns
-if (is.null(linelist.loc)) {
+if (is.null(deaths.loc)) {
 	input.loc = commandArgs(trailingOnly = TRUE)[1]
 } else {
-	input.loc = build.data.filepath(subdir = "raw", linelist.loc)
+	input.loc = build.data.filepath(subdir = "raw", deaths.loc)
 }
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(
