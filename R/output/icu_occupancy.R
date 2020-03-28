@@ -1,4 +1,24 @@
-source('R/output/projections.R')
+## Location of this script
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+
+## Where are various directories?
+file.loc <- dirname(thisFile())
+
+source(file.path(file.loc, 'projections.R'))
 
 element.leave.time <- function(i, row) {
 	result <- rep(0, length(row))
