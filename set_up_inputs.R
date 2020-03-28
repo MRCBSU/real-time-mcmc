@@ -76,11 +76,33 @@ for (region in regions) {
 	}
 } 
 
+<<<<<<< HEAD
 ## Where to store the data outputs.
 # If end.gp and/or end.hosp are NULL then read from data files
+||||||| parent of 823ad42... Correct data filenames when running for not whole of England
+
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
+gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
+hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_ENGLAND.txt")
+
+# If end.gp and/or end.hosp are none then read from data files
+=======
+
+# Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
+gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
+hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
+
+# If end.gp and/or end.hosp are none then read from data files
+>>>>>>> 823ad42... Correct data filenames when running for not whole of England
 set.end.date <- function(user.value, data.file) {
 	if (is.null(user.value)) {
-		return(length(readLines(data.file)))
+		return(max(length(readLines(data.file))))
 	} else {
 		return(user.value)
 	}
