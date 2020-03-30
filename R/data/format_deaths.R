@@ -70,8 +70,9 @@ within.range <- function(dates) {
 
 plausible.death.date <- function(x) {
 	death.within.range <- within.range(x$Date)
+	onset.within.range <- is.na(x$Onset) | within.range(x$Onset)
 	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
-	return(death.within.range & after.onset)
+	return(death.within.range & onset.within.range & after.onset)
 }
 
 heuristically.swap.day.and.month <- function(dates) {
