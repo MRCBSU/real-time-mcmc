@@ -54,7 +54,7 @@ proposal_variance = 0.03;
 
 prop_case_to_GP_consultation = { param_value = `r value.pgp`;
 
-prior_distribution = 1;
+prior_distribution = 3;
 
 prior_parameters = `r paste(pars.pgp, collapse = ", ")`;
 
