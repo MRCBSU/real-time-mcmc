@@ -54,7 +54,7 @@ proposal_variance = 0.03;
 
 prop_case_to_GP_consultation = { param_value = `r value.pgp`;
 
-prior_distribution = 3;
+prior_distribution = `r ifelse(gp.flag, 3, 1)`;
 
 prior_parameters = `r paste(pars.pgp, collapse = ", ")`;
 
@@ -131,7 +131,7 @@ prior_distributions = 1;
 
 prop_case_to_hosp = { param_value = `r value.ifr`;
 
-prior_distributions = 3;
+prior_distributions = `r ifelse(hosp.flag, 3, 1)`;
 
 prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
 
