@@ -66,9 +66,9 @@ regions.total.population <- get.variable.value(target.dir, "regions_population")
 source(file.path(proj.dir, "set_up_pars.R"))
 var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "day_of_week_effects")
 ### PRIOR INFORMATION
-var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), list(dnorm, dnorm), NULL, NULL, list(dbeta),
+var.priors <- list(distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), rep(list(dnorm), r), NULL, NULL, list(dbeta),
                                        list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, pars.nu, NA, NA, pars.pgp,
+                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, r), NA, NA, pars.pgp,
                                      pars.ifr, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.
@@ -132,9 +132,9 @@ for(inti in 1:npar)
             curve(prior.density(x, temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)]),
                   min(params[[inti]][, intj]), max(params[[inti]][, intj]), lty = 4, lwd = 1.5, add = TRUE, col = "red"
                   )
+        start.index <- end.index
           }
         
-        start.index <- end.index
 
       }
 

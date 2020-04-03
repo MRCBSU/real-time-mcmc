@@ -71,6 +71,8 @@ prior_parameters = `r paste(contact.pars, collapse = ", ")`;
 
 proposal_variance = `r paste(c(0, rep(0.001, length(contact.reduction) - 1)), collapse = ", ")`;
 
+proposal_variance = 0.1, 0.1;
+
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
