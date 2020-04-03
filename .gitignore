@@ -2,6 +2,7 @@ rtm
 rtm_debug
 rtm_optim
 **.swp
+**.swo
 build/**
 outputs/**
 .vscode
