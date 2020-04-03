@@ -35,7 +35,7 @@ out.file <- function(filename) {
 source(file.path(proj.dir, "set_up_inputs.R"))
 
 if (!file.exists(out.file("occupancy_results.RData"))) {
-	source(file.path(file.loc, "icu_occupancy.R"))
+	source(file.path(file.loc, "icu_occupancy.R"), echo=TRUE)
 }
 load(out.file("plotted_summaries.RData"))
 load(out.file("occupancy_results.RData"))
@@ -83,14 +83,16 @@ plot.q <- function(q, ylab) {
 D.data <- read_tsv(hosp.data,  col_names = c("date", "incidence")) %>%
 	mutate(date = ymd(date), cum = cumsum(incidence)) %>%
 	filter(date >= ymd("2020-03-10"))
-ll.data <- read_tsv(gp.data,  col_names = c("date", "incidence")) %>%
-	mutate(date = ymd(date), cum = cumsum(incidence)) %>%
-	filter(date >= ymd("2020-03-10"))
-ll.data.plot <- ggplot(data = ll.data, aes(x = date, y = incidence)) +
-	geom_col() +
-	xlab("Date of lab report") +
-	ylab("Confirmed cases")
-ggsave(filename = out.file("confirmed_cases_data.png"), plot = ll.data.plot, width = 7, height = 15, unit = "cm")
+if (gp.flag == 1) {
+	ll.data <- read_tsv(gp.data,  col_names = c("date", "incidence")) %>%
+		mutate(date = ymd(date), cum = cumsum(incidence)) %>%
+		filter(date >= ymd("2020-03-10"))
+	ll.data.plot <- ggplot(data = ll.data, aes(x = date, y = incidence)) +
+		geom_col() +
+		xlab("Date of lab report") +
+		ylab("Confirmed cases")
+	ggsave(filename = out.file("confirmed_cases_data.png"), plot = ll.data.plot, width = 7, height = 15, unit = "cm")
+}
 D.data.plot <- ggplot(data = D.data, aes(x = date, y = incidence)) +
 	geom_col() +
 	xlab("Date of death") +

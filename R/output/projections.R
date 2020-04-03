@@ -89,9 +89,6 @@ for(reg in regions){
     dev.off()
 
 }
-
-ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
-#ifr <- params$prop_case_to_hosp
 source(file.path(R.dir, "convolution.R"))
 source(file.path(R.dir, "gamma_fns.R"))
 ifh <- (3*ifr) + 0.02
@@ -118,8 +115,8 @@ delay.to.death <- list(
     incub.sd = 1.41,
     disease.mean = 0,
     disease.sd = 0,
-    report.mean = ddelay.mean,
-    report.sd = ddelay.sd
+    report.mean = 17.8,
+    report.sd = 8.9
     )
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
@@ -136,7 +133,7 @@ for(reg in regions){
     ICU[[reg]] <- apply(ICU[[reg]], 1, conv, b = F.icu)[1:(dim(ICU[[reg]])[2]), , drop = F]
     D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
     D[[reg]] <- apply(D[[reg]], 1, function(x) x * t(ifr))
-    D[[reg]] <- array(t(D[[reg]]), dim = dim(ICU[[reg]]))
+    D[[reg]] <- t(D[[reg]]) ## NEEDS SOME CONSIDERATION OF AGE
     
     ## ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
     ## D[[reg]] <- apply(D[[reg]], c(1, 3), sum)
@@ -160,7 +157,7 @@ for(reg in regions){
     abline(v = dates.used[nt], col = "red")
     dev.off()
 
-    pdf(file.path(target.dir, paste0("Deaths_projections_", reg, ".pdf")))
+    pdf(paste0("Deaths_projections_", reg, ".pdf"))
 
     plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.D[[reg]])))
     lines(dates.used, q.D[[reg]][1, ], lty = 3)
@@ -253,5 +250,4 @@ for(reg in regions){
 ## dev.off()
 
 save(q.ICU, q.D, q.NNI, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
-
 save(nni, icu, hosp, deaths, file = "table_summaries.RData")
