@@ -53,15 +53,23 @@ add.numerical.summary.for.day <- function(x, day) {
 	return(do.call(mutate, 	args))
 }
 
-numerical.summary <- tribble(
-	~output_name,				~quantile_list,
-	"Cumulative infections",	q.NNI.cum,
-	"Cumulative deaths",		q.D.cum,
-	"Current ICU occupancy",	q.occupancy,
-	) %>%
-	add.numerical.summary.for.day(today()) %>%
-	add.numerical.summary.for.day(today() + 7) %>%
-	add.numerical.summary.for.day(today() + 14)
+reg.summary <- c()
+for (reg in names(q.NNI.cum)) {
+	names <- paste0(
+		c("Cumulative infections", "Cumulative deaths"),
+		" (", reg, ")"
+	)
+	reg.summary <- c(reg.summary, tribble(
+			~output_name,	~quantile_list,
+			names[1],		q.NNI.cum[[reg]],
+			names[2],		q.D.cum[[reg]],
+		) %>%
+		add.numerical.summary.for.day(today()) %>%
+		add.numerical.summary.for.day(today() + 7) %>%
+		add.numerical.summary.for.day(today() + 14)
+	)
+}
+numerical.summary <- rbind(reg.summary)
 
 
 transform.q <- function(x, str = "Mid"){
