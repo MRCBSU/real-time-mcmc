@@ -2,12 +2,96 @@
 title: Real-time modelling results
 ---
 
+```{r init}
+library(ggplot2)
+regions <- names(NNI)
+knitr::opts_chunk$set(fig.width=20, fig.height=40) 
+```
+
+## Data
+
+```{r hosp-data, fig.width = 18, fig.height = 15}
+col_types <- cols(
+  date = col_date(format = ""),
+  incidence = col_double()
+)
+
+reg.D.data = list()
+for (reg in regions) {
+	reg.D.data[[reg]] <- read_tsv(hosp.data[[reg]], col_types = col_types, 
+	                              col_names = c("date", "incidence")) %>%
+		mutate(date = ymd(date), cum = cumsum(incidence), region = reg) %>%
+		filter(date >= ymd("2020-03-10"))
+}
+D.data <- do.call(rbind, reg.D.data) %>% mutate(region_friendly = str_replace_all(region, "_", " "))
+ggplot(D.data, aes(x = date, y = incidence, colour = region_friendly)) +
+  geom_line() +
+  labs(x = 'Date', y = 'Number of deaths', colour = 'Region', title = 'Incidence of deaths')
+```
+
+
 ## Numerical summaries
+
 `r knitr::kable(numerical.summary %>% select(-c(quantile_list)))`
 Median (95% CrI) values for projection of relevant quantities.
 
 ## Projections
-```r
-#library(ggplot2)
+
+```{r plot-func}
+make.grid.plot <- function(q, ylab, data = NULL, data.y = "incidence") {
+  plots = list(ncol = 2)
+  for (reg in regions) {
+  	df <- transform.q(q[[reg]])
+  	plots[[reg]] <- plot.q(df, ylab) +
+  	  theme(text = element_text(size=20),
+            axis.text.x = element_text(size = 15, angle=90, hjust=1)) +
+  	  scale_x_date(date_breaks = "3 days") +
+  	  labs(x = "", title = str_replace_all(reg, "_", " "))
+  	if (!is.null(data)) {
+  	  reg.data <- data %>% filter(region == reg)
+  	  plots[[reg]] <- plots[[reg]] +
+  	                    geom_point(
+  	                      aes(x = date, y = incidence),
+  	                      data = reg.data,
+  	                      inherit.aes = FALSE
+  	                   )
+  	}
+  }
+  do.call(gridExtra::grid.arrange, plots)
+}
+```
+
+
+### Infections
+
+```{r NNI}
+make.grid.plot(q.NNI, "Incidence")
+```
+
+```{r NNI-cum}
+make.grid.plot(q.NNI.cum, "Cumulative")
+```
+
+
+### Deaths
+
+```{r deaths}
+make.grid.plot(q.D, "Incidence", D.data)
+```
+
+```{r deaths-cum}
+make.grid.plot(q.D.cum, "Cumulative")
+```
+
+```{r ICU, echo = FALSE, eval = FALSE}
+
+	#df.icu.occ <- transform.q(q.occupancy)
+	#plot.icu.occ <- plot.q(df.icu.occ, "ICU occupancy")
+	#ggsave(filename = out.file("icu_cum", reg, ".png"), plot = plot.icu.occ)
+
+	#df.icu.cum <- transform.q(q.ICU[[reg]])
+	#plot.icu.cum <- plot.q(df.icu.cum, "ICU admissions")
+	#ggsave(filename = out.file("icu_admission", reg, ".png"), plot = plot.icu.cum)
+}
 
 ```
