@@ -13,7 +13,7 @@ date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- NULL
+deaths.loc <- "20200403 COVID19 Deaths.csv" ## NULL
 # deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 
 ## Map our names for columns (LHS) to data column names (RHS)
@@ -24,9 +24,9 @@ col.names <- list(
 )
 
 ## Inputs that are dependent on the output required.
-reporting.delay <- 2
-## region.def.str <- "ifelse(nhsregionname == \"London\", \"London\", \"Outside_London\")"
-region.def.str <- "\"ENGLAND\""
+reporting.delay <- 0
+region.def.str <- "ifelse(nhser_name == \"London\", \"London\", \"Outside_London\")"
+## region.def.str <- "\"ENGLAND\""
 ## death.col.name <- "PATIENT_DEATH_DATE"
 
 
@@ -88,24 +88,22 @@ fix.dates <- function(df) {
 if (is.null(deaths.loc)) {
 	input.loc = commandArgs(trailingOnly = TRUE)[1]
 } else {
-	input.loc = build.data.filepath(subdir = "raw", deaths.loc)
+	input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
 }
 print(paste("Reading from", input.loc))
-dth.dat <- read_csv(
-		input.loc,
-		col_types = death.cols
-	) %>%
-	rename(!!!col.names) %>%
+dth.dat <- read_csv(input.loc,
+                    col_types = death.cols) %>%
+    rename(!!!col.names) %>%
     mutate(Date = fuzzy_date_parse(death_date),
-		   Onset = fuzzy_date_parse(onset_date)) %>%
-	fix.dates %>%
-	mutate(plausible_death_date = plausible.death.date(.))
+           Onset = fuzzy_date_parse(onset_date)) %>%
+    ## fix.dates %>%
+    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
 
 if (!all(dth.dat$plausible_death_date)) {
-	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
-	print("WARNING: The following rows have implausible death dates and have been excluded: ")
-	print(implausible.dates %>% select(c(finalid, Date, Onset, swap_death, swap_onset)))
-	dth.dat <- dth.dat %>% filter(plausible_death_date)
+    implausible.dates <- dth.dat %>% filter(!plausible_death_date)
+    print("WARNING: The following rows have implausible death dates and have been excluded: ")
+    print(implausible.dates %>% select(c(finalid, Date, Onset)))## , swap_death, swap_onset)))
+    dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
 ## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
@@ -134,14 +132,34 @@ rtm.dat <- dth.dat %>%
 
 rtm.dat$fDate <- lubridate::as_date(rtm.dat$fDate)
 
-rtm.dat <- arrange(rtm.dat, fDate)
+rtm.dat <- rtm.dat %>%
+    arrange(fDate) %>%
+    filter(!is.na(Region))
 
 ## Write rtm.dat to data file
 for(reg in levels(rtm.dat$Region)){
     write.table(filter(rtm.dat, Region == reg) %>%
                select(fDate, count),
-            file = build.data.filepath("RTM_format", "deaths", date.data, "_", reg, ".txt"),
+            file = build.data.filepath("RTM_format/deaths", "deaths", date.data, "_", reg, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
 }
+
+## Save a quick plot of the data...
+require(ggplot2)
+gp <- ggplot(rtm.dat, aes(x = fDate, y = count, color = Region)) +
+    geom_line() +
+    geom_point() +
+    theme_minimal() +
+    ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
+    xlab("Date of death") +
+    ylab("#Deaths") +
+    theme(
+        legend.position = "top",
+        legend.justification = "left",
+        )
+ggsave(build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf"),
+       gp,
+       width = 8.15,
+       height = 6)

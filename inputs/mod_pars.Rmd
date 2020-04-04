@@ -1,6 +1,6 @@
 gp_negbin_overdispersion = { param_value = `r value.eta`;
 
-prior_distribution = 2;
+prior_distribution = `r 1 + gp.flag`;
 
 prior_parameters = `r paste(pars.eta, collapse = ", ")`;
 
@@ -11,7 +11,7 @@ proposal_variance = 1;
 
 hosp_negbin_overdispersion = { param_value = `r value.eta.h`;
 
-prior_distribution = 2;
+prior_distribution = `r 1 + hosp.flag`;
 
 prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
 
@@ -65,7 +65,11 @@ proposal_variance = 0.002;
 
 contact_parameters = { param_value = `r paste(as.character(contact.reduction), collapse = ", ")`;
 
-prior_distribution = `r paste(rep(1, length(contact.reduction)), collapse = ", ")`;
+prior_distribution = `r paste(contact.dist, collapse = ", ")`;
+
+prior_parameters = `r paste(contact.pars, collapse = ", ")`;
+
+proposal_variance = `r paste(c(0, rep(0.001, length(contact.reduction) - 1)), collapse = ", ")`;
 
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
@@ -95,7 +99,7 @@ proposal_variance = 0.0001;
 }
 
 
-log_p_lambda_0 = { param_value = `r rep(value.nu, nregs)`;
+log_p_lambda_0 = { param_value = `r paste(rnorm(nregs, pars.nu[1], pars.nu[2]), collapse = ", ")`;
 
 prior_distribution = `r paste(rep(4, nregs), collapse = ", ")`;
 

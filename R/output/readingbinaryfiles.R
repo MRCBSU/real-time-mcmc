@@ -82,9 +82,9 @@ if(exists("var.priors")){
 		print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
 					"but", num.params, "found. Discarding the extra ones."))
 	}
-	expected.num.samples <- parameter.dims[inti] * i.saved
-	if (num.samples != expected.num.samples) {
-		print(paste("WARNING: Expected", expected.num.samples, "samples for", parameter.names[inti],
+	## expected.num.samples <- parameter.dims[inti] * i.saved
+	if (num.samples != i.saved) {
+		print(paste("WARNING: Expected", i.saved, "samples for", parameter.names[inti],
 					"but", num.samples, "found. Discarding the extra ones."))
 	}
 	seek(coda.files[[inti]], 0)

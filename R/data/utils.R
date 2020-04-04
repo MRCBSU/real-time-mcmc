@@ -3,7 +3,7 @@ library(assertr)
 build.data.filepath <- function(subdir, ...) {
 	dir <- file.path(dir.data, subdir)
 	filename <- paste0(...)
-	return(file.path(dir, filename))
+	return(gsub("//", "/", file.path(dir, filename)))
 }
 
 

@@ -2,20 +2,20 @@
 ## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
 #######################################################################
 
-date.of.runs <- "20200325"    	# What date is in the input file names?
-regions <- c("ENGLAND")			# Regions under study
+date.of.runs <- "20200403"    	# What date is in the input file names?
+regions <- c("London", "Outside_London")	# Regions under study
 
 # How big an effect should be assumed for the introduction of lockdown?
 # Options are "lo", "med", or "high"
-scenario.name <- "med"
+scenario.name <- "L_OL_variable"
 
 # Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.of.runs, "_", scenario.name)
+subdir.name <- paste0(date.of.runs, "/", scenario.name)
 out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
-ndays <- 91
+ndays <- 99
 
 #######################################################################
 ## INPUT SETTINGS
@@ -24,27 +24,15 @@ ndays <- 91
 # The 'gp' stream in the code is linked to confirmed cases data
 gp.flag <- 0					# 0 = off, 1 = on
 start.gp <- 15					# What day to start running the likelihood on
-end.gp <- NULL					# Total days of data, or NULL to infer from length of file
+end.gp <- 15					# Total days of data, or NULL to infer from length of file
 
 # The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 start.hosp <- 1					# What day to start running the likelihood on
-end.hosp <- NULL				# Total days of data, or NULL to infer from length of file
+end.hosp <- 43				# Total days of data, or NULL to infer from length of file
 
 viro.data <- NULL
 viro.denom <- NULL
-
-# Map what we call regions (LHS) to the ONS region(s) they contain
-# ONS puts country-level regions in caps
-# See the data/popn2018_all.csv file for all possible options
-ons.regions <- list(
-	"London" = "LONDON",
-    "Outside_London" = c("NORTH EAST", "NORTH WEST", "YORKSHIRE AND THE HUMBER",
-						 "EAST MIDLANDS", "WEST MIDLANDS", "EAST", "SOUTH EAST",
-						 "SOUTH WEST"),
-	"UNITED_KINGDOM" = "UNITED KINGDOM",
-	"ENGLAND" = "ENGLAND"
-)
 
 # Vector of age-group descriptions
 age.grps <- "All";
@@ -58,23 +46,25 @@ cm.mults <- c(paste0("single_age_mult", 0:1, ".txt"))
 
 
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############
+source(file.path(proj.dir, "R/data/utils.R"))
 
-# Check that regions have ONS population specified
+## Where are the data files?
+dir.data <- file.path(proj.dir, "data")
+
+## Map what we call regions (LHS) to the NHS region(s) they contain
+## These no longer calculated `on the fly' and should be handled within the data/population folder.
+## Use objects nhs.regions and pop
+load(build.data.filepath("population", "pop_nhs.RData"))
+
+## Check that regions have ONS population specified
 for (region in regions) {
-	if (!region %in% names(ons.regions)) {
-		stop(paste(region, "is not specified in `ons.regions`"))
+	if (!region %in% names(nhs.regions)) {
+		stop(paste(region, "is not specified in `nhs.regions`"))
 	}
 } 
 
-
-# Where are the data files?
-dir.data <- file.path(proj.dir, "data")
-source(file.path(proj.dir, "R/data/utils.R"))
-gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
-gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
-hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_ENGLAND.txt")
-
-# If end.gp and/or end.hosp are none then read from data files
+## Where to store the data outputs.
+# If end.gp and/or end.hosp are NULL then read from data files
 set.end.date <- function(user.value, data.file) {
 	if (is.null(user.value)) {
 		return(length(readLines(data.file)))
@@ -82,9 +72,28 @@ set.end.date <- function(user.value, data.file) {
 		return(user.value)
 	}
 }
-end.gp <- set.end.date(end.gp, gp.data)
-end.hosp <- set.end.date(end.hosp, hosp.data)
-# Data file locations: shouldn't need to be changed, calculated based on above
+
+gp.data <- ifelse(gp.flag,
+                  build.data.filepath("RTM_format", "linelist", date.of.runs, "_", regions, ".txt"),
+                  "NULL")
+gp.denom <- ifelse(gp.flag,
+                   build.data.filepath("RTM_format", "ll_denom", date.of.runs, "_", regions, ".txt"),
+                   "NULL")
+if(is.null(end.gp))
+    end.gp <- ifelse(gp.flag, set.end.date(end.gp, gp.data), start.gp)
+
+hosp.data <- ifelse(hosp.flag,
+                    build.data.filepath("RTM_format/deaths",
+                                        "deaths",
+                                        date.of.runs,
+                                        "_",
+                                        regions,
+                                        ".txt"),
+                    "NULL")
+if(is.null(end.hosp))
+    end.hosp <- ifelse(hosp.flag, set.end.date(end.hosp, hosp.data), start.hosp)
+
+## Data file locations: shouldn't need to be changed, calculated based on above
 dir.data <- file.path(proj.dir, "data")
 ## Get the number of age groups and regions
 nages <- length(age.grps)

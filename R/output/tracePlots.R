@@ -66,16 +66,16 @@ regions.total.population <- get.variable.value(target.dir, "regions_population")
 source(file.path(proj.dir, "set_up_pars.R"))
 var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "day_of_week_effects")
 ### PRIOR INFORMATION
-var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, NULL, NULL, NULL, list(dgamma), list(dnorm), NULL, NULL, list(dbeta),
+var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), list(dnorm, dnorm), NULL, NULL, list(dbeta),
                                        list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, NA, NA, NA, pars.egr, pars.nu, NA, NA, pars.pgp,
+                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, pars.nu, NA, NA, pars.pgp,
                                      pars.ifr, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.
 save(var.names, var.priors, file = file.path(target.dir, "prior.spec.RData"))
 ## ## ######################################################
 
-###### READ IN THE MCMC CHAIN from binary output files
+## ###### READ IN THE MCMC CHAIN from binary output files
 source(file.path(rfile.dir, "readingbinaryfiles.R"))
 
 var.priors <- lapply(var.priors, function(x) x[stochastic.flags])
@@ -161,7 +161,7 @@ if(is.null(params$infectious_period))
      prior.aip <- min.waiting.time + rgamma(i.saved, var.priors$parameters$infectious_period[1], rate = var.priors$parameters$infectious_period[2]) ## will need editing for multiple regions      
    }
 
-posterior.lp <- min.waiting.time
+posterior.lp <- min.waiting.time + value.dl
 
 if(ncol(posterior.aip) != ncol(posterior.egr))
   {
@@ -169,7 +169,7 @@ if(ncol(posterior.aip) != ncol(posterior.egr))
   } else posterior.R0 <- R0.func(posterior.egr, posterior.aip, posterior.lp)
 while(ncol(posterior.R0) < r) posterior.R0 <- cbind(posterior.R0, posterior.R0[, ncol(posterior.R0)])
 prior.egr <- rgamma(i.saved, var.priors$parameters$exponential_growth_rate[1], rate = var.priors$parameters$exponential_growth_rate[2])
-prior.lp <- min.waiting.time
+prior.lp <- min.waiting.time + value.dl
 prior.R0 <- R0.func(prior.egr, prior.aip, prior.lp)
 
 for(inti in 1:ncol(posterior.R0))
@@ -199,9 +199,10 @@ if(!is.null(params$prop_case_to_GP_consultation)){
 if(ncol(posterior.aip) == ncol(posterior.nu)){
   posterior.I0 <- t(I0.func(t(posterior.aip), t(posterior.nu), t(posterior.R0), t(posterior.pGP), regions.total.population))
 } else {
-  posterior.I0 <- array(0, dim = dim(posterior.nu))
+  posterior.I0 <- array(0, dim = c(nrow(posterior.nu), min(r, ncol(posterior.nu))))
   for(inti in 1:ncol(posterior.nu))
-    posterior.I0[, inti] <- I0.func(posterior.aip, posterior.nu[, inti], posterior.R0[, inti], posterior.pGP[, inti], regions.total.population[inti])
+      if(inti <= r)
+          posterior.I0[, inti] <- I0.func(posterior.aip, posterior.nu[, inti], posterior.R0[, inti], posterior.pGP[, inti], regions.total.population[inti])
 }
 prior.I0 <- I0.func(prior.aip, prior.nu, prior.R0, prior.pGP, regions.total.population)
 q.prior.I0 <- quantile(prior.I0, probs = c(0.05, 0.95))

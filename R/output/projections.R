@@ -93,17 +93,25 @@ for(reg in regions){
 ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
 source(file.path(R.dir, "convolution.R"))
 source(file.path(R.dir, "gamma_fns.R"))
-ifi <- 0.025
+ifh <- (3*ifr) + 0.02
+ifi <- 0.3 * ifh
+delay.to.hosp <- list(
+    incub.mean = 4,
+    incub.sd = 1.41,
+    disease.mean = 0,
+    disease.sd = 0,
+    report.mean = 7.21,
+    report.sd = 2.17)
+F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
 delay.to.ICU <- list(
                     incub.mean = 4,
                     incub.sd = 1.41,
                     disease.mean = 0,
                     disease.sd = 0,
-                    report.mean = 8.9,
-                    report.sd = 4.45
+                    report.mean = 9.21,
+                    report.sd = 3.59
                     )
 F.icu <- discretised.delay.cdf(delay.to.ICU, steps.per.day = 1)
-
 delay.to.death <- list(
     incub.mean = 4,
     incub.sd = 1.41,
@@ -114,21 +122,34 @@ delay.to.death <- list(
     )
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
+H <- list()
 ICU <- list()
 D <- list()
+q.H <- list()
 q.ICU <- list()
 q.D <- list()
 for(reg in regions){
-    ICU[[reg]] <- ifi * apply(NNI[[reg]], c(1, 3), conv, b = F.icu)[1:(dim(NNI[[reg]])[2]), , , drop = F]
+    H[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifh))
+    H[[reg]] <- apply(H[[reg]], 1, conv, b = F.hosp)[1:(dim(H[[reg]])[2]), , drop = F]
+    ICU[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifi))
+    ICU[[reg]] <- apply(ICU[[reg]], 1, conv, b = F.icu)[1:(dim(ICU[[reg]])[2]), , drop = F]
     D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
     D[[reg]] <- apply(D[[reg]], 1, function(x) x * t(ifr))
-    D[[reg]] <- array(D[[reg]], dim = dim(ICU[[reg]]))
+    D[[reg]] <- t(D[[reg]])
     
-    ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
-    D[[reg]] <- apply(D[[reg]], c(1, 3), sum)
+    ## ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
+    ## D[[reg]] <- apply(D[[reg]], c(1, 3), sum)
     
+    q.H[[reg]] <- apply(H[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
     q.ICU[[reg]] <- apply(ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
     q.D[[reg]] <- apply(D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+
+    pdf(paste0("Hosp_projections_", reg, ".pdf"))
+    plot(dates.used, q.H[[reg]][2, ], type = "l", main = paste("Projected (daily) Hospital Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.H[[reg]])))
+    lines(dates.used, q.H[[reg]][1, ], lty = 3)
+    lines(dates.used, q.H[[reg]][3, ], lty = 3)
+    abline(v = dates.used[nt], col = "red")
+    dev.off()
 
     pdf(file.path(target.dir, paste0("ICU_projections_", reg, ".pdf")))
 
@@ -146,6 +167,36 @@ for(reg in regions){
     abline(v = dates.used[nt], col = "red")
     dev.off()
 
+}
+
+## ## Get weekly tables of quantiles
+require(dplyr)
+require(tidyr)
+
+get.tab <- function(x, dates){
+    nni <- t(x)
+    colnames(nni) <- dates
+    nni <- as.data.frame(nni)
+    nni <- nni %>%
+        mutate(iter = 1:nrow(nni)) %>%
+        pivot_longer(cols = -(nrow(x)+1), names_to = "Date", values_to = "Count")
+    nni$Date <- as.Date(as.integer(nni$Date), origin = "1970-01-01")
+    nni <- nni %>%
+        mutate(Week = format(Date, "%Y-%W"))
+    nni <- aggregate(nni$Count, by = list(iter = nni$iter, week = nni$Week), sum)
+    aggregate(nni$x, by = list(Week = nni$week), quantile, probs = c(0.025, 0.5, 0.975))
+}
+
+nni <- hosp <- icu <- deaths <- NULL
+for(reg in regions){
+    nni <- rbind(nni, get.tab(NNI[[reg]][1, , ], dates.used) %>%
+                      mutate(Region = reg))
+    hosp <- rbind(hosp, get.tab(H[[reg]], dates.used) %>%
+                        mutate(Region = reg))
+    icu <- rbind(icu, get.tab(ICU[[reg]], dates.used) %>%
+                      mutate(Region = reg))
+    deaths <- rbind(deaths, get.tab(D[[reg]], dates.used) %>%
+                            mutate(Region = reg))
 }
 
 ## weeks <- gl(n = ncol(GP.ma) / 7, k = 7, length = ncol(GP.ma))
@@ -201,3 +252,5 @@ for(reg in regions){
 ## dev.off()
 
 save(q.ICU, q.D, q.NNI, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
+
+save(nni, icu, hosp, deaths, file = "table_summaries.RData")

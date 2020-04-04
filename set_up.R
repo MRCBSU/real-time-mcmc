@@ -17,21 +17,32 @@ thisFile <- function() {
 ## Where are various directories?
 file.loc <- dirname(thisFile())
 proj.dir <- file.loc
-
+## Load required functions for reading in data
 source(file.path(proj.dir, "set_up_inputs.R"))
 source(file.path(proj.dir, "set_up_pars.R"))
 
 ## Make the output directory if necessary
 flg.createfile <- !file.exists(out.dir)
-if(flg.createfile) system(paste("mkdir", out.dir))
+if(flg.createfile){
+    tmp.dir <- out.dir
+    while(!file.exists(dirname(tmp.dir[1])))
+        tmp.dir <- c(dirname(tmp.dir[1]), tmp.dir)
+    for(i in 1:length(tmp.dir))
+        system(paste("mkdir", deparse(tmp.dir[i])))
+}
+## Change the hard-wiring of the number of age groups
+header <- readLines("src/RTM_Header.h")
+intHea <- grep("NUM_AGE_GROUPS", header)
+header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nages, ")")
+write(header, file = "src/RTM_Header.h", append = F)
 
 ## Get the population sizes
 require(readr)
 require(tidyr)
-pop <- read_csv(build.data.filepath("", "popn2018_all.csv"))
+load(build.data.filepath("population", "pop_nhs.RData"))
 pop.input <- NULL
 for(reg in regions){
-    pop.full <- pop[pop$Name %in% ons.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+    pop.full <- pop[pop$Name %in% nhs.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
     pop.full <- apply(pop.full, 2, sum)
     if(age.grps == "All")
         pop.input <- c(pop.input, pop.full["All ages"])
