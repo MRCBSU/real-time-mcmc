@@ -1,6 +1,5 @@
-suppressMessages(library(readr))
 suppressMessages(library(lubridate))
-suppressMessages(library(dplyr))
+suppressMessages(library(tidyverse))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis
@@ -13,8 +12,7 @@ date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- "20200403 COVID19 Deaths.csv" ## NULL
-# deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
+deaths.loc <- NULL
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
@@ -22,16 +20,40 @@ col.names <- list(
 	finalid = "finalid",
 	onset_date = "onsetdate",
 	nhs_region = "nhser_name",
-	phe_region = "phec_name"
+	phe_region = "phec_name",
+	utla_name = "utla_name"
 )
 
 ## Inputs that are dependent on the output required.
 reporting.delay <- 2
 
-# Keep if either PHE or NHS region matches, set to NULL for no filter
-phe_regions <- c("East of England")
-nhs_regions <- phe_regions
+mapping <- list(
+	"East Midlands" = "Midlands",
+	"East of England" = "East of England",
+	"London" = "London",
+	"North East" = "North East and Yorkshire",
+	"North West" = "North West",
+	"South East" = "South East",
+	"South West" = "South West",
+	"West Midlands" = "Midlands",
+	"Yorkshire and Humber" = "North East and Yorkshire"
+)
+phe.to.nhs.region <- function(x) {
+	args <- mapping
+	args[[".x"]] <- x$phe_region
+	result <- do.call(recode, args)
+	result[x$utla_name == "Cumbria"] <- NA
+	return(result)
+}
 
+get.region <- function(x) {
+	ifelse(
+		!is.na(x$nhs_region),
+		x$nhs_region,
+		phe.to.nhs.region(x)
+	) %>%
+	str_replace_all(" ", "_")
+}
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -59,6 +81,7 @@ file.loc <- dirname(thisFile())
 proj.dir <- dirname(dirname(file.loc))
 dir.data <- file.path(proj.dir, "data")
 source(file.path(file.loc, "utils.R"))
+source(file.path(proj.dir, "config.R"))
 
 ## Which columns are we interested in?
 death.col.args <- list()
@@ -67,6 +90,7 @@ death.col.args[[col.names[["onset_date"]]]] <- col_character()
 death.col.args[[col.names[["finalid"]]]] <- col_double()
 death.col.args[[col.names[["nhs_region"]]]] <- col_character()
 death.col.args[[col.names[["phe_region"]]]] <- col_character()
+death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -145,42 +169,40 @@ dth.dat %>%
 
 latest.date <- ymd(date.data) - reporting.delay
 earliest.date <- ymd("2020-02-17")
-all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
-    mutate(fDate = factor(Date))
-
-# Region filter
-if ((length(phe_regions) > 0) && (length(nhs_regions) > 0)) {
-	dth.dat <- dth.dat %>% filter(phe_region %in% phe_regions | nhs_region %in% nhs_regions)
-} else if (length(phe_regions) > 0 || length(nhs_regions) > 0) {
-	stop("Set both PHE and NHS regions or neither")
-}
-
-dth.dat$Region <- "East_England"
-
-levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
+    mutate(Region = get.region(.)) %>%
+	filter(Region %in% regions)
 
 rtm.dat <- dth.dat %>%
-    group_by(fDate, Region, .drop = FALSE) %>%
-    summarise(count = n())
-
-rtm.dat$fDate <- lubridate::as_date(rtm.dat$fDate)
-
-rtm.dat <- rtm.dat %>%
-    arrange(fDate) %>%
-    filter(!is.na(Region))
+	group_by(Date, Region, .drop = FALSE) %>%
+	tally %>%
+	right_join(		# Add missing rows
+		expand_grid(Date = as_date(earliest.date:latest.date), Region = regions),
+		by = c("Date", "Region")
+	) %>%
+	replace_na(list(n = 0)) %>%		# 0 if just added
+	arrange(Date)
 
 ## Write rtm.dat to data file
-for(reg in levels(rtm.dat$Region)){
-    write.table(filter(rtm.dat, Region == reg) %>%
-               select(fDate, count),
-            file = build.data.filepath("RTM_format/deaths", "deaths", date.data, "_", reg, ".txt"),
-            sep = "\t",
-            col.names = FALSE,
-            row.names = FALSE)
+for(reg in regions) {
+	region.dat <- rtm.dat %>%
+		filter(Region == reg) %>%
+		select(Date, n)
+		
+	print(paste(
+		"Writing to",
+		build.data.filepath("RTM_format", "deaths", date.data, "_", reg, ".txt"),
+		"(", sum(region.dat$n), "total deaths,", nrow(region.dat), "rows.)"
+	))
+
+	region.dat %>%
+		write_tsv(
+            build.data.filepath("RTM_format", "deaths", date.data, "_", reg, ".txt"),
+            col_names = FALSE
+		)
 }
 
 ## Save a quick plot of the data...

@@ -1,23 +1,4 @@
 #######################################################################
-## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
-#######################################################################
-
-date.of.runs <- "20200403"    	# What date is in the input file names?
-regions <- c("London", "Outside_London")	# Regions under study
-
-# How big an effect should be assumed for the introduction of lockdown?
-# Options are "lo", "med", or "high"
-scenario.name <- "L_OL_variable"
-
-# Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.of.runs, "/", scenario.name)
-out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
-
-# Number of days to run the simulation for.
-# Including lead-in time, analysis of data and short-term projection
-ndays <- 99
-
-#######################################################################
 ## INPUT SETTINGS
 #######################################################################
 
@@ -44,7 +25,12 @@ ons.regions <- list(
 						 "SOUTH WEST"),
 	"UNITED_KINGDOM" = "UNITED KINGDOM",
 	"ENGLAND" = "ENGLAND",
-	"East_England" = "EAST"
+	"East_of_England" = "EAST",
+	"Midlands" = c("EAST MIDLANDS", "WEST MIDLANDS"),
+	"North_East_and_Yorkshire" = c("NORTH EAST", "YORKSHIRE AND THE HUMBER"),
+	"North_West" = c("NORTH WEST"),
+	"South_East" = "SOUTH EAST",
+	"South_West" = "SOUTH WEST"
 )
 
 # Vector of age-group descriptions
@@ -59,10 +45,10 @@ cm.mults <- c(paste0("single_age_mult", 0:1, ".txt"))
 
 
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############
-source(file.path(proj.dir, "R/data/utils.R"))
-
-## Where are the data files?
 dir.data <- file.path(proj.dir, "data")
+source(file.path(proj.dir, "R/data/utils.R"))
+source(file.path(proj.dir, "config.R"))
+date.of.runs <- date.data
 
 ## Map what we call regions (LHS) to the NHS region(s) they contain
 ## These no longer calculated `on the fly' and should be handled within the data/population folder.
@@ -98,9 +84,9 @@ if (hosp.flag == 1) {
 	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
 	end.hosp <- set.end.date(end.hosp, hosp.data)
 }
-
 # If end.gp and/or end.hosp are none then read from data files
 set.end.date <- function(user.value, data.file) {
+	if (length(data.file) > 1) data.file <- data.file[1]
 	if (is.null(user.value)) {
 		return(max(length(readLines(data.file))))
 	} else {
