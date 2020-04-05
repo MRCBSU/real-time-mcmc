@@ -4,15 +4,12 @@
 
 date.data <- "20200403"
 
-# Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.data, "_regions_deaths")
-out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
 ndays <- 62
 
-regions <- c(
+all.regions <- c(
 	"East_of_England",
 	"London",
 	"Midlands",
@@ -21,4 +18,11 @@ regions <- c(
 	"South_East",
 	"South_West"
 )			# Regions under study
+args <- commandArgs(trailingOnly = TRUE)
+region.index <- as.integer(args[length(args)])
+if (length(region.index) == 0) region.index <- 1
+regions <- all.regions[region.index]
 
+# Choose the name of the subdirectory in model_runs to use
+subdir.name <- paste0(date.data, "regions_alone")
+out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
