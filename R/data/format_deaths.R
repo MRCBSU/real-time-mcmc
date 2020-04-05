@@ -7,6 +7,7 @@ suppressMessages(library(tidyverse))
 
 ## Where to find the data, if NULL use command line argument
 deaths.loc <- NULL
+#deaths.loc <- "20200403 COVID19 Deaths.csv" ## NULL
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
