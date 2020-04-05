@@ -36,6 +36,7 @@ for (region in all.regions) {
 	load(file.path(all.out.dirs[[region]], "occupancy_results.RData"))
 	load(file.path(all.out.dirs[[region]], "plotted_summaries.RData"))
 	load(file.path(all.out.dirs[[region]], "mcmc.RData"))
+	out.dir <- out.dir.correct
 	all.q.NNI.cum[[region]] <- q.NNI.cum[[region]]
 	all.q.D.cum[[region]] <- q.D.cum[[region]]
 	all.q.NNI[[region]] <- q.NNI[[region]]
