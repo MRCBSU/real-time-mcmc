@@ -42,6 +42,36 @@ if (!exists("q.NNI.cum")) {
 	load(out.file("occupancy_results.RData"))
 }
 
+calc.posterior.summary <- function(posterior) {
+	if (ncol(posterior) > 1) posterior <- posterior[2,]
+	quantiles <- quantile(posterior, c(0.025, 0.5, 0.075))
+	return(tribble(
+		~Median,		~`95% lower`,		~`95% upper`,
+		quantiles[2],	quantiles[1],		quantiles[3]
+	))
+}
+
+if (is.null(names(posterior.R0))) {
+	posterior.summary <-
+		calc.posterior.summary(posterior.R0) %>%
+		bind_rows(calc.posterior.summary(params$contact_parameters[2,])) %>%
+		bind_col(parameter = c("R0", "Lockdown effect"))
+} else {
+	R0.summary <- bind_rows(lapply(posterior.R0, calc.posterior.summary))
+	col.names <- sapply(names(posterior.R0), function(x) {paste0("R0 (", str_replace_all(x, "_", " "), ")")})
+	R0.summary$parameter <- col.names
+
+	contact_param<- bind_rows(lapply(posterior.contact_param, calc.posterior.summary))
+	col.names <- sapply(names(posterior.contact_param), function(x) {paste0("Lockdown effect (", str_replace_all(x, "_", " "), ")")})
+	contact_param$parameter <- col.names
+
+	posterior.summary <- rbind(R0.summary, contact_param)
+}
+
+posterior.summary <- posterior.summary %>%
+	select(parameter, everything()) %>%
+	arrange(parameter)
+
 add.numerical.summary.for.day <- function(x, day) {
 	day.num <- day.number(day)
 	extract_quantile_value <- function(quantile) {
