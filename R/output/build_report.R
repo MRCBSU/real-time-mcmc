@@ -56,6 +56,7 @@ add.numerical.summary.for.day <- function(x, day) {
 }
 
 numerical.summary <- tibble()
+predict.on <- lubridate::ymd(date.data)
 for (reg in names(q.NNI.cum)) {
 	names <- paste0(
 		c("Cumulative infections", "Cumulative deaths"),
@@ -66,9 +67,10 @@ for (reg in names(q.NNI.cum)) {
 			names[1],		q.NNI.cum[[reg]],
 			names[2],		q.D.cum[[reg]],
 		) %>%
-		add.numerical.summary.for.day(today()) %>%
-		add.numerical.summary.for.day(today() + 7) %>%
-		add.numerical.summary.for.day(today() + 14)
+		add.numerical.summary.for.day(predict.on) %>%
+		add.numerical.summary.for.day(lubridate::ymd(20200413)) %>%
+		add.numerical.summary.for.day(predict.on + 7) %>%
+		add.numerical.summary.for.day(predict.on + 14)
 	numerical.summary <- rbind(numerical.summary, reg.summary)
 }
 
