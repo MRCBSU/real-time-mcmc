@@ -7,7 +7,7 @@ date.data <- "20200403"
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
-ndays <- 62
+ndays <- 64
 
 all.regions <- c(
 	"East_of_England",
