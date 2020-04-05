@@ -14,7 +14,7 @@ thisFile <- function() {
 
 ## Where are various directories?
 file.loc <- dirname(thisFile())
-proj.dir <- dirname(dirname(file.loc))
+proj.dir <- file.loc
 source(file.path(proj.dir, "set_up_inputs.R"))
 
 all.out.dirs <- file.path(proj.dir, "model_runs", subdir.name, all.regions)
@@ -42,6 +42,7 @@ for (region in all.regions) {
 	all.q.NNI[[region]] <- q.NNI[[region]]
 	all.q.D[[region]]  <- q.D[[region]]
 	all.NNI[[region]] <- NNI[[region]]
+	all.NNI.cum[[region]] <- NNI.cum[[region]]
 	all.posterior.R0[[region]] <- posterior.R0
 	posterior.contact_param[[region]] <- params$contact_param
 	file.copy(file.path(all.out.dirs[[region]], "codas.pdf"),
@@ -53,8 +54,9 @@ q.NNI <- all.q.NNI
 q.D  <- all.q.D
 q.NNI  <- all.q.NNI
 NNI <- all.NNI
+NNI.cum <- all.NNI.cum
 posterior.R0 <- all.posterior.R0
 out.dir <- out.dir.correct 
 hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", all.regions, ".txt")
 
-source(file.path(file.loc, "build_report.R"), echo=TRUE)
+#source(file.path(file.loc, "build_report.R"), echo=TRUE)
