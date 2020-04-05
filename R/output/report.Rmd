@@ -25,7 +25,7 @@ for (reg in regions) {
 }
 D.data <- do.call(rbind, reg.D.data) %>% mutate(region_friendly = str_replace_all(region, "_", " "))
 ggplot(D.data, aes(x = date, y = incidence, colour = region_friendly)) +
-  geom_line() +
+  geom_line(size = 1.5) +
   labs(x = 'Date', y = 'Number of deaths', colour = 'Region', title = 'Incidence of deaths')
 ```
 

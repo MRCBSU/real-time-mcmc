@@ -43,6 +43,7 @@ if (!exists("q.NNI.cum")) {
 }
 
 calc.posterior.summary <- function(posterior) {
+	if (ncol(posterior) > 1) posterior <- posterior[,2]
 	quantiles <- quantile(posterior, c(0.025, 0.5, 0.975))
 	return(tribble(
 		~Median,		~`95% lower`,		~`95% upper`,
@@ -53,7 +54,7 @@ calc.posterior.summary <- function(posterior) {
 if (is.null(names(posterior.R0))) {
 	posterior.summary <-
 		calc.posterior.summary(posterior.R0) %>%
-		bind_rows(calc.posterior.summary(params$contact_parameters[2,])) %>%
+		bind_rows(calc.posterior.summary(params$contact_parameters)) %>%
 		bind_cols(parameter = c("R0", "Lockdown effect"))
 } else {
 	R0.summary <- bind_rows(lapply(posterior.R0, calc.posterior.summary))
