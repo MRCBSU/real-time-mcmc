@@ -2,7 +2,7 @@
 ## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
 #######################################################################
 
-date.of.runs <- "20200403"    	# What date is in the input file names?
+date.of.runs <- "20200404"    	# What date is in the input file names?
 regions <- c("London", "Outside_London")	# Regions under study
 
 # How big an effect should be assumed for the introduction of lockdown?
@@ -15,7 +15,7 @@ out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
-ndays <- 99
+ndays <- 100
 
 #######################################################################
 ## INPUT SETTINGS
@@ -29,7 +29,7 @@ end.gp <- 15					# Total days of data, or NULL to infer from length of file
 # The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 start.hosp <- 1					# What day to start running the likelihood on
-end.hosp <- 43				# Total days of data, or NULL to infer from length of file
+end.hosp <- 44				# Total days of data, or NULL to infer from length of file
 
 viro.data <- NULL
 viro.denom <- NULL
