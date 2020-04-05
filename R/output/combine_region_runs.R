@@ -30,6 +30,7 @@ all.q.D.cum <- list()
 all.q.NNI <- list()
 all.q.D  <- list()
 all.NNI <- list()
+all.NNI.cum <- list()
 all.posterior.R0 <- list()
 posterior.contact_param <- list()
 posterior.ifr <- list()
@@ -43,6 +44,7 @@ for (region in all.regions) {
 	all.q.NNI[[region]] <- q.NNI[[region]]
 	all.q.D[[region]]  <- q.D[[region]]
 	all.NNI[[region]] <- NNI[[region]]
+	all.NNI.cum[[region]] <- NNI.cum[[region]]
 	all.posterior.R0[[region]] <- posterior.R0
 	posterior.contact_param[[region]] <- params$contact_param
 	posterior.ifr[[region]] <- params$prop_case_to_hosp
@@ -55,8 +57,10 @@ q.NNI <- all.q.NNI
 q.D  <- all.q.D
 q.NNI  <- all.q.NNI
 NNI <- all.NNI
+NNI.cum <- all.NNI.cum
 posterior.R0 <- all.posterior.R0
 out.dir <- out.dir.correct 
 hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", all.regions, ".txt")
 
-source(file.path(file.loc, "build_report.R"), echo=TRUE)
+save.image(file.path(out.dir, "mcmc.RData"))
+source(file.path(file.loc, "build_report.R"))
