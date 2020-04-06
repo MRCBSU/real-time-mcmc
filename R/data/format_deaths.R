@@ -219,7 +219,9 @@ gp <- ggplot(rtm.dat, aes(x = Date, y = n, color = Region)) +
         legend.position = "top",
         legend.justification = "left",
         )
-ggsave(build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf"),
+plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf")
+if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
+ggsave(plot.filename,
        gp,
        width = 8.15,
        height = 6)
