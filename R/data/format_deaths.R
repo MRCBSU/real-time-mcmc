@@ -40,7 +40,8 @@ phe.to.nhs.region <- function(x) {
 	return(result)
 }
 
-get.region <- function(x) {
+nhs.region <- function(x) {
+	# Below code will give the NHS region
 	ifelse(
 		!is.na(x$nhs_region),
 		x$nhs_region,
@@ -48,6 +49,12 @@ get.region <- function(x) {
 	) %>%
 	str_replace_all(" ", "_")
 }
+
+
+# Given a row in a deaths file, return its region.
+# Various useful functions for this are defined above.
+get.region <- function(x) {return("England")}
+
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
