@@ -208,7 +208,7 @@ for(reg in regions) {
 
 ## Save a quick plot of the data...
 require(ggplot2)
-gp <- ggplot(rtm.dat, aes(x = fDate, y = count, color = Region)) +
+gp <- ggplot(rtm.dat, aes(x = Date, y = n, color = Region)) +
     geom_line() +
     geom_point() +
     theme_minimal() +
