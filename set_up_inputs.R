@@ -74,6 +74,7 @@ set.end.date <- function(user.value, data.file) {
 dir.data <- file.path(proj.dir, "data")
 source(file.path(proj.dir, "R/data/utils.R"))
 gp.data <- NULL
+gp.denom <- NULL
 if (gp.flag == 1) {
 	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
 	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
