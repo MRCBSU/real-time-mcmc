@@ -5,12 +5,6 @@ suppressMessages(library(tidyverse))
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
-## YYYYMMDD string, used in filenames and reporting lag
-# Default: yesterday's date
-date.data <- (today() - days(1)) %>% format("%Y%m%d")
-# Or specify manually
-# date.data <- "20200325"
-
 ## Where to find the data, if NULL use command line argument
 deaths.loc <- NULL
 
