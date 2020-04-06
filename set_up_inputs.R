@@ -55,10 +55,11 @@ date.of.runs <- date.data
 ## Use objects nhs.regions and pop
 load(build.data.filepath("population", "pop_nhs.RData"))
 
-## Check that regions have ONS population specified
+## Check that regions have population specified
 for (region in regions) {
 	if (!region %in% names(nhs.regions)) {
-		stop(paste(region, "is not specified in `nhs.regions`"))
+		stop(paste(region, "is not specified in `nhs.regions`. Options are:",
+				   paste0(names(nhs.regions), collapse=", ")))
 	}
 } 
 
