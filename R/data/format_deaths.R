@@ -53,7 +53,7 @@ nhs.region <- function(x) {
 
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
-get.region <- function(x) {return("England")}
+get.region <- function(x) {return("ENGLAND")}
 
 
 ####################################################################
