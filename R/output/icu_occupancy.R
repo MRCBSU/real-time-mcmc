@@ -83,4 +83,4 @@ for (reg in names(NNI)) {
 	dev.off()
 }
 
-save(q.occupancy, q.NNI.cum, q.D.cum, file = file.path(target.dir, "occupancy_results.RData"))
+save(q.NNI.cum, q.D.cum, file = file.path(target.dir, "occupancy_results.RData"))
