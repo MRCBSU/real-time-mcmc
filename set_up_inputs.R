@@ -15,24 +15,6 @@ end.hosp <- 43				# Total days of data, or NULL to infer from length of file
 viro.data <- NULL
 viro.denom <- NULL
 
-# Map what we call regions (LHS) to the ONS region(s) they contain
-# ONS puts country-level regions in caps
-# See the data/popn2018_all.csv file for all possible options
-ons.regions <- list(
-	"London" = "LONDON",
-    "Outside_London" = c("NORTH EAST", "NORTH WEST", "YORKSHIRE AND THE HUMBER",
-						 "EAST MIDLANDS", "WEST MIDLANDS", "EAST", "SOUTH EAST",
-						 "SOUTH WEST"),
-	"UNITED_KINGDOM" = "UNITED KINGDOM",
-	"ENGLAND" = "ENGLAND",
-	"East_of_England" = "EAST",
-	"Midlands" = c("EAST MIDLANDS", "WEST MIDLANDS"),
-	"North_East_and_Yorkshire" = c("NORTH EAST", "YORKSHIRE AND THE HUMBER"),
-	"North_West" = c("NORTH WEST"),
-	"South_East" = "SOUTH EAST",
-	"South_West" = "SOUTH WEST"
-)
-
 # Vector of age-group descriptions
 age.grps <- "All";
 
