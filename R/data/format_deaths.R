@@ -19,7 +19,7 @@ col.names <- list(
 )
 
 ## Inputs that are dependent on the output required.
-reporting.delay <- 2
+reporting.delay <- 5
 
 mapping <- list(
 	"East Midlands" = "Midlands",
