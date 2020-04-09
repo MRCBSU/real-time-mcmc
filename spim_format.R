@@ -3,14 +3,32 @@ require(tidyr)
 require(tidyverse)
 require(lubridate)
 
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+file.loc <- dirname(thisFile())
+proj.dir <- file.loc
+source(file.path(proj.dir, "config.R"))
+
 ## regions <- c("London", "North", "South.East", "South.West", "Midlands.and.East")
 ## region.index <- 4
 ## reg <- regions[region.index]
 ## wk <- 4
-rtm.dir <- "./"
-R.dir <- paste0(rtm.dir, "R/output/")
-res.dir <- paste0(rtm.dir, "model_runs/20200405regions_alone/_OVERALL_/")
-run.date <- lubridate::as_date("20200405")
+R.dir <- file.path(proj.dir, "R", "output")
+res.dir <- combined.dir
+run.date <- lubridate::ymd(date.data)
 
 str.scenario <- "forecast"
 first.date <- run.date - 30
@@ -27,7 +45,7 @@ end.date <- run.date + 21
 
 ## nitr <- 10000
 
-load(paste0(res.dir, "mcmc.RData"))
+load(file.path(res.dir, "mcmc.RData"))
 
 ## Last day of data
 #nt <- 42
