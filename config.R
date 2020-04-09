@@ -2,12 +2,12 @@
 ## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
 #######################################################################
 
-date.data <- "20200406"
+date.data <- "20200407"
 
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
-ndays <- 73
+ndays <- 75
 
 all.regions <- c(
 	"East_of_England",
