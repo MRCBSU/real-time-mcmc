@@ -2,8 +2,13 @@
 ## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
 #######################################################################
 
-date.data <- "20200407"
+args <- commandArgs(trailingOnly = TRUE)
 
+if (length(args) > 0) region.index <- as.integer(args[length(args)])
+if (length(args) > 1) date.data <- args[length(args)-1]
+
+
+#if (!exists("date.data")) date.data <- "20200407"
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
@@ -18,13 +23,11 @@ all.regions <- c(
 	"South_East",
 	"South_West"
 )			# Regions under study
-args <- commandArgs(trailingOnly = TRUE)
-region.index <- as.integer(args[length(args)])
-if (length(region.index) == 0) region.index <- 1
+if (!exists("region.index")) region.index <- 1
 regions <- all.regions[region.index]
 
 # Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.data, "_regions_alone_new")
+subdir.name <- paste0(date.data, "_regions_alone")
 out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
 
 scenario.name <- "variable"
