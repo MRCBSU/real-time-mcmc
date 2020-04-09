@@ -28,7 +28,7 @@ if(flg.createfile){
     while(!file.exists(dirname(tmp.dir[1])))
         tmp.dir <- c(dirname(tmp.dir[1]), tmp.dir)
     for(i in 1:length(tmp.dir))
-        system(paste("mkdir", deparse(tmp.dir[i])))
+        system(paste("mkdir -p", deparse(tmp.dir[i])))
 }
 ## Change the hard-wiring of the number of age groups
 header <- readLines("src/RTM_Header.h")
