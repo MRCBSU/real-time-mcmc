@@ -1,11 +1,7 @@
 set -e
-set -x
 
 declare -a region
 region=($(seq 1 7))
-echo $1
-echo $2
-echo $3
 
 for r in ${region[@]}; do
 	Rscript R/data/format_deaths.R $1 $2 $r
