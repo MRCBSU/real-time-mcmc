@@ -8,7 +8,7 @@ if (length(args) > 0) region.index <- as.integer(args[length(args)])
 if (length(args) > 1) date.data <- args[length(args)-1]
 
 
-#if (!exists("date.data")) date.data <- "20200407"
+if (!exists("date.data")) date.data <- "20200409"
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
