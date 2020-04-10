@@ -53,4 +53,4 @@ ldelay.sd <- 3.59
 which.var <- which(sapply(sapply(names(int.effect), function(x) grep(x, scenario.name, fixed = TRUE)), length) > 0)
 contact.reduction <- c(1, int.effect[which.var])
 contact.dist <- c(1, 3) ## rep(1, 2) if fixed
-contact.pars <- c(20.67, 31.00)
+contact.pars <- c(2, 3)
