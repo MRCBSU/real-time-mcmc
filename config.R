@@ -21,7 +21,8 @@ all.regions <- c(
 	"North_East_and_Yorkshire",
 	"North_West",
 	"South_East",
-	"South_West"
+	"South_West",
+	"Scotland"
 )			# Regions under study
 if (!exists("region.index")) region.index <- 1
 
