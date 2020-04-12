@@ -25,7 +25,9 @@ all.regions <- c(
 	"Scotland"
 )			# Regions under study
 if (!exists("region.index")) region.index <- 1
+
 regions <- all.regions[region.index]
+#regions <- "ENGLAND"
 
 # Choose the name of the subdirectory in model_runs to use
 subdir.name <- paste0(date.data, "_regions_alone")
