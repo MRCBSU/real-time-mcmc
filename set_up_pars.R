@@ -1,7 +1,7 @@
 ## Incubation period - best working estimate - mean 5.2 (4.1-7.0)
 ## Use these as simulation parameters for the latent period
 
-int.effect <- c(0.6435671, 0.52, 0.1753693, 0.00, 0.52, 0.24, 1.0)
+int.effect <- c(0.6435671, 0.52, 0.1753693, 0.00, 0.521, 0.24, 1.0)
 names(int.effect) <- c("lo", "med", "hi", "total", "variable", "lshtm", "nothing")
 
 ## shape.dL <- 35.1
@@ -27,7 +27,7 @@ pars.pgp <- c(2.12, 15.8)
 
 ## Infection to fatality ratio
 value.ifr <- 0.007
-pars.ifr <- c(21.6, 3070) / 4
+pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
 
 ## Initial seeding
 value.nu <- c(-19, -17.7)
@@ -45,12 +45,41 @@ pars.eta.h <- c(1.0, 0.2)
 ddelay.mean <- 17.8
 ddelay.sd <- 8.9
 
+## Reporting delay on the deaths
+## First, write down Tom's cdf for the delay distribution function
+F <- c(0, 0.0581397, 0.3410914, 0.5708017, 0.7027247, 0.7794353, 0.8213025, 0.8516836, 0.8770857, 0.8940002, .9123456, 0.924536, .9387407, .9544153, .9685447, .9821035, .9868954, .991038, 1)
+f <- diff(F)
+delay <- 0:(length(f) - 1)
+m <- sum(f * delay)
+v <- sum(f * delay^2) - m^2
+if(grepl("reports", data.desc, fixed = T)){
+    rdelay.mean <- m # 3.5
+    rdelay.sd <- sqrt(v) # 1.75
+} else {
+    rdelay.mean <- 0
+    rdelay.sd <- 0
+}
 ## Delays in the line listing data
 ldelay.mean <- 5.22
 ldelay.sd <- 3.59
 
 ## Contact model
-which.var <- which(sapply(sapply(names(int.effect), function(x) grep(x, scenario.name, fixed = TRUE)), length) > 0)
+prior.list <- list(fixed = NULL,
+                   tight = c(20.67, 31.00),
+                   relax = c(2, 3),
+                   unif = c(1, 1),
+                   uninf = c(0.5, 0.5))
+nprior.name <- names(prior.list)
+which.var <- which(sapply(nprior.name, grepl, x = scenario.name, fixed = TRUE))
+contact.dist <- c(1, ifelse(is.null(prior.list[which.var]), 1, 3))
+contact.pars <- prior.list[[which.var]]
+which.var <- which(sapply(names(int.effect), grepl, x = scenario.name, fixed = TRUE))
 contact.reduction <- c(1, int.effect[which.var])
+<<<<<<< HEAD
 contact.dist <- c(1, 3) ## rep(1, 2) if fixed
 contact.pars <- c(2, 3)
+||||||| parent of 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.
+contact.dist <- c(1, 3) ## rep(1, 2) if fixed
+contact.pars <- c(20.67, 31.00)
+=======
+>>>>>>> 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.

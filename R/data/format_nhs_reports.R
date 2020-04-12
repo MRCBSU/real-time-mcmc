@@ -8,7 +8,7 @@ suppressMessages(library(dplyr))
 
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
-date.data <- (today() - days(2)) %>% format("%Y%m%d")
+date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 
@@ -110,7 +110,7 @@ dth.dat <- read_csv(input.loc,
            ReportNHS = fuzzy_date_parse(nhs_date),
            ReportHPT = fuzzy_date_parse(hpt_date)) %>%
     ## ## fix.dates %>%
-    mutate(Report = pmin(ReportDBS, ReportNHS, ReportHPT, na.rm = TRUE)) %>%
+    mutate(Report = ReportNHS) %>%
     mutate(plausible_death_date = plausible.death.date(.) & !is.na(Report))
 
 
@@ -155,7 +155,7 @@ rtm.dat <- rtm.dat %>%
 for(reg in levels(rtm.dat$Region)){
     write.table(filter(rtm.dat, Region == reg) %>%
                select(fDate, count),
-            file = build.data.filepath("RTM_format/deaths", "reports", date.data, "_", reg, ".txt"),
+            file = build.data.filepath("RTM_format/deaths", "reportsNHS", date.data, "_", reg, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
@@ -174,7 +174,7 @@ gp <- ggplot(rtm.dat, aes(x = fDate, y = count, color = Region)) +
         legend.position = "top",
         legend.justification = "left",
         )
-ggsave(build.data.filepath("RTM_format/deaths", "reports_plot", date.data, ".pdf"),
+ggsave(build.data.filepath("RTM_format/deaths", "reportsNHS_plot", date.data, ".pdf"),
        gp,
        width = 8.15,
        height = 6)

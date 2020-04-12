@@ -16,7 +16,7 @@ viro.data <- NULL
 viro.denom <- NULL
 
 # Vector of age-group descriptions
-age.grps <- "All";
+age.grps <- "All"
 
 ## CONTACT MATRICES SETTINGS
 cm.breaks <- 36							# Day numbers where breaks happen

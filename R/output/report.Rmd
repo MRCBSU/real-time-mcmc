@@ -5,7 +5,7 @@ title: Real-time modelling results (`r str_replace_all(subdir.name, "_", " ")`)
 ```{r init}
 library(ggplot2)
 regions <- names(NNI)
-knitr::opts_chunk$set(fig.width=20, fig.height=ceiling(length(regions)/2)*10) 
+knitr::opts_chunk$set(fig.width=20, fig.height=40) 
 ```
 
 ## Data
@@ -100,3 +100,4 @@ make.grid.plot(q.D.cum, "Cumulative")
 }
 
 ```
+>>>>>>> 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.

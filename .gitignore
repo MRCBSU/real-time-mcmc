@@ -8,3 +8,7 @@ outputs/**
 .vscode
 model_runs/**
 .Rhistory
+Emulation/**
+spi-forecasts/**
+**/spim*
+**/*~
