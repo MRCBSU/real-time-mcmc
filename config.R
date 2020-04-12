@@ -30,9 +30,8 @@ regions <- all.regions[region.index]
 #regions <- "ENGLAND"
 
 # Choose the name of the subdirectory in model_runs to use
-subdir.name <- paste0(date.data, "_regions_alone")
-out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
-
 data.desc <- "incidence"
-scenario.name <- "relax_variable"
+scenario.name <- "tight_variable"
+subdir.name <- paste0(date.data, "_regions_alone_", scenario.name)
+out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
 combined.dir <- file.path(proj.dir, "model_runs", subdir.name, "_OVERALL_")	# Value actually used
