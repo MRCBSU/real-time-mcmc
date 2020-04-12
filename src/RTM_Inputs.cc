@@ -783,7 +783,7 @@ void read_global_model_parameters(globalModelParams& in_pars,
   // LOAD THE INPUT FILE INTO A STRING VARIABLE
   fn_load_file(&str_source, source_file);
 
-  // READ IN PARAMETER STRUCTURES OR SET TO DEFAULT.
+    // READ IN PARAMETER STRUCTURES OR SET TO DEFAULT.
   for(inti = 0; inti < num_instances; inti++){
 
     // GET VARIABLE NAME FROM DEFAULT STRING
