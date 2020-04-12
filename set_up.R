@@ -34,7 +34,7 @@ if(flg.createfile){
 header <- readLines("src/RTM_Header.h")
 intHea <- grep("NUM_AGE_GROUPS", header)
 header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nages, ")")
-write(header, file = "src/RTM_Header.h", append = F)
+write(header, file = "src/RTM_Header.h")
 
 ## Get the population sizes
 require(readr)

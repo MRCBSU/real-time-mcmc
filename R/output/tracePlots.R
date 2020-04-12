@@ -68,7 +68,8 @@ var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susc
 ### PRIOR INFORMATION
 var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), list(dnorm, dnorm), NULL, NULL, list(dbeta),
                                        list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, 2), NA, NA, pars.pgp,
+                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars,
+                                     NA, NA, pars.egr, rep(pars.nu, 2), NA, NA, pars.pgp,
                                      pars.ifr, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.

@@ -214,9 +214,9 @@ gamma_sd = 0.0;
 }
 
 
-symp_to_hosp_distribution = { gamma_mean = 0.0;
+symp_to_hosp_distribution = { gamma_mean = `r ddelay.mean`;
 
-gamma_sd = 0.0;
+gamma_sd = `r ddelay.sd`;
 
 }
 
@@ -235,9 +235,9 @@ gamma_sd = `r ldelay.sd`;
 }
 
 
-hosp_reporting_distribution = { gamma_mean = `r ddelay.mean`;
+hosp_reporting_distribution = { gamma_mean = `r rdelay.mean`;
 
-gamma_sd = `r ddelay.sd`;
+gamma_sd = `r rdelay.sd`;
 
 }
 

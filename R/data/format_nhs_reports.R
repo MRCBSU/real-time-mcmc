@@ -13,14 +13,17 @@ date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- "20200409 COVID19 Deaths.csv" ## NULL
+deaths.loc <- "Dataset Modelling 20200408.csv" ## NULL
 # deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
-	death_date = "dod",
-	finalid = "finalid",
-	onset_date = "onsetdate"
+    death_date = "dod",
+    dbs_date = "DBSdeathreportdate",
+    nhs_date = "NHSdeathreportdate",
+    hpt_date = "HPTdeathreportdate",
+    finalid = "finalid",
+    onset_date = "onsetdate"
 )
 
 ## Inputs that are dependent on the output required.
@@ -60,14 +63,21 @@ source(file.path(file.loc, "utils.R"))
 ## Which columns are we interested in?
 death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
+death.col.args[[col.names[["dbs_date"]]]] <- col_character()
+death.col.args[[col.names[["nhs_date"]]]] <- col_character()
+death.col.args[[col.names[["hpt_date"]]]] <- col_character()
 death.col.args[[col.names[["onset_date"]]]] <- col_character()
 death.col.args[[col.names[["finalid"]]]] <- col_double()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 plausible.death.date <- function(x) {
-	within.range <- x$Date <= today() & x$Date >= ymd("2020-01-01")
-	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
-	return(within.range & after.onset)
+	within.range <- x$Report <= today() & x$Report >= ymd("2020-01-01")
+        flgs <- is.na(x$Date)
+        death.after.onset <- rep(TRUE, nrow(x))
+        death.after.onset[flgs] <- (is.na(x$Onset) | (x$Onset <= x$Report))[flgs]
+        death.after.onset[!flgs] <- (is.na(x$Onset) | (x$Onset <= x$Date))[!flgs]
+        report.after.death <- is.na(x$Date) | (x$Date <= x$Report)
+	return(within.range & death.after.onset & report.after.death)
 }
 
 ## Some patients are known to have the month and day swapped
@@ -95,14 +105,19 @@ dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
     mutate(Date = fuzzy_date_parse(death_date),
-           Onset = fuzzy_date_parse(onset_date)) %>%
-    ## fix.dates %>%
-    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
+           Onset = fuzzy_date_parse(onset_date),
+           ReportDBS = fuzzy_date_parse(dbs_date),
+           ReportNHS = fuzzy_date_parse(nhs_date),
+           ReportHPT = fuzzy_date_parse(hpt_date)) %>%
+    ## ## fix.dates %>%
+    mutate(Report = ReportNHS) %>%
+    mutate(plausible_death_date = plausible.death.date(.) & !is.na(Report))
+
 
 if (!all(dth.dat$plausible_death_date)) {
     implausible.dates <- dth.dat %>% filter(!plausible_death_date)
     print("WARNING: The following rows have implausible death dates and have been excluded: ")
-    print(implausible.dates %>% select(c(finalid, Date, Onset)))## , swap_death, swap_onset)))
+    print(x.out <- implausible.dates %>% select(c(finalid, Onset, Date, Report)))## , swap_death, swap_onset)))
     dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
@@ -120,9 +135,9 @@ earliest.date <- ymd("2020-02-17")
 all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 dth.dat <- dth.dat %>%
-    filter(Date <= latest.date) %>%
-    filter(Date >= earliest.date) %>%
-    mutate(fDate = factor(Date)) %>%
+    filter(Report <= latest.date) %>%
+    filter(Report >= earliest.date) %>%
+    mutate(fDate = factor(Report)) %>%
     mutate(Region = as.factor(eval(parse(text = region.def.str))))
 levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
 
@@ -140,7 +155,7 @@ rtm.dat <- rtm.dat %>%
 for(reg in levels(rtm.dat$Region)){
     write.table(filter(rtm.dat, Region == reg) %>%
                select(fDate, count),
-            file = build.data.filepath("RTM_format/deaths", "deaths", date.data, "_", reg, ".txt"),
+            file = build.data.filepath("RTM_format/deaths", "reportsNHS", date.data, "_", reg, ".txt"),
             sep = "\t",
             col.names = FALSE,
             row.names = FALSE)
@@ -152,14 +167,14 @@ gp <- ggplot(rtm.dat, aes(x = fDate, y = count, color = Region)) +
     geom_line() +
     geom_point() +
     theme_minimal() +
-    ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
-    xlab("Date of death") +
+    ggtitle(paste("Daily number of death reports (on", lubridate::as_date(date.data), ")")) +
+    xlab("Date of death report") +
     ylab("#Deaths") +
     theme(
         legend.position = "top",
         legend.justification = "left",
         )
-ggsave(build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf"),
+ggsave(build.data.filepath("RTM_format/deaths", "reportsNHS_plot", date.data, ".pdf"),
        gp,
        width = 8.15,
        height = 6)

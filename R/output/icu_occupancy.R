@@ -35,25 +35,52 @@ row.leave.time <- function(row) {
 	return(Reduce('+',lapply(seq(from=1,to=length(row)), element.leave.time, row=row)))
 }
 
-icu.int <- round(ICU$East)
-icu.out <- apply(icu.int, 2, row.leave.time)
-icu.net <- icu.int - icu.out
-icu.occupancy <- apply(icu.net, 2, cumsum)
-
+if (FALSE) { # We need better method of estimating ICU occupancy and this is slow
 pdf(file.path(target.dir, "ICU_occupancy.pdf"))
-q.occupancy <- apply(icu.occupancy, 1, quantile, probs = c(0.025, 0.5, 0.975))
-plot(dates.used, q.occupancy[2, ], type = "l", main = "ICU bed occupancy", ylab = "Beds occupied", xlab = "Day", ylim = c(0, max(q.occupancy)))
-lines(dates.used, q.occupancy[1, ], lty = 3)
-lines(dates.used, q.occupancy[3, ], lty = 3)
-abline(v = dates.used[nt], col = "red")
-dev.off()
+icu.int <- list()
+icu.out <- list()
+icu.net <- list()
+icu.occupancy <- list()
+q.occupancy <- list()
+for (reg in names(NNI)) {
+	icu.int[[reg]] <- round(ICU[[reg]])
+	icu.out[[reg]] <- apply(icu.int[[reg]], 2, row.leave.time)
+	icu.net[[reg]] <- icu.int[[reg]] - icu.out[[reg]]
+	icu.occupancy[[reg]] <- apply(icu.net[[reg]], 2, cumsum)
 
+	q.occupancy[[reg]] <- apply(icu.occupancy[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+	plot(dates.used, q.occupancy[[reg]][2, ], type = "l", main = "ICU bed occupancy", ylab = "Beds occupied", xlab = "Day", ylim = c(0, max(q.occupancy[[reg]])))
+	lines(dates.used, q.occupancy[[reg]][1, ], lty = 3)
+	lines(dates.used, q.occupancy[[reg]][3, ], lty = 3)
+	abline(v = dates.used[nt], col = "red")
+	dev.off()
+}
+}
+
+NNI.cum = list()
+q.NNI.cum = list()
 pdf(file.path(target.dir, "NNI_cum.pdf"))
-NNI.cum <- apply(NNI$East[1,,], 2, cumsum)
-q.NNI.cum <- apply(NNI.cum, 1, quantile, probs = c(0.025, 0.5, 0.975))
-plot(dates.used, q.NNI.cum[2, ], type = "l", main = "Cumulative infection count", ylab = "Cumulative infections", xlab = "Day", ylim = c(0, max(q.NNI.cum)))
-lines(dates.used, q.NNI.cum[1, ], lty = 3)
-lines(dates.used, q.NNI.cum[3, ], lty = 3)
-abline(v = dates.used[nt], col = "red")
-dev.off()
+for (reg in names(NNI)) {
+	NNI.cum[[reg]] <- apply(NNI[[reg]][1,,], 2, cumsum)
+	q.NNI.cum[[reg]] <- apply(NNI.cum[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+	plot(dates.used, q.NNI.cum[[reg]][2, ], type = "l", main = "Cumulative infection count", ylab = "Cumulative infections", xlab = "Day", ylim = c(0, max(q.NNI.cum[[reg]])))
+	lines(dates.used, q.NNI.cum[[reg]][1, ], lty = 3)
+	lines(dates.used, q.NNI.cum[[reg]][3, ], lty = 3)
+	abline(v = dates.used[nt], col = "red")
+	dev.off()
+}
 
+D.cum = list()
+q.D.cum = list()
+pdf(file.path(target.dir, "Deaths_cum.pdf"))
+for (reg in names(NNI)) {
+	D.cum[[reg]] <- apply(D[[reg]], 2, cumsum)
+	q.D.cum[[reg]] <- apply(D.cum[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+	plot(dates.used, q.D.cum[[reg]][2, ], type = "l", main = "Cumulative deaths count", ylab = "Cumulative deaths", xlab = "Day", ylim = c(0, max(q.D.cum[[reg]])))
+	lines(dates.used, q.D.cum[[reg]][1, ], lty = 3)
+	lines(dates.used, q.D.cum[[reg]][3, ], lty = 3)
+	abline(v = dates.used[nt], col = "red")
+	dev.off()
+}
+
+save(q.NNI.cum, q.D.cum, file = file.path(target.dir, "occupancy_results.RData"))

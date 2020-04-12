@@ -8,12 +8,12 @@ suppressMessages(library(dplyr))
 
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
-date.data <- (today() - days(1)) %>% format("%Y%m%d")
+date.data <- (today() - days(2)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- "Dataset Modelling 20200404.csv" ## NULL
+deaths.loc <- "Dataset Modelling 20200408.csv" ## NULL
 # deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 
 ## Map our names for columns (LHS) to data column names (RHS)
