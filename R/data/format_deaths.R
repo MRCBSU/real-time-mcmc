@@ -7,7 +7,6 @@ suppressMessages(library(tidyverse))
 
 ## Where to find the data, if NULL use command line argument
 deaths.loc <- NULL
-#deaths.loc <- "20200403 COVID19 Deaths.csv" ## NULL
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
@@ -54,7 +53,7 @@ nhs.region <- function(x) {
 
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
-get.region <- function(x) {return("ENGLAND")}
+get.region <- nhs.region
 
 
 ####################################################################

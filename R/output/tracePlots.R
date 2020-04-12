@@ -68,14 +68,7 @@ var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susc
 ### PRIOR INFORMATION
 var.priors <- list(distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), rep(list(dnorm), r), NULL, NULL, list(dbeta),
                                        list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-<<<<<<< HEAD
                    parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, r), NA, NA, pars.pgp,
-||||||| parent of 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, 2), NA, NA, pars.pgp,
-=======
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars,
-                                     NA, NA, pars.egr, rep(pars.nu, 2), NA, NA, pars.pgp,
->>>>>>> 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.
                                      pars.ifr, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.

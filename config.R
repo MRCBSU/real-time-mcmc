@@ -33,5 +33,6 @@ regions <- "ENGLAND"
 subdir.name <- paste0(date.data, "regions_alone")
 out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
 
-scenario.name <- "variable"
+data.desc <- "incidence" # Set to "report" if running by reporting date
+scenario.name <- "variable_relax"
 combined.dir <- file.path(proj.dir, "model_runs", subdir.name, "_OVERALL_")	# Value actually used

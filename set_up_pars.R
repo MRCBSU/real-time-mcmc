@@ -75,11 +75,3 @@ contact.dist <- c(1, ifelse(is.null(prior.list[which.var]), 1, 3))
 contact.pars <- prior.list[[which.var]]
 which.var <- which(sapply(names(int.effect), grepl, x = scenario.name, fixed = TRUE))
 contact.reduction <- c(1, int.effect[which.var])
-<<<<<<< HEAD
-contact.dist <- c(1, 3) ## rep(1, 2) if fixed
-contact.pars <- c(2, 3)
-||||||| parent of 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.
-contact.dist <- c(1, 3) ## rep(1, 2) if fixed
-contact.pars <- c(20.67, 31.00)
-=======
->>>>>>> 0dc4f43... Fixes various and undocumented. New structure to the output in model_runs.

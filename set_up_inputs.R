@@ -1,3 +1,4 @@
+
 #######################################################################
 ## INPUT SETTINGS
 #######################################################################
@@ -73,29 +74,7 @@ if (hosp.flag == 1) {
 	end.hosp <- set.end.date(end.hosp, hosp.data)
 }
 
-set.end.date <- function(user.value, data.file) {
-	if (is.null(user.value)) {
-		return(max(length(readLines(data.file))))
-	} else {
-		return(user.value)
-	}
-}
-# Where are the data files?
-dir.data <- file.path(proj.dir, "data")
-source(file.path(proj.dir, "R/data/utils.R"))
-# If end.gp and/or end.hosp are NULL then read from data files
-gp.data <- NULL
-gp.denom <- NULL
-if (gp.flag == 1) {
-	gp.data <- build.data.filepath("RTM_format", "linelist", date.of.runs, ".txt")
-	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.of.runs, ".txt")
-	end.gp <- set.end.date(end.gp, gp.data)
-}
-hosp.data <- NULL
-if (hosp.flag == 1) {
-	hosp.data <- build.data.filepath("RTM_format", "deaths", date.of.runs, "_", regions, ".txt")
-	end.hosp <- set.end.date(end.hosp, hosp.data)
-}
+
 
 ## Get the number of age groups and regions
 nages <- length(age.grps)

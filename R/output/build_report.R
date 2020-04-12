@@ -3,7 +3,7 @@ library(lubridate)
 library(tidyverse)
 #knitr::opts_chunk$set(echo = FALSE)
 
-start_date = ymd("2020-02-17")
+start_date <- ymd("2020-02-17")
 
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -51,8 +51,11 @@ calc.posterior.summary <- function(posterior) {
 	))
 }
 
+if(is.null(params$contact_parameters))
+    params$contact_parameters <- t(array(contact.reduction, dim = dim(t(posterior.R0))))
+    
 if (is.null(names(posterior.R0))) {
-  posterior.ifr <- params$prop_case_to_hosp
+    posterior.ifr <- params$prop_case_to_hosp
 	posterior.summary <-
 		calc.posterior.summary(posterior.R0) %>%
 		bind_rows(calc.posterior.summary(params$contact_parameters)) %>%
@@ -65,7 +68,7 @@ if (is.null(names(posterior.R0))) {
 	contact_param<- bind_rows(lapply(posterior.contact_param, calc.posterior.summary))
 	col.names <- sapply(names(posterior.contact_param), function(x) {paste0("Lockdown effect (", str_replace_all(x, "_", " "), ")")})
 	contact_param$parameter <- col.names
-	
+
 	ifr <- bind_rows(lapply(posterior.ifr, calc.posterior.summary))
 	col.names <- sapply(names(posterior.ifr), function(x) {paste0("IFR (", str_replace_all(x, "_", " "), ")")})
 	ifr$parameter <- col.names
