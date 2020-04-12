@@ -1,3 +1,4 @@
+suppressMessages(library(tidyverse))
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -34,6 +35,7 @@ all.NNI.cum <- list()
 all.posterior.R0 <- list()
 posterior.contact_param <- list()
 posterior.ifr <- list()
+posterior.Rt <- list()
 for (region in all.regions) {
 	load(file.path(all.out.dirs[[region]], "occupancy_results.RData"))
 	load(file.path(all.out.dirs[[region]], "plotted_summaries.RData"))
@@ -50,6 +52,11 @@ for (region in all.regions) {
 	posterior.ifr[[region]] <- params$prop_case_to_hosp
 	file.copy(file.path(all.out.dirs[[region]], "codas.pdf"),
 				file.path(out.dir, paste0("codas_", region, ".pdf")))
+	reg.pop <- sum(filter(pop, Name %in% nhs.regions[[region]])$`All ages`)
+	if (region == "Scotland") reg.pop <- 5438100
+	susc <- 1 - NNI.cum[[region]] / reg.pop
+	adj_R0 <- (posterior.R0 * params$contact_parameters[,2])[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
+	posterior.Rt[[region]] <- sweep(susc, MARGIN=2, adj_R0, `*`)
 }
 q.NNI.cum <- all.q.NNI.cum
 q.D.cum <- all.q.D.cum

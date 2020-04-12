@@ -42,8 +42,8 @@ if (!exists("q.NNI.cum")) {
 	load(out.file("occupancy_results.RData"))
 }
 
-calc.posterior.summary <- function(posterior) {
-	if (ncol(posterior) > 1) posterior <- posterior[,2]
+calc.posterior.summary <- function(posterior, col=NULL) {
+	if (ncol(posterior) > 1) posterior <- posterior[,col]
 	quantiles <- quantile(posterior, c(0.025, 0.5, 0.975))
 	return(tribble(
 		~Median,		~`95% lower`,		~`95% upper`,
@@ -65,7 +65,7 @@ if (is.null(names(posterior.R0))) {
 	col.names <- sapply(names(posterior.R0), function(x) {paste0("R0 (", str_replace_all(x, "_", " "), ")")})
 	R0.summary$parameter <- col.names
 
-	contact_param<- bind_rows(lapply(posterior.contact_param, calc.posterior.summary))
+	contact_param<- bind_rows(lapply(posterior.contact_param, calc.posterior.summary, col = 2))
 	col.names <- sapply(names(posterior.contact_param), function(x) {paste0("Lockdown effect (", str_replace_all(x, "_", " "), ")")})
 	contact_param$parameter <- col.names
 
@@ -73,7 +73,14 @@ if (is.null(names(posterior.R0))) {
 	col.names <- sapply(names(posterior.ifr), function(x) {paste0("IFR (", str_replace_all(x, "_", " "), ")")})
 	ifr$parameter <- col.names
 
-	posterior.summary <- rbind(R0.summary, contact_param, ifr)
+	num.today <- day.number(lubridate::ymd(date.data))
+	Rt <- bind_rows(lapply(posterior.Rt, calc.posterior.summary, col = num.today))
+	col.names <- sapply(names(posterior.ifr), function(x) {
+							paste0("R on ", lubridate::today(), " (", str_replace_all(x, "_", " "), ")")
+						})
+	Rt$parameter <- col.names
+
+	posterior.summary <- rbind(R0.summary, contact_param, ifr, Rt)
 }
 
 posterior.summary <- posterior.summary %>%
@@ -97,7 +104,7 @@ numerical.summary <- tibble()
 predict.on <- lubridate::ymd(date.data)
 for (reg in names(q.NNI.cum)) {
 	names <- paste0(
-		c("Cumulative infections", "Cumulative deaths"),
+		c("Cumulative infections", "Cumulative deaths", "Rt"),
 		" (", reg, ")"
 	)
 	reg.summary <- tribble(
