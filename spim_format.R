@@ -144,7 +144,8 @@ regions <- c(
 	"North_East_and_Yorkshire",
 	"North_West",
 	"South_East",
-	"South_West"
+	"South_West",
+	"Scotland"
 )
 
 NNI.out <- list() ## What we're going to put into the report
@@ -260,6 +261,7 @@ out <- out %>%
            `75th centile` = Value[, 5],
            `95th centile` = Value[, 6],
            `99th centile` = Value[, 7],
+           `50th centile` = Value[, 7],
 		   `Creation Day` = day(CreationDate),
 		   `Creation Month` = month(CreationDate),
 		   `Creation Year` = year(CreationDate),
