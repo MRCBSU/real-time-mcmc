@@ -28,7 +28,7 @@ if(flg.createfile){
     while(!file.exists(dirname(tmp.dir[1])))
         tmp.dir <- c(dirname(tmp.dir[1]), tmp.dir)
     for(i in 1:length(tmp.dir))
-        system(paste("mkdir", deparse(tmp.dir[i])))
+        system(paste("mkdir -p", deparse(tmp.dir[i])))
 }
 ## Change the hard-wiring of the number of age groups
 header <- readLines("src/RTM_Header.h")
@@ -42,11 +42,15 @@ require(tidyr)
 load(build.data.filepath("population", "pop_nhs.RData"))
 pop.input <- NULL
 for(reg in regions){
-    pop.full <- pop[pop$Name %in% nhs.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
-    pop.full <- apply(pop.full, 2, sum)
-    if(age.grps == "All")
-        pop.input <- c(pop.input, pop.full["All ages"])
-    }
+	if (reg == "Scotland" && age.grps == "All") {
+		pop.input <- c(pop.input, 5438100)
+	} else {
+		pop.full <- pop[pop$Name %in% nhs.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+		pop.full <- apply(pop.full, 2, sum)
+		if(age.grps == "All")
+			pop.input <- c(pop.input, pop.full["All ages"])
+	}
+}
 ## Remove spaces from region name.
 regions <- gsub(" ", "_", regions, fixed = TRUE)
 

@@ -10,50 +10,11 @@ deaths.loc <- NULL
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
-	death_date = "dod",
-	finalid = "finalid",
-	onset_date = "onsetdate",
-	nhs_region = "nhser_name",
-	phe_region = "phec_name",
-	utla_name = "utla_name"
+	death_date = "NRS.Date.Death"
 )
 
 ## Inputs that are dependent on the output required.
-reporting.delay <- 5
-
-mapping <- list(
-	"East Midlands" = "Midlands",
-	"East of England" = "East of England",
-	"London" = "London",
-	"North East" = "North East and Yorkshire",
-	"North West" = "North West",
-	"South East" = "South East",
-	"South West" = "South West",
-	"West Midlands" = "Midlands",
-	"Yorkshire and Humber" = "North East and Yorkshire"
-)
-phe.to.nhs.region <- function(x) {
-	args <- mapping
-	args[[".x"]] <- x$phe_region
-	result <- do.call(recode, args)
-	result[x$utla_name == "Cumbria"] <- NA
-	return(result)
-}
-
-nhs.region <- function(x) {
-	# Below code will give the NHS region
-	ifelse(
-		!is.na(x$nhs_region),
-		x$nhs_region,
-		phe.to.nhs.region(x)
-	) %>%
-	str_replace_all(" ", "_")
-}
-
-
-# Given a row in a deaths file, return its region.
-# Various useful functions for this are defined above.
-get.region <- nhs.region
+reporting.delay <- 7
 
 
 ####################################################################
@@ -87,11 +48,6 @@ source(file.path(proj.dir, "config.R"))
 ## Which columns are we interested in?
 death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
-death.col.args[[col.names[["onset_date"]]]] <- col_character()
-death.col.args[[col.names[["finalid"]]]] <- col_double()
-death.col.args[[col.names[["nhs_region"]]]] <- col_character()
-death.col.args[[col.names[["phe_region"]]]] <- col_character()
-death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -100,9 +56,7 @@ within.range <- function(dates) {
 
 plausible.death.date <- function(x) {
 	death.within.range <- within.range(x$Date)
-	onset.within.range <- is.na(x$Onset) | within.range(x$Onset)
-	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
-	return(death.within.range & onset.within.range & after.onset)
+	return(death.within.range)
 }
 
 heuristically.swap.day.and.month <- function(dates) {
@@ -119,9 +73,7 @@ heuristically.swap.day.and.month <- function(dates) {
 fix.dates <- function(df) {
 	return(mutate(df,
 		orig_date = Date,
-		orig_onset = Onset,
-		Date = heuristically.swap.day.and.month(Date),
-		Onset = heuristically.swap.day.and.month(Onset)
+		Date = heuristically.swap.day.and.month(Date)
 	  ))
 }
 
@@ -135,54 +87,40 @@ print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
-    mutate(Date = fuzzy_date_parse(death_date),
-           Onset = fuzzy_date_parse(onset_date)) %>%
+    mutate(Date = fuzzy_date_parse(death_date)) %>%
     fix.dates %>%
     mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
 
 if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
 	print("WARNING: The following rows have implausible death dates and have been excluded: ")
-	implausible.dates %>% select(c(finalid, Date, Onset)) %>% print(n=1000)
+	implausible.dates %>% print(n=1000)
 	dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
 print("WARNING: the following rows have had onset and/or death date changed to become plausible: ")
 dth.dat %>%
-   filter(orig_date != Date | orig_onset != Onset) %>%
-   select(c(finalid, Date, orig_date, Onset, orig_onset)) %>%
+   filter(orig_date != Date) %>%
+   select(c(Date, orig_date)) %>%
    mutate(
    		orig_date = as_date(ifelse(orig_date == Date,
-							  NA, orig_date)),
-   		orig_onset = as_date(ifelse(orig_onset == Onset,
-							  NA, orig_onset))
+							  NA, orig_date))
 	) %>%
    print(n=1000)
-
-## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
-#dth.dat$dod <- lubridate::as_date(dth.dat$dod, format = "%d/%m/%Y", tz = "GMT")
-#dth.dat$dod_NHSE <- lubridate::as_date(dth.dat$dod_NHSE, format = "%m/%d/%Y", tz = "GMT")
-#x <- dth.dat$dod
-#x[is.na(x)] <- dth.dat$dod_NHSE[is.na(x)]
-#dth.dat <- dth.dat %>%
-    #mutate(Date = x)
-## ## 
 
 latest.date <- ymd(date.data) - reporting.delay
 earliest.date <- ymd("2020-02-17")
 
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
-    filter(Date >= earliest.date) %>%
-    mutate(Region = get.region(.)) %>%
-	filter(Region %in% regions)
+    filter(Date >= earliest.date)
 
 rtm.dat <- dth.dat %>%
-	group_by(Date, Region, .drop = FALSE) %>%
+	group_by(Date, .drop = FALSE) %>%
 	tally %>%
 	right_join(		# Add missing rows
-		expand_grid(Date = as_date(earliest.date:latest.date), Region = regions),
-		by = c("Date", "Region")
+		expand_grid(Date = as_date(earliest.date:latest.date)),
+		by = c("Date")
 	) %>%
 	replace_na(list(n = 0)) %>%		# 0 if just added
 	arrange(Date)
@@ -190,25 +128,24 @@ rtm.dat <- dth.dat %>%
 ## Write rtm.dat to data file
 for(reg in regions) {
 	region.dat <- rtm.dat %>%
-		filter(Region == reg) %>%
 		select(Date, n)
 		
 	print(paste(
 		"Writing to",
-		build.data.filepath("RTM_format", "deaths", date.data, "_", reg, ".txt"),
+		build.data.filepath("RTM_format", "deaths", date.data, "_Scotland.txt"),
 		"(", sum(region.dat$n), "total deaths,", nrow(region.dat), "rows.)"
 	))
 
 	region.dat %>%
 		write_tsv(
-            build.data.filepath("RTM_format", "deaths", date.data, "_", reg, ".txt"),
+			build.data.filepath("RTM_format", "deaths", date.data, "_Scotland.txt"),
             col_names = FALSE
 		)
 }
 
 ## Save a quick plot of the data...
 require(ggplot2)
-gp <- ggplot(rtm.dat, aes(x = Date, y = n, color = Region)) +
+gp <- ggplot(rtm.dat, aes(x = Date, y = n)) +
     geom_line() +
     geom_point() +
     theme_minimal() +

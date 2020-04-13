@@ -144,7 +144,7 @@ for(reg in regions){
     q.ICU[[reg]] <- apply(ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
     q.D[[reg]] <- apply(D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(paste0("Hosp_projections_", reg, ".pdf"))
+    pdf(file.path(target.dir, paste0("Hosp_projections_", reg, ".pdf")))
     plot(dates.used, q.H[[reg]][2, ], type = "l", main = paste("Projected (daily) Hospital Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.H[[reg]])))
     lines(dates.used, q.H[[reg]][1, ], lty = 3)
     lines(dates.used, q.H[[reg]][3, ], lty = 3)
@@ -252,5 +252,4 @@ for(reg in regions){
 ## dev.off()
 
 save(q.ICU, q.D, q.NNI, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
-
-save(nni, icu, hosp, deaths, file = "table_summaries.RData")
+save(nni, icu, hosp, deaths, file = file.path(target.dir, "table_summaries.RData"))

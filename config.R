@@ -1,0 +1,38 @@
+#######################################################################
+## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
+#######################################################################
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) > 0) region.index <- as.integer(args[length(args)])
+if (length(args) > 1) date.data <- args[length(args)-1]
+
+
+if (!exists("date.data")) date.data <- "20200407"
+
+# Number of days to run the simulation for.
+# Including lead-in time, analysis of data and short-term projection
+ndays <- 62
+
+all.regions <- c(
+	"East_of_England",
+	"London",
+	"Midlands",
+	"North_East_and_Yorkshire",
+	"North_West",
+	"South_East",
+	"South_West",
+	"Scotland"
+)			# Regions under study
+if (!exists("region.index")) region.index <- 1
+
+#regions <- all.regions[region.index] # Use to allow setting region via command-line
+regions <- "ENGLAND"
+
+# Choose the name of the subdirectory in model_runs to use
+subdir.name <- paste0(date.data, "regions_alone")
+out.dir <- file.path(proj.dir, "model_runs", subdir.name, regions)	# Value actually used
+
+data.desc <- "incidence" # Set to "report" if running by reporting date
+scenario.name <- "variable_relax"
+combined.dir <- file.path(proj.dir, "model_runs", subdir.name, "_OVERALL_")	# Value actually used

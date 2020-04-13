@@ -45,7 +45,14 @@ regions.short$Region <- gsub(" ", "_", regions.short$Region)
 nhs.regions <- list("London" = "London",
                     "Outside_London" = c("North East and Yorkshire", "North West", "Midlands", "East of England", "South East", "South West"),
                     "UNITED_KINGDOM" = "UNITED KINGDOM",
-                    "ENGLAND" = unlist(lookup[, 2])
+                    "ENGLAND" = unlist(lookup[, 2]),
+					"East_of_England" =	"East of England",
+					"London" = "London",
+					"Midlands" = "Midlands",
+					"North_East_and_Yorkshire" = "North East and Yorkshire",
+					"North_West" = "North West",
+					"South_East" = "South East",
+					"South_West" = "South West"
                     )
 
 save(pop, nhs.regions, file = build.data.filepath(subdir = "", "pop_nhs.RData"))
