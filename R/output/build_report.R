@@ -1,5 +1,5 @@
 library(ggplot2)
-library(lubridate)
+suppressMessages(library(lubridate))
 library(tidyverse)
 #knitr::opts_chunk$set(echo = FALSE)
 
@@ -58,8 +58,8 @@ if (is.null(names(posterior.R0))) {
     posterior.ifr <- params$prop_case_to_hosp
 	posterior.summary <-
 		calc.posterior.summary(posterior.R0) %>%
-		bind_rows(calc.posterior.summary(params$contact_parameters)) %>%
-		bind_cols(parameter = c("R0", "Lockdown effect"))
+		rbind(calc.posterior.summary(params$contact_parameters)) %>%
+		mutate(parameter = c("R0", "Lockdown effect"))
 } else {
 	R0.summary <- bind_rows(lapply(posterior.R0, calc.posterior.summary))
 	col.names <- sapply(names(posterior.R0), function(x) {paste0("R0 (", str_replace_all(x, "_", " "), ")")})
@@ -73,10 +73,10 @@ if (is.null(names(posterior.R0))) {
 	col.names <- sapply(names(posterior.ifr), function(x) {paste0("IFR (", str_replace_all(x, "_", " "), ")")})
 	ifr$parameter <- col.names
 
-	num.today <- day.number(lubridate::ymd(date.data))
+	num.today <- day.number(ymd(date.data))
 	Rt <- bind_rows(lapply(posterior.Rt, calc.posterior.summary, col = num.today))
 	col.names <- sapply(names(posterior.ifr), function(x) {
-							paste0("R on ", lubridate::today(), " (", str_replace_all(x, "_", " "), ")")
+							paste0("R on ", today(), " (", str_replace_all(x, "_", " "), ")")
 						})
 	Rt$parameter <- col.names
 
@@ -101,7 +101,7 @@ add.numerical.summary.for.day <- function(x, day) {
 }
 
 numerical.summary <- tibble()
-predict.on <- lubridate::ymd(date.data)
+predict.on <- ymd(date.data)
 for (reg in names(q.NNI.cum)) {
 	names <- paste0(
 		c("Cumulative infections", "Cumulative deaths", "Rt"),
@@ -113,7 +113,7 @@ for (reg in names(q.NNI.cum)) {
 			names[2],		q.D.cum[[reg]],
 		) %>%
 		add.numerical.summary.for.day(predict.on) %>%
-		add.numerical.summary.for.day(lubridate::ymd(20200413)) %>%
+		add.numerical.summary.for.day(ymd(20200413)) %>%
 		add.numerical.summary.for.day(predict.on + 7) %>%
 		add.numerical.summary.for.day(predict.on + 14)
 	numerical.summary <- rbind(numerical.summary, reg.summary)
@@ -123,7 +123,7 @@ for (reg in names(q.NNI.cum)) {
 transform.q <- function(x, str = "Mid"){
 	rownames(x) <- c("lower", "median", "upper")
     df <- as.data.frame(cbind(dates.used, t(x)))
-	as_tibble(t(x)) %>% mutate(date = lubridate::as_date(dates.used))
+	as_tibble(t(x)) %>% mutate(date = as_date(dates.used))
 }
 
 plot.q <- function(q, ylab) {
