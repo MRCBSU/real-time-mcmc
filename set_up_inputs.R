@@ -2,12 +2,12 @@
 ## THIS FILE CONTAINS GENERAL PARAMETERS NEEDING TO BE UPDATED
 #######################################################################
 
-date.of.runs <- "20200409"    	# What date is in the input file names?
+date.of.runs <- "20200412"    	# What date is in the input file names?
 regions <- c("London", "Outside_London")	# Regions under study
 data.desc <- "deaths"                          # Needs to be either 'deaths' or 'reports'
 # How big an effect should be assumed for the introduction of lockdown?
 # Options are "lo", "med", or "high"
-scenario.name <- "L_OL_death_variable_relax"
+scenario.name <- "L_OL_death_variable_tight"
 
 # Choose the name of the subdirectory in model_runs to use
 subdir.name <- paste0(date.of.runs, "/", scenario.name)
@@ -15,7 +15,7 @@ out.dir <- file.path(proj.dir, "model_runs", subdir.name)	# Value actually used
 
 # Number of days to run the simulation for.
 # Including lead-in time, analysis of data and short-term projection
-ndays <- 104
+ndays <- 107
 
 #######################################################################
 ## INPUT SETTINGS
@@ -29,7 +29,7 @@ end.gp <- 15					# Total days of data, or NULL to infer from length of file
 # The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 start.hosp <- 1	 ## 35			# What day to start running the likelihood on
-end.hosp <- 48			# Total days of data, or NULL to infer from length of file
+end.hosp <- 51		# Total days of data, or NULL to infer from length of file
 
 viro.data <- NULL
 viro.denom <- NULL

@@ -13,7 +13,7 @@ date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- "20200409 COVID19 Deaths.csv" ## NULL
+deaths.loc <- "20200412 COVID19 Deaths.csv" ## NULL
 # deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 
 ## Map our names for columns (LHS) to data column names (RHS)

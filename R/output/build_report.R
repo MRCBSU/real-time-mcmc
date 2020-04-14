@@ -4,7 +4,7 @@ library(tidyverse)
 #knitr::opts_chunk$set(echo = FALSE)
 
 start_date = ymd("2020-02-17")
-date.data <- ymd("20200409")
+date.data <- ymd("20200412")
 
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)

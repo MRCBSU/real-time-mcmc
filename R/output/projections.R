@@ -90,6 +90,16 @@ for(reg in regions){
 
 }
 
+Rt <- q.Rt <- list()
+for(reg in regions){
+    ireg <- which(regions %in% reg)
+    Rt[[reg]] <- apply(NNI[[reg]], 2:3, sum)
+    Rt[[reg]] <- apply(Rt[[reg]], 2, cumsum) / regions.total.population[ireg]
+    Rt[[reg]] <- apply(Rt[[reg]], 1, function(x) posterior.R0[seq(10, nrow(posterior.R0), length.out = dim(NNI[[reg]])[3]), ireg] * (1 - x))
+    Rt[[reg]][, -(1:36)] <- Rt[[reg]][, -(1:36)] * params$contact_parameters[seq(10, nrow(posterior.R0), length.out = dim(NNI[[reg]])[3]), 2]
+    q.Rt[[reg]] <- apply(Rt[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
+}
+
 ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
 source(file.path(R.dir, "convolution.R"))
 source(file.path(R.dir, "gamma_fns.R"))
@@ -251,6 +261,6 @@ for(reg in regions){
 
 ## dev.off()
 
-save(q.ICU, q.D, q.NNI, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
+save(q.ICU, q.D, q.NNI, q.Rt, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
 
 save(nni, icu, hosp, deaths, file = "table_summaries.RData")
