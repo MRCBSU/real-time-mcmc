@@ -42,8 +42,9 @@ if (!exists("q.NNI.cum")) {
 	load(out.file("occupancy_results.RData"))
 }
 
-calc.posterior.summary <- function(posterior, col=NULL) {
-	if (ncol(posterior) > 1) posterior <- posterior[,col]
+calc.posterior.summary <- function(posterior, col = 1) {
+  if (!is.null(dim(posterior))) posterior <- posterior[,col]
+	stopifnot(length(posterior) >= 1000)
 	quantiles <- quantile(posterior, c(0.025, 0.5, 0.975))
 	return(tribble(
 		~Median,		~`95% lower`,		~`95% upper`,
@@ -58,7 +59,7 @@ if (is.null(names(posterior.R0))) {
     posterior.ifr <- params$prop_case_to_hosp
 	posterior.summary <-
 		calc.posterior.summary(posterior.R0) %>%
-		rbind(calc.posterior.summary(params$contact_parameters)) %>%
+		rbind(calc.posterior.summary(params$contact_parameters, col = 2)) %>%
 		mutate(parameter = c("R0", "Lockdown effect"))
 } else {
 	R0.summary <- bind_rows(lapply(posterior.R0, calc.posterior.summary))
@@ -76,7 +77,7 @@ if (is.null(names(posterior.R0))) {
 	num.today <- day.number(ymd(date.data))
 	Rt <- bind_rows(lapply(posterior.Rt, calc.posterior.summary, col = num.today))
 	col.names <- sapply(names(posterior.ifr), function(x) {
-							paste0("R on ", today(), " (", str_replace_all(x, "_", " "), ")")
+							paste0("R on ", ymd(date.data), " (", str_replace_all(x, "_", " "), ")")
 						})
 	Rt$parameter <- col.names
 

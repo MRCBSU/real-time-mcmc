@@ -56,7 +56,7 @@ for (region in all.regions) {
 	if (region == "Scotland") reg.pop <- 5438100
 	susc <- 1 - NNI.cum[[region]] / reg.pop
 	adj_R0 <- (posterior.R0 * params$contact_parameters[,2])[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
-	posterior.Rt[[region]] <- sweep(susc, MARGIN=2, adj_R0, `*`)
+	posterior.Rt[[region]] <- t(sweep(susc, MARGIN=2, adj_R0, `*`))
 }
 q.NNI.cum <- all.q.NNI.cum
 q.D.cum <- all.q.D.cum
