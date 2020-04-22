@@ -1,3 +1,4 @@
+`r options(scipen=999)`
 \#\#\#\#\# DATA FLAGS AND FILENAMES
 
 GP_consultation_flag `r gp.flag`
@@ -137,19 +138,19 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 
 
 
-num_iterations	     750000
+num_iterations	     `r num.iterations`
 
 output_type	     0
 
-thin_output_every    50
+thin_output_every    `r thin.outputs`
 
-thin_stats_every     500
+thin_stats_every     `r thin.params`
 
-adaptive_phase	     100000
+adaptive_phase	     `r adaptive.phase`
 
 adapt_every	     100
 
-burn_in		     250000
+burn_in		     `r burnin`
 
 num_progress_reports 10
 

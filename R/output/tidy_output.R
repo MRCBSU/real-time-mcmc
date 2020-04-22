@@ -89,13 +89,15 @@ if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
 }
+if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
 if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 
 # TODO: read where we start/stop/thin from config files
-parameter.iterations <- seq(from = 20000, to = 50000-1, by = 1)
-outputs.iterations <- seq(from = 20000, to = 50000-1, by = 10)
+parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+stopifnot(sum(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
 ################################################################
 
