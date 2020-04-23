@@ -31,22 +31,21 @@ thisFile <- function() {
                 return(normalizePath(sys.frames()[[1]]$ofile))
         }
 }
-file.loc <- dirname(thisFile())
-proj.dir <- dirname(dirname(file.loc))
-source(file.path(proj.dir, "set_up_inputs.R"))
+if(!exists("Rfile.loc")){
+    Rfile.loc <- dirname(thisFile())
+    proj.dir <- dirname(dirname(Rfile.loc))
+    source(file.path(proj.dir, "set_up_inputs.R"))
+}
 
 ###### WHERE IS THE R FILE DIRECTORY
-rfile.dir <- file.loc
-R.dir <- rfile.dir
 target.dir <- out.dir
-source(file.path(rfile.dir, "input_extraction_fns.R"))
+source(file.path(Rfile.loc, "input_extraction_fns.R"))
 
 ###### DIRECTORY CONTAINING MCMC OUTPUT
 mcmc.file <- file.path(target.dir, "mcmc.RData")
-if (!file.exists(mcmc.file)) {
-	source(file.path(rfile.dir, "tracePlots.R"))
-}
-load(mcmc.file)
+if (!file.exists(mcmc.file)){
+    source(file.path(Rfile.loc, "tracePlots.R"))
+} else if(!exists("params")) load(mcmc.file)
 
 ## Last day of data
 nt <- max(end.gp, end.hosp)
@@ -65,6 +64,7 @@ nt <- max(end.gp, end.hosp)
 ## nreg <- 5
 
 ## source("./generate.mu.for.pres.R")
+iter.sum <- seq(from = i.saved / i.summary, to = i.saved, length.out = i.summary)
 
 q.NNI <- list()
 for(reg in regions){
@@ -90,38 +90,67 @@ for(reg in regions){
 
 }
 
-Rt <- q.Rt <- list()
-for(reg in regions){
-    ireg <- which(regions %in% reg)
-    Rt[[reg]] <- apply(NNI[[reg]], 2:3, sum)
-    Rt[[reg]] <- apply(Rt[[reg]], 2, cumsum) / regions.total.population[ireg]
-    Rt[[reg]] <- apply(Rt[[reg]], 1, function(x) posterior.R0[seq(10, nrow(posterior.R0), length.out = dim(NNI[[reg]])[3]), ireg] * (1 - x))
-    Rt[[reg]][, -(1:36)] <- Rt[[reg]][, -(1:36)] * params$contact_parameters[seq(10, nrow(posterior.R0), length.out = dim(NNI[[reg]])[3]), 2]
-    q.Rt[[reg]] <- apply(Rt[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
+
+Rt.func <- function(vecS, matM){
+    if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
+    M.star <- sweep(matM, 2, vecS, `*`)
+    max(abs(eigen(M.star)$value))
 }
 
-ifr <- params$prop_case_to_hosp[seq(10, nrow(params$hosp_negbin_overdispersion), length.out = 1000), , drop = F]
-source(file.path(R.dir, "convolution.R"))
-source(file.path(R.dir, "gamma_fns.R"))
+Rt <- q.Rt <- list()
+M.star <- M <- M.mult <- list()
+m <- params$contact_parameters[iter.sum, ]
+R0 <- posterior.R0[iter.sum, , drop = F]
+for(idir in 1:length(cm.bases)){
+    M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE))
+    M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE)) + 1
+    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[M.mult[[idir]]]),
+                            dim = c(nA, nA, nrow(m)))
+}
+m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
+names(M) <- names(M.mult) <- names(M.star)
+pop.total <- all.pop[1, ]
+for(reg in regions){
+    ireg <- which(regions %in% reg)
+    M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
+    R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+    S <- apply(NNI[[reg]], c(1, 3), cumsum)  ## TxAxI array
+    S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+    R.prime <- sapply(1:ndays,
+                      function(x) sapply(1:i.summary, function(i){
+                          M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                          Rt.func(S[x, , i] / pop.total[ireg], M.temp)
+                      }
+                      )
+                      ) ## IxT array
+    Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
+    q.Rt[[reg]] <- apply(Rt[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
+}
+## ############################################################################ ##
+
+## ### Deaths ### ##
+ifr <- params$prop_case_to_hosp[iter.sum, , drop = F]
+source(file.path(Rfile.loc, "convolution.R"))
+source(file.path(Rfile.loc, "gamma_fns.R"))
 ifh <- (3*ifr) + 0.02
 ifi <- 0.3 * ifh
-delay.to.hosp <- list(
-    incub.mean = 4,
-    incub.sd = 1.41,
-    disease.mean = 0,
-    disease.sd = 0,
-    report.mean = 7.21,
-    report.sd = 2.17)
-F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
-delay.to.ICU <- list(
-                    incub.mean = 4,
-                    incub.sd = 1.41,
-                    disease.mean = 0,
-                    disease.sd = 0,
-                    report.mean = 9.21,
-                    report.sd = 3.59
-                    )
-F.icu <- discretised.delay.cdf(delay.to.ICU, steps.per.day = 1)
+## delay.to.hosp <- list(
+##     incub.mean = 4,
+##     incub.sd = 1.41,
+##     disease.mean = 0,
+##     disease.sd = 0,
+##     report.mean = 7.21,
+##     report.sd = 2.17)
+## F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
+## delay.to.ICU <- list(
+##                     incub.mean = 4,
+##                     incub.sd = 1.41,
+##                     disease.mean = 0,
+##                     disease.sd = 0,
+##                     report.mean = 9.21,
+##                     report.sd = 3.59
+##                     )
+## F.icu <- discretised.delay.cdf(delay.to.ICU, steps.per.day = 1)
 delay.to.death <- list(
     incub.mean = 4,
     incub.sd = 1.41,
@@ -132,49 +161,88 @@ delay.to.death <- list(
     )
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
+## Load in some data for goodness-of-fit
+dth.dat <- list()
+if(all(file.exists(data.files))){
+    for(r in 1:nr){
+        dth.dat[[r]] <- read_tsv(data.files[r], col_names = FALSE)
+        dth.dat[[r]] <- cbind(dth.dat[[r]][, 1], apply(dth.dat[[r]][, -1], 1, sum))
+        names(dth.dat)[r] <- regions[r]
+    }
+}
+
+## Set up lists to store convolutions
 H <- list()
 ICU <- list()
 D <- list()
+rD <- list()
 q.H <- list()
 q.ICU <- list()
 q.D <- list()
+q.rD <- list()
+
 for(reg in regions){
-    H[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifh))
-    H[[reg]] <- apply(H[[reg]], 1, conv, b = F.hosp)[1:(dim(H[[reg]])[2]), , drop = F]
-    ICU[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifi))
-    ICU[[reg]] <- apply(ICU[[reg]], 1, conv, b = F.icu)[1:(dim(ICU[[reg]])[2]), , drop = F]
-    D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:(dim(NNI[[reg]])[2]), , , drop = F]
+    ireg <- which(regions %in% reg)
+    ## Merge the two youngest age categories
+    if(nA > 1)
+        NNI[[reg]] <- apply(NNI[[reg]], 2:3, function(x) c(x[1]+x[2], x[-(1:2)]))
+    ## H[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifh))
+    ## H[[reg]] <- apply(H[[reg]], 1, conv, b = F.hosp)[1:(dim(H[[reg]])[2]), , drop = F]
+    ## ICU[[reg]] <- apply(NNI[[reg]], 2, function(x) x * t(ifi))
+    ## ICU[[reg]] <- apply(ICU[[reg]], 1, conv, b = F.icu)[1:(dim(ICU[[reg]])[2]), , drop = F]
+    D[[reg]] <- apply(NNI[[reg]], c(1, 3), conv, b = F.death)[1:ndays, , , drop = F]
     D[[reg]] <- apply(D[[reg]], 1, function(x) x * t(ifr))
-    D[[reg]] <- t(D[[reg]])
+    D[[reg]] <- array(D[[reg]], dim = c(dim(t(ifr)), as.integer(ndays)))
     
     ## ICU[[reg]] <- apply(ICU[[reg]], c(1, 3), sum)
     ## D[[reg]] <- apply(D[[reg]], c(1, 3), sum)
     
-    q.H[[reg]] <- apply(H[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
-    q.ICU[[reg]] <- apply(ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
-    q.D[[reg]] <- apply(D[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+    ## q.H[[reg]] <- apply(H[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
+    ## q.ICU[[reg]] <- apply(ICU[[reg]], 1, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(paste0("Hosp_projections_", reg, ".pdf"))
-    plot(dates.used, q.H[[reg]][2, ], type = "l", main = paste("Projected (daily) Hospital Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.H[[reg]])))
-    lines(dates.used, q.H[[reg]][1, ], lty = 3)
-    lines(dates.used, q.H[[reg]][3, ], lty = 3)
-    abline(v = dates.used[nt], col = "red")
-    dev.off()
+    ## Get total deaths over age groups
+    rD[[reg]] <- aperm(D[[reg]], c(2:3, 1)) ## I * T * A array
+    D[[reg]] <- apply(D[[reg]], 2:3, sum)
+    q.D[[reg]] <- apply(D[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(file.path(target.dir, paste0("ICU_projections_", reg, ".pdf")))
+    ## pdf(file.path(target.dir, paste0("Hosp_projections_", reg, ".pdf")))
+    ## plot(dates.used, q.H[[reg]][2, ], type = "l", main = paste("Projected (daily) Hospital Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.H[[reg]])))
+    ## lines(dates.used, q.H[[reg]][1, ], lty = 3)
+    ## lines(dates.used, q.H[[reg]][3, ], lty = 3)
+    ## abline(v = dates.used[nt], col = "red")
+    ## dev.off()
 
-    plot(dates.used, q.ICU[[reg]][2, ], type = "l", main = paste("Projected (daily) ICU Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.ICU[[reg]])))
-    lines(dates.used, q.ICU[[reg]][1, ], lty = 3)
-    lines(dates.used, q.ICU[[reg]][3, ], lty = 3)
-    abline(v = dates.used[nt], col = "red")
-    dev.off()
+    ## pdf(file.path(target.dir, paste0("ICU_projections_", reg, ".pdf")))
+
+    ## plot(dates.used, q.ICU[[reg]][2, ], type = "l", main = paste("Projected (daily) ICU Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.ICU[[reg]])))
+    ## lines(dates.used, q.ICU[[reg]][1, ], lty = 3)
+    ## lines(dates.used, q.ICU[[reg]][3, ], lty = 3)
+    ## abline(v = dates.used[nt], col = "red")
+    ## dev.off()
+
+    ## Goodness-of-fit
+    rD[[reg]] <- rnbinom(length(rD[[reg]]),
+                         size = rD[[reg]] / params$hosp_negbin_overdispersion[iter.sum, ireg],
+                         mu = rD[[reg]])
+    rD[[reg]] <- array(rD[[reg]], dim = c(i.summary, ndays, ifelse(nA > 1, nA - 1, 1)))
+    rD[[reg]] <- apply(rD[[reg]], 1:2, sum)
+    q.rD[[reg]] <- apply(rD[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
 
     pdf(file.path(target.dir, paste0("Deaths_projections_", reg, ".pdf")))
 
-    plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.D[[reg]])))
+    plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.rD[[reg]])))
     lines(dates.used, q.D[[reg]][1, ], lty = 3)
     lines(dates.used, q.D[[reg]][3, ], lty = 3)
     abline(v = dates.used[nt], col = "red")
+
+    points(dth.dat[[reg]][start.hosp:ndays, 1], dth.dat[[reg]][start.hosp:ndays, 2], pch = 18, col = "blue")
+    arrows(dth.dat[[reg]][start.hosp:ndays, 1] + 0.1,
+           q.rD[[reg]][1, start.hosp:ndays],
+           y1 = q.rD[[reg]][3, start.hosp:ndays],
+           code = 3,
+           angle = 90,
+           length = 0.1)
+    
     dev.off()
 
 }
@@ -199,13 +267,14 @@ get.tab <- function(x, dates){
 
 nni <- hosp <- icu <- deaths <- NULL
 for(reg in regions){
-    nni <- rbind(nni, get.tab(NNI[[reg]][1, , ], dates.used) %>%
+    NNI.sum <- apply(NNI[[reg]], 2:3, sum)
+    nni <- rbind(nni, get.tab(NNI.sum, dates.used) %>%
                       mutate(Region = reg))
-    hosp <- rbind(hosp, get.tab(H[[reg]], dates.used) %>%
-                        mutate(Region = reg))
-    icu <- rbind(icu, get.tab(ICU[[reg]], dates.used) %>%
-                      mutate(Region = reg))
-    deaths <- rbind(deaths, get.tab(D[[reg]], dates.used) %>%
+    ## hosp <- rbind(hosp, get.tab(H[[reg]], dates.used) %>%
+    ##                     mutate(Region = reg))
+    ## icu <- rbind(icu, get.tab(ICU[[reg]], dates.used) %>%
+    ##                   mutate(Region = reg))
+    deaths <- rbind(deaths, get.tab(t(D[[reg]]), dates.used) %>%
                             mutate(Region = reg))
 }
 
@@ -261,6 +330,16 @@ for(reg in regions){
 
 ## dev.off()
 
-save(q.ICU, q.D, q.NNI, q.Rt, dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
 
-save(nni, icu, hosp, deaths, file = "table_summaries.RData")
+save(## q.ICU,
+     q.D,
+     q.NNI,
+    q.Rt,
+    q.rD,
+     dates.used, file = file.path(target.dir, "plotted_summaries.RData"))
+
+save(nni,
+     ## icu,
+     ## hosp,
+     deaths, file = file.path(target.dir, "table_summaries.RData"))
+

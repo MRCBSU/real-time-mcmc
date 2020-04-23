@@ -48,7 +48,7 @@ start_day_of_week		   5	\#\# THE CALENDAR DAY OF start_week
 
 start_week			   6	\#\# THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
 
-num_regions			   `r nregs`	\#\# THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
+num_regions			   `r nr`	\#\# THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
 
 GP_likelihood_start_day		   `r start.gp`	\#\# THE BELOW GIVE THE RANGE OF DAYS OVER WHICH TO CALCULATE THE VARIOUS LIKELIHOODS
 
@@ -137,19 +137,19 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 
 
 
-num_iterations	     450000
+num_iterations	     750000
 
 output_type	     0
 
-thin_output_every    25
+thin_output_every    50
 
-thin_stats_every     250
+thin_stats_every     500
 
 adaptive_phase	     100000
 
 adapt_every	     100
 
-burn_in		     200000
+burn_in		     250000
 
 num_progress_reports 10
 
@@ -163,6 +163,6 @@ prop_var_shrinkage   0.9
 
 maximum_block_size   9
 
-random_seed	     80
+random_seed	     81
 
-max_threads	     2
+max_threads	     `r nr`

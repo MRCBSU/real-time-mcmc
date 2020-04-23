@@ -17,7 +17,7 @@ thisFile <- function() {
 ## Where are various directories?
 file.loc <- dirname(thisFile())
 proj.dir <- file.loc
-## Load required functions for reading in data
+## ## Load required functions for reading in data
 source(file.path(proj.dir, "set_up_inputs.R"))
 source(file.path(proj.dir, "set_up_pars.R"))
 
@@ -28,25 +28,39 @@ if(flg.createfile){
     while(!file.exists(dirname(tmp.dir[1])))
         tmp.dir <- c(dirname(tmp.dir[1]), tmp.dir)
     for(i in 1:length(tmp.dir))
-        system(paste("mkdir", deparse(tmp.dir[i])))
+        system(paste("mkdir -p", deparse(tmp.dir[i])))
 }
 ## Change the hard-wiring of the number of age groups
 header <- readLines("src/RTM_Header.h")
 intHea <- grep("NUM_AGE_GROUPS", header)
-header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nages, ")")
+header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nA, ")")
 write(header, file = "src/RTM_Header.h")
 
 ## Get the population sizes
 require(readr)
 require(tidyr)
+require(dplyr)
 load(build.data.filepath("population", "pop_nhs.RData"))
 pop.input <- NULL
 for(reg in regions){
-    pop.full <- pop[pop$Name %in% nhs.regions[[reg]] & !is.na(pop$Name), -(1:3), drop = FALSE]
-    pop.full <- apply(pop.full, 2, sum)
-    if(age.grps == "All")
-        pop.input <- c(pop.input, pop.full["All ages"])
-    }
+    reg.nhs <- get.nhs.region(reg)
+	if (reg == "Scotland" && age.labs[1] == "All") {
+		pop.input <- c(pop.input, 5438100)
+	} else {
+		pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+		pop.full <- apply(pop.full, 2, sum)
+		if(age.labs[1] == "All"){
+                    pop.input <- c(pop.input, pop.full["All ages"])
+                } else {
+                    pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
+                    pdf <- pdf %>%
+                        mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
+                        group_by(age.grp) %>%
+                        summarise(count = sum(count))
+                    pop.input <- c(pop.input, pdf$count)
+                }
+        }
+}
 ## Remove spaces from region name.
 regions <- gsub(" ", "_", regions, fixed = TRUE)
 

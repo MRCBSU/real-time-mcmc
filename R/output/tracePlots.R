@@ -16,23 +16,23 @@ thisFile <- function() {
 }
 
 ###### WHERE IS THE PROJECT ROUTE DIRECTORY
-file.loc <- dirname(thisFile())
-proj.dir <- dirname(dirname(file.loc))
-source(file.path(proj.dir, "set_up_inputs.R"))
+if(!exists("Rfile.loc")) Rfile.loc <- dirname(thisFile())
+if(!exists("proj.dir")){
+    proj.dir <- dirname(dirname(Rfile.loc))
+    source(file.path(proj.dir, "set_up_inputs.R"))
+    source(file.path(proj.dir, "set_up_pars.R"))
+}
+if(!exists("out.dir"))
+    out.dir <- "./"
 
 ###### WHERE IS THE R FILE DIRECTORY
-rfile.dir <- file.loc
-source(file.path(rfile.dir, "input_extraction_fns.R"))
-
-###### DIRECTORY CONTAINING MCMC OUTPUT
-target.dir <- out.dir
+source(file.path(Rfile.loc, "input_extraction_fns.R"))
 
 ###### HOW IS THE DATA ORGANISED
 weekly.data <- FALSE
 
 ###### EPIDEMIC DATA TIMING
-start.date <- as.Date("17/02/20", format = "%d/%m/%y")
-## flusurvey.start.date <- as.Date("25/06/09", format = "%d/%m/%y")
+if(!exists("start.date")) start.date <- as.Date("17/02/20", format = "%d/%m/%y")
 
 ###### Are we accounting for day of the week effects?
 day.of.week.effect <- FALSE
@@ -47,37 +47,36 @@ min.waiting.time <- 2
 SMC.output <- FALSE
 
 ## run details
-a <- nages  ## number of age classes
-d <- ndays  ## length in days of the run
+## a <- nages  ## number of age classes
+## d <- ndays  ## length in days of the run
 i.saved <- 10000 ## number of iterations saved in coda files
 i.summary <- 1000 ## number of iterations of summary statistics stored on file
 
-dates.used <- start.date + (0:(d - 1))
-
 r <- length(regions)
 
-regions.total.population <- get.variable.value(target.dir, "regions_population")
+regions.total.population <- t(matrix(get.variable.value(out.dir, "regions_population"), nA, r))
+
 ## regions.total.population <- sum(regions.total.population) ### TO BE COMMENTED OUT WHEN NOT LOOKING AT ENGLAND ALONE.
 ## regions.total.population <- regions.total.population[1]
 
 ## ## DEFINE PRIOR MODEL ###################################
 
 ### WHICH VARIABLES ARE STOCHASTIC?
-source(file.path(proj.dir, "set_up_pars.R"))
 var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "day_of_week_effects")
 ### PRIOR INFORMATION
-var.priors <- list(distribution = list(NULL, NULL, NULL, list(dgamma), list(dgamma), NULL, list(dgamma), NULL, NULL, list(NULL, dbeta), NULL, NULL, list(dgamma), list(dnorm, dnorm), NULL, NULL, list(dbeta),
-                                       list(dbeta), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars,
-                                     NA, NA, pars.egr, rep(pars.nu, 2), NA, NA, pars.pgp,
+var.priors <- list(distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL, list(NULL, dgamma), NULL, NULL, list(dgamma), rep(list(dnorm), nr), NULL, NULL, NULL,
+                                       rep(list(dbeta), nA - 1), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
+                   parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, nr), NA, NA, pars.pgp,
                                      pars.ifr, NA, NA, NA, NA, NA, NA)
                    )
 ## save the prior specification for use elsewhere.
-save(var.names, var.priors, file = file.path(target.dir, "prior.spec.RData"))
+save(var.names, var.priors, file = file.path(out.dir, "prior.spec.RData"))
 ## ## ######################################################
 
 ## ###### READ IN THE MCMC CHAIN from binary output files
-source(file.path(rfile.dir, "readingbinaryfiles.R"))
+source(file.path(Rfile.loc, "readingbinaryfiles.R"))
+
+dates.used <- start.date + (0:(ndays - 1))
 
 var.priors <- lapply(var.priors, function(x) x[stochastic.flags])
 
@@ -115,7 +114,7 @@ for(var.string in var.names[stochastic.flags])
     params[[var.string]] <- as.mcmc(t(params[[var.string]]))
 
 ## ## DRAW CODA PLOTS
-pdf(file.path(target.dir, "codas.pdf"))
+pdf(file.path(out.dir, "codas.pdf"))
 par(mfrow = c(1, 2))
 for(inti in 1:npar)
   {
@@ -137,7 +136,7 @@ for(inti in 1:npar)
           }
         
       }
-
+    
   }
 
 ## ADD A PLOT FOR THE CHAIN OF R0
@@ -196,17 +195,20 @@ if(!is.null(params$prop_case_to_GP_consultation)){
 }    ## N
 
 ## I0
+all.pop <- matrix(apply(regions.total.population, 1, sum), nrow(posterior.R0), ncol(posterior.R0), byrow = TRUE)
 if(ncol(posterior.aip) == ncol(posterior.nu)){
-  posterior.I0 <- t(I0.func(t(posterior.aip), t(posterior.nu), t(posterior.R0), t(posterior.pGP), regions.total.population))
+  posterior.I0 <- t(I0.func(t(posterior.aip), t(posterior.nu), t(posterior.R0), t(posterior.pGP), t(all.pop)))
 } else {
   posterior.I0 <- array(0, dim = c(nrow(posterior.nu), min(r, ncol(posterior.nu))))
   for(inti in 1:ncol(posterior.nu))
       if(inti <= r)
-          posterior.I0[, inti] <- I0.func(posterior.aip, posterior.nu[, inti], posterior.R0[, inti], posterior.pGP[, inti], regions.total.population[inti])
+          posterior.I0[, inti] <- I0.func(posterior.aip, posterior.nu[, inti], posterior.R0[, inti], posterior.pGP[, inti], all.pop[1, inti])
 }
-prior.I0 <- I0.func(prior.aip, prior.nu, prior.R0, prior.pGP, regions.total.population)
-q.prior.I0 <- quantile(prior.I0, probs = c(0.05, 0.95))
-prior.I0 <- prior.I0[order(prior.I0)]
+prior.I0 <- NULL
+for(ireg in 1:r)
+    prior.I0 <- cbind(I0.func(prior.aip, prior.nu, prior.R0, prior.pGP, all.pop[1, r]))
+q.prior.I0 <- apply(prior.I0, 2, quantile, probs = c(0.05, 0.95))
+prior.I0 <- prior.I0[order(prior.I0[, 1]), ]
 
 for(inti in 1:ncol(posterior.I0))
   {
@@ -218,7 +220,7 @@ for(inti in 1:ncol(posterior.I0))
 par(mfrow = c(1, 1))
 
 ## ADD A PLOT FOR THE LIKELIHOOD CHAIN, SHOULD IT EXIST
-if(file.exists(paste(target.dir, "coda_lfx", sep = "")))
+if(file.exists(file.path(out.dir, "coda_lfx")))
   {
     lfx <- as.mcmc(lfx)
     plot(lfx, main = "lfx chain")
@@ -227,18 +229,18 @@ if(file.exists(paste(target.dir, "coda_lfx", sep = "")))
 dev.off()
 
 ## ## ##
-## source(paste(rfile.dir, "pGP_curve.R", sep = ""))
+## source(paste(Rfile.loc, "pGP_curve.R", sep = ""))
 
 ## ## ## IF THE PROPENSITY TO CONSULT IS MODELLED
 ## if(!is.null(p.gp.design.file))
 ##   {
 ##     ## DRAW THE PROPENSITY TO CONSULT AS A FUNCTION OF TIME
-##     X.mat <- scan(paste(target.dir, p.gp.design.file, sep = ""), )
+##     X.mat <- scan(paste(out.dir, p.gp.design.file, sep = ""), )
 ##     ncs <- ncol(params$prop_case_to_GP_consultation)
 ##     X.mat <- t(matrix(X.mat, ncs, length(X.mat) / ncs))
 
 ##     if(day.of.week.effect){
-##       dow.mat <- scan(paste(target.dir, dow.design.file, sep = ""), )
+##       dow.mat <- scan(paste(out.dir, dow.design.file, sep = ""), )
 ##       ncs <- ncol(params$day_of_week_effects)
 ##       dow.mat <- t(matrix(dow.mat, ncs, length(dow.mat) / ncs))
 ##     }
@@ -263,7 +265,7 @@ dev.off()
 
 ##     for(intr in 1:(dim(q.p.GP.child)[2]))
 ##       {
-##         pdf(paste(target.dir, "p_GP_plots_region", intr, ".pdf", sep = ""))
+##         pdf(paste(out.dir, "p_GP_plots_region", intr, ".pdf", sep = ""))
 ##         par(mfrow = c(2, 1))
 ##         plot(xpts, c(q.p.GP.child[3, intr, ], q.p.GP.child[3, intr, dim(q.p.GP.child)[3]]), type = "s", lty = 2, ylab = "P_GP", xlab = "Date", ylim = c(0, 0.55), main = "p_GP Children", lwd = 2)
 ##         lines(xpts, c(q.p.GP.child[1, intr, ], q.p.GP.child[1, intr, dim(q.p.GP.child)[3]]), type = "s", lwd = 2, lty = 2)
@@ -290,4 +292,4 @@ dev.off()
     
 ##   }
 
-save.image(file.path(target.dir, "mcmc.RData"))
+save.image(file.path(out.dir, "mcmc.RData"))

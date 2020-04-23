@@ -26,8 +26,21 @@ value.pgp <- 0.1
 pars.pgp <- c(2.12, 15.8)
 
 ## Infection to fatality ratio
-value.ifr <- 0.007
-pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
+if(nA > 1){
+    value.ifr <- jitter(rep(0.007, nA - 1))
+    var.ifr <- rep(0.005, nA - 1)
+} else {
+    value.ifr <- 0.007
+    var.ifr <- 0.005
+}
+if(nA == 1){
+    pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
+} else {
+    means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+    pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
+    pars.ifr[13] <- 9.50
+    pars.ifr[14] <- 112
+}
 
 ## Initial seeding
 value.nu <- c(-19, -17.7)
@@ -42,8 +55,13 @@ value.eta.h <- 1.0
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
-ddelay.mean <- 17.8
-ddelay.sd <- 8.9
+if(grepl("Anne", scenario.name, fixed = T)){
+    ddelay.mean <-15.0
+    ddelay.sd <- 12.1
+} else {
+    ddelay.mean <- 17.8
+    ddelay.sd <- 8.9
+}
 
 ## Reporting delay on the deaths
 ## First, write down Tom's cdf for the delay distribution function
@@ -64,14 +82,17 @@ ldelay.mean <- 5.22
 ldelay.sd <- 3.59
 
 ## Contact model
+if(nA == 1){
 prior.list <- list(fixed = NULL,
                    tight = c(20.67, 31.00),
                    relax = c(2, 3),
                    unif = c(1, 1),
                    uninf = c(0.5, 0.5))
+} else prior.list <- list(relax = c(4, 4))
+
 nprior.name <- names(prior.list)
 which.var <- which(sapply(nprior.name, grepl, x = scenario.name, fixed = TRUE))
-contact.dist <- c(1, ifelse(is.null(prior.list[which.var]), 1, 3))
+contact.dist <- c(1, ifelse(is.null(prior.list[which.var]), 1, ifelse(nA == 1, 3, 2)))
 contact.pars <- prior.list[[which.var]]
 which.var <- which(sapply(names(int.effect), grepl, x = scenario.name, fixed = TRUE))
 contact.reduction <- c(1, int.effect[which.var])

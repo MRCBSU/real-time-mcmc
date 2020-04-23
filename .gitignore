@@ -2,13 +2,15 @@ rtm
 rtm_debug
 rtm_optim
 **.swp
+**.swo
 build/**
 outputs/**
 .vscode
 model_runs/**
-.Rhistory
+**/.Rhistory
 Emulation/**
 spi-forecasts/**
 sitrep-outputs/**
 **/spim*
-**/*~
+**~
+Report_structure*

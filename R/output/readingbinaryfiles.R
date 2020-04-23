@@ -5,18 +5,18 @@ if(!exists("proj.dir")){
 }
 
 if(!exists("target.dir"))
-  target.dir <- "./"
+  target.dir <- out.dir
 
 ## output type
 SMC.output <- FALSE
 
 ## run details - some default values
-if(!exists("a")) a <- 7 ## number of age classes
-if(!exists("d")) d <- 245 ## length in days of the run
+if(!exists("nA")) nA <- 1 ## number of age classes
+if(!exists("ndays")) ndays <- 81 ## length in days of the run
 if(!exists("i.saved")) i.saved <- 10000 ## number of iterations saved in coda files
 if(!exists("i.summary")) i.summary <- 100 ## number of iterations of summary statistics stored on file
 ## regions <- c("London", "WestMidlands", "North", "South")
-if(!exists("regions")) regions <- "London"
+if(!exists("regions")) regions <- c("London", "Outside_London")
 regions <- regions[!is.na(regions)]
 r <- length(regions)
 ## ### ####### # #### ####### ######
@@ -60,8 +60,8 @@ if(exists("var.priors")){
   ## ## READ IN FROM FILE CONNECTIONS ## ##
   for(intr in 1:r)
     {
-      NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * d * a)
-      NNI[[intr]] <- array(NNI[[intr]], dim = c(a, d, i.summary))
+      NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * ndays * nA)
+      NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
     }
   names(NNI) <- regions
   
@@ -70,7 +70,7 @@ if(exists("var.priors")){
   if(SMC.output)
     {
       for(intr in 1:r)
-        states[[intr]] <- readBin(state.files[[intr]], double(), n = a * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
+        states[[intr]] <- readBin(state.files[[intr]], double(), n = nA * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
       names(states) <- regions
     }
   
@@ -80,7 +80,7 @@ if(exists("var.priors")){
 	num.samples <- readBin(coda.files[[inti]], "integer")
 	if (num.params != parameter.dims[inti]) {
 		print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
-					"but", num.params, "found. Discarding the extra ones."))
+					"but", num.params, "found. Discarding extra ones and not plotting missing ones."))
 	}
 	## expected.num.samples <- parameter.dims[inti] * i.saved
 	if (num.samples != i.saved) {

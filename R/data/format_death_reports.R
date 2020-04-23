@@ -1,6 +1,8 @@
 suppressMessages(library(readr))
+suppressMessages(library(stringr))
 suppressMessages(library(lubridate))
 suppressMessages(library(dplyr))
+suppressMessages(library(tidyr))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis
@@ -8,13 +10,25 @@ suppressMessages(library(dplyr))
 
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
-date.data <- (today() - days(1)) %>% format("%Y%m%d")
+if(!exists("date.data"))
+    date.data <- (today() - days(1)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- "Dataset Modelling 20200412.csv" ## NULL
-# deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
+if(!exists("deaths.loc"))
+    deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+
+## Define an age-grouping
+if(!exists("age.agg")){
+    age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
+    age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+")
+    }
+nA <- length(age.labs)
+
+if(!exists("regions")){
+    regions <- c("London", "Outside_London")
+}
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
@@ -23,15 +37,11 @@ col.names <- list(
     nhs_date = "NHSdeathreportdate",
     hpt_date = "HPTdeathreportdate",
     finalid = "finalid",
-    onset_date = "onsetdate"
+    onset_date = "onsetdate",
+    nhs_region = "nhser_name",
+    phe_region = "phec_name",
+    utla_name = "utla_name"
 )
-
-## Inputs that are dependent on the output required.
-reporting.delay <- 0
-region.def.str <- "ifelse(nhser_name == \"London\", \"London\", \"Outside_London\")"
-## region.def.str <- "\"ENGLAND\""
-## death.col.name <- "PATIENT_DEATH_DATE"
-
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -54,11 +64,23 @@ thisFile <- function() {
         }
 }
 
-## Where are various directories?
-file.loc <- dirname(thisFile())
-proj.dir <- dirname(dirname(file.loc))
-dir.data <- file.path(proj.dir, "data")
-source(file.path(file.loc, "utils.R"))
+## ## Where are various directories?
+if(!exists("file.loc")){
+    file.loc <- dirname(thisFile())
+    proj.dir <- dirname(dirname(file.loc))
+    dir.data <- file.path(proj.dir, "data")
+    source(file.path(file.loc, "utils.R"))
+}
+
+if(!exists("data.files"))
+    data.files <- build.data.filepath("RTM_format/deaths",
+                                      "reports",
+                                      date.data,
+                                      "_",
+                                      regions,
+                                      "_",
+                                      nA,
+                                      "ages.txt")
 
 ## Which columns are we interested in?
 death.col.args <- list()
@@ -83,15 +105,14 @@ plausible.death.date <- function(x) {
 ## Some patients are known to have the month and day swapped
 ## Fix these here...
 fix.dates <- function(df) {
-	finalid.swapped.onset <- c(2507, 2727, 3159, 3284, 3767, 6969, 35367, 39214)
-	finalid.swapped.death <- c(2507)
-	df <- df %>% mutate(
-		swap_onset = finalid %in% finalid.swapped.onset,
-		swap_death = finalid %in% finalid.swapped.death
-	)
-	df[df$swap_death,]$Date  = swap.day.and.month(df[df$swap_death,]$Date)
-	df[df$swap_onset,]$Onset = swap.day.and.month(df[df$swap_onset,]$Onset)
-	return(df)
+	return(mutate(df,
+		orig_date = Date,
+		orig_onset = Onset,
+                orig_report = Report,
+		Date = heuristically.swap.day.and.month(Date),
+		Onset = heuristically.swap.day.and.month(Onset),
+                Report = heuristically.swap.day.and.month(Report)
+	  ))
 }
 
 ## Read the file and rename columns
@@ -109,8 +130,8 @@ dth.dat <- read_csv(input.loc,
            ReportDBS = fuzzy_date_parse(dbs_date),
            ReportNHS = fuzzy_date_parse(nhs_date),
            ReportHPT = fuzzy_date_parse(hpt_date)) %>%
-    ## ## fix.dates %>%
     mutate(Report = pmin(ReportDBS, ReportNHS, ReportHPT, na.rm = TRUE)) %>%
+    fix.dates %>%
     mutate(plausible_death_date = plausible.death.date(.) & !is.na(Report))
 
 
@@ -121,6 +142,20 @@ if (!all(dth.dat$plausible_death_date)) {
     dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
+print("WARNING: the following rows have had onset and/or death date changed to become plausible: ")
+dth.dat %>%
+   filter(orig_date != Date | orig_onset != Onset | orig_report != Report) %>%
+   select(c(finalid, Date, orig_date, Onset, orig_onset, Report, orig_report)) %>%
+   mutate(
+       orig_date = as_date(ifelse(orig_date == Date,
+                                  NA, orig_date)),
+       orig_onset = as_date(ifelse(orig_onset == Onset,
+                                   NA, orig_onset)),
+       orig_report = as_date(ifelse(orig_report == Report,
+                                    NA, orig_report))
+   ) %>%
+   print(n=1000)
+
 ## The following code was necessary for the first time on 20200324. Hopefully it can be commented out and ignored in future iterations
 #dth.dat$dod <- lubridate::as_date(dth.dat$dod, format = "%d/%m/%Y", tz = "GMT")
 #dth.dat$dod_NHSE <- lubridate::as_date(dth.dat$dod_NHSE, format = "%m/%d/%Y", tz = "GMT")
@@ -130,40 +165,67 @@ if (!all(dth.dat$plausible_death_date)) {
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ymd(date.data) - reporting.delay
+latest.date <- ymd(date.data)
 earliest.date <- ymd("2020-02-17")
 all.dates <- as.character(seq(earliest.date, latest.date, by = 1))
 
 dth.dat <- dth.dat %>%
     filter(Report <= latest.date) %>%
     filter(Report >= earliest.date) %>%
-    mutate(fDate = factor(Report)) %>%
-    mutate(Region = as.factor(eval(parse(text = region.def.str))))
-levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
+    filter(age > 0) %>%  ## Large numbers of 0ys. Suspect age hasn't been recorded for the majority of these.
+    ## mutate(fDate = factor(Report)) %>%
+    mutate(Region = nhs.region(.)) %>%
+    mutate(Region = map.to.region(Region)) %>%
+    filter(Region %in% regions) %>%
+    mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
+## levels(dth.dat$fDate) <- c(levels(dth.dat$fDate), all.dates[!(all.dates %in% levels(dth.dat$fDate))])
 
 rtm.dat <- dth.dat %>%
-    group_by(fDate, Region, .drop = FALSE) %>%
-    summarise(count = n())
+    group_by(Report, Region, Age.Grp, .drop = FALSE) %>%
+    tally %>%
+    right_join(
+        expand_grid(Report = as_date(earliest.date:latest.date), Region = regions, Age.Grp = age.labs),
+        by = c("Report", "Region", "Age.Grp")
+    ) %>%
+    replace_na(list(n = 0)) %>%
+    arrange(Report)
 
-rtm.dat$fDate <- lubridate::as_date(rtm.dat$fDate)
+## rtm.dat$fDate <- lubridate::as_date(rtm.dat$fDate)
 
-rtm.dat <- rtm.dat %>%
-    arrange(fDate) %>%
-    filter(!is.na(Region))
+## rtm.dat <- rtm.dat %>%
+##     arrange(fDate) %>%
+##     filter(!is.na(Region))
 
 ## Write rtm.dat to data file
-for(reg in levels(rtm.dat$Region)){
-    write.table(filter(rtm.dat, Region == reg) %>%
-               select(fDate, count),
-            file = build.data.filepath("RTM_format/deaths", "reports", date.data, "_", reg, ".txt"),
-            sep = "\t",
-            col.names = FALSE,
-            row.names = FALSE)
+names(data.files) <- regions
+for(reg in regions){
+    region.dat <- pivot_wider(filter(rtm.dat, Region == reg),
+                            id_cols = 1,
+                            names_from = Age.Grp,
+                            values_from = n)
+
+    tmpFile <- data.files[reg]
+    
+    print(paste(
+        "Writing to",
+        tmpFile,
+        "(", sum(region.dat[, -1]), "total deaths,", nrow(region.dat), "rows.)"))
+
+    region.dat %>%
+        write_tsv(
+            tmpFile,
+            col_names = FALSE
+            )
+
 }
 
 ## Save a quick plot of the data...
 require(ggplot2)
-gp <- ggplot(rtm.dat, aes(x = fDate, y = count, color = Region)) +
+rtm.dat %>%
+    group_by(Report, Region) %>%
+    summarise(count = sum(n)) -> rtm.dat.plot
+
+gp <- ggplot(rtm.dat.plot, aes(x = Report, y = count, color = Region)) +
     geom_line() +
     geom_point() +
     theme_minimal() +
