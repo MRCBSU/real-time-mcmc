@@ -49,8 +49,8 @@ SMC.output <- FALSE
 ## run details
 ## a <- nages  ## number of age classes
 ## d <- ndays  ## length in days of the run
-i.saved <- 10000 ## number of iterations saved in coda files
-i.summary <- 1000 ## number of iterations of summary statistics stored on file
+i.saved <- 30000 ## number of iterations saved in coda files
+i.summary <- 3000 ## number of iterations of summary statistics stored on file
 
 r <- length(regions)
 

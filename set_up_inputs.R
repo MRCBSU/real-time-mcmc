@@ -23,6 +23,7 @@ if(hosp.flag){
         ifelse(data.desc == "deaths", reporting.delay, 0) -
         start.date +
         1 # Total days of data, or NULL to infer from length of file
+	end.hosp <- NULL
 }
 
 viro.data <- NULL
@@ -115,7 +116,7 @@ if (gp.flag == 1) {
 }
 hosp.data <- "NULL"
 if (hosp.flag == 1) {
-    hosp.data <- build.data.filepath("RTM_format/deaths", data.desc, date.data, "_", regions, "_", nA, "ag.txt")
+    hosp.data <- build.data.filepath("RTM_format/deaths", data.desc, date.data, "_", regions, "_", nA, "ages.txt")
     if(!all(file.exists(hosp.data)))
         stop("One of the specified hospitalisation data files does not exist")
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)

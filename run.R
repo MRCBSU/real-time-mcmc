@@ -18,6 +18,9 @@ proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
 
+## do we need to do formatting?
+format.inputs <- TRUE
+
 ## Will code need to be recompiled?
 compile.code <- TRUE
 
@@ -28,14 +31,14 @@ run.code <- TRUE
 run.outputs <- TRUE
 
 ## Do the required data files exist?? If not, create them
-data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag.txt")
+data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ages.txt")
 ## If these files don't already exits, make them
 if(!all(file.exists(data.files))){
-    dir.data <- "data"
-    if(data.desc == "deaths")
-        source("R/data/format_deaths.R")
-    if(data.desc == "reports")
-        source("R/data/format_death_reports.R")
+  dir.data <- "data"
+  if(data.desc == "deaths")
+	  source("R/data/format_deaths.R")
+  if(data.desc == "reports")
+	  source("R/data/format_death_reports.R")
 }
 
 ## Set up the model specification.
