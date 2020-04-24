@@ -1,0 +1,159 @@
+suppressMessages(library(tidyverse))
+
+## Location of this script
+thisFile <- function() {
+  cmdArgs <- commandArgs(trailingOnly = FALSE)
+  needle <- "--file="
+  match <- grep(needle, cmdArgs)
+  if (length(match) > 0) {
+    # Rscript
+    return(normalizePath(sub(needle, "", cmdArgs[match])))
+  } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+    # We're in RStudio
+    return(rstudioapi::getSourceEditorContext()$path)
+  } else {
+    # 'source'd via R console
+    return(normalizePath(sys.frames()[[1]]$ofile))
+  }
+}
+
+###############################################################
+
+## Functions
+drop.from.names <- function(x, value) {
+  names(x)[!(names(x) %in% value)]
+}
+
+apply.over.named.array <- function(arr, over, func,
+                                   target.dimnames = dimnames(arr)) {
+  dims.to.preserve <- drop.from.names(dimnames(arr), over)
+  new.dim.order <- c(over, dims.to.preserve)
+  target.dimnames <- target.dimnames[new.dim.order]
+  target.dims <- sapply(target.dimnames, length)
+  return(
+    apply(arr, dims.to.preserve, func) %>%
+      array(dim = target.dims, dimnames = target.dimnames)
+  )
+}
+
+apply.param.to.output <- function(output, param, func, over) {
+  param.to.use <- param[parameter.to.outputs,]
+  func.with.param <- function(x) {
+    func(x, t(param.to.use))
+  }
+  dims.to.preserve <- drop.from.names(output.dimnames, c(over, "iteration"))
+  mat <- aperm(output, c(over, "iteration", dims.to.preserve))
+  return(apply.over.named.array(mat, c(over, "iteration"), func.with.param))
+}
+
+merge.youngest.age.groups <- function(mat, num.to.group = 2) {
+  add.function <- function(x) {
+    to.merge <- x[1:num.to.group]
+    to.preserve <- x[(num.to.group+1):length(x)]
+    return(c(sum(to.merge), to.preserve))
+  }
+  dims.to.preserve <- drop.from.names(output.dimnames, "age")
+  old.age.group.names <- dimnames(mat)$age
+  changed.age.group.name <- paste(
+    old.age.group.names[1:num.to.group], 
+    collapse = ","
+  )
+  result <- apply(mat, dims.to.preserve, add.function)
+  dimnames(result)[[1]][1] <- changed.age.group.name
+  names(dimnames(result))[1] <- "age"
+  return(result)
+}
+
+apply.convolution <- function(start, func, over = "date") {
+  result.length <- length(dimnames(start)[[over]])
+  name.over <- dimnames(start)[[over]]
+  dims.to.preserve <- drop.from.names(output.dimnames, over)
+  result <- start %>%
+    apply(dims.to.preserve, conv, b = func)
+  result <- result[1:result.length,,,,drop = FALSE]
+  dimnames(result)[[1]] <- name.over
+  names(dimnames(result))[1] <- over
+  return(result)
+}
+
+###############################################################
+
+## Load files
+if(!exists("proj.dir")){
+  file.loc <- dirname(thisFile())
+  proj.dir <- dirname(dirname(file.loc))
+}
+if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
+load(file.path(out.dir, "mcmc.RData"))
+if (!exists("conv")) {
+  source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
+  source(file.path(proj.dir, "R", "output", "convolution.R"))
+}
+if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
+
+
+# TODO: read where we start/stop/thin from config files
+parameter.iterations <- seq(from = 20000, to = 50000-1, by = 1)
+outputs.iterations <- seq(from = 20000, to = 50000-1, by = 10)
+parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+
+################################################################
+
+## Constants and settings
+
+delay.to.death <- list(
+  incub.mean = 4,
+  incub.sd = 1.41,
+  disease.mean = ddelay.mean,
+  disease.sd = ddelay.sd,
+  report.mean = rdelay.mean,
+  report.sd = rdelay.sd
+)
+F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
+
+## Extract length of dimensions
+num.regions <- length(regions)
+stopifnot(length(NNI) == num.regions)
+num.ages <- dim(NNI[[1]])[1]
+stopifnot(num.ages == length(age.labs))
+num.days <- dim(NNI[[1]])[2]
+num.NNI.iterations <- dim(NNI[[1]])[3]
+stopifnot(length(outputs.iterations) == num.NNI.iterations)
+output.quantity.dims <- c(num.ages,
+                          num.days, num.NNI.iterations, num.regions)
+## Calculate all dates used
+dates <- seq(
+  from = lubridate::as_date(start.date),
+  by = 1,
+  length = num.days
+)
+output.dimnames <- list(
+  "age" = age.labs,
+  "date" = dates,
+  "iteration" = outputs.iterations,
+  "region" = regions
+)
+
+## Get parameters
+tbl_params <- as_tibble(params)
+tbl_params$iteration <- parameter.iterations
+
+## Get NNI into nice format
+infections <- array(
+  unlist(NNI),
+  dim = output.quantity.dims,
+  dimnames = output.dimnames
+)
+if (num.ages > 1) infections <- merge.youngest.age.groups(infections)
+
+cum_infections <- infections %>% apply.over.named.array("date", cumsum)
+
+
+## Calculate deaths
+deaths <- infections %>%
+  apply.convolution(F.death) %>%
+  apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
+cum_deaths <- deaths %>% apply.over.named.array("date", cumsum)
+
+save(infections, cum_infections, deaths, cum_deaths, params,
+     file = file.path(out.dir, "output_matrices.R"))

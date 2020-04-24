@@ -8,7 +8,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "1", "England")
 
-date.data <- args[1]
+if (!exists("date.data")) date.data <- args[1]
 nr <- as.integer(args[2])
 regions <- args[3:(nr+2)]
 if (regions[1] == "All") regions <- c("East_of_England", "London", "Midlands",
@@ -29,10 +29,6 @@ age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "Al
 nA <- length(age.labs)
 
 if(!exists("regions")) regions <- "England"
-if (!exists("region.index")){
-    region.index <- 1
-} else 
-    region.index <- which(names(all.regions) %in% regions)
 
 region.code <- "Eng"
 
