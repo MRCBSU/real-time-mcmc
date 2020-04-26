@@ -114,13 +114,12 @@ if (is.null(deaths.loc)) {
 	input.loc = commandArgs(trailingOnly = TRUE)[1]
 } else {
 	if (startsWith(deaths.loc, "/")) input.loc <- deaths.loc
-	else input.loc = build.data.filepath(subdir = "raw", deaths.loc)
+	else input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
 }
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
-	filter(death_type == "Confirmed") %>%
     mutate(Date = fuzzy_date_parse(death_date),
            Onset = fuzzy_date_parse(onset_date)) %>%
     fix.dates %>%

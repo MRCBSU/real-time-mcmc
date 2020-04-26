@@ -48,5 +48,5 @@ out.dir <- file.path(proj.dir,
 					 "matrices", google.data.date))	# Value actually used
 data.dirs <- file.path(proj.dir,
                        "data/RTM_format/deaths")
-## Do we want to consider only confirmed cases
-flg.confirmed <- TRUE
+
+flg.confirmed = TRUE
