@@ -28,7 +28,7 @@ run.code <- FALSE
 run.outputs <- FALSE
 
 ## Do the required data files exist?? If not, create them
-data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "ALL_", nA, "ag.txt")
+data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
 ## If these files don't already exits, make them
 if(!all(file.exists(data.files))){
     dir.data <- "data"
@@ -48,8 +48,9 @@ if(compile.code)
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
-if(run.code)
+if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+} else save.image("tmp.RData")
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")

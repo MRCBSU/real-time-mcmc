@@ -33,8 +33,8 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
-cm.breaks <- c(36, 43, 50)				# Day numbers where breaks happen
-google.data.date <- format(ymd("20200421"), format = "%Y%m%d")
+cm.breaks <- c(36, 43, 50, 57)				# Day numbers where breaks happen
+google.data.date <- format(ymd("20200424"), format = "%Y%m%d")
 mat.dates <- start.date + cm.breaks - 1
 lst <- readRDS("contact_mats/base_matrices/base_matrices.rds")
 lst$England$all$m <- lst$England$all$m * 1e7
