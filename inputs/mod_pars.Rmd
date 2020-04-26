@@ -80,6 +80,8 @@ proposal_variance = `r paste(rep(c(0, 0.005), length(contact.reduction)), collap
 
 region_breakpoints = true;
 
+region_breakpoints = true;
+
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
