@@ -74,8 +74,8 @@ num.iterations <- 450000
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
 burnin <- 40000
 adaptive.phase <- burnin / 2
-thin.outputs <- 500 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 50  # After how many iterations to output each set of parameters
+thin.outputs <- 80 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 40  # After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 
