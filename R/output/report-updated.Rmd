@@ -18,7 +18,11 @@ suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 date.data <- "20200422"
 proj.dir <- "../.."
-source("results_api.R")
+if(exists("Rfile.loc")) {
+  source(file.path(Rfile.loc, "results_api.R"))
+} else {
+  source("results_api.R")
+}
 
 ```
 
@@ -31,18 +35,31 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL) {
   num.rows <- ceiling(length(plot.names)/2)
   plot.height <- num.rows * 420 + 150
   date <- lubridate::ymd(date.data)
-  vline <- list(
-      type = "line", 
-      y0 = 0, 
-      y1 = 1, 
-      yref = "paper",
-      x0 = lubridate::ymd(date.data), 
-      x1 = lubridate::ymd(date.data), 
-      line = list(color = "red")
+  lines <- list(
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = lubridate::ymd(date.data), 
+        x1 = lubridate::ymd(date.data), 
+        line = list(color = "red"),
+        hoverinfo = "Today"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = lubridate::ymd(20200323), 
+        x1 = lubridate::ymd(20200323), 
+        line = list(color = "blue"),
+        hoverinfo = "Lockdown"
+    )
   )
   title <- function(name) {
     list(
-      text = name,
+      text = str_replace_all(name, "_", " "),
       xref = "paper",
       yref = "paper",
       yanchor = "top",
@@ -59,29 +76,31 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL) {
       filter(by == subplot) %>%
       pivot_wider(names_from = quantile) %>%
       plot_ly(x = ~date, width = 800, height = plot.height) %>%
-      add_lines(y = ~`0.5`, color = I("black")) %>%
-      add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25) %>%
-      layout(shapes = list(vline), annotations = title(subplot), showlegend = FALSE)
-      
-
-      #geom_ribbon(alpha=0.25) +
-#      geom_vline(xintercept = lubridate::ymd(date.data), linetype = "dashed", color = "red") +
-#      theme(text = element_text(size=10),
-#            axis.text.y = element_text(size = 10, angle=90, hjust=1)) +
-#      scale_x_date(date_breaks = "14 days", labels = scales::label_date("%d %b"))) %>%
+      add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
+                hovertemplate = "%{x}: %{y:.3s}<extra>Upper 95% CrI</extra>") %>%
+      add_lines(y = ~`0.025`, alpha = 0,   # An extra trace just for hover text
+                hovertemplate = "%{x}: %{y:.3s}<extra>Median</extra>") %>%
+      add_lines(y = ~`0.5`, color = I("black"),
+                hovertemplate = "%{x}: %{y:.3s}<extra>Lower 95% CrI</extra>") %>%
+      layout(shapes = lines, annotations = title(subplot), showlegend = FALSE,
+             hovermode = "x unified")
     if (!is.null(data)) {
-      reg.data <- data %>% filter(region == reg)
-      plots[[reg]] <- plots[[reg]] +
-                        geom_point(
-                          aes(x = date, y = incidence),
-                          data = reg.data,
-                          inherit.aes = FALSE
-                       )
+      plot.data <- data %>%
+        filter(!!sym(by) == subplot) %>%
+        group_by(date) %>%
+        summarise(True = sum(value))
+      plots[[subplot]] <- plots[[subplot]] %>%
+        add_markers(
+          data = plot.data,
+          x = ~date,
+          y = ~True,
+          color = I("red"),
+          hovertemplate = "%{x}: %{y:.3s}<extra>Actual report</extra>"
+        )
     }
   }
   return(subplot(plots, nrows = num.rows))
 }
-
 ```
 
 ## Summary
@@ -131,6 +150,18 @@ make.plots(infections, by = "region")
 make.plots(infections, by = "age")
 ```
 
+### Deaths incidence with noise {.tabset}
+
+#### By region
+```{r}
+make.plots(noisy_deaths, by = "region", data = dth.dat)
+```
+
+#### By age
+```{r}
+make.plots(noisy_deaths, by = "age", data = dth.dat)
+```
+
 ### Cumulative deaths {.tabset}
 
 #### By region
@@ -147,12 +178,12 @@ make.plots(cum_deaths, by = "age")
 
 #### By region
 ```{r}
-make.plots(deaths, by = "region")
+make.plots(deaths, by = "region", data = dth.dat)
 ```
 
 #### By age
 ```{r}
-make.plots(deaths, by = "age")
+make.plots(deaths, by = "age", data = dth.dat)
 ```
 
 

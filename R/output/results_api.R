@@ -25,13 +25,14 @@ if(!exists("proj.dir")){
   proj.dir <- dirname(dirname(file.loc))
 }
 if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
-output.required <- file.path(out.dir, "output_matrices.R")
-if (file.exists(output.required)) {
-  load(output.required)
-} else {
-  source(file.path(file.loc, "tidy_output.R"))
+if (!exists("infections")) {
+  output.required <- file.path(out.dir, "output_matrices.RData")
+  if (file.exists(output.required)) {
+    load(output.required)
+  } else {
+    source(file.path(proj.dir, "R/output/tidy_output.R"))
+  }
 }
-
 
 # TODO: read where we start/stop/thin from config files
 parameter.iterations <- seq(from = 20000, to = 50000-1, by = 1)

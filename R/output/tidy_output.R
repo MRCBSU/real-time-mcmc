@@ -36,14 +36,16 @@ apply.over.named.array <- function(arr, over, func,
   )
 }
 
-apply.param.to.output <- function(output, param, func, over) {
+apply.param.to.output <- function(output, param, func, over = NULL,
+                                  target.dimnames = dimnames(output)) {
   param.to.use <- param[parameter.to.outputs,]
   func.with.param <- function(x) {
     func(x, t(param.to.use))
   }
   dims.to.preserve <- drop.from.names(output.dimnames, c(over, "iteration"))
   mat <- aperm(output, c(over, "iteration", dims.to.preserve))
-  return(apply.over.named.array(mat, c(over, "iteration"), func.with.param))
+  return(apply.over.named.array(mat, c(over, "iteration"), func.with.param,
+                                target.dimnames))
 }
 
 merge.youngest.age.groups <- function(mat, num.to.group = 2) {
@@ -97,7 +99,7 @@ if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
 outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
-stopifnot(sum(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
+stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
 ################################################################
 
@@ -146,16 +148,44 @@ infections <- array(
   dim = output.quantity.dims,
   dimnames = output.dimnames
 )
-if (num.ages > 1) infections <- merge.youngest.age.groups(infections)
-
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 
-
 ## Calculate deaths
-deaths <- infections %>%
+if (num.ages > 1) {
+  deaths <- merge.youngest.age.groups(infections)
+} else {
+  deaths <- infections
+}
+deaths <- deaths %>%
   apply.convolution(F.death) %>%
   apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
 cum_deaths <- deaths %>% apply.over.named.array("date", cumsum)
+noise.replicates <- 5
+neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
+  stopifnot(is.null(dim(drop(overdispersion))))
+  size <- mu / params$hosp_negbin_overdispersion
+  return(rnbinom(
+    n = length(mu) * replicates,
+    mu = rep(mu, each = replicates),
+    size = rep(size, each = replicates)
+  ))
+}
+noise.iterations <- 1:(noise.replicates * num.iterations)
+noise.dimnames <- dimnames(deaths)
+noise.dimnames$iteration <- noise.iterations
+noisy_deaths <- deaths %>%
+  apply.param.to.output(params$hosp_negbin_overdispersion, neg.binom.noise,
+                        target.dimnames = noise.dimnames)
 
-save(infections, cum_infections, deaths, cum_deaths, params,
-     file = file.path(out.dir, "output_matrices.R"))
+## Parse data
+dth.col.names <- c('date', age.labs)
+names(data.files) <- regions
+dth.dat.raw <- suppressMessages(sapply(data.files, read_tsv, col_names = dth.col.names, simplify = FALSE))
+dth.dat.raw[[".id"]] <- "region"
+dth.dat <- do.call(bind_rows, dth.dat.raw) %>%
+  mutate(`<1yr,1-4` = `<1yr` + `1-4`) %>%
+  select(-c(`<1yr`, `1-4`)) %>%
+  pivot_longer(-c(date, region), names_to = "age")
+  
+save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths,
+     file = file.path(out.dir, "output_matrices.RData"))
