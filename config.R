@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-args <- c((today() - days(1)) %>% format("%Y%m%d"),
+args <- c((today() - days(3)) %>% format("%Y%m%d"),
           "1",
           "England")
 
@@ -38,11 +38,11 @@ if (!exists("region.index")){
 } else 
     region.index <- which(names(all.regions) %in% regions)
 
-region.code <- "Eng"
+region.code <- "EngALL"
 
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
-data.desc <- "deaths" # Set to "reports" if running by reporting date
+data.desc <- "reports" # Set to "reports" if running by reporting date
 scenario.name <- "variable_relax_ifr_prior_delayAnne"
 out.dir <- file.path(proj.dir,
                      "model_runs",

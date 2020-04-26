@@ -47,7 +47,8 @@ nhs.region <- function(x) {
 }
 
 inverse.map <- function(r, l){
-    if(is.na(r)) return("NA")
+    assign.NAs <- any(sapply(l, function(x) any(is.na(x))))
+    if(is.na(r) & !assign.NAs) return("NA")
     bl <- sapply(l, function(x) r %in% x)
     ifelse(all(!bl), "NA", names(l)[bl])
 }
@@ -78,7 +79,8 @@ all.regions <- list( ## Region names that might be used and their constituent NH
                 "North_East_and_Yorkshire",
                 "North_West",
                 "South_East",
-                "South_West"),
+                "South_West",
+                NA),
     East_of_England = "East_of_England",
     London = "London",
     Midlands = "Midlands",

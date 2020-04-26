@@ -19,16 +19,16 @@ source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
 
 ## Will code need to be recompiled?
-compile.code <- TRUE
+compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- TRUE
+run.code <- FALSE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- TRUE
+run.outputs <- FALSE
 
 ## Do the required data files exist?? If not, create them
-data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag.txt")
+data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "ALL_", nA, "ag.txt")
 ## If these files don't already exits, make them
 if(!all(file.exists(data.files))){
     dir.data <- "data"

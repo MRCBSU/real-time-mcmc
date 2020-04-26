@@ -162,25 +162,28 @@ delay.to.death <- list(
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
 ## Load in some data for goodness-of-fit
-dth.dat <- list()
+dth.dat <- dth.dat.agg <- list()
 if(all(file.exists(data.files))){
     for(r in 1:nr){
+        dl <- end.hosp + reporting.delay
         dth.dat[[r]] <- read_tsv(data.files[r], col_names = FALSE)
-        dth.dat[[r]] <- cbind(dth.dat[[r]][, 1], apply(dth.dat[[r]][, -1], 1, sum))
-        names(dth.dat)[r] <- regions[r]
+        dth.dat[[r]] <- cbind(dth.dat[[r]][, 1], dth.dat[[r]][, -1])
+        dth.dat.agg[[r]] <- cbind(dth.dat[[r]][, 1], apply(dth.dat[[r]][, -1], 1, sum))
+        names(dth.dat)[r] <- names(dth.dat.agg)[r] <- regions[r]
     }
 }
 
 ## Set up lists to store convolutions
 H <- list()
 ICU <- list()
-D <- list()
+D <- D.agg <- list()
 rD <- list()
 q.H <- list()
 q.ICU <- list()
 q.D <- list()
+q.D.tot <- list()
 q.rD <- list()
-
+q.rD.tot <- list()
 for(reg in regions){
     ireg <- which(regions %in% reg)
     ## Merge the two youngest age categories
@@ -202,8 +205,9 @@ for(reg in regions){
 
     ## Get total deaths over age groups
     rD[[reg]] <- aperm(D[[reg]], c(2:3, 1)) ## I * T * A array
-    D[[reg]] <- apply(D[[reg]], 2:3, sum)
-    q.D[[reg]] <- apply(D[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
+    q.D[[reg]] <- apply(D[[reg]], c(1, 3), quantile, probs = c(0.025, 0.5, 0.975))
+    D.agg[[reg]] <- apply(D[[reg]], 2:3, sum)
+    q.D.tot[[reg]] <- apply(D.agg[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
 
     ## pdf(file.path(target.dir, paste0("Hosp_projections_", reg, ".pdf")))
     ## plot(dates.used, q.H[[reg]][2, ], type = "l", main = paste("Projected (daily) Hospital Admissions - ", reg), ylab = "New Admissions", xlab = "Day", ylim = c(0, max(q.H[[reg]])))
@@ -225,26 +229,59 @@ for(reg in regions){
                          size = rD[[reg]] / params$hosp_negbin_overdispersion[iter.sum, ireg],
                          mu = rD[[reg]])
     rD[[reg]] <- array(rD[[reg]], dim = c(i.summary, ndays, ifelse(nA > 1, nA - 1, 1)))
-    rD[[reg]] <- apply(rD[[reg]], 1:2, sum)
-    q.rD[[reg]] <- apply(rD[[reg]], 2, quantile, probs = c(0.025, 0.5, 0.975))
+    q.rD[[reg]] <- apply(rD[[reg]], 2:3, quantile, probs = c(0.025, 0.5, 0.975))
+    q.rD.tot[[reg]] <- apply(apply(rD[[reg]], 1:2, sum), 2, quantile, probs = c(0.025, 0.5, 0.975))
 
-    pdf(file.path(target.dir, paste0("Deaths_projections_", reg, ".pdf")))
+    pdf(file.path(target.dir, paste0("Deaths_projections_", reg, ".pdf")), width = 20, height = 7)
 
-    plot(dates.used, q.D[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.rD[[reg]])))
-    lines(dates.used, q.D[[reg]][1, ], lty = 3)
-    lines(dates.used, q.D[[reg]][3, ], lty = 3)
+    plot(dates.used, q.D.tot[[reg]][2, ], type = "l", main = paste("Projected (daily) Deaths - ", reg), ylab = "Count", xlab = "Day", ylim = c(0, max(q.rD.tot[[reg]])))
+    lines(dates.used, q.D.tot[[reg]][1, ], lty = 3)
+    lines(dates.used, q.D.tot[[reg]][3, ], lty = 3)
     abline(v = dates.used[nt], col = "red")
 
-    points(dth.dat[[reg]][start.hosp:ndays, 1], dth.dat[[reg]][start.hosp:ndays, 2], pch = 18, col = "blue")
-    arrows(dth.dat[[reg]][start.hosp:ndays, 1] + 0.1,
-           q.rD[[reg]][1, start.hosp:ndays],
-           y1 = q.rD[[reg]][3, start.hosp:ndays],
+    points(dth.dat.agg[[reg]][start.hosp:dl, 1],
+           dth.dat.agg[[reg]][start.hosp:dl, 2],
+           pch = 18,
+           col = "blue")
+    arrows(dth.dat.agg[[reg]][start.hosp:dl, 1] + 0.1,
+           q.rD.tot[[reg]][1, start.hosp:dl],
+           y1 = q.rD.tot[[reg]][3, start.hosp:dl],
            code = 3,
            angle = 90,
            length = 0.1)
     
     dev.off()
 
+    for(ag in 2:(nA - 1)){
+        pdf(file.path(target.dir, paste0("Deaths_projections_", reg, "_age_", ag, ".pdf")),
+            width = 20,
+            height = 7)
+        
+        plot(dates.used,
+             q.D[[reg]][3, ag, ],
+             type = "l",
+             main = paste("Projected (daily) Deaths -", reg, "among", age.labs[ag + 1], "year-olds"),
+             ylab = "Count",
+             xlab = "Day",
+             lty = 3,
+             ylim = c(0, max(q.rD[[reg]][3, , ag])))
+        lines(dates.used, q.D[[reg]][1, ag, ], lty = 3)
+        lines(dates.used, q.D[[reg]][2, ag, ])
+        abline(v = dates.used[nt], col = "red")
+        points(dth.dat[[reg]][start.hosp:dl, 1],
+               dth.dat[[reg]][start.hosp:dl, ag + 2],
+               pch = 18,
+               col = "blue")
+        arrows(dth.dat[[reg]][start.hosp:dl, 1] + 0.1,
+               q.rD[[reg]][1, start.hosp:dl, ag],
+               y1 = q.rD[[reg]][3, start.hosp:dl, ag],
+               code = 3,
+               angle = 90,
+               length = 0.1)
+        
+        ## plot(dates.used, q.
+        dev.off()
+    }
 }
 
 ## ## Get weekly tables of quantiles
@@ -274,7 +311,7 @@ for(reg in regions){
     ##                     mutate(Region = reg))
     ## icu <- rbind(icu, get.tab(ICU[[reg]], dates.used) %>%
     ##                   mutate(Region = reg))
-    deaths <- rbind(deaths, get.tab(t(D[[reg]]), dates.used) %>%
+    deaths <- rbind(deaths, get.tab(t(D.agg[[reg]]), dates.used) %>%
                             mutate(Region = reg))
 }
 

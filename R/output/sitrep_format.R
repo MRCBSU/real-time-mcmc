@@ -9,10 +9,10 @@ require(lubridate)
 ## wk <- 4
 rtm.dir <- proj.dir <- "./"
 R.dir <- paste0(rtm.dir, "R/output/")
-res.dir <- paste0(rtm.dir, "model_runs/20200412/", c("L_OL_report_variable_relax/", "L_OL_report_variable_tight/"))
-run.date <- lubridate::as_date("20200412")
+res.dir <- paste0(rtm.dir, "model_runs/20200422/", "1regions_Engdeaths_variable_relax_ifr_prior_delayAnne/")
+run.date <- lubridate::as_date("20200422")
 
-str.scenario <- c("forecast - relaxed prior", "forecast - tight prior")
+str.scenario <- c("forecast")
 death_type <- "death_inc_line"
 ## Dates of forecast period
 first.date <- run.date - 21
