@@ -69,6 +69,17 @@ if(!all(file.exists(cm.mults))){
     }
 cm.mults <- cm.mults[mult.order+1]
 
+## MCMC settings
+num.iterations <- 750000
+stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
+burnin <- 250000
+adaptive.phase <- burnin / 2
+thin.outputs <- 50 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 500  # After how many iterations to output each set of parameters
+stopifnot(thin.params %% thin.outputs == 0) # Need parameters on iterations we have outputs
+
+
+
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############
 
 dir.data <- file.path(proj.dir, "data")

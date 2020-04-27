@@ -5,21 +5,17 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-args <- c((today() - days(1)) %>% format("%Y%m%d"),
-          "1",
-          "England")
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) < 3) args <- c(args, "1", "England")
 
-if(length(args) > 0) date.data <- args[1]
-if(length(args) > 1) nr <- as.integer(args[2])
-if(length(args) >= (nr + 2)){
-    regions <- NULL
-    for(i in 1:nr) regions <- c(regions, args[i + 2])
-} else { ## Not enough region names supplied
-    stop("Not enough region names supplied")
-}
+if (!exists("date.data")) date.data <- args[1]
+nr <- as.integer(args[2])
+regions <- args[3:(nr+2)]
+if (regions[1] == "All") regions <- c("East_of_England", "London", "Midlands",
+									  "North_East_and_Yorkshire", "North_West",
+									  "South_East", "South_West")
+stopifnot(length(regions) == nr)
 
-if (!exists("date.data"))
-    date.data <- (today() - days(1)) %>% format("%Y%m%d") ## Yesterday, by default
 reporting.delay <- 5
 
 ## Number of days to run the simulation for.
@@ -33,10 +29,6 @@ age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "Al
 nA <- length(age.labs)
 
 if(!exists("regions")) regions <- "England"
-if (!exists("region.index")){
-    region.index <- 1
-} else 
-    region.index <- which(names(all.regions) %in% regions)
 
 region.code <- "Eng"
 
@@ -47,13 +39,15 @@ scenario.name <- "variable_relax_ifr_prior_delayAnne_confirmed"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(nr, "regions_", region.code, data.desc, "_", scenario.name))	# Value actually used
+                     "age_stratified_1")	# Value actually used
 data.dirs <- file.path(proj.dir,
                        "data/RTM_format/deaths")
-combined.dir <- file.path(proj.dir,
-                          "model_runs",
-                          date.data,
-                          paste0(nr, "regions_", data.desc, "_", scenario.name)) ## subdir.name, "_OVERALL_")	# Value actually used
+## combined.dir <- file.path(proj.dir,
+##                           "model_runs",
+##                           date.data,
+##                           paste0(nr, "regions_", data.desc, "_", scenario.name)) ## subdir.name, "_OVERALL_")	# Value actually used
 
 ## Do we want to consider only confirmed cases
 flg.confirmed <- TRUE
+=======
+>>>>>>> origin/report

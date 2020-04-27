@@ -5,7 +5,6 @@ suppressMessages(library(tidyverse))
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
-# deaths.loc <- paste0(date.data, " - Anonymised Line List.csv")		# relative to data/raw
 if(!exists("date.data"))
     date.data <- (today() - days(1)) %>% format("%Y%m%d")
 
@@ -65,9 +64,9 @@ if(!exists("file.loc")){
     file.loc <- dirname(thisFile())
     proj.dir <- dirname(dirname(file.loc))
     dir.data <- file.path(proj.dir, "data")
-    source(file.path(file.loc, "utils.R"))
-    ## source(file.path(proj.dir, "config.R"))
 }
+source(file.path(file.loc, "utils.R"))
+source(file.path(proj.dir, "config.R"))
 
 if(!exists("data.files"))
     data.files <- build.data.filepath("RTM_format/deaths",
@@ -151,7 +150,7 @@ dth.dat %>%
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ymd(date.data) ## - reporting.delay
+latest.date <- ymd(date.data) - reporting.delay
 earliest.date <- ymd("2020-02-17")
 
 dth.dat <- dth.dat %>%

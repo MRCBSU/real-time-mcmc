@@ -43,7 +43,7 @@ Median (95% CrI) values for posteriors of selected parameters.
 ## Projections
 
 ```{r plot-func}
-make.grid.plot <- function(q, ylab, data = NULL, data.y = "incidence") {
+make.grid.plot <- function(q, ylab, data = NULL) {
   plots = list(ncol = 2)
   for (reg in regions) {
   	df <- transform.q(q[[reg]])
