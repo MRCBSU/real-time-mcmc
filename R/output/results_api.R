@@ -63,3 +63,13 @@ get.aggregated.quantiles <- function(data, by, quantiles) {
       )
   )
 }
+
+matrix.to.tbl <- function(mat) {
+  mat %>%
+    as.tbl_cube(met_name = "value") %>%
+    as_tibble() %>%
+    mutate(
+      date = lubridate::as_date(date),
+      quantile = parse.percentage(quantile)
+    )
+}

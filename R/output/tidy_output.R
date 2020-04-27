@@ -48,7 +48,7 @@ apply.param.to.output <- function(output, param, func, over = NULL,
                                 target.dimnames))
 }
 
-merge.youngest.age.groups <- function(mat, num.to.group = 2) {
+merge.youngest.age.groups <- function(mat, num.to.group = 2, new.name = NULL) {
   add.function <- function(x) {
     to.merge <- x[1:num.to.group]
     to.preserve <- x[(num.to.group+1):length(x)]
@@ -56,12 +56,14 @@ merge.youngest.age.groups <- function(mat, num.to.group = 2) {
   }
   dims.to.preserve <- drop.from.names(output.dimnames, "age")
   old.age.group.names <- dimnames(mat)$age
-  changed.age.group.name <- paste(
-    old.age.group.names[1:num.to.group], 
-    collapse = ","
-  )
+  if (is.null(new.name)){
+    new.name <- paste(
+      old.age.group.names[1:num.to.group], 
+      collapse = ","
+    )
+  }
   result <- apply(mat, dims.to.preserve, add.function)
-  dimnames(result)[[1]][1] <- changed.age.group.name
+  dimnames(result)[[1]][1] <- new.name
   names(dimnames(result))[1] <- "age"
   return(result)
 }
@@ -101,6 +103,40 @@ outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.output
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
+################################################################
+Rt.func <- function(vecS, matM){
+  if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
+  M.star <- sweep(matM, 2, vecS, `*`)
+  max(abs(eigen(M.star)$value))
+}
+Rt <- list()
+M.star <- M <- M.mult <- list()
+m <- params$contact_parameters[parameter.to.outputs, ]
+R0 <- posterior.R0[parameter.to.outputs, , drop = F]
+for(idir in 1:length(cm.bases)){
+  M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE))
+  M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE)) + 1
+  M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[M.mult[[idir]]]),
+                          dim = c(nA, nA, nrow(m)))
+}
+m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
+names(M) <- names(M.mult) <- names(M.star)
+pop.total <- all.pop[1, ]
+for(reg in regions){
+  ireg <- which(regions %in% reg)
+  M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
+  R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+  S <- apply(NNI[[reg]], c(1, 3), cumsum)  ## TxAxI array
+  S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+  R.prime <- sapply(1:ndays,
+                    function(x) sapply(1:i.summary, function(i){
+                      M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                      Rt.func(S[x, , i] / pop.total[ireg], M.temp)
+                    }
+                    )
+  ) ## IxT array
+  Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
+}
 ################################################################
 
 ## Constants and settings
@@ -142,6 +178,16 @@ output.dimnames <- list(
 tbl_params <- as_tibble(params)
 tbl_params$iteration <- parameter.iterations
 
+## Get Rt into nice format
+Rt.old <- Rt
+Rt.dimnames <- output.dimnames[c("iteration","date","region")]
+Rt.dims <- sapply(output.dimnames[c("iteration","date","region")], length)
+Rt <- array(
+  unlist(Rt.old),
+  dim = Rt.dims,
+  dimnames = Rt.dimnames
+)
+
 ## Get NNI into nice format
 infections <- array(
   unlist(NNI),
@@ -159,8 +205,7 @@ if (num.ages > 1) {
 deaths <- deaths %>%
   apply.convolution(F.death) %>%
   apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
-cum_deaths <- deaths %>% apply.over.named.array("date", cumsum)
-noise.replicates <- 5
+noise.replicates <- 2
 neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
   stopifnot(is.null(dim(drop(overdispersion))))
   size <- mu / params$hosp_negbin_overdispersion
@@ -175,7 +220,9 @@ noise.dimnames <- dimnames(deaths)
 noise.dimnames$iteration <- noise.iterations
 noisy_deaths <- deaths %>%
   apply.param.to.output(params$hosp_negbin_overdispersion, neg.binom.noise,
-                        target.dimnames = noise.dimnames)
+                        target.dimnames = noise.dimnames) %>%
+  merge.youngest.age.groups(3, "<25")
+cum_deaths <- noisy_deaths %>% apply.over.named.array("date", cumsum)
 
 ## Parse data
 dth.col.names <- c('date', age.labs)
