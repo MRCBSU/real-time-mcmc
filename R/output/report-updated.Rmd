@@ -3,10 +3,10 @@ title: 'COVID-19: nowcast and forecast'
 author:
 - Paul Birrell
 - Joshua Blake
-- Daniella De Angelis
+- Daniela De Angelis
 - PHE Modelling Cell
 - MRC-BSU COVID-19 Working Group
-date: "`r lubridate::today()`"
+date: "`r today()`"
 output: html_document
 ---
 
@@ -16,8 +16,6 @@ knitr::opts_chunk$set(echo = FALSE)
 suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
-date.data <- "20200422"
-proj.dir <- "../.."
 if(exists("Rfile.loc")) {
   source(file.path(Rfile.loc, "results_api.R"))
 } else {
@@ -28,21 +26,22 @@ if(exists("Rfile.loc")) {
 
 ```{r plot-function}
 
-make.plots <- function(projections, ylab = "", by = NULL, data = NULL) {
+make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
+                       y.format = ".3s") {
   projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
     rename(by = all_of(by))
   plot.names <- unique(projections$by)
   num.rows <- ceiling(length(plot.names)/2)
   plot.height <- num.rows * 420 + 150
-  date <- lubridate::ymd(date.data)
+  date <- ymd(date.data)
   lines <- list(
     list(
         type = "line", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
-        x0 = lubridate::ymd(date.data), 
-        x1 = lubridate::ymd(date.data), 
+        x0 = ymd(date.data), 
+        x1 = ymd(date.data), 
         line = list(color = "red"),
         hoverinfo = "Today"
     ),
@@ -51,8 +50,8 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL) {
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
-        x0 = lubridate::ymd(20200323), 
-        x1 = lubridate::ymd(20200323), 
+        x0 = ymd(20200323), 
+        x1 = ymd(20200323), 
         line = list(color = "blue"),
         hoverinfo = "Lockdown"
     )
@@ -77,11 +76,11 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL) {
       pivot_wider(names_from = quantile) %>%
       plot_ly(x = ~date, width = 800, height = plot.height) %>%
       add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
-                hovertemplate = "%{x}: %{y:.3s}<extra>Upper 95% CrI</extra>") %>%
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Upper 95% CrI</extra>")) %>%
       add_lines(y = ~`0.025`, alpha = 0,   # An extra trace just for hover text
-                hovertemplate = "%{x}: %{y:.3s}<extra>Median</extra>") %>%
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
       add_lines(y = ~`0.5`, color = I("black"),
-                hovertemplate = "%{x}: %{y:.3s}<extra>Lower 95% CrI</extra>") %>%
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Lower 95% CrI</extra>")) %>%
       layout(shapes = lines, annotations = title(subplot), showlegend = FALSE,
              hovermode = "x unified")
     if (!is.null(data)) {
@@ -109,12 +108,14 @@ Real-time tracking of a pandemic, as data accumulate over time, is an essential 
 
 ## Data Sources
 
-We have been using data from the PHE-generated line-listing, as published on `r date.data`. 
+We have been using data from the PHE-generated line-listing, as published on `r format(ymd(date.data), "%d %b")`. 
 This consists of a combination of deaths notified to:
 
 * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnoses with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20<sup>th</sup> March, 2020).
 * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
 * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23<sup>rd</sup> March, 2020).
+
+This covers all deaths where the fatality had a confirmed positive test. Deaths which have COVID-19 on the death certificate are included in ONS figures but not here; we are looking into their inclusion.
 
 
 We have separately analysed the data by:
@@ -124,7 +125,104 @@ We have separately analysed the data by:
 * stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+.
 * stratified into NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West) and Scotland.
 
-## Results {.tabset}
+## Current situation update (by region) {.tabset}
+
+### Current R
+```{r Rt-table}
+get.aggregated.quantiles(Rt, "region", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+
+```{r growth-rate-func}
+today.int <- as.integer(ymd(date.data))
+wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
+calc.growth.rate <- function(data) {
+  data %>%
+    aperm(c("date", "region", "iteration", "age")) %>%
+    `[`(wanted.days,,,) %>%
+    apply(c("region", "iteration", "date"), sum) %>%
+    as.tbl_cube(met_name = "value") %>%
+    as_tibble() %>%
+    mutate(
+      date = lubridate::as_date(date)
+    ) %>%
+    arrange(date) %>%
+    group_by(region, iteration) %>%
+    summarise(growth = ((lead(value) - lag(value)) / (2 * value))[2]) %>%
+    group_by(region) %>%
+    summarise(Median = median(growth),
+              `95% CrI (lower)` = quantile(growth, 0.025),
+              `95% CrI (upper)` = quantile(growth, 0.975),
+              ) %>%
+    mutate(region = str_replace_all(region, "_", " "))
+}
+infections.growth.rates <- calc.growth.rate(infections)
+deaths.growth.rates <- calc.growth.rate(noisy_deaths)
+```
+
+### Infections incidence {.tabset}
+
+```{r inf-growth-rates}
+infections.growth.rates <- calc.growth.rate(infections)
+```
+
+#### Growth rates
+
+NB: negative growth rates are decline rates. Values are daily changes.
+
+`r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
+
+### Halving times
+
+Halving times in days, if a region shows growth than value will be Inf.
+
+```{r inf-halving}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-region),
+    ~ifelse(. > 0, Inf, log2(-.) - 1)
+  ) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+### Deaths incidence {.tabset}
+
+```{r death-growth-rates}
+infections.growth.rates <- calc.growth.rate(infections)
+```
+
+#### Growth rates
+
+NB: negative growth rates are decline rates. Values are daily changes.
+
+`r knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')`
+
+### Halving times
+
+Halving times in days, if a region shows growth than value will be Inf.
+
+```{r death-halving}
+
+deaths.growth.rates %>%
+  mutate_at(
+    vars(-region),
+    ~ifelse(. > 0, Inf, log2(-.) - 1)
+  ) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+
+## Infections and deaths {.tabset}
+
+Blue line is date of lockdown (23 Mar), the red line is the date of results (`r format(ymd(date.data), "%d %b")`).
 
 ### Cumulative infections {.tabset}
 
@@ -150,7 +248,7 @@ make.plots(infections, by = "region")
 make.plots(infections, by = "age")
 ```
 
-### Deaths incidence with noise {.tabset}
+### Deaths incidence {.tabset}
 
 #### By region
 ```{r}
@@ -159,7 +257,7 @@ make.plots(noisy_deaths, by = "region", data = dth.dat)
 
 #### By age
 ```{r}
-make.plots(noisy_deaths, by = "age", data = dth.dat)
+make.plots(noisy_deaths, by = "age")#, data = dth.dat)
 ```
 
 ### Cumulative deaths {.tabset}
@@ -174,19 +272,12 @@ make.plots(cum_deaths, by = "region")
 make.plots(cum_deaths, by = "age")
 ```
 
-### Deaths incidence {.tabset}
-
-#### By region
+### Rt
 ```{r}
-make.plots(deaths, by = "region", data = dth.dat)
+make.plots(Rt, by = "region", y.format = ".2f")
 ```
 
-#### By age
-```{r}
-make.plots(deaths, by = "age", data = dth.dat)
-```
-
-
+<!--
 ## Methods {.tabset}
 
 ### Overview
@@ -210,5 +301,5 @@ What proportion of infections will lead to death
 When will we know about the deaths, relative to disease onset.
 
 
-
+-->
 
