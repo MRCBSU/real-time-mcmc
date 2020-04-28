@@ -36,7 +36,7 @@ if(!exists("age.labs"))
 cm.breaks <- c(36, 43, 50, 57)				# Day numbers where breaks happen
 google.data.date <- format(ymd("20200424"), format = "%Y%m%d")
 mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS("contact_mats/base_matrices/base_matrices.rds")
+lst <- readRDS(file.path(proj.dir, "contact_mats", "base_matrices", "base_matrices.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
 cm.files <- "england_8ag_contact.txt"
 for(i in 1:length(cm.breaks))
@@ -74,9 +74,9 @@ num.iterations <- 750000
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
 burnin <- 250000
 adaptive.phase <- burnin / 2
-thin.outputs <- 50 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 500  # After how many iterations to output each set of parameters
-stopifnot(thin.params %% thin.outputs == 0) # Need parameters on iterations we have outputs
+thin.outputs <- 500 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 50  # After how many iterations to output each set of parameters
+stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 
 

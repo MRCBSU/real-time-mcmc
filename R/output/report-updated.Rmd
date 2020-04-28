@@ -10,7 +10,7 @@ date: "`r today()`"
 output: html_document
 ---
 
-```{r preamble, echo=FALSE}
+```{r preamble, echo=FALSE, message=FALSE, results='hide'}
 knitr::opts_chunk$set(echo = FALSE)
 
 suppressMessages(library(lubridate))
@@ -144,7 +144,7 @@ wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
 calc.growth.rate <- function(data) {
   data %>%
     aperm(c("date", "region", "iteration", "age")) %>%
-    `[`(wanted.days,,,) %>%
+    `[`(wanted.days,,,,drop=FALSE) %>%
     apply(c("region", "iteration", "date"), sum) %>%
     as.tbl_cube(met_name = "value") %>%
     as_tibble() %>%
@@ -257,7 +257,12 @@ make.plots(noisy_deaths, by = "region", data = dth.dat)
 
 #### By age
 ```{r}
-make.plots(noisy_deaths, by = "age")#, data = dth.dat)
+dth.dat <- dth.dat %>%
+	mutate(age.plot = age)
+plt.flgs <- dth.dat$age.plot %in% c("<1yr,1-4", "5-14", "15-24")
+dth.dat$age.plot[plt.flgs] <- "<25"
+x.dat <- dth.dat %>% group_by(region,date,age.plot) %>% summarise(value = sum(value)) %>% rename(age=age.plot)
+make.plots(noisy_deaths, by = "age", data = x.dat)
 ```
 
 ### Cumulative deaths {.tabset}

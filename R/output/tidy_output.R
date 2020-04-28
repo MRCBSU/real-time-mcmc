@@ -215,7 +215,7 @@ neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
     size = rep(size, each = replicates)
   ))
 }
-noise.iterations <- 1:(noise.replicates * num.iterations)
+noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
 noise.dimnames <- dimnames(deaths)
 noise.dimnames$iteration <- noise.iterations
 noisy_deaths <- deaths %>%

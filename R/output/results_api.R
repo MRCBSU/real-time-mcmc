@@ -34,11 +34,6 @@ if (!exists("infections")) {
   }
 }
 
-# TODO: read where we start/stop/thin from config files
-parameter.iterations <- seq(from = 20000, to = 50000-1, by = 1)
-outputs.iterations <- seq(from = 20000, to = 50000-1, by = 10)
-parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
-
 ################################################################
 
 num.regions <- length(dimnames(infections)$region)

@@ -49,5 +49,3 @@ data.dirs <- file.path(proj.dir,
 
 ## Do we want to consider only confirmed cases
 flg.confirmed <- TRUE
-=======
->>>>>>> origin/report
