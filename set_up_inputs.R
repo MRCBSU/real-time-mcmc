@@ -81,7 +81,6 @@ stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we h
 
 
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############
-
 dir.data <- file.path(proj.dir, "data")
 if(sys.nframe() <= 4){ ## Check if below source files might have already been loaded in
     source(file.path(proj.dir, "R/data/utils.R"))
@@ -92,6 +91,7 @@ if(sys.nframe() <= 4){ ## Check if below source files might have already been lo
 ## These no longer calculated `on the fly' and should be handled within the data/population folder.
 ## Use objects nhs.regions and pop
 load(build.data.filepath("population", "pop_nhs.RData"))
+
 get.nhs.region <- function(reg, rlist = nhs.regions){
     if(reg %in% names(nhs.regions)){
         return(reg)
@@ -116,6 +116,7 @@ set.end.date <- function(user.value, data.file) {
 # Where are the data files?
 dir.data <- file.path(proj.dir, "data")
 source(file.path(proj.dir, "R/data/utils.R"))
+
 gp.data <- "NULL"
 gp.denom <- "NULL"
 if (gp.flag == 1) {
@@ -131,10 +132,6 @@ if (hosp.flag == 1) {
         stop("One of the specified hospitalisation data files does not exist")
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }
-
-## ## Get the number of age groups and regions
-## nages <- length(age.labs)
-## nregs <- length(regions)
 
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)

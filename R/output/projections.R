@@ -367,7 +367,6 @@ for(reg in regions){
 
 ## dev.off()
 
-
 save(## q.ICU,
      q.D,
      q.NNI,
@@ -379,4 +378,3 @@ save(nni,
      ## icu,
      ## hosp,
      deaths, file = file.path(target.dir, "table_summaries.RData"))
-

@@ -34,7 +34,6 @@ col.names <- list(
 	utla_name = "utla_name"
 )
 
-
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
 
@@ -67,7 +66,6 @@ if(!exists("file.loc")){
 }
 source(file.path(file.loc, "utils.R"))
 source(file.path(proj.dir, "config.R"))
-
 if(!exists("data.files"))
     data.files <- build.data.filepath("RTM_format/deaths",
                                       "deaths",
@@ -88,13 +86,15 @@ death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
 
+within.range <- function(dates) {
+	return(dates <= today() & dates >= ymd("2020-01-01"))
+}
+
 plausible.death.date <- function(x) {
 	death.within.range <- within.range(x$Date)
 	onset.within.range <- is.na(x$Onset) | within.range(x$Onset)
 	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
 	return(death.within.range & onset.within.range & after.onset)
-}
-
 
 ## Some patients are known to have the month and day swapped
 ## Fix these here...

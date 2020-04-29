@@ -133,7 +133,7 @@ for(inti in 1:npar)
             curve(prior.density(x, temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)]),
                   min(params[[inti]][, intj]), max(params[[inti]][, intj]), lty = 4, lwd = 1.5, add = TRUE, col = "red"
                   )
-            start.index <- end.index
+        start.index <- end.index
           }
         
       }
