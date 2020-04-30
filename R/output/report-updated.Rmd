@@ -130,7 +130,7 @@ We have separately analysed the data by:
 * stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+.
 * stratified into NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West) and Scotland.
 
-## Current situation update (by region) {.tabset}
+## Tables of values {.tabset}
 
 ### Current R
 ```{r Rt-table}
@@ -214,6 +214,25 @@ population %>%
   knitr::kable()
 ```
 
+### IFR
+
+```{r ifr}
+params$prop_case_to_hosp %>%
+  as.matrix() %>%
+  `colnames<-`(dimnames(deaths)$age) %>%
+  as_tibble() %>%
+  pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+  plot_ly(
+    x = ~age,
+    y = ~ifr
+  ) %>%
+  add_boxplot()
+```
+
+### Infections incidence {.tabset}
+
+#### Growth rates
+
 ```{r growth-rate-func}
 today.int <- as.integer(ymd(date.data))
 wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
@@ -242,10 +261,6 @@ calc.growth.rate <- function(data) {
 infections.growth.rates <- calc.growth.rate(infections)
 deaths.growth.rates <- calc.growth.rate(deaths)
 ```
-
-### Infections incidence {.tabset}
-
-#### Growth rates
 
 NB: negative growth rates are decline rates. Values are daily changes.
 
