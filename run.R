@@ -18,6 +18,8 @@ proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
 
+system(paste("mkdir -p", out.dir))
+
 ## do we need to do formatting?
 format.inputs <- TRUE
 
@@ -25,16 +27,16 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- FALSE
+run.code <- TRUE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- FALSE
+run.outputs <- TRUE
 
 ## Do the required data files exist?? If not, create them
 data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
 
 ## If these files don't already exits, make them
-if(!all(file.exists(data.files))){
+if(format.inputs && !all(file.exists(data.files))){
   dir.data <- "data"
   if(data.desc == "deaths")
 	  source("R/data/format_deaths.R")
@@ -46,8 +48,10 @@ if(!all(file.exists(data.files))){
 source("set_up.R")
 
 ## Compile the code
-if(compile.code)
+if(compile.code) {
     system("make rtm_optim")
+	system("chmod a-w coda* NNI* posterior* adaptive*")
+}
 
 ## Run the code
 startwd <- getwd()
@@ -61,7 +65,12 @@ Rfile.loc <- file.path(file.loc, "R/output")
 
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
-	rmarkdown::render(file.path(Rfile.loc, 'report-updated.Rmd'), output_dir = out.dir)
+	rmarkdown::render(
+		file.path(Rfile.loc, 'report-updated.Rmd'),
+		html_document(pandoc_args = "--self-contained"),
+		output_dir = out.dir,
+		clean = FALSE, intermediates_dir = out.dir
+	)
 }
 
 ## Return back to initial directory
