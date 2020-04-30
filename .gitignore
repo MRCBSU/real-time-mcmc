@@ -10,7 +10,7 @@ model_runs/**
 **/.Rhistory
 Emulation/**
 spi-forecasts/**
-sitrep-outputs/**
+sitrep_outputs/**
 **/spim*
 **~
 Report_structure*
