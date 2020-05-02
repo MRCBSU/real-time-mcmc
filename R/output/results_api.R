@@ -1,3 +1,4 @@
+library(coda)
 suppressMessages(library(tidyverse))
 
 ## Location of this script

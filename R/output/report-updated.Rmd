@@ -3,6 +3,7 @@ title: 'COVID-19: nowcast and forecast'
 author:
 - Paul Birrell
 - Joshua Blake
+- Edwin van Leeuwen
 - Daniela De Angelis
 - PHE Modelling Cell
 - MRC-BSU COVID-19 Working Group
@@ -125,8 +126,7 @@ We have separately analysed the data by:
 * stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+.
 * stratified into NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West) and Scotland.
 
-## Current situation update (by region) {.tabset}
-
+## Tables of values {.tabset}
 ### Current R
 ```{r Rt-table}
 get.aggregated.quantiles(Rt, "region", c(0.025, 0.5, 0.975)) %>%
@@ -137,6 +137,101 @@ get.aggregated.quantiles(Rt, "region", c(0.025, 0.5, 0.975)) %>%
 
 ```
 
+### Cumulative infections
+
+```{r cum-inf}
+tbl_cum_inf_region <-
+  get.aggregated.quantiles(cum_infections, "region", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+
+tbl_cum_inf_region %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+### Attack rate
+
+```{r attack-region}
+population %>%
+  group_by(region) %>%
+  summarise(population = sum(value)) %>%
+  left_join(tbl_cum_inf_region, by = c('region' = 'Region')) %>%
+  #mutate_at(vars(-c(region, population)), function(x, pop) {x / pop}, population)
+  mutate(
+    Median = 100 * Median / population,
+    `95% CrI (lower)` = 100 * `95% CrI (lower)` / population,
+    `95% CrI (upper)` = 100 * `95% CrI (upper)` / population
+    ) %>%
+  select(-population) %>%
+  knitr::kable()
+```
+
+```{r attack-age}
+tbl_cum_inf_age <-
+  get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+
+population %>%
+  group_by(age) %>%
+  summarise(population = sum(value)) %>%
+  left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
+  mutate(
+    Median = 100 * Median / population,
+    `95% CrI (lower)` = 100 * `95% CrI (lower)` / population,
+    `95% CrI (upper)` = 100 * `95% CrI (upper)` / population
+    ) %>%
+  select(-population) %>%
+  arrange(match(age, age.labs)) %>%
+  knitr::kable()
+```
+
+```{r attack-region-age}
+tbl_cum_inf_region <-
+  get.aggregated.quantiles(cum_infections, "region", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+population %>%
+  group_by(region) %>%
+  summarise(population = sum(value)) %>%
+  left_join(tbl_cum_inf, by = c('region' = 'Region')) %>%
+  #mutate_at(vars(-c(region, population)), function(x, pop) {x / pop}, population)
+  mutate(
+    Median = 100 * Median / population,
+    `95% CrI (lower)` = 100 * `95% CrI (lower)` / population,
+    `95% CrI (upper)` = 100 * `95% CrI (upper)` / population
+    ) %>%
+  select(-population) %>%
+  knitr::kable()
+```
+
+### IFR
+
+```{r ifr}
+params$prop_case_to_hosp %>%
+  as.matrix() %>%
+  `colnames<-`(dimnames(deaths)$age) %>%
+  as_tibble() %>%
+  pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+  plot_ly(
+    x = ~age,
+    y = ~ifr
+  ) %>%
+  add_boxplot()
+  geom_boxplot()
+#%>%
+  rename(!!!dimnames(deaths)$age)
+colnames(ifr)<-(dimnames(deaths)$age) %>%
+  as_tibble(ifr)
+```
+
+### Infections incidence {.tabset}
+
+#### Growth rates
 
 ```{r growth-rate-func}
 today.int <- as.integer(ymd(date.data))
@@ -144,7 +239,7 @@ wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
 calc.growth.rate <- function(data) {
   data %>%
     aperm(c("date", "region", "iteration", "age")) %>%
-    `[`(wanted.days,,,,drop=FALSE) %>%
+	`[`(wanted.days,,,,drop=FALSE) %>%
     apply(c("region", "iteration", "date"), sum) %>%
     as.tbl_cube(met_name = "value") %>%
     as_tibble() %>%
@@ -159,25 +254,19 @@ calc.growth.rate <- function(data) {
               `95% CrI (lower)` = quantile(growth, 0.025),
               `95% CrI (upper)` = quantile(growth, 0.975),
               ) %>%
-    mutate(region = str_replace_all(region, "_", " "))
+    mutate(Region = str_replace_all(region, "_", " ")) %>%
+    select(Region, everything()) %>%
+    select(-region)
 }
 infections.growth.rates <- calc.growth.rate(infections)
-deaths.growth.rates <- calc.growth.rate(noisy_deaths)
+deaths.growth.rates <- calc.growth.rate(deaths)
 ```
-
-### Infections incidence {.tabset}
-
-```{r inf-growth-rates}
-infections.growth.rates <- calc.growth.rate(infections)
-```
-
-#### Growth rates
 
 NB: negative growth rates are decline rates. Values are daily changes.
 
 `r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
 
-### Halving times
+#### Halving times
 
 Halving times in days, if a region shows growth than value will be Inf.
 
@@ -185,8 +274,32 @@ Halving times in days, if a region shows growth than value will be Inf.
 
 infections.growth.rates %>%
   mutate_at(
-    vars(-region),
-    ~ifelse(. > 0, Inf, log2(-.) - 1)
+    vars(-'Region'),
+    ~ifelse(. > 0, Inf, -1/log2(1+.))
+  ) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+### Infections incidence {.tabset}
+
+
+#### Growth rates
+
+NB: negative growth rates are decline rates. Values are daily changes.
+
+`r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
+
+#### Halving times
+
+Halving times in days, if a region shows growth than value will be Inf.
+
+```{r infectionshalving}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. > 0, Inf, -1/log2(1+.))
   ) %>%
   knitr::kable(digits = 2, align = 'lccc')
 
@@ -194,9 +307,6 @@ infections.growth.rates %>%
 
 ### Deaths incidence {.tabset}
 
-```{r death-growth-rates}
-infections.growth.rates <- calc.growth.rate(infections)
-```
 
 #### Growth rates
 
@@ -204,7 +314,7 @@ NB: negative growth rates are decline rates. Values are daily changes.
 
 `r knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')`
 
-### Halving times
+#### Halving times
 
 Halving times in days, if a region shows growth than value will be Inf.
 
@@ -212,8 +322,8 @@ Halving times in days, if a region shows growth than value will be Inf.
 
 deaths.growth.rates %>%
   mutate_at(
-    vars(-region),
-    ~ifelse(. > 0, Inf, log2(-.) - 1)
+    vars(-'Region'),
+    ~ifelse(. > 0, Inf, -1/log2(1+.))
   ) %>%
   knitr::kable(digits = 2, align = 'lccc')
 
@@ -223,18 +333,6 @@ deaths.growth.rates %>%
 ## Infections and deaths {.tabset}
 
 Blue line is date of lockdown (23 Mar), the red line is the date of results (`r format(ymd(date.data), "%d %b")`).
-
-### Cumulative infections {.tabset}
-
-#### By region
-```{r}
-make.plots(cum_infections, by = "region")
-```
-
-#### By age
-```{r}
-make.plots(cum_infections, by = "age")
-```
 
 ### Infection incidence {.tabset}
 
@@ -248,21 +346,30 @@ make.plots(infections, by = "region")
 make.plots(infections, by = "age")
 ```
 
-### Deaths incidence {.tabset}
+### Cumulative infections {.tabset}
 
 #### By region
+
+```{r}
+make.plots(cum_infections, by = "region")
+```
+
+#### By age
+```{r}
+make.plots(cum_infections, by = "age")
+```
+
+###  Deaths incidence {.tabset}
+
+#### By region
+
 ```{r}
 make.plots(noisy_deaths, by = "region", data = dth.dat)
 ```
 
 #### By age
 ```{r}
-dth.dat <- dth.dat %>%
-	mutate(age.plot = age)
-plt.flgs <- dth.dat$age.plot %in% c("<1yr,1-4", "5-14", "15-24")
-dth.dat$age.plot[plt.flgs] <- "<25"
-x.dat <- dth.dat %>% group_by(region,date,age.plot) %>% summarise(value = sum(value)) %>% rename(age=age.plot)
-make.plots(noisy_deaths, by = "age", data = x.dat)
+make.plots(noisy_deaths, by = "age", data = dth.dat)
 ```
 
 ### Cumulative deaths {.tabset}

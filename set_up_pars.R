@@ -6,7 +6,7 @@ names(int.effect) <- c("lo", "med", "hi", "total", "variable", "lshtm", "nothing
 
 ## shape.dL <- 35.1
 ## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
-value.dl <-2
+value.dl <-1
 ## shape.dL <- 13.3
 ## rate.dL <- 4.16
 
@@ -18,7 +18,7 @@ value.dI <- 0.972
 pars.dI <- c(1.43, 0.549)
 
 ## Exponential growth rate
-value.egr <- 0.14
+value.egr <- 0.25
 pars.egr <- c(31.36, 224)
 
 ## Ascertainment parameters
@@ -27,7 +27,7 @@ pars.pgp <- c(2.12, 15.8)
 
 ## Infection to fatality ratio
 if(nA > 1){
-    value.ifr <- jitter(rep(0.007, nA - 1))
+    value.ifr <- jitter(rep(0.001, nA - 1))
     var.ifr <- rep(0.005, nA - 1)
 } else {
     value.ifr <- 0.007
@@ -51,7 +51,7 @@ value.eta <- 1.0;
 pars.eta <- c(1.0, 0.2);
 
 ## Hosp Overdispersion
-value.eta.h <- 1.0
+value.eta.h <- 0.3
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
@@ -92,7 +92,8 @@ prior.list <- list(fixed = NULL,
 
 nprior.name <- names(prior.list)
 which.var <- which(sapply(nprior.name, grepl, x = scenario.name, fixed = TRUE))
-contact.dist <- c(1, ifelse(is.null(prior.list[which.var]), 1, ifelse(nA == 1, 3, 2)))
-contact.pars <- prior.list[[which.var]]
+contact.dist <- rep(c(1, ifelse(is.null(prior.list[which.var]), 1, 3)), nr)
+contact.pars <- rep(prior.list[[which.var]], nr)
 which.var <- which(sapply(names(int.effect), grepl, x = scenario.name, fixed = TRUE))
-contact.reduction <- c(1, int.effect[which.var])
+stopifnot(length(which.var) == 1)
+contact.reduction <- rep(c(1, int.effect[which.var]), nr)

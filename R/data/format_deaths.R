@@ -11,7 +11,7 @@ if(!exists("date.data"))
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc"))
     ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
-    deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -29,13 +29,15 @@ col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
 	onset_date = "onsetdate",
-	nhs_region = "nhser_name",
+	nhs_region = "NHSEnglandRegionName2019_lkup",
 	phe_region = "phec_name",
 	utla_name = "utla_name"
 )
 
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
+get.region <- nhs.region
+
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -63,9 +65,9 @@ if(!exists("file.loc")){
     file.loc <- dirname(thisFile())
     proj.dir <- dirname(dirname(file.loc))
     dir.data <- file.path(proj.dir, "data")
+	source(file.path(file.loc, "utils.R"))
+	source(file.path(proj.dir, "config.R"))
 }
-source(file.path(file.loc, "utils.R"))
-source(file.path(proj.dir, "config.R"))
 if(!exists("data.files"))
     data.files <- build.data.filepath("RTM_format/deaths",
                                       "deaths",
@@ -111,12 +113,14 @@ fix.dates <- function(df) {
 if (is.null(deaths.loc)) {
 	input.loc = commandArgs(trailingOnly = TRUE)[1]
 } else {
-	input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
+	if (startsWith(deaths.loc, "/")) input.loc <- deaths.loc
+	else input.loc = build.data.filepath(subdir = "raw", deaths.loc)
 }
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
+	filter(death_type == "Confirmed") %>%
     mutate(Date = fuzzy_date_parse(death_date),
            Onset = fuzzy_date_parse(onset_date)) %>%
     fix.dates %>%
@@ -157,8 +161,7 @@ dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
     filter(age > 0) %>%
-    mutate(RegionTmp = nhs.region(.)) %>%
-    mutate(Region = map.to.region(RegionTmp)) %>%
+    mutate(Region = get.region(.)) %>%
     filter(Region %in% regions) %>%
     mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 

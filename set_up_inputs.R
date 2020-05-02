@@ -31,12 +31,12 @@ viro.denom <- NULL
 if(!exists("age.labs"))
     age.labs <- "All"
 
+
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
-cm.breaks <- c(36, 43, 50, 57)				# Day numbers where breaks happen
-google.data.date <- format(ymd("20200424"), format = "%Y%m%d")
+cm.breaks <- c(36, 43, 50, 57, 64, 71)				# Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS(file.path(proj.dir, "contact_mats", "base_matrices", "base_matrices.rds"))
+lst <- readRDS(file.path(proj.dir, "contact_mats", "base_matrices", "base_matrices_new.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
 cm.files <- "england_8ag_contact.txt"
 for(i in 1:length(cm.breaks))
@@ -70,9 +70,9 @@ if(!all(file.exists(cm.mults))){
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 750000
+num.iterations <- 450000
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
-burnin <- 250000
+burnin <- 40000
 adaptive.phase <- burnin / 2
 thin.outputs <- 500 	# After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 50  # After how many iterations to output each set of parameters
@@ -108,7 +108,7 @@ for (region in regions) {
 # If end.gp and/or end.hosp are none then read from data files
 set.end.date <- function(user.value, data.file) {
 	if (is.null(user.value)) {
-		return(max(length(readLines(data.file))))
+		return(max(length(readLines(data.file[1]))))
 	} else {
 		return(user.value)
 	}

@@ -226,7 +226,7 @@ for(reg in regions){
 
     ## Goodness-of-fit
     rD[[reg]] <- rnbinom(length(rD[[reg]]),
-                         size = rD[[reg]] / params$hosp_negbin_overdispersion[iter.sum, ireg],
+                         size = rD[[reg]] / params$hosp_negbin_overdispersion[iter.sum],
                          mu = rD[[reg]])
     rD[[reg]] <- array(rD[[reg]], dim = c(i.summary, ndays, ifelse(nA > 1, nA - 1, 1)))
     q.rD[[reg]] <- apply(rD[[reg]], 2:3, quantile, probs = c(0.025, 0.5, 0.975))

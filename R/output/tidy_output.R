@@ -99,7 +99,7 @@ if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 # TODO: read where we start/stop/thin from config files
 parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs*2)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
@@ -152,6 +152,7 @@ delay.to.death <- list(
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
 ## Extract length of dimensions
+NNI <- NNI[,,1:length(outputs.iterations)]
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
 num.ages <- dim(NNI[[1]])[1]
@@ -205,7 +206,7 @@ if (num.ages > 1) {
 deaths <- deaths %>%
   apply.convolution(F.death) %>%
   apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
-noise.replicates <- 2
+noise.replicates <- 5
 neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
   stopifnot(is.null(dim(drop(overdispersion))))
   size <- mu / params$hosp_negbin_overdispersion
@@ -227,12 +228,20 @@ cum_deaths <- noisy_deaths %>% apply.over.named.array("date", cumsum)
 ## Parse data
 dth.col.names <- c('date', age.labs)
 names(data.files) <- regions
+to.combine <- dimnames(infections)$age[1:4]
 dth.dat.raw <- suppressMessages(sapply(data.files, read_tsv, col_names = dth.col.names, simplify = FALSE))
 dth.dat.raw[[".id"]] <- "region"
 dth.dat <- do.call(bind_rows, dth.dat.raw) %>%
-  mutate(`<1yr,1-4` = `<1yr` + `1-4`) %>%
-  select(-c(`<1yr`, `1-4`)) %>%
+  mutate(`<25` = rowSums(.[to.combine])) %>%
+  select(-to.combine) %>%
   pivot_longer(-c(date, region), names_to = "age")
+
+## Get population
+colnames(regions.total.population) <- age.labs
+rownames(regions.total.population) <- regions
+population <- as_tibble(regions.total.population, rownames = "region") %>%
+  pivot_longer(-region, names_to = "age")
   
-save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths,
+save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
+     population,
      file = file.path(out.dir, "output_matrices.RData"))

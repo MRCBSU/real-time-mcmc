@@ -142,9 +142,9 @@ num_iterations	     `r num.iterations`
 
 output_type	     0
 
-thin_output_every    `r thin.outputs`
+thin_output_every    `r thin.params`
 
-thin_stats_every     `r thin.params`
+thin_stats_every     `r thin.outputs`
 
 adaptive_phase	     `r adaptive.phase`
 
