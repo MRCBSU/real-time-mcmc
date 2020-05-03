@@ -97,7 +97,6 @@ if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
 if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 
-# TODO: read where we start/stop/thin from config files
 parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
 outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs*2)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
@@ -107,7 +106,7 @@ stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
   M.star <- sweep(matM, 2, vecS, `*`)
-  max(abs(eigen(M.star)$value))
+  max(abs(eigen(M.star, only.values = TRUE)$value))
 }
 Rt <- list()
 M.star <- M <- M.mult <- list()
