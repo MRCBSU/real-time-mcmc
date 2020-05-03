@@ -12,6 +12,8 @@ if(!exists("date.data"))
 if(!exists("deaths.loc"))
     ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
 	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+    #deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(date.data, ".csv"))
+	#deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
