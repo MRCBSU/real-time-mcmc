@@ -49,7 +49,13 @@ get.aggregated.quantiles <- function(data, by, quantiles) {
   return(
     data %>%
       apply(c(by, "iteration", "date"), sum) %>%
-      apply(c(by, "date"), quantile, probs = quantiles) %>%
+      add.quantiles(by, quantiles)
+  )
+}
+
+add.quantiles <- function(data, by, quantiles) {
+  return(    
+    apply(data, c(by, "date"), quantile, probs = quantiles) %>%
       as.tbl_cube(met_name = "value") %>%
       as_tibble() %>%
       rename(quantile = Var1) %>%
@@ -69,5 +75,3 @@ matrix.to.tbl <- function(mat) {
       quantile = parse.percentage(quantile)
     )
 }
-
-

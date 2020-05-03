@@ -17,22 +17,41 @@ output:
 
 ```{r preamble, echo=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+QUANTILES <- c(0.025, 0.5, 0.975)
 
+suppressMessages(library(knitr))
+suppressMessages(library(DT))
 suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 if(exists("Rfile.loc")) {
   source(file.path(Rfile.loc, "results_api.R"))
 } else {
+  proj.dir <- "~/RTM"
   source("results_api.R")
 }
 
 ```
 
-```{r plot-function}
+```{r combine-Rt}
+inf_by_region <- apply(infections, c("iteration", "date", "region"), sum)
+Rt <- aperm(Rt, names(dimnames(inf_by_region)))
+stopifnot(all.equal(dim(Rt), dim(inf_by_region), check.names = FALSE))
+weighted_Rt_sum <- apply(inf_by_region * Rt, c("iteration", "date"), sum)
+inf_by_day <- apply(inf_by_region, c("iteration", "date"), sum)
+stopifnot(all.equal(dim(weighted_Rt_sum), dim(inf_by_day)))
+overall_Rt <- weighted_Rt_sum / inf_by_day
+```
 
+
+```{r plot-function}
+sum.all <- function(arr) {
+  return(apply(arr, c("iteration", "date"), sum))
+}
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
-                       y.format = ".3s") {
+                       y.format = ".3s", combine.to.England = sum.all) {
+
+  Eng_projection <- combine.to.England(projections) %>% add.quantiles(NULL, QUANTILES)
   projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
     rename(by = all_of(by))
   plot.names <- unique(projections$by)
@@ -74,10 +93,8 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       showarrow = FALSE
     )
   }
-  plots <- NULL
-  for(subplot in plot.names) {
-    plots[[subplot]] <- projections %>%
-      filter(by == subplot) %>%
+  create.subplot <- function(projections, subplot_title) {
+    projections %>%
       pivot_wider(names_from = quantile) %>%
       plot_ly(x = ~date, width = 800, height = plot.height) %>%
       add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
@@ -86,8 +103,14 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
       add_lines(y = ~`0.5`, color = I("black"),
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Lower 95% CrI</extra>")) %>%
-      layout(shapes = lines, annotations = title(subplot), showlegend = FALSE,
+      layout(shapes = lines, annotations = title(subplot_title), showlegend = FALSE,
              hovermode = "x unified")
+  }
+  plots <- list("England" = create.subplot(Eng_projection, "England"))
+  for(subplot in plot.names) {
+    plots[[subplot]] <- projections %>%
+      filter(by == subplot) %>%
+      create.subplot(subplot)
     if (!is.null(data)) {
       plot.data <- data %>%
         filter(!!sym(by) == subplot) %>%
@@ -130,15 +153,24 @@ We have separately analysed the data by:
 * stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+.
 * stratified into NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West) and Scotland.
 
-## Tables of values {.tabset}
+## Key values {.tabset}
 
 ### Current R
+
+Value of $R_e$, the average number of secondary infections due to a typical infection today.
+
 ```{r Rt-table}
-get.aggregated.quantiles(Rt, "region", c(0.025, 0.5, 0.975)) %>%
+overall_Rt %>%
+  add.quantiles(NULL, QUANTILES) %>%
+  mutate(region = "England") %>%
+  bind_rows(
+    get.aggregated.quantiles(Rt, "region", QUANTILES)
+  ) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
   select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
-  knitr::kable(digits = 2, align = 'lccc')
+  datatable() %>%
+  formatRound(2:4)
 
 ```
 
@@ -148,30 +180,45 @@ get.aggregated.quantiles(Rt, "region", c(0.025, 0.5, 0.975)) %>%
 tbl_cum_inf_region <-
   get.aggregated.quantiles(cum_infections, "region", c(0.025, 0.5, 0.975)) %>%
   pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data))
+  
+tbl_ar_Eng <- get.aggregated.quantiles(cum_infections, NULL, c(0.025, 0.5, 0.975))  %>%
+  pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
-  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
-
-tbl_cum_inf_region %>%
-  knitr::kable(digits = 2, align = 'lccc')
+  mutate(
+    population = sum(population$value),
+    region = "England"
+  )
 
 ```
 
-### Attack rate
+### Attack rate {.tabset}
+
+The percentage of a given group that has been infected.
+
+#### By region
 
 ```{r attack-region}
-population %>%
-  group_by(region) %>%
-  summarise(population = sum(value)) %>%
-  left_join(tbl_cum_inf_region, by = c('region' = 'Region')) %>%
-  #mutate_at(vars(-c(region, population)), function(x, pop) {x / pop}, population)
+bind_rows(
+  tbl_ar_Eng,
+  population %>%
+    group_by(region) %>%
+    summarise(population = sum(value)) %>%
+    left_join(tbl_cum_inf_region, by = c('region' = 'region'))
+  ) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`, population) %>%
   mutate(
-    Median = 100 * Median / population,
-    `95% CrI (lower)` = 100 * `95% CrI (lower)` / population,
-    `95% CrI (upper)` = 100 * `95% CrI (upper)` / population
+    Median = Median / population,
+    `95% CrI (lower)` = `95% CrI (lower)` / population,
+    `95% CrI (upper)` = `95% CrI (upper)` / population
     ) %>%
   select(-population) %>%
-  knitr::kable()
+  datatable() %>%
+  formatPercentage(2:4)
 ```
+
+
+#### By age
 
 ```{r attack-age}
 tbl_cum_inf_age <-
@@ -185,15 +232,16 @@ population %>%
   summarise(population = sum(value)) %>%
   left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
   mutate(
-    Median = 100 * Median / population,
-    `95% CrI (lower)` = 100 * `95% CrI (lower)` / population,
-    `95% CrI (upper)` = 100 * `95% CrI (upper)` / population
+    Median = Median / population,
+    `95% CrI (lower)` = `95% CrI (lower)` / population,
+    `95% CrI (upper)` = `95% CrI (upper)` / population
     ) %>%
   select(-population) %>%
   arrange(match(age, age.labs)) %>%
-  knitr::kable()
+  datatable() %>%
+  formatPercentage(2:4)
 ```
-
+<!--
 ```{r attack-region-age}
 tbl_cum_inf_region <-
   get.aggregated.quantiles(cum_infections, "region", c(0.025, 0.5, 0.975)) %>%
@@ -213,6 +261,7 @@ population %>%
   select(-population) %>%
   knitr::kable()
 ```
+-->
 
 ### IFR
 
@@ -222,14 +271,18 @@ params$prop_case_to_hosp %>%
   `colnames<-`(dimnames(deaths)$age) %>%
   as_tibble() %>%
   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+  #arrange(match(age, age.labs)) %>%
   plot_ly(
-    x = ~age,
+    x = ~factor(age, levels = dimnames(deaths)$age),
     y = ~ifr
   ) %>%
-  add_boxplot()
+  add_boxplot() %>%
+  layout(yaxis = list(tickformat = "%", title = "IFR (infection fatality rate)",
+                      hoverformat = ".2%"),
+         xaxis = list(title = "Age"))
 ```
 
-### Infections incidence {.tabset}
+### Change in infections incidence {.tabset}
 
 #### Growth rates
 
@@ -281,7 +334,7 @@ infections.growth.rates %>%
 
 ```
 
-### Deaths incidence {.tabset}
+### Change in deaths incidence {.tabset}
 
 
 #### Growth rates
@@ -360,7 +413,8 @@ make.plots(cum_deaths, by = "age")
 
 ### Rt
 ```{r}
-make.plots(Rt, by = "region", y.format = ".2f")
+get.combined.Rt <- function(...) overall_Rt
+make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = get.combined.Rt)
 ```
 
 <!--
