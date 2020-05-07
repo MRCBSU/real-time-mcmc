@@ -202,6 +202,9 @@ for(reg in regions) {
         )
 }
 
+## Save the data as processed
+write_csv(rtm.dat, file.path(out.dir, "deaths_data.csv"))
+
 ## Save a quick plot of the data...
 require(ggplot2)
 rtm.dat %>%
