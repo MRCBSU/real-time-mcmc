@@ -48,10 +48,20 @@ overall_Rt <- weighted_Rt_sum / inf_by_day
 sum.all <- function(arr) {
   return(apply(arr, c("iteration", "date"), sum))
 }
+
+sum.all.data <- function (df) {
+  if (is.null(df)) return(NULL)
+  df %>%
+    group_by(date) %>%
+    summarise(True = sum(value, na.rm = TRUE))
+}
+
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
-                       y.format = ".3s", combine.to.England = sum.all) {
+                       y.format = ".3s", combine.to.England = sum.all,
+                       combine.data.to.England = sum.all.data) {
 
   Eng_projection <- combine.to.England(projections) %>% add.quantiles(NULL, QUANTILES)
+  Eng_data <- combine.data.to.England(data)
   projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
     rename(by = all_of(by))
   plot.names <- unique(projections$by)
@@ -93,38 +103,41 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       showarrow = FALSE
     )
   }
-  create.subplot <- function(projections, subplot_title) {
-    projections %>%
+  create.subplot <- function(projections, subplot_title, data) {
+    plot <- projections %>%
       pivot_wider(names_from = quantile) %>%
       plot_ly(x = ~date, width = 800, height = plot.height) %>%
       add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Upper 95% CrI</extra>")) %>%
       add_lines(y = ~`0.025`, alpha = 0,   # An extra trace just for hover text
-                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
-      add_lines(y = ~`0.5`, color = I("black"),
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Lower 95% CrI</extra>")) %>%
+      add_lines(y = ~`0.5`, color = I("black"),
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
       layout(shapes = lines, annotations = title(subplot_title), showlegend = FALSE,
              hovermode = "x unified")
-  }
-  plots <- list("England" = create.subplot(Eng_projection, "England"))
-  for(subplot in plot.names) {
-    plots[[subplot]] <- projections %>%
-      filter(by == subplot) %>%
-      create.subplot(subplot)
-    if (!is.null(data)) {
-      plot.data <- data %>%
-        filter(!!sym(by) == subplot) %>%
-        group_by(date) %>%
-        summarise(True = sum(value))
-      plots[[subplot]] <- plots[[subplot]] %>%
+    if (is.null(data)) return(plot)
+    plot %>%
         add_markers(
-          data = plot.data,
+          data = data,
           x = ~date,
           y = ~True,
           color = I("red"),
           hovertemplate = "%{x}: %{y:.3s}<extra>Actual report</extra>"
         )
+  }
+  plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
+  for(subplot in plot.names) {
+    if (is.null(data)) {
+      plot.data <- NULL
+    } else {
+      plot.data <- data %>%
+        filter(!!sym(by) == subplot) %>%
+        group_by(date) %>%
+        summarise(True = sum(value))
     }
+    plots[[subplot]] <- projections %>%
+      filter(by == subplot) %>%
+      create.subplot(subplot, plot.data)
   }
   return(subplot(plots, nrows = num.rows))
 }
@@ -132,7 +145,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
 
 ## Summary
 
-Real-time tracking of a pandemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. This document reports the work of a joint Public Health England (PHE)-University of Cambridge modelling group to nowcast and forecast COVID-19 infections and deaths, together with estimation of relevant epidemiological quantities for England (by NHS region) and Scotland. These estimates have provided the bases of forecasts supplied to the Scientific Pandemic Influenza sub-group on Modelling (SPI-M) and to regional PHE teams.
+Real-time tracking of a pandemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. This document reports the work of a joint Public Health England (PHE)---University of Cambridge modelling group to nowcast and forecast COVID-19 infections and deaths, together with estimation of relevant epidemiological quantities for England (by NHS region) and Scotland. These estimates have provided the bases of forecasts supplied to the Scientific Pandemic Influenza sub-group on Modelling (SPI-M) and to regional PHE teams.
 
 ## Data Sources
 
@@ -174,7 +187,7 @@ overall_Rt %>%
 
 ```
 
-### Cumulative infections
+<!-- ### Cumulative infections -->
 
 ```{r cum-inf}
 tbl_cum_inf_region <-
@@ -271,15 +284,47 @@ params$prop_case_to_hosp %>%
   `colnames<-`(dimnames(deaths)$age) %>%
   as_tibble() %>%
   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
-  #arrange(match(age, age.labs)) %>%
-  plot_ly(
-    x = ~factor(age, levels = dimnames(deaths)$age),
-    y = ~ifr
+  group_by(age) %>%
+  summarise(value = list(quantile(ifr, QUANTILES))) %>%
+  mutate(quantile = list(names(value[[1]]))) %>%
+  unnest(c(quantile, value)) %>%
+  mutate(
+    quantile = parse.percentage(quantile),
+    value = paste0(signif(100 * value, 2), "%")
   ) %>%
-  add_boxplot() %>%
-  layout(yaxis = list(tickformat = "%", title = "IFR (infection fatality rate)",
-                      hoverformat = ".2%"),
-         xaxis = list(title = "Age"))
+  pivot_wider(names_from = quantile, values_from = value) %>%
+  select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
+  arrange(match(Age, dimnames(deaths)$age)) %>%
+  datatable()
+
+# (params$prop_case_to_hosp %>%
+#   as.matrix() %>%
+#   `colnames<-`(dimnames(deaths)$age) %>%
+#   as_tibble() %>%
+#   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+#   mutate(age = factor(age, levels = dimnames(deaths)$age)) %>%
+#   ggplot(aes(x = age, y = ifr)) +
+#   geom_violin()) %>%
+#   ggplotly()
+#   
+# params$prop_case_to_hosp %>%
+#   as.matrix() %>%
+#   `colnames<-`(dimnames(deaths)$age) %>%
+#   as_tibble() %>%
+#   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+#   group_by(age) %>%
+#   summarise(value = list(quantile(ifr, c(0.025, 0.25, 0.5, 0.75, 0.975)))) %>%
+#   mutate(quantile = list(names(value[[1]]))) %>%
+#   unnest(c(quantile, value)) %>%
+#   mutate(
+#     age = factor(age, levels = dimnames(deaths)$age),
+#     quantile = parse.percentage(quantile)
+#   ) %>%
+#   pivot_wider(names_from = quantile, values_from = value, names_prefix = "q") %>%
+#   ggplot(aes(x = age, lower=q0.25, upper=q0.75, middle=q0.5, ymin=q0.025, 
+#                     ymax=q0.975)) +
+#   geom_boxplot(stat = "identity") +
+#   scale_y_continuous()
 ```
 
 ### Change in infections incidence {.tabset}
