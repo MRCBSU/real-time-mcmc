@@ -75,3 +75,14 @@ matrix.to.tbl <- function(mat) {
       quantile = parse.percentage(quantile)
     )
 }
+
+sum.all <- function(arr) {
+  return(apply(arr, c("iteration", "date"), sum))
+}
+
+sum.all.data <- function (df) {
+  if (is.null(df)) return(NULL)
+  df %>%
+    group_by(date) %>%
+    summarise(True = sum(value, na.rm = TRUE))
+}

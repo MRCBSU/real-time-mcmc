@@ -5,13 +5,11 @@ author:
 - Joshua Blake
 - Edwin van Leeuwen
 - Daniela De Angelis
-- PHE Modelling Cell
-- MRC-BSU COVID-19 Working Group
+- Joint PHE Modelling Cell
+- MRC Biostatistics Unit COVID-19 Working Group
 date: "`r lubridate::today()`"
 output:
   html_document:
-    pandoc_args:
-    - "--self-contained"
     self_contained: no
 ---
 
@@ -45,17 +43,6 @@ overall_Rt <- weighted_Rt_sum / inf_by_day
 
 
 ```{r plot-function}
-sum.all <- function(arr) {
-  return(apply(arr, c("iteration", "date"), sum))
-}
-
-sum.all.data <- function (df) {
-  if (is.null(df)) return(NULL)
-  df %>%
-    group_by(date) %>%
-    summarise(True = sum(value, na.rm = TRUE))
-}
-
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data) {
