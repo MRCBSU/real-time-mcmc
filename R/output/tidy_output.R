@@ -98,7 +98,7 @@ if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 
 parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs*2)
+outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
@@ -151,7 +151,6 @@ delay.to.death <- list(
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
 ## Extract length of dimensions
-NNI <- NNI[,,1:length(outputs.iterations)]
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
 num.ages <- dim(NNI[[1]])[1]
