@@ -22,7 +22,7 @@ if (args[2] == "All")  {
 
 reporting.delay <- 5
 
-google.data.date <- format(ymd("20200501"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200509"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 nforecast.weeks <- 3
