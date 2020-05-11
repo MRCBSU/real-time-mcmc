@@ -10,9 +10,9 @@ if(!exists("date.data"))
 
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc"))
-    ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
-	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
-    #deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(date.data, ".csv"))
+    # deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
+	#deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+    deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(ymd(date.data), ".csv"))
 	#deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 
 ## Define an age-grouping
@@ -99,6 +99,7 @@ plausible.death.date <- function(x) {
 	onset.within.range <- is.na(x$Onset) | within.range(x$Onset)
 	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
 	return(death.within.range & onset.within.range & after.onset)
+}
 
 ## Some patients are known to have the month and day swapped
 ## Fix these here...
