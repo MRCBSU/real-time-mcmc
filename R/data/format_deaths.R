@@ -12,6 +12,8 @@ if(!exists("date.data"))
 if(!exists("deaths.loc"))
     ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
 	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+    #deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(date.data, ".csv"))
+	#deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -114,13 +116,12 @@ if (is.null(deaths.loc)) {
 	input.loc = commandArgs(trailingOnly = TRUE)[1]
 } else {
 	if (startsWith(deaths.loc, "/")) input.loc <- deaths.loc
-	else input.loc = build.data.filepath(subdir = "raw", deaths.loc)
+	else input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
 }
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
-	filter(death_type == "Confirmed") %>%
     mutate(Date = fuzzy_date_parse(death_date),
            Onset = fuzzy_date_parse(onset_date)) %>%
     fix.dates %>%
@@ -200,6 +201,9 @@ for(reg in regions) {
             col_names = FALSE
         )
 }
+
+## Save the data as processed
+write_csv(rtm.dat, file.path(out.dir, "deaths_data.csv"))
 
 ## Save a quick plot of the data...
 require(ggplot2)

@@ -29,7 +29,12 @@ if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 if (!exists("infections")) {
   output.required <- file.path(out.dir, "output_matrices.RData")
   if (file.exists(output.required)) {
+    load(file.path(out.dir, "mcmc.RData"))
     load(output.required)
+    parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+    outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+    parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+    stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
   } else {
     source(file.path(proj.dir, "R/output/tidy_output.R"))
   }
@@ -49,7 +54,13 @@ get.aggregated.quantiles <- function(data, by, quantiles) {
   return(
     data %>%
       apply(c(by, "iteration", "date"), sum) %>%
-      apply(c(by, "date"), quantile, probs = quantiles) %>%
+      add.quantiles(by, quantiles)
+  )
+}
+
+add.quantiles <- function(data, by, quantiles) {
+  return(    
+    apply(data, c(by, "date"), quantile, probs = quantiles) %>%
       as.tbl_cube(met_name = "value") %>%
       as_tibble() %>%
       rename(quantile = Var1) %>%
@@ -68,4 +79,15 @@ matrix.to.tbl <- function(mat) {
       date = lubridate::as_date(date),
       quantile = parse.percentage(quantile)
     )
+}
+
+sum.all <- function(arr) {
+  return(apply(arr, c("iteration", "date"), sum))
+}
+
+sum.all.data <- function (df) {
+  if (is.null(df)) return(NULL)
+  df %>%
+    group_by(date) %>%
+    summarise(True = sum(value, na.rm = TRUE))
 }

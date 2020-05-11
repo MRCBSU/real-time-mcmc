@@ -97,9 +97,8 @@ if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
 if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 
-# TODO: read where we start/stop/thin from config files
 parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs*2)
+outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
@@ -107,29 +106,32 @@ stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
   M.star <- sweep(matM, 2, vecS, `*`)
-  max(abs(eigen(M.star)$value))
+  max(abs(eigen(M.star, only.values = TRUE)$value))
 }
 Rt <- list()
 M.star <- M <- M.mult <- list()
-m <- params$contact_parameters[parameter.to.outputs, ]
-R0 <- posterior.R0[parameter.to.outputs, , drop = F]
+iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
+m <- params$contact_parameters[iterations.for.Rt, ]
+R0 <- posterior.R0[iterations.for.Rt, , drop = F]
 for(idir in 1:length(cm.bases)){
   M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE))
   M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE)) + 1
-  M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[M.mult[[idir]]]),
-                          dim = c(nA, nA, nrow(m)))
 }
 m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
-names(M) <- names(M.mult) <- names(M.star)
+names(M) <- names(M.mult) <- NULL
 pop.total <- all.pop[1, ]
 for(reg in regions){
   ireg <- which(regions %in% reg)
+  for(idir in 1:length(cm.bases)){
+    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*2+M.mult[[idir]]]),
+                            dim = c(nA, nA, nrow(m)))
+  }
   M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
   R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
-  S <- apply(NNI[[reg]], c(1, 3), cumsum)  ## TxAxI array
+  S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
   S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
   R.prime <- sapply(1:ndays,
-                    function(x) sapply(1:i.summary, function(i){
+                    function(x) sapply(1:length(iterations.for.Rt), function(i){
                       M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
                       Rt.func(S[x, , i] / pop.total[ireg], M.temp)
                     }
@@ -152,7 +154,6 @@ delay.to.death <- list(
 F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
 
 ## Extract length of dimensions
-NNI <- NNI[,,1:length(outputs.iterations)]
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
 num.ages <- dim(NNI[[1]])[1]
@@ -181,8 +182,10 @@ tbl_params$iteration <- parameter.iterations
 
 ## Get Rt into nice format
 Rt.old <- Rt
-Rt.dimnames <- output.dimnames[c("iteration","date","region")]
-Rt.dims <- sapply(output.dimnames[c("iteration","date","region")], length)
+Rt.dimnames <- output.dimnames[c("date","region")]
+Rt.dimnames$iteration <- iterations.for.Rt
+Rt.dimnames <- Rt.dimnames[c("iteration", "date","region")]
+Rt.dims <- c(dim(Rt.old[[1]]), num.regions)
 Rt <- array(
   unlist(Rt.old),
   dim = Rt.dims,

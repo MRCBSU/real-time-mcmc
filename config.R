@@ -22,11 +22,11 @@ if (args[2] == "All")  {
 
 reporting.delay <- 5
 
-google.data.date <- format(ymd("20200501"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200509"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 nforecast.weeks <- 3
-ndays <- lubridate::as_date(date.data) - lubridate::as_date("20200216") + 370
+ndays <- lubridate::as_date(date.data) - lubridate::as_date("20200216") + (7 * nforecast.weeks)
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -39,8 +39,8 @@ region.code <- "Eng"
 
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
-data.desc <- "reports" # Set to "reports" if running by reporting date
-scenario.name <- "variable_relax_ifr_prior_delayAnne_confirmed"
+data.desc <- "deaths" # Set to "reports" if running by reporting date
+scenario.name <- "variable_relax_ifr_prior_delayAnne"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
@@ -48,5 +48,5 @@ out.dir <- file.path(proj.dir,
 					 "matrices", google.data.date))	# Value actually used
 data.dirs <- file.path(proj.dir,
                        "data/RTM_format/deaths")
-## Do we want to consider only confirmed cases
-flg.confirmed <- TRUE
+
+flg.confirmed = TRUE
