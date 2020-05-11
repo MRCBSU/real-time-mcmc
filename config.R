@@ -39,8 +39,8 @@ region.code <- "Eng"
 
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
-data.desc <- "reports" # Set to "reports" if running by reporting date
-scenario.name <- "variable_relax_ifr_prior_delayAnne_confirmed"
+data.desc <- "deaths" # Set to "reports" if running by reporting date
+scenario.name <- "variable_relax_ifr_prior_delayAnne"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
