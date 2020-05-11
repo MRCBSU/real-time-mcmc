@@ -33,13 +33,21 @@ run.outputs <- FALSE
 ## Do the required data files exist?? If not, create them
 data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
 
+## Which code is being considered
+gp.flag <- 0
+hosp.flag <- 1
+sero.flag <- 1
+viro.flag <- 0
+
 ## If these files don't already exits, make them
 if(!all(file.exists(data.files))){
   dir.data <- "data"
   if(data.desc == "deaths")
 	  source("R/data/format_deaths.R")
   if(data.desc == "reports")
-	  source("R/data/format_death_reports.R")
+      source("R/data/format_death_reports.R")
+  if(sero.flag)
+      source("R/data/format_sero.R")
 }
 
 ## Set up the model specification.
