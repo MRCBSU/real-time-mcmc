@@ -29,7 +29,12 @@ if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 if (!exists("infections")) {
   output.required <- file.path(out.dir, "output_matrices.RData")
   if (file.exists(output.required)) {
+    load(file.path(out.dir, "mcmc.RData"))
     load(output.required)
+    parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+    outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+    parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+    stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
   } else {
     source(file.path(proj.dir, "R/output/tidy_output.R"))
   }
