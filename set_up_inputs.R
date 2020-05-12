@@ -17,9 +17,8 @@ if(gp.flag){
 }
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
-reporting.delay <- ifelse(data.desc == "deaths", reporting.delay, 0)
 if(hosp.flag){
-    start.hosp <- ifelse(data.desc == "deaths", 1, 35) ## 35 # Day number on which to start likelihood calculation
+    start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
 }
@@ -126,7 +125,6 @@ if (gp.flag == 1) {
 }
 hosp.data <- "NULL"
 if (hosp.flag == 1) {
-    ## hosp.data <- build.data.filepath("RTM_format/deaths", data.desc, date.data, "_", regions, "_", nA, "ag.txt")
     hosp.data <- data.files
     if(!all(file.exists(hosp.data)))
         stop("One of the specified hospitalisation data files does not exist")

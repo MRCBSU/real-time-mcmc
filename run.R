@@ -38,10 +38,11 @@ data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA
 ## If these files don't already exits, make them
 if(format.inputs && !all(file.exists(data.files))){
   dir.data <- "data"
-  if(data.desc == "deaths")
-	  source("R/data/format_deaths.R")
-  if(data.desc == "reports")
+  if(data.desc == "reports") {
 	  source("R/data/format_death_reports.R")
+  } else {
+	  source("R/data/format_deaths.R")
+  }
 }
 
 ## Set up the model specification.

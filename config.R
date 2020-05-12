@@ -20,7 +20,6 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-reporting.delay <- 5
 
 google.data.date <- format(ymd("20200509"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
@@ -37,16 +36,34 @@ if(!exists("regions")) regions <- "England"
 
 region.code <- "Eng"
 
+# Possible values:
+# deaths: confirmed deaths only, by date of death
+# reports: confirmed deaths only, by date of reporting
+# all: all deaths, by date of death
+data.desc <- "deaths" # Set to "reports" if running by reporting date
+
+flg.confirmed <- (data.desc != "all")
+if (data.desc == "all") {
+	reporting.delay <- 18
+} else if (data.desc == "reports") {
+	reporting.delay <- 0
+} else if (data.desc == "deaths") {
+	reporting.delay <- 5
+} else {
+	stop("Unknown data description")
+}
+
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
-data.desc <- "deaths" # Set to "reports" if running by reporting date
 scenario.name <- "variable_relax_ifr_prior_delayAnne"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0("age_and_region_",
-					 "matrices", google.data.date))	# Value actually used
+                     paste0(
+							"age_and_region_",
+					 		"matrices", google.data.date,
+							"_", data.desc))	# Value actually used
 data.dirs <- file.path(proj.dir,
-                       "data/RTM_format/deaths")
+                       "data/RTM_format",
+					   data.desc)
 
-flg.confirmed = TRUE
