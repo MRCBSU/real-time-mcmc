@@ -50,7 +50,7 @@ if(format.inputs){
   if(sero.flag){
       serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
       seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
-      source("R/data/format_sero.R")
+	  source(file.path(proj.dir, "R/data/format_sero.R"))
   }
 }
 
