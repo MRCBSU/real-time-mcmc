@@ -39,14 +39,14 @@ data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA
 if(format.inputs && !all(file.exists(data.files))){
   dir.data <- "data"
   if(data.desc == "reports") {
-	  source("R/data/format_death_reports.R")
+	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
   } else {
-	  source("R/data/format_deaths.R")
+	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
 }
 
 ## Set up the model specification.
-source("set_up.R")
+source(file.path(proj.dir, "set_up.R"))
 
 ## Compile the code
 if(compile.code) {
