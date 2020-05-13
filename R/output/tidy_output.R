@@ -240,7 +240,7 @@ dth.dat.raw <- suppressMessages(sapply(data.files, read_tsv, col_names = dth.col
 dth.dat.raw[[".id"]] <- "region"
 dth.dat <- do.call(bind_rows, dth.dat.raw) %>%
   mutate(`<25` = rowSums(.[to.combine])) %>%
-  select(-to.combine) %>%
+  select(-all_of(to.combine)) %>%
   pivot_longer(-c(date, region), names_to = "age")
 
 ## Get population
