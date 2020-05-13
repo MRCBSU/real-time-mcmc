@@ -116,8 +116,8 @@ iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to
 m <- params$contact_parameters[iterations.for.Rt, ]
 R0 <- posterior.R0[iterations.for.Rt, , drop = F]
 for(idir in 1:length(cm.bases)){
-  M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE))
-  M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE)) + 1
+  M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
+  M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
 }
 m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
 names(M) <- names(M.mult) <- NULL
