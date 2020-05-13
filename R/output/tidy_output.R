@@ -83,6 +83,7 @@ apply.convolution <- function(start, func, over = "date") {
 ###############################################################
 
 ## Load files
+print('Loading results')
 if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
@@ -103,6 +104,7 @@ parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
 ################################################################
+print('Calculating Rt')
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
   M.star <- sweep(matM, 2, vecS, `*`)
@@ -140,6 +142,7 @@ for(reg in regions){
   Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
 }
 ################################################################
+print('Formatting time series')
 
 ## Constants and settings
 
@@ -229,6 +232,7 @@ noisy_deaths <- deaths %>%
 cum_deaths <- noisy_deaths %>% apply.over.named.array("date", cumsum)
 
 ## Parse data
+print('Loading true data')
 dth.col.names <- c('date', age.labs)
 names(data.files) <- regions
 to.combine <- dimnames(infections)$age[1:4]
@@ -245,6 +249,7 @@ rownames(regions.total.population) <- regions
 population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
+print('Saving results')
 save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
      population,
      file = file.path(out.dir, "output_matrices.RData"))
