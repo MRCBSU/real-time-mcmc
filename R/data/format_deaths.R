@@ -99,6 +99,7 @@ plausible.death.date <- function(x) {
 	onset.within.range <- is.na(x$Onset) | within.range(x$Onset)
 	after.onset <- is.na(x$Onset) | (x$Onset <= x$Date)
 	return(death.within.range & onset.within.range & after.onset)
+}
 
 ## Some patients are known to have the month and day swapped
 ## Fix these here...

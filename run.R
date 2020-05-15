@@ -27,13 +27,10 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- TRUE
+run.code <- FALSE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- TRUE
-
-## Do the required data files exist?? If not, create them
-data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+run.outputs <- FALSE
 
 ## Which code is being considered
 gp.flag <- 0
@@ -42,14 +39,19 @@ sero.flag <- 1
 viro.flag <- 0
 
 ## If these files don't already exits, make them
-if(format.inputs && !all(file.exists(data.files))){
+if(format.inputs){
   dir.data <- "data"
-  if(data.desc == "deaths")
-	  source("R/data/format_deaths.R")
+  if(data.desc == "deaths"){
+      data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+      source("R/data/format_deaths.R")
+      }
   if(data.desc == "reports")
       source("R/data/format_death_reports.R")
-  if(sero.flag)
+  if(sero.flag){
+      serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
+      seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
       source("R/data/format_sero.R")
+  }
 }
 
 ## Set up the model specification.

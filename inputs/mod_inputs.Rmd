@@ -7,7 +7,7 @@ Hospitalisation_flag `r hosp.flag`
 
 Deaths_flag	     0
 
-Sero_data_flag	     0
+Sero_data_flag	     `r sero.flag`
 
 Viro_data_flag	     0
 
@@ -63,9 +63,9 @@ Deaths_likelihood_start_day	   1
 
 Deaths_likelihood_end_day	   1
 
-Sero_likelihood_start_day	   1
+Sero_likelihood_start_day	   `r start.sero`
 
-Sero_likelihood_end_day		   1
+Sero_likelihood_end_day		   `r end.sero`
 
 Viro_likelihood_start_day	   1
 
@@ -118,8 +118,8 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 		 regions_death_data = NULL; \#\#\#\#\# this null comment doesn't have to be here, I've just put it in to be explicit
 
 
-		 regions_seropositives_data = NULL;
-		 regions_serosamples_data = NULL;
+		 regions_seropositives_data = `r paste(sero.data$positive, collapse = ", ")`;
+		 regions_serosamples_data = `r paste(sero.data$sample, collapse = ", ")`;
 
 
 		 regions_viropositives_data = NULL;
@@ -164,6 +164,6 @@ prop_var_shrinkage   0.9
 
 maximum_block_size   9
 
-random_seed	     81
+random_seed	     82
 
 max_threads	     `r nr`

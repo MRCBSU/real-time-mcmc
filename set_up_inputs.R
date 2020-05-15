@@ -26,9 +26,8 @@ if(hosp.flag){
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 if(sero.flag){
-    sero.delay <- 21
-    start.sero <- 1
-    end.sero <- lubridata::as_date(date.data)
+    start.sero <- min(rtm.plot$date) - start.date + 1
+    end.sero <- max(rtm.plot$date) - start.date + 1
     }
 ## The 'viro' stream in the code
 viro.data <- NULL
@@ -139,7 +138,14 @@ if (hosp.flag == 1) {
         stop("One of the specified hospitalisation data files does not exist")
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }
-
+sero.data <- list(sample = "NULL",
+                  positive = "NULL")
+if (sero.flag == 1) {
+    sero.data <- list(sample = serosam.files, positive = seropos.files)
+    if(!all(sapply(sero.data, function(x) all(file.exists(x)))))
+        stop("One of the specified serology data files does not exist")
+    if(is.null(end.sero)) end.sero <- set.end.date(end.sero, sero.data)
+}
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
 cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
