@@ -12,15 +12,15 @@
 
 - add this member to the ``regional_model_params`` structure in file ``RTM_StructDefs.h``.
 
-- allocate some memory to the new component of the ``regional_model_params`` in the ``regional_model_params_alloc`` functions (this is an overloaded function name, so this needs to be done in two places).
+- allocate some memory to the new component of the ``regional_model_params`` in the ``regional_model_params_alloc`` functions (this is an overloaded function name, so this needs to be done in two places). This isn't necessary for scalar quantities.
 
-- free memory from the new component of the ``regional_model_params`` in the ``regional_model_params_free`` function.
+- free memory from the new component of the ``regional_model_params`` in the ``regional_model_params_free`` function. This isn't necessary for scalar quantities.
 
 - similarly adapt the memory copy routine ``regional_model_params_memcpy``.
 
-- add a case for the new parameter's index name. This should return a " : " delimited list of the regional parameters that will need modifying when you change the new parameter.
+- in the function ``flagclass::UPItoRMP`` in the ``RTM_flagclass.cc`` files, add a case for the new parameter's index name. This should return a " : " delimited list of the regional parameters that will need modifying when you change the new parameter.
 
-- re-size the relevant structures in the ``regional_model_params`` (if this parameter is a variance or overdispersion parameter that relates directly to data).
+- if this parameter is a variance or overdispersion parameter that relates directly to data, re-size the relevant structures in the ``regional_model_params`` 
 
 - add a call to the mapping function ``regional_matrix_parameter`` or ``regional_vector_parameter`` or modify exsiting ones as appropriate within the ``evaluate_regional_parameters``. This describes how the updateable model parameter is mapped into the regions.
 

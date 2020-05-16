@@ -637,6 +637,11 @@ void fn_log_likelihood(likelihood& llhood,
 	      }
 	    gsl_vector_free(prop_immune_baseline_nonseropositive);
 
+	    // ** Some account for test sensitivity and specificity. Will have to move from here
+	    // ** if these two quantities are ever to be allowed to vary by time, region or age.
+	    gsl_matrix_scale(test_positivity, meta_region[int_region].det_model_params.l_sero_sensitivity + meta_region[int_region].det_model_params.l_sero_specificity - 1);
+	    gsl_matrix_add_constant(test_positivity, 1 - meta_region[int_region].det_model_params.l_sero_specificity);
+	    
 	    // ** Is there any missing data - if dataset is of dimension less than the number of strata
 	    if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
 	      // ** Yes: Aggregate seropositivities using a weighted mean

@@ -191,6 +191,20 @@ prior_distributions = 1;
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
+sero_test_sensitivity = { param_value = 1;
+
+prior_distributions = 1;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+sero_test_specificity = { param_value = 1;
+
+prior_distributions = 1;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
 exponential_growth_rate_hyper = { param_value = 6.3, 57;
 
 prior_distribution = 1, 1;

@@ -87,6 +87,15 @@ void select_design_matrix(gsl_matrix* dest, gsl_matrix* src, bool whole_matrix_f
 
 }
 
+void fixed_quantity(double& out_val, const double param_value, const string& param_name, const gsl_matrix* design)
+{
+  // TRIVIAL ERROR CHECK FOR PARAMETERS THAT ARE A FIXED QUANTITY OVER THE COURSE OF THE PANDEMIC
+  if(design!=0)
+    {
+      ERROR_PARAM_INPUT(param_name.c_str());
+    }
+  out_val = param_value;
+}
 void regional_scalar_parameter(double& out_val, const gsl_vector* param_value, const regression_def& map_to_regional, const int region_index)
 {
   /// IN THIS FUNCTION, THE CODE LINES INVOLVING THE subdesign MATRICES HAVE BEEN DONE IN A VERY
@@ -321,20 +330,32 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, in_umps[REL_INFECT_INDEX].param_value, in_umps[REL_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_sensitivity"))
     { // STRICTLY A SCALAR QUANTITY
-      if(in_umps[SENS_INDEX].map_to_regional.design_matrix != 0)
-	{
-	  ERROR_PARAM_INPUT(in_umps[SENS_INDEX].param_name.c_str());
-	}
-      out_rmp.l_sensitivity = gsl_vector_get(in_umps[SENS_INDEX].param_value, 0);
+      fixed_quantity(out_rmp.l_sensitivity,
+		     gsl_vector_get(in_umps[SENS_INDEX].param_value, 0),
+		     in_umps[SENS_INDEX].param_name,
+		     in_umps[SENS_INDEX].map_to_regional.design_matrix);
     }
   if(update_flags.getFlag("l_specificity"))
     { // STRICTLY A SCALAR QUANTITY
-      if(in_umps[SPEC_INDEX].map_to_regional.design_matrix != 0)
-	{
-	  ERROR_PARAM_INPUT(in_umps[SPEC_INDEX].param_name.c_str());
-	}
-      out_rmp.l_specificity = gsl_vector_get(in_umps[SPEC_INDEX].param_value, 0);
-    }  
+      fixed_quantity(out_rmp.l_specificity,
+		     gsl_vector_get(in_umps[SPEC_INDEX].param_value, 0),
+		     in_umps[SPEC_INDEX].param_name,
+		     in_umps[SPEC_INDEX].map_to_regional.design_matrix);
+    }
+  if(update_flags.getFlag("l_sero_sensitivity"))
+    { // STRICTLY A SCALAR QUANTITY
+      fixed_quantity(out_rmp.l_sero_sensitivity,
+		     gsl_vector_get(in_umps[SSENS_INDEX].param_value, 0),
+		     in_umps[SSENS_INDEX].param_name,
+		     in_umps[SSENS_INDEX].map_to_regional.design_matrix);
+    }
+  if(update_flags.getFlag("l_sero_specificity"))
+    { // STRICTLY A SCALAR QUANTITY
+      fixed_quantity(out_rmp.l_sero_specificity,
+		     gsl_vector_get(in_umps[SSPEC_INDEX].param_value, 0),
+		     in_umps[SSPEC_INDEX].param_name,
+		     in_umps[SSPEC_INDEX].map_to_regional.design_matrix);
+    }
   if(update_flags.getFlag("l_pr_symp"))
     regional_matrix_parameter(out_rmp.l_pr_symp, in_umps[PROP_SYMP_INDEX].param_value, in_umps[PROP_SYMP_INDEX].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
   if(update_flags.getFlag("l_pr_onset_to_GP"))

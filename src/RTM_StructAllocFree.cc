@@ -304,6 +304,10 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     rmp_dest.l_sensitivity = rmp_src.l_sensitivity;
   if(update_flags.getFlag("l_specificity"))
     rmp_dest.l_specificity = rmp_src.l_specificity;
+  if(update_flags.getFlag("l_sero_sensitivity"))
+    rmp_dest.l_sero_sensitivity = rmp_src.l_sero_sensitivity;
+  if(update_flags.getFlag("l_sero_specificity"))
+    rmp_dest.l_sero_specificity = rmp_src.l_sero_specificity;
   if(update_flags.getFlag("l_gp_negbin_overdispersion"))
     gsl_matrix_memcpy(rmp_dest.l_gp_negbin_overdispersion, rmp_src.l_gp_negbin_overdispersion);
   if(update_flags.getFlag("l_hosp_negbin_overdispersion"))
