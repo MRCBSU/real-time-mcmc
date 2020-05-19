@@ -144,18 +144,6 @@ for(reg in regions){
 ################################################################
 print('Formatting time series')
 
-## Constants and settings
-
-delay.to.death <- list(
-  incub.mean = 4,
-  incub.sd = 1.41,
-  disease.mean = ddelay.mean,
-  disease.sd = ddelay.sd,
-  report.mean = rdelay.mean,
-  report.sd = rdelay.sd
-)
-F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
-
 ## Extract length of dimensions
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
@@ -203,45 +191,98 @@ infections <- array(
 )
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 
-## Calculate deaths
-if (num.ages > 1) {
-  deaths <- merge.youngest.age.groups(infections)
-} else {
-  deaths <- infections
-}
-deaths <- deaths %>%
-  apply.convolution(F.death) %>%
-  apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
-noise.replicates <- 5
-neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
-  stopifnot(is.null(dim(drop(overdispersion))))
-  size <- mu / params$hosp_negbin_overdispersion
-  return(rnbinom(
-    n = length(mu) * replicates,
-    mu = rep(mu, each = replicates),
-    size = rep(size, each = replicates)
+derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 5) {
+  ## Calculate deaths
+  if (num.ages > 1) {
+    raw <- merge.youngest.age.groups(infections)
+  } else {
+    raw <- infections
+  }
+  mean <- raw %>%
+    apply.convolution(convolution) %>%
+    apply.param.to.output(scaling.param, `*`, "age")
+  neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
+    stopifnot(is.null(dim(drop(overdispersion))))
+    size <- mu / overdispersion
+    return(rnbinom(
+      n = length(mu) * replicates,
+      mu = rep(mu, each = replicates),
+      size = rep(size, each = replicates)
+    ))
+  }
+  noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
+  noise.dimnames <- dimnames(mean)
+  noise.dimnames$iteration <- noise.iterations
+  noisy.out <- mean %>%
+    apply.param.to.output(overdispersion.param, neg.binom.noise,
+                          target.dimnames = noise.dimnames) %>%
+    merge.youngest.age.groups(3, "<25")
+  return(list(
+    mean = mean,
+    noisy.out = noisy.out,
+    cumulative = noisy.out %>% apply.over.named.array("date", cumsum)
   ))
 }
-noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
-noise.dimnames <- dimnames(deaths)
-noise.dimnames$iteration <- noise.iterations
-noisy_deaths <- deaths %>%
-  apply.param.to.output(params$hosp_negbin_overdispersion, neg.binom.noise,
-                        target.dimnames = noise.dimnames) %>%
-  merge.youngest.age.groups(3, "<25")
-cum_deaths <- noisy_deaths %>% apply.over.named.array("date", cumsum)
+if (hosp.flag == 0) {
+  deaths <- noisy_deaths <- cum_deaths <- NULL
+} else {
+	delay.to.death <- list(
+	  incub.mean = 4,
+	  incub.sd = 1.41,
+	  disease.mean = ddelay.mean,
+	  disease.sd = ddelay.sd,
+	  report.mean = 0,
+	  report.sd = 0
+	)
+	F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
+  death.data <- derived.quantity(params$prop_case_to_hosp, params$hosp_negbin_overdispersion, F.death)
+  deaths <- death.data$mean
+  noisy_deaths <- death.data$noisy.out
+  cum_deaths <- death.data$cumulative
+}
+if (gp.flag == 0) {
+  hosp <- noisy_hosp <- cum_hosp <- NULL
+} else {
+	delay.to.hosp <- list(
+	  incub.mean = 4,
+	  incub.sd = 1.41,
+	  disease.mean = hdelay.mean,
+	  disease.sd = hdelay.sd,
+	  report.mean = 0,
+	  report.sd = 0
+	)
+	F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
+  hosp.data <- derived.quantity(params$prop_case_to_GP_consultation, params$gp_negbin_overdispersion, F.hosp)
+  hosp <- hosp.data$mean
+  noisy_hosp <- hosp.data$noisy.out
+  cum_hosp <- hosp.data$cumulative
+}
+
 
 ## Parse data
 print('Loading true data')
-dth.col.names <- c('date', age.labs)
-names(data.files) <- regions
-to.combine <- dimnames(infections)$age[1:4]
-dth.dat.raw <- suppressMessages(sapply(data.files, read_tsv, col_names = dth.col.names, simplify = FALSE))
-dth.dat.raw[[".id"]] <- "region"
-dth.dat <- do.call(bind_rows, dth.dat.raw) %>%
-  mutate(`<25` = rowSums(.[to.combine])) %>%
-  select(-all_of(to.combine)) %>%
-  pivot_longer(-c(date, region), names_to = "age")
+load.data <- function(file.names) {
+  col.names <- c('date', age.labs)
+  names(data.files) <- regions
+  to.combine <- dimnames(infections)$age[1:4]
+  dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
+  dat.raw[[".id"]] <- "region"
+  return(do.call(bind_rows, dat.raw) %>%
+    mutate(`<25` = rowSums(.[to.combine])) %>%
+    select(-all_of(to.combine)) %>%
+    pivot_longer(-c(date, region), names_to = "age")
+  )
+}
+if (hosp.flag == 0) {
+  dth.dat <- NULL
+} else {
+  dth.dat <- load.data(data.files)
+}
+if (gp.flag == 0) {
+  hosp.dat <- NULL
+} else {
+  hosp.dat <- load.data(gp.data)
+}
 
 ## Get population
 colnames(regions.total.population) <- age.labs
@@ -251,5 +292,5 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   
 print('Saving results')
 save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
-     population,
+     hosp, noisy_hosp, cum_hosp, population, hosp.dat,
      file = file.path(out.dir, "output_matrices.RData"))

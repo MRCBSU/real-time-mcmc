@@ -26,7 +26,7 @@ if(exists("Rfile.loc")) {
 ```
 
 ```{r combine-Rt}
-inf_by_region <- apply(infections, c("iteration", "date", "region"), sum)[seq(from = 1, to = length(parameter.to.outputs), length.out = 500),,]
+inf_by_region <- apply(infections, c("iteration", "date", "region"), sum)[seq(from = 1, to = length(parameter.to.outputs), length.out = 500),,,drop = FALSE]
 Rt <- aperm(Rt, names(dimnames(inf_by_region)))
 stopifnot(all.equal(dim(Rt), dim(inf_by_region), check.names = FALSE))
 weighted_Rt_sum <- apply(inf_by_region * Rt, c("iteration", "date"), sum)
@@ -304,7 +304,7 @@ population %>%
 ### IFR
 
 
-```{r ifr}
+```{r ifr, eval=!is.null(dth.dat)}
 today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,], c("age", "iteration"), sum)
 merge.youngest.age.groups <- function(mat, num.to.group = 2) {
   add.function <- function(x) {
@@ -385,7 +385,7 @@ wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
 calc.growth.rate <- function(data) {
   data %>%
     aperm(c("date", "region", "iteration", "age")) %>%
-    `[`(wanted.days,,,) %>%
+    `[`(wanted.days,,,,drop = FALSE) %>%
     apply(c("region", "iteration", "date"), sum) %>%
     as.tbl_cube(met_name = "value") %>%
     as_tibble() %>%
@@ -405,7 +405,7 @@ calc.growth.rate <- function(data) {
     select(-region)
 }
 infections.growth.rates <- calc.growth.rate(infections)
-deaths.growth.rates <- calc.growth.rate(deaths)
+if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
 NB: negative growth rates are decline rates. Values are daily changes.
@@ -434,13 +434,15 @@ infections.growth.rates %>%
 
 NB: negative growth rates are decline rates. Values are daily changes.
 
-`r knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')`
+```{r death-growth, eval=!is.null(deaths)}
+knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
+```
 
 #### Halving times
 
 Halving times in days, if a region shows growth than value will be Inf.
 
-```{r death-halving}
+```{r death-halving, eval=!is.null(deaths)}
 
 deaths.growth.rates %>%
   mutate_at(
@@ -480,28 +482,11 @@ make.plots(cum_infections, by = "region")
 make.plots(cum_infections, by = "age")
 ```
 
-### Deaths incidence {.tabset}
-
-#### By region
-```{r}
-make.plots(noisy_deaths, by = "region", data = dth.dat)
+```{r eval=!is.null(dth.dat), child='deaths-report.Rmd'}
 ```
 
-#### By age
-```{r}
-make.plots(noisy_deaths, by = "age", data = dth.dat)
-```
 
-### Cumulative deaths {.tabset}
-
-#### By region
-```{r}
-make.plots(cum_deaths, by = "region")
-```
-
-#### By age
-```{r}
-make.plots(cum_deaths, by = "age")
+```{r eval=!is.null(hosp.dat), child='hosp-report.Rmd'}
 ```
 
 ### Rt
