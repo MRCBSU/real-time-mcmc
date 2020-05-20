@@ -6,7 +6,7 @@ names(int.effect) <- c("total", "variable", "lshtm", "nothing")
 
 ## shape.dL <- 35.1
 ## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
-value.dl <-1
+value.dl <- 2
 ## shape.dL <- 13.3
 ## rate.dL <- 4.16
 
