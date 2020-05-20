@@ -31,9 +31,9 @@ col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
 	onset_date = "symptom_onset_date",
-	nhs_region = "NHSER_name",
-	phe_region = "PHEC_name",
-	utla_name = "UTLA_name"
+	nhs_region = "NHSEnglandRegionName2019_lkup",
+	phe_region = "phec_name",
+	utla_name = "utla_code"
 )
 
 # Given a row in a deaths file, return its region.
