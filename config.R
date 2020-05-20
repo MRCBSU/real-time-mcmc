@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -23,7 +23,7 @@ if (args[2] == "All")  {
 reporting.delay <- 5
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200509"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200515"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 nforecast.weeks <- 3
@@ -39,11 +39,11 @@ if(!exists("regions")) regions <- "England"
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "serology_variable_relax_ifr_prior_delayAnne_slowantibodies"
+scenario.name <- "serology_varSens_slowantibodies"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0("age_and_region_matrices_slow", google.data.date)) ## Value actually used
+                     paste0(scenario.name, "_matrices_", google.data.date)) ## Value actually used
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
                          "data/RTM_format/serology")

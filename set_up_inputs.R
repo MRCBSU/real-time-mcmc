@@ -25,7 +25,7 @@ if(hosp.flag){
 }
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
-if(sero.flag){
+if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
     start.sero <- min(rtm.plot$date) - start.date + 1
     end.sero <- max(rtm.plot$date) - start.date + 1
     }
@@ -40,9 +40,12 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
-cm.breaks <- c(36, 43, 50, 57, 64, 71)				# Day numbers where breaks happen
+cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85) ## Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS(file.path(proj.dir, "contact_mats", "base_matrices", "base_matrices_new.rds"))
+lst <- readRDS(file.path(proj.dir,
+                         "contact_mats",
+                         "base_matrices",
+                         paste0("base_matrices_", google.data.date, ".rds")))
 lst$England$all$m <- lst$England$all$m * 1e7
 cm.files <- "england_8ag_contact.txt"
 for(i in 1:length(cm.breaks))
@@ -65,8 +68,8 @@ if(!all(file.exists(cm.bases))){
 }
 ## Modifiers (which element of contact_parameters to use)
 cm.mults <- file.path(proj.dir, "contact_mats", 
-                      paste0("ag", nA, "_mult", c(0:1), ".txt"))
-mult.order <- c(0, rep(1, length(cm.breaks)))
+                      paste0("ag", nA, "_mult", 0:2, ".txt"))
+mult.order <- c(0, rep(1, sum(cm.breaks<85)), rep(2, sum(cm.breaks>=85)))
 if(!all(file.exists(cm.mults))){
     mult.mat <- lapply(unique(mult.order), function(x) matrix(x, nA, nA))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),

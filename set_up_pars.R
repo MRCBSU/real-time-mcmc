@@ -55,13 +55,8 @@ value.eta.h <- 0.3
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
-if(grepl("Anne", scenario.name, fixed = T)){
-    ddelay.mean <-15.0
-    ddelay.sd <- 12.1
-} else {
-    ddelay.mean <- 17.8
-    ddelay.sd <- 8.9
-}
+ddelay.mean <-15.0
+ddelay.sd <- 12.1
 
 ## Reporting delay on the deaths
 ## First, write down Tom's cdf for the delay distribution function
@@ -82,18 +77,33 @@ ldelay.mean <- 5.22
 ldelay.sd <- 3.59
 
 ## Contact model
-if(nA == 1){
-prior.list <- list(fixed = NULL,
-                   tight = c(20.67, 31.00),
-                   relax = c(2, 3),
-                   unif = c(1, 1),
-                   uninf = c(0.5, 0.5))
-} else prior.list <- list(relax = c(4, 4))
+int.effect <- 0.521
+prior.list <- list(lock = c(4, 4),
+                   relax = c(163, 231,
+                             138, 231,
+                             245, 305,
+                             169, 241,
+                             160, 216,
+                             235, 289,
+                             126, 169)
+                   )
+## prior.list <- list(relax = c(4, 4))
+contact.dist <- rep(c(1, 3, 3), nr)
+## contact.pars <- rep(prior.list[[1]], nr)
+contact.pars <- c(prior.list$lock, prior.list$relax[1:2],
+                  prior.list$lock, prior.list$relax[3:4],
+                  prior.list$lock, prior.list$relax[5:6],
+                  prior.list$lock, prior.list$relax[7:8],
+                  prior.list$lock, prior.list$relax[9:10],
+                  prior.list$lock, prior.list$relax[11:12],
+                  prior.list$lock, prior.list$relax[13:14])
+contact.reduction <- rep(c(1, int.effect, int.effect), nr)
 
-nprior.name <- names(prior.list)
-which.var <- which(sapply(nprior.name, grepl, x = scenario.name, fixed = TRUE))
-contact.dist <- rep(c(1, ifelse(is.null(prior.list[which.var]), 1, 3)), nr)
-contact.pars <- rep(prior.list[[which.var]], nr)
-which.var <- which(sapply(names(int.effect), grepl, x = scenario.name, fixed = TRUE))
-stopifnot(length(which.var) == 1)
-contact.reduction <- rep(c(1, int.effect[which.var]), nr)
+## Serological test sensivitiy and specificity
+sero.sens <- 71.5 / 101
+sero.spec <- 777.5 / 787
+
+ssens.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
+ssens.prior.pars <- c(71.5, 29.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
+sspec.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
+sspec.prior.pars <- c(777.5, 9.5)

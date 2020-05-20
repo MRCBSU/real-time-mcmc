@@ -76,7 +76,7 @@ prior_distribution = `r paste(contact.dist, collapse = ", ")`;
 
 prior_parameters = `r paste(contact.pars, collapse = ", ")`;
 
-proposal_variance = `r paste(rep(c(0, 0.0005), length(contact.reduction)), collapse = ", ")`
+proposal_variance = `r paste(rep(c(0, 0.001, 0.002), length(contact.reduction)), collapse = ", ")`
 
 region_breakpoints = true;
 
@@ -191,16 +191,20 @@ prior_distributions = 1;
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_sensitivity = { param_value = 1;
+sero_test_sensitivity = { param_value = `r sero.sens`;
 
-prior_distributions = 1;
+prior_distributions = `r ssens.prior.dist`;
+
+prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_specificity = { param_value = 1;
+sero_test_specificity = { param_value = `r sero.spec`;
 
-prior_distributions = 1;
+prior_distributions = `r sspec.prior.dist`;
+
+prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 

@@ -19,7 +19,8 @@ thisFile <- function() {
         }
 }
 file.loc <- dirname(thisFile())
-proj.dir <- file.loc
+proj.dir <- dirname(dirname(file.loc))
+if(!exists("out.dir")) out.dir <- getwd()
 source(file.path(proj.dir, "R/output/results_api.R"))
 
 create.spim.table <- function(data, name) {
@@ -58,7 +59,7 @@ tbl_inf <- create.spim.table(cum_infections, "infections_cum")
 tbl_inf_inc <- create.spim.table(infections, "infections_inc")
 tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
 
-dir.string <- file.path(proj.dir, paste0("date_", date.data))
+dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 
 bind_rows(tbl_inf, tbl_deaths, tbl_inf_inc) %>%
@@ -72,5 +73,5 @@ bind_rows(tbl_inf, tbl_deaths, tbl_inf_inc) %>%
 		   Geography = str_replace_all(Geography, "_", " ")
   ) %>%
   select(-c(CreationDate, date)) %>%
-  write.csv(file.path(dir.string, format(Sys.time(), "%X.csv")), row.names = FALSE)
+  write.csv(file.path(dir.string, paste0("PHE_RTM_outputs", format(Sys.time(), "%Y%m%d.csv"))), row.names = FALSE)
 
