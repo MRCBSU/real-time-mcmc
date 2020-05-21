@@ -30,10 +30,10 @@ if(!exists("regions")){
 col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
-	onset_date = "symptom_onset_date",
+	onset_date = "onsetdate",
 	nhs_region = "NHSEnglandRegionName2019_lkup",
 	phe_region = "phec_name",
-	utla_name = "utla_code"
+	utla_name = "utla_name"
 )
 
 # Given a row in a deaths file, return its region.
