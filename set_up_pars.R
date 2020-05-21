@@ -88,7 +88,7 @@ prior.list <- list(lock = c(4, 4),
                              126, 169)
                    )
 ## prior.list <- list(relax = c(4, 4))
-contact.dist <- rep(c(1, 3, 3), nr)
+contact.dist <- rep(c(1, 2, 2), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
 contact.pars <- c(prior.list$lock, prior.list$relax[1:2],
                   prior.list$lock, prior.list$relax[3:4],
