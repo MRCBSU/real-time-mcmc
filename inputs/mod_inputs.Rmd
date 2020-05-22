@@ -43,11 +43,11 @@ duration_of_runs_in_days	   `r ndays`	\#\# THE NUMBER OF DAYS OF EPIDEMIC DATA (
 
 projection_days			   `r ndays`	\#\# THE NUMBER OF DAYS OF EPIDEMIC PROJECTION REQUIRED
 
-day_of_start			   38	\#\# THE CALENDAR DAY CORRESPONDING TO DAY 1 OF THE EPIDEMIC MODEL
+day_of_start			   32	\#\# THE CALENDAR DAY CORRESPONDING TO DAY 1 OF THE EPIDEMIC MODEL
 
-start_day_of_week		   5	\#\# THE CALENDAR DAY OF start_week
+start_day_of_week		   6	\#\# THE CALENDAR DAY OF start_week
 
-start_week			   6	\#\# THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
+start_week			   5	\#\# THE CALENDAR WEEK CONTAINING DAY 1 OF THE EPIDEMIC MODEL
 
 num_regions			   `r nr`	\#\# THE NUMBER OF REGIONS OVER WHICH TO MODEL THE EPIDEMIC
 

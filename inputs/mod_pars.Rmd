@@ -240,16 +240,16 @@ gamma_sd = 0.0;
 }
 
 
-gp_reporting_distribution = { gamma_mean = `r ldelay.mean`;
+gp_reporting_distribution = { gamma_mean = 0;
 
-gamma_sd = `r ldelay.sd`;
+gamma_sd = 0;
 
 }
 
 
-hosp_reporting_distribution = { gamma_mean = `r rdelay.mean`;
+hosp_reporting_distribution = { gamma_mean = 0;
 
-gamma_sd = `r rdelay.sd`;
+gamma_sd = 0;
 
 }
 

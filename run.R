@@ -20,8 +20,6 @@ source(file.path(proj.dir, "R/data/utils.R"))
 
 system(paste("mkdir -p", out.dir))
 
-## do we need to do formatting?
-format.inputs <- TRUE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -33,17 +31,8 @@ run.code <- TRUE
 run.outputs <- TRUE
 
 ## Do the required data files exist?? If not, create them
-data.files <- paste0(data.dirs, "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
-
-## If these files don't already exits, make them
-if(format.inputs && !all(file.exists(data.files))){
-  dir.data <- "data"
-  if(data.desc == "reports") {
-	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
-  } else {
-	  source(file.path(proj.dir, "R/data/format_deaths.R"))
-  }
-}
+data.files <- file.path(proj.dir, "data", "RTM_format", "Lombardy",
+						paste0(date.data, ".txt"))
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
@@ -51,7 +40,6 @@ source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
 if(compile.code) {
     system("make rtm_optim")
-	system("chmod a-w coda* NNI* posterior* adaptive*")
 }
 
 ## Run the code
@@ -59,6 +47,7 @@ startwd <- getwd()
 setwd(out.dir)
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+	system("chmod a-w coda* NNI* posterior* adaptive*")
 } else save.image("tmp.RData")
 
 ## Post processing the results.
