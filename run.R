@@ -30,7 +30,7 @@ compile.code <- FALSE
 run.code <- FALSE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- FALSE
+run.outputs <- TRUE
 
 ## Which code is being considered
 gp.flag <- 0
