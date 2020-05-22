@@ -67,7 +67,7 @@ var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susc
 ### PRIOR INFORMATION
 var.priors <- list(
 	distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL, rep(list(NULL, dgamma), r), NULL, NULL, rep(list(dgamma), r), rep(list(dnorm), r), NULL, NULL, rep(list(dbeta), nA - 1), rep(list(dbeta), nA - 1), NULL, NULL, NULL, NULL, NULL, NULL), ## informative prior specification
-	parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, r), NA, NA, pars.ihr, pars.ifr, NA, NA, NA, NA, NA, NA)
+	parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, contact.pars, NA, NA, pars.egr, rep(pars.nu, r), NA, NA, NA, pars.ifr, NA, NA, NA, NA, NA, NA)
 )
 ## save the prior specification for use elsewhere.
 save(var.names, var.priors, file = file.path(out.dir, "prior.spec.RData"))

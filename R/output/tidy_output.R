@@ -263,12 +263,13 @@ if (gp.flag == 0) {
 print('Loading true data')
 load.data <- function(file.names) {
   col.names <- c('date', age.labs)
-  names(data.files) <- regions
+  names(file.names) <- regions
   to.combine <- dimnames(infections)$age[1:4]
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
   return(do.call(bind_rows, dat.raw) %>%
-    mutate(`<25` = rowSums(.[to.combine])) %>%
+    mutate(`<25` = rowSums(.[to.combine]),
+           date = lubridate::dmy(date)) %>%
     select(-all_of(to.combine)) %>%
     pivot_longer(-c(date, region), names_to = "age")
   )

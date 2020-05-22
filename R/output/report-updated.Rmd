@@ -41,8 +41,6 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data) {
 
-  Eng_projection <- combine.to.England(projections) %>% add.quantiles(NULL, QUANTILES)
-  Eng_data <- combine.data.to.England(data)
   projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
     rename(by = all_of(by))
   plot.names <- unique(projections$by)
@@ -65,8 +63,8 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
-        x0 = ymd(20200323), 
-        x1 = ymd(20200323), 
+        x0 = ymd(20200307), 
+        x1 = ymd(20200307), 
         line = list(color = "blue"),
         hoverinfo = "Lockdown"
     )
@@ -106,7 +104,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
           hovertemplate = "%{x}: %{y:.3s}<extra>Actual report</extra>"
         )
   }
-  plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
+  plots <- NULL
   for(subplot in plot.names) {
     if (is.null(data)) {
       plot.data <- NULL
@@ -162,12 +160,7 @@ We have analysed the data stratified into eight age groups: <1, 1-4, 5-14, 15-24
 Value of $R_e$, the average number of secondary infections due to a typical infection today.
 
 ```{r Rt-table}
-overall_Rt %>%
-  add.quantiles(NULL, QUANTILES) %>%
-  mutate(region = "England") %>%
-  bind_rows(
-    get.aggregated.quantiles(Rt, "region", QUANTILES)
-  ) %>%
+get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
   select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
