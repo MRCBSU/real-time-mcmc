@@ -5,8 +5,6 @@ require(lubridate)
 ## INPUT SETTINGS
 #######################################################################
 
-start.date <- lubridate::as_date("20200217")
-# The 'gp' stream in the code is linked to confirmed cases data
 gp.flag <- 0					# 0 = off, 1 = on
 if(gp.flag){
     start.gp <- 15			# What day to start running the likelihood on

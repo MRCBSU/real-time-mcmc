@@ -24,8 +24,9 @@ if (args[2] == "All")  {
 google.data.date <- format(ymd("20200509"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
+start.date <- lubridate::as_date("20200217")
 nforecast.weeks <- 3
-ndays <- lubridate::as_date(date.data) - lubridate::as_date("20200216") + (7 * nforecast.weeks)
+ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
