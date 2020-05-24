@@ -27,7 +27,7 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- FALSE
+run.code <- TRUE
 
 ## Do we want to automatically run post-processing R code?
 run.outputs <- TRUE
