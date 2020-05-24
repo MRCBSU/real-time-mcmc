@@ -5,7 +5,6 @@ require(lubridate)
 ## INPUT SETTINGS
 #######################################################################
 
-gp.flag <- 0					# 0 = off, 1 = on
 if(gp.flag){
     start.gp <- 15			# What day to start running the likelihood on
     end.gp <- NULL			# Total days of data, or NULL to infer from length of file
@@ -13,12 +12,14 @@ if(gp.flag){
     start.gp <- 1
     end.gp <- 1
 }
-## The 'hosp' stream in the code is linked to death data
-hosp.flag <- 1					# 0 = off, 1 = on
+
 if(hosp.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+} else {
+    start.hosp <- 1
+    end.hosp <- 1
 }
 
 viro.data <- NULL

@@ -54,6 +54,12 @@ if (data.desc == "all") {
 	stop("Unknown data description")
 }
 
+# The 'gp' stream in the code is linked to hospitalised cases
+gp.flag <- 1					# 0 = off, 1 = on
+## The 'hosp' stream in the code is linked to death data
+hosp.flag <- 1					# 0 = off, 1 = on
+
+
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
 scenario.name <- "variable_relax_ifr_prior_delayAnne"
@@ -64,6 +70,8 @@ out.dir <- file.path(proj.dir,
 							"age_and_region_",
 					 		"matrices", google.data.date,
 							"_", data.desc))	# Value actually used
+if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
+if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        "data/RTM_format",
 					   data.desc)
