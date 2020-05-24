@@ -15,7 +15,7 @@ if(gp.flag){
 
 ## The 'hosp' stream in the code is linked to death data
 if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
-if(!exists(reporting.delay) reporting.delay <- ifelse(data.desc == "deaths", reporting.delay, 0)
+reporting.delay <- ifelse(data.desc == "deaths", reporting.delay, 0)
 if(hosp.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
