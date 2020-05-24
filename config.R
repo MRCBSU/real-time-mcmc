@@ -58,7 +58,7 @@ if (data.desc == "all") {
 }
 
 # The 'gp' stream in the code is linked to hospitalised cases
-gp.flag <- 1					# 0 = off, 1 = on
+gp.flag <- 0					# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 
