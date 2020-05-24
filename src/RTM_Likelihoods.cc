@@ -555,7 +555,7 @@ double fn_log_lik_negbindata(const gsl_matrix* mat_counts,
 	    x = (int) round(gsl_matrix_get(mat_counts, inti, intj));
 	    if((mu == 0) && (x == 0)){
 	      lfx += 0;
-	    } else if((mu == 0) && (x == 0)){
+	    } else if((mu == 0) && (x != 0)){
 	      lfx += GSL_NEGINF;
 	    } else {
 	      eta = gsl_matrix_get(mat_dispersion_params, inti, intj);

@@ -1,0 +1,23 @@
+### Deaths incidence {.tabset}
+
+#### By region
+```{r}
+make.plots(noisy_deaths, by = "region", data = dth.dat)
+```
+
+#### By age
+```{r}
+make.plots(noisy_deaths, by = "age", data = dth.dat)
+```
+
+### Cumulative deaths {.tabset}
+
+#### By region
+```{r}
+make.plots(cum_deaths, by = "region")
+```
+
+#### By age
+```{r}
+make.plots(cum_deaths, by = "age")
+```

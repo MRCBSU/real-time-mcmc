@@ -26,8 +26,9 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 google.data.date <- format(ymd("20200515"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
+start.date <- lubridate::as_date("20200217")
 nforecast.weeks <- 3
-ndays <- lubridate::as_date(date.data) - lubridate::as_date("20200216") + (7 * nforecast.weeks)
+ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -56,12 +57,21 @@ if (data.desc == "all") {
 	stop("Unknown data description")
 }
 
+# The 'gp' stream in the code is linked to hospitalised cases
+gp.flag <- 1					# 0 = off, 1 = on
+## The 'hosp' stream in the code is linked to death data
+hosp.flag <- 1					# 0 = off, 1 = on
+
+
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date)) ## Value actually used
+                     paste0(scenario.name, "_matrices_", google.data.date,
+							"_", data.desc))	# Value actually used
+if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
+if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
                          "data/RTM_format/serology")

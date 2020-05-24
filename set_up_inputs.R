@@ -5,9 +5,6 @@ require(lubridate)
 ## INPUT SETTINGS
 #######################################################################
 
-start.date <- lubridate::as_date("20200217")
-# The 'gp' stream in the code is linked to confirmed cases data
-if(!exists("gp.flag")) gp.flag <- 0	# 0 = off, 1 = on
 if(gp.flag){
     start.gp <- 15			# What day to start running the likelihood on
     end.gp <- NULL			# Total days of data, or NULL to infer from length of file
@@ -15,6 +12,7 @@ if(gp.flag){
     start.gp <- 1
     end.gp <- 1
 }
+
 ## The 'hosp' stream in the code is linked to death data
 if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
 if(!exists(reporting.delay) reporting.delay <- ifelse(data.desc == "deaths", reporting.delay, 0)
@@ -22,6 +20,9 @@ if(hosp.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+} else {
+    start.hosp <- 1
+    end.hosp <- 1
 }
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
