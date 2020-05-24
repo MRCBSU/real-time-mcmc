@@ -41,22 +41,20 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
+matrix.dir <- file.path(
+	proj.dir, "contact_mats",
+	paste0("google_mobility_relative_matrices_", google.data.date)
+)
 cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85) ## Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS(file.path(proj.dir,
-                         "contact_mats",
-                         "base_matrices",
-                         paste0("base_matrices_", google.data.date, ".rds")))
+lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
 cm.files <- "england_8ag_contact.txt"
 for(i in 1:length(cm.breaks))
     cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
 cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
-cm.lockdown <- file.path(proj.dir,
-                         "contact_mats",
-                         paste0("google_mobility_relative_matrices_", google.data.date),
-                         cm.lockdown.fl)
+cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
 idx <- 1
 if(!all(file.exists(cm.bases))){
     adf <- as.data.frame(lst$England$all$m)
