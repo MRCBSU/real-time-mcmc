@@ -49,5 +49,5 @@ ddelay.mean <- 16.0
 ddelay.sd <- 12.6
 
 contact.dist <- rep(c(1, 2), nr)
-contact.pars <- rep(c(4, 4), nr)
+contact.pars <- rep(c(2, 2), nr)
 contact.reduction <- rep(1, nr * 2)

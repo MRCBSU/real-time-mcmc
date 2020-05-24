@@ -36,6 +36,6 @@ hosp.flag <- 1					# 0 = off, 1 = on
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-					 "Lombardy"
+					 "Lombardy_prior_2_2"
 					 )
 
