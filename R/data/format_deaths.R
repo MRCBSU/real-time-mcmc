@@ -189,6 +189,7 @@ for(reg in regions) {
                               names_from = Age.Grp,
                               values_from = n)
     tmpFile <- data.files[reg]
+	dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
     
     print(paste(
         "Writing to",

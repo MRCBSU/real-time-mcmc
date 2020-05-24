@@ -36,10 +36,28 @@ nA <- length(age.labs)
 
 if(!exists("regions")) regions <- "England"
 
-## ## Choose the name of the subdirectory in model_runs to use
-## subdir.name <- paste0(date.data, "regions_alone")
+region.code <- "Eng"
+
+# Possible values:
+# deaths: confirmed deaths only, by date of death
+# reports: confirmed deaths only, by date of reporting
+# all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
 scenario.name <- "serology_varSens_slowantibodies"
+
+flg.confirmed <- (data.desc != "all")
+if (data.desc == "all") {
+	reporting.delay <- 18
+} else if (data.desc == "reports") {
+	reporting.delay <- 0
+} else if (data.desc == "deaths") {
+	reporting.delay <- 5
+} else {
+	stop("Unknown data description")
+}
+
+## ## Choose the name of the subdirectory in model_runs to use
+## subdir.name <- paste0(date.data, "regions_alone")
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
