@@ -39,12 +39,17 @@ overall_Rt <- weighted_Rt_sum / inf_by_day
 ```{r plot-function}
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s", combine.to.England = sum.all,
-                       combine.data.to.England = sum.all.data) {
+                       combine.data.to.England = sum.all.data,
+                       project.forwards = !is.null(data)) {
 
   Eng_projection <- combine.to.England(projections) %>% add.quantiles(NULL, QUANTILES)
   Eng_data <- combine.data.to.England(data)
   projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
     rename(by = all_of(by))
+  if (!project.forwards) {
+    Eng_projection <- filter(Eng_projection, date <= ymd(date.data))
+    projections <- filter(projections, date <= ymd(date.data))
+  }
   plot.names <- unique(projections$by)
   num.rows <- ceiling(length(plot.names)/2)
   plot.height <- num.rows * 420 + 150
@@ -67,6 +72,16 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
         yref = "paper",
         x0 = ymd(20200323), 
         x1 = ymd(20200323), 
+        line = list(color = "blue"),
+        hoverinfo = "Lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20200511), 
+        x1 = ymd(20200511), 
         line = list(color = "blue"),
         hoverinfo = "Lockdown"
     )
@@ -456,7 +471,7 @@ deaths.growth.rates %>%
 
 ## Infections and deaths {.tabset}
 
-Blue line is date of lockdown (23 Mar), the red line is the date of results (`r format(ymd(date.data), "%d %b")`).
+The blue lines is show when interventions have been introduced (lockdown on 23 Mar and the relaxation of measures on 11 May), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
 ### Infection incidence {.tabset}
 
