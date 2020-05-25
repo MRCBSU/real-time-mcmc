@@ -41,6 +41,12 @@ viro.flag <- 0
 ## If these files don't already exits, make them
 dir.data <- "data"
 data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+if(sero.flag){
+  serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
+  seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
+} else {
+  serosam.files <- seropos.files <- NULL
+}
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
@@ -48,8 +54,6 @@ if(format.inputs){
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
   if(sero.flag){
-      serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
-      seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
 	  source(file.path(proj.dir, "R/data/format_sero.R"))
   }
 }
