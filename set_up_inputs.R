@@ -27,9 +27,15 @@ if(hosp.flag){
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
-    start.sero <- min(rtm.plot$date) - start.date + 1
-    end.sero <- max(rtm.plot$date) - start.date + 1
-    }
+	if(exists("rtm.plot")) {
+		start.sero <- min(rtm.plot$date) - start.date + 1
+		end.sero <- max(rtm.plot$date) - start.date + 1
+	} else {
+		warning('Running sero likelihood for whole period')
+		start.sero <- 1
+		end.sero <- ndays 
+	}
+}
 ## The 'viro' stream in the code
 viro.data <- NULL
 viro.denom <- NULL
@@ -135,8 +141,10 @@ if (gp.flag == 1) {
 hosp.data <- "NULL"
 if (hosp.flag == 1) {
     hosp.data <- data.files
-    if(!all(file.exists(hosp.data)))
-        stop("One of the specified hospitalisation data files does not exist")
+    if(!all(file.exists(hosp.data))) {
+		print(hosp.data[which(!file.exists(hosp.data))])
+        stop("Above hospitalisation data files does not exist")
+	}
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }
 sero.data <- list(sample = "NULL",
