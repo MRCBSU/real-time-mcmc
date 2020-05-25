@@ -30,8 +30,8 @@ if(!exists("regions")){
 col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
-	onset_date = "onsetdate",
-	nhs_region = "NHSEnglandRegionName2019_lkup",
+	onset_date = "symptom_onset_date",
+	nhs_region = "nhser_name",
 	phe_region = "phec_name",
 	utla_name = "utla_name"
 )
