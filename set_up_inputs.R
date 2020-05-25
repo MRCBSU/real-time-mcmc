@@ -69,7 +69,7 @@ if(!all(file.exists(cm.bases))){
 ## Modifiers (which element of contact_parameters to use)
 cm.mults <- file.path(proj.dir, "contact_mats", 
                       paste0("ag", nA, "_mult", 0:2, ".txt"))
-mult.order <- c(0, rep(1, sum(cm.breaks<85)), rep(2, sum(cm.breaks>=85)))
+mult.order <- c(0, rep(1, sum(cm.breaks<85)), rep(1, sum(cm.breaks>=85)))
 if(!all(file.exists(cm.mults))){
     mult.mat <- lapply(unique(mult.order), function(x) matrix(x, nA, nA))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
@@ -79,12 +79,12 @@ if(!all(file.exists(cm.mults))){
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 450000
+num.iterations <- 550000
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
-burnin <- 40000
+burnin <- 50000
 adaptive.phase <- burnin / 2
-thin.outputs <- 80 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 40  # After how many iterations to output each set of parameters
+thin.outputs <- 98 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 49  # After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 

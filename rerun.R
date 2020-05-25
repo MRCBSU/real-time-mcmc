@@ -1,6 +1,8 @@
 ## Run from within output directory
 load("tmp.RData")
 
+out.dir <- getwd()
+
 run.outputs <- !run.outputs
 
 require(rmarkdown)

@@ -71,8 +71,6 @@ plain_document <- output_format(
     pandoc = pandoc_options(to = "plain", ext = ".txt"),
 )
 
-cat("Got here\n")
-
 pars.template.loc <- file.path(proj.dir, "inputs", "mod_pars.Rmd")
 inputs.template.loc <- file.path(proj.dir, "inputs", "mod_inputs.Rmd")
 render(pars.template.loc, output_dir = out.dir, output_format = plain_document)

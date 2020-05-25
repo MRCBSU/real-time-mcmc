@@ -96,9 +96,11 @@ if (!exists("conv")) {
 if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
 if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
-
-parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+int_iter <- 0:(num.iterations - 1)
+## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
@@ -120,10 +122,11 @@ for(idir in 1:length(cm.bases)){
 m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
 names(M) <- names(M.mult) <- NULL
 pop.total <- all.pop[1, ]
+num.m.pars <- ncol(m) / nr
 for(reg in regions){
   ireg <- which(regions %in% reg)
   for(idir in 1:length(cm.bases)){
-    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*2+M.mult[[idir]]]),
+    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*num.m.pars+M.mult[[idir]]]),
                             dim = c(nA, nA, nrow(m)))
   }
   M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])

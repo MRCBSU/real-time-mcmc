@@ -582,6 +582,7 @@ void fn_log_likelihood(likelihood& llhood,
 		       bool flag_update_GP_likelihood,
 		       bool flag_update_Hosp_likelihood,
 		       bool flag_update_Viro_likelihood,
+		       bool flag_update_Sero_likelihood,
 		       global_model_instance_parameters gmip,
 		       globalModelParams gmp_delays)
 {
@@ -609,14 +610,15 @@ void fn_log_likelihood(likelihood& llhood,
       // Does the transmission model need to be re-evaluated?
       // (Not necessary when updating parameters of the reporting model)
       if(flag_update_transmission_model)
-	{
 	  fn_transmission_model(meta_region[int_region].det_model_params,
 				gmip,
 				meta_region[int_region].population,
 				meta_region[int_region].region_modstats);
-
-	  // Having evaluated the transmission model alone we can evaluate the seropositivity likelihood
-	  if(gmip.l_Sero_data_flag){
+      
+      // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
+      if(gmip.l_Sero_data_flag &&
+	 (flag_update_transmission_model || flag_update_Sero_likelihood)
+	 ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
 	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
 	    // This proportion is age, but not time dependent.
 	    gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_seropositivity->size1, meta_region[int_region].region_modstats.d_seropositivity->size2);
@@ -664,8 +666,7 @@ void fn_log_likelihood(likelihood& llhood,
 	    lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Sero_lfx, int_region));
 	    gsl_vector_set(llhood.Sero_lfx, int_region, temp_log_likelihood);
 	    gsl_matrix_free(test_positivity);
-	  }
-	}
+      }
 
       double lfx_sub_increment = 0.0;
 

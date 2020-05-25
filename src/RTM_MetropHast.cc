@@ -406,6 +406,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					  theta_i->flag_GP_likelihood,
 					  theta_i->flag_Hosp_likelihood,
 					  theta_i->flag_Viro_likelihood,
+					  theta_i->flag_Sero_likelihood,
 					  gmip,
 					  theta);
 

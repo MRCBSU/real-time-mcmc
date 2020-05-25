@@ -116,12 +116,12 @@ sero.cols <- do.call(cols, sero.col.args)
 
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
-
+strPos <- c("+", "Positive", "positive")
 sero.dat <- read_csv(input.loc,
                      col_types = sero.cols) %>%
     rename(!!!col.names) %>%
     mutate(SDate = fuzzy_date_parse(sample_date),
-           Positive = endsWith(Eoutcome, "+"))
+           Positive = endsWith(Eoutcome, "+") | endsWith(Eoutcome, "Positive"))
 
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
@@ -243,3 +243,12 @@ ggsave(plot.filename,
        width = 9.15,
        height = 6)
 saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero, ".html")))
+
+pp.focus <- ggplotly(gp+ylim(c(0, 0.25)), tooltip = "text")
+
+plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero, ".jpg"))
+ggsave(plot.filename,
+       gp,
+       width = 9.15,
+       height = 6)
+saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero, ".html")))

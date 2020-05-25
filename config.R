@@ -23,7 +23,7 @@ if (args[2] == "All")  {
 reporting.delay <- 5
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200515"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200522"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 nforecast.weeks <- 3
@@ -39,7 +39,7 @@ if(!exists("regions")) regions <- "England"
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "serology_varSens_slowantibodies"
+scenario.name <- "sero_varSens_lp3_1m"
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
