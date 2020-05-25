@@ -121,7 +121,7 @@ sero.dat <- read_csv(input.loc,
                      col_types = sero.cols) %>%
     rename(!!!col.names) %>%
     mutate(SDate = fuzzy_date_parse(sample_date),
-           Positive = endsWith(Eoutcome, "+"))
+           Positive = endsWith(Eoutcome, "+") | Eoutcome == "Positive")
 
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
