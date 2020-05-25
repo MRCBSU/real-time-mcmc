@@ -31,6 +31,14 @@ pop <- pop %>%
            "All ages",
            everything())
 
+# Add the population of UK constituent nations
+pop <- read_csv(build.data.filepath(subdir = "", "popn2018_all.csv")) %>%
+	rename(Geography=Geography1) %>%
+	filter(Geography=="Country") %>%
+	bind_rows(pop) %>%
+	assertr::assert(assertr::is_uniq, Name) %>%
+	assertr::assert(function(x) !is.na(x), everything())
+
 ## Put back into long format with age aggregation.
 ## Long format...
 regions <- pop %>%
@@ -52,7 +60,9 @@ nhs.regions <- list("London" = "London",
 					"North_East_and_Yorkshire" = "North East and Yorkshire",
 					"North_West" = "North West",
 					"South_East" = "South East",
-					"South_West" = "South West"
+					"South_West" = "South West",
+					"SCOTLAND" = "SCOTLAND"
                     )
+
 
 save(pop, nhs.regions, file = build.data.filepath(subdir = "", "pop_nhs.RData"))

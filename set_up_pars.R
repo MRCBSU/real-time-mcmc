@@ -6,7 +6,7 @@ names(int.effect) <- c("total", "variable", "lshtm", "nothing")
 
 ## shape.dL <- 35.1
 ## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
-value.dl <-1
+value.dl <- 2
 ## shape.dL <- 13.3
 ## rate.dL <- 4.16
 
@@ -41,6 +41,9 @@ if(nA == 1){
     pars.ifr[13] <- 9.50
     pars.ifr[14] <- 112
 }
+
+## Infection hospitalisation rate
+pars.ihr <- c(1, 1)
 
 ## Initial seeding
 value.nu <- c(-19, -17.7)
@@ -88,7 +91,7 @@ prior.list <- list(lock = c(4, 4),
                              126, 169)
                    )
 ## prior.list <- list(relax = c(4, 4))
-contact.dist <- rep(c(1, 3, 3), nr)
+contact.dist <- rep(c(1, 2, 2), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
 contact.pars <- c(prior.list$lock, prior.list$relax[1:2],
                   prior.list$lock, prior.list$relax[3:4],

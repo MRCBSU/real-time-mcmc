@@ -5,9 +5,6 @@ require(lubridate)
 ## INPUT SETTINGS
 #######################################################################
 
-start.date <- lubridate::as_date("20200217")
-# The 'gp' stream in the code is linked to confirmed cases data
-if(!exists("gp.flag")) gp.flag <- 0	# 0 = off, 1 = on
 if(gp.flag){
     start.gp <- 15			# What day to start running the likelihood on
     end.gp <- NULL			# Total days of data, or NULL to infer from length of file
@@ -15,20 +12,30 @@ if(gp.flag){
     start.gp <- 1
     end.gp <- 1
 }
+
 ## The 'hosp' stream in the code is linked to death data
 if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
 reporting.delay <- ifelse(data.desc == "deaths", reporting.delay, 0)
 if(hosp.flag){
-    start.hosp <- ifelse(data.desc == "deaths", 1, 35) ## 35 # Day number on which to start likelihood calculation
+    start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+} else {
+    start.hosp <- 1
+    end.hosp <- 1
 }
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
-    start.sero <- min(rtm.plot$date) - start.date + 1
-    end.sero <- max(rtm.plot$date) - start.date + 1
-    }
+	if(exists("rtm.plot")) {
+		start.sero <- min(rtm.plot$date) - start.date + 1
+		end.sero <- max(rtm.plot$date) - start.date + 1
+	} else {
+		warning('Running sero likelihood for whole period')
+		start.sero <- 1
+		end.sero <- ndays 
+	}
+}
 ## The 'viro' stream in the code
 viro.data <- NULL
 viro.denom <- NULL
@@ -40,22 +47,20 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
+matrix.dir <- file.path(
+	proj.dir, "contact_mats",
+	paste0("google_mobility_relative_matrices_", google.data.date)
+)
 cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85) ## Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS(file.path(proj.dir,
-                         "contact_mats",
-                         "base_matrices",
-                         paste0("base_matrices_", google.data.date, ".rds")))
+lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
 cm.files <- "england_8ag_contact.txt"
 for(i in 1:length(cm.breaks))
     cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
 cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
-cm.lockdown <- file.path(proj.dir,
-                         "contact_mats",
-                         paste0("google_mobility_relative_matrices_", google.data.date),
-                         cm.lockdown.fl)
+cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
 idx <- 1
 if(!all(file.exists(cm.bases))){
     adf <- as.data.frame(lst$England$all$m)
@@ -135,10 +140,11 @@ if (gp.flag == 1) {
 }
 hosp.data <- "NULL"
 if (hosp.flag == 1) {
-    ## hosp.data <- build.data.filepath("RTM_format/deaths", data.desc, date.data, "_", regions, "_", nA, "ag.txt")
     hosp.data <- data.files
-    if(!all(file.exists(hosp.data)))
-        stop("One of the specified hospitalisation data files does not exist")
+    if(!all(file.exists(hosp.data))) {
+		print(hosp.data[which(!file.exists(hosp.data))])
+        stop("Above hospitalisation data files does not exist")
+	}
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }
 sero.data <- list(sample = "NULL",

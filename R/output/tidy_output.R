@@ -83,6 +83,7 @@ apply.convolution <- function(start, func, over = "date") {
 ###############################################################
 
 ## Load files
+print('Loading results')
 if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
@@ -103,6 +104,7 @@ parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
 ################################################################
+print('Calculating Rt')
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
   M.star <- sweep(matM, 2, vecS, `*`)
@@ -112,46 +114,40 @@ Rt <- list()
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
 m <- params$contact_parameters[iterations.for.Rt, ]
-R0 <- posterior.R0[iterations.for.Rt, , drop = F]
-for(idir in 1:length(cm.bases)){
-  M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE))
-  M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE)) + 1
-}
-m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
-names(M) <- names(M.mult) <- NULL
-pop.total <- all.pop[1, ]
-for(reg in regions){
-  ireg <- which(regions %in% reg)
+if(ncol(m) %% r != 0) {
+  warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
+} else {
+  m.per.region <- ncol(m) / r
+  R0 <- posterior.R0[iterations.for.Rt, , drop = F]
   for(idir in 1:length(cm.bases)){
-    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*2+M.mult[[idir]]]),
-                            dim = c(nA, nA, nrow(m)))
+    M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
+    M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
   }
-  M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
-  R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
-  S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
-  S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
-  R.prime <- sapply(1:ndays,
-                    function(x) sapply(1:length(iterations.for.Rt), function(i){
-                      M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
-                      Rt.func(S[x, , i] / pop.total[ireg], M.temp)
-                    }
-                    )
-  ) ## IxT array
-  Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
+  m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
+  names(M) <- names(M.mult) <- NULL
+  pop.total <- all.pop[1, ]
+  for(reg in regions){
+    ireg <- which(regions %in% reg)
+    for(idir in 1:length(cm.bases)){
+      M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]),
+                              dim = c(nA, nA, nrow(m)))
+    }
+    M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
+    R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+    S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
+    S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+    R.prime <- sapply(1:ndays,
+                      function(x) sapply(1:length(iterations.for.Rt), function(i){
+                        M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                        Rt.func(S[x, , i] / pop.total[ireg], M.temp)
+                      }
+                      )
+    ) ## IxT array
+    Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
+  }
 }
 ################################################################
-
-## Constants and settings
-
-delay.to.death <- list(
-  incub.mean = 4,
-  incub.sd = 1.41,
-  disease.mean = ddelay.mean,
-  disease.sd = ddelay.sd,
-  report.mean = rdelay.mean,
-  report.sd = rdelay.sd
-)
-F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
+print('Formatting time series')
 
 ## Extract length of dimensions
 num.regions <- length(regions)
@@ -200,44 +196,98 @@ infections <- array(
 )
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 
-## Calculate deaths
-if (num.ages > 1) {
-  deaths <- merge.youngest.age.groups(infections)
-} else {
-  deaths <- infections
-}
-deaths <- deaths %>%
-  apply.convolution(F.death) %>%
-  apply.param.to.output(params$prop_case_to_hosp, `*`, "age")
-noise.replicates <- 5
-neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
-  stopifnot(is.null(dim(drop(overdispersion))))
-  size <- mu / params$hosp_negbin_overdispersion
-  return(rnbinom(
-    n = length(mu) * replicates,
-    mu = rep(mu, each = replicates),
-    size = rep(size, each = replicates)
+derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 5) {
+  ## Calculate deaths
+  if (num.ages > 1) {
+    raw <- merge.youngest.age.groups(infections)
+  } else {
+    raw <- infections
+  }
+  mean <- raw %>%
+    apply.convolution(convolution) %>%
+    apply.param.to.output(scaling.param, `*`, "age")
+  neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
+    stopifnot(is.null(dim(drop(overdispersion))))
+    size <- mu / overdispersion
+    return(rnbinom(
+      n = length(mu) * replicates,
+      mu = rep(mu, each = replicates),
+      size = rep(size, each = replicates)
+    ))
+  }
+  noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
+  noise.dimnames <- dimnames(mean)
+  noise.dimnames$iteration <- noise.iterations
+  noisy.out <- mean %>%
+    apply.param.to.output(overdispersion.param, neg.binom.noise,
+                          target.dimnames = noise.dimnames) %>%
+    merge.youngest.age.groups(3, "<25")
+  return(list(
+    mean = mean,
+    noisy.out = noisy.out,
+    cumulative = noisy.out %>% apply.over.named.array("date", cumsum)
   ))
 }
-noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
-noise.dimnames <- dimnames(deaths)
-noise.dimnames$iteration <- noise.iterations
-noisy_deaths <- deaths %>%
-  apply.param.to.output(params$hosp_negbin_overdispersion, neg.binom.noise,
-                        target.dimnames = noise.dimnames) %>%
-  merge.youngest.age.groups(3, "<25")
-cum_deaths <- noisy_deaths %>% apply.over.named.array("date", cumsum)
+if (hosp.flag == 0) {
+  deaths <- noisy_deaths <- cum_deaths <- NULL
+} else {
+	delay.to.death <- list(
+	  incub.mean = 4,
+	  incub.sd = 1.41,
+	  disease.mean = ddelay.mean,
+	  disease.sd = ddelay.sd,
+	  report.mean = 0,
+	  report.sd = 0
+	)
+	F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
+  death.data <- derived.quantity(params$prop_case_to_hosp, params$hosp_negbin_overdispersion, F.death)
+  deaths <- death.data$mean
+  noisy_deaths <- death.data$noisy.out
+  cum_deaths <- death.data$cumulative
+}
+if (gp.flag == 0) {
+  hosp <- noisy_hosp <- cum_hosp <- NULL
+} else {
+	delay.to.hosp <- list(
+	  incub.mean = 4,
+	  incub.sd = 1.41,
+	  disease.mean = hdelay.mean,
+	  disease.sd = hdelay.sd,
+	  report.mean = 0,
+	  report.sd = 0
+	)
+	F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
+  hosp.data <- derived.quantity(params$prop_case_to_GP_consultation, params$gp_negbin_overdispersion, F.hosp)
+  hosp <- hosp.data$mean
+  noisy_hosp <- hosp.data$noisy.out
+  cum_hosp <- hosp.data$cumulative
+}
+
 
 ## Parse data
-dth.col.names <- c('date', age.labs)
-names(data.files) <- regions
-to.combine <- dimnames(infections)$age[1:4]
-dth.dat.raw <- suppressMessages(sapply(data.files, read_tsv, col_names = dth.col.names, simplify = FALSE))
-dth.dat.raw[[".id"]] <- "region"
-dth.dat <- do.call(bind_rows, dth.dat.raw) %>%
-  mutate(`<25` = rowSums(.[to.combine])) %>%
-  select(-to.combine) %>%
-  pivot_longer(-c(date, region), names_to = "age")
+print('Loading true data')
+load.data <- function(file.names) {
+  col.names <- c('date', age.labs)
+  names(data.files) <- regions
+  to.combine <- dimnames(infections)$age[1:4]
+  dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
+  dat.raw[[".id"]] <- "region"
+  return(do.call(bind_rows, dat.raw) %>%
+    mutate(`<25` = rowSums(.[to.combine])) %>%
+    select(-all_of(to.combine)) %>%
+    pivot_longer(-c(date, region), names_to = "age")
+  )
+}
+if (hosp.flag == 0) {
+  dth.dat <- NULL
+} else {
+  dth.dat <- load.data(data.files)
+}
+if (gp.flag == 0) {
+  hosp.dat <- NULL
+} else {
+  hosp.dat <- load.data(gp.data)
+}
 
 ## Get population
 colnames(regions.total.population) <- age.labs
@@ -245,6 +295,7 @@ rownames(regions.total.population) <- regions
 population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
+print('Saving results')
 save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
-     population,
+     hosp, noisy_hosp, cum_hosp, population, hosp.dat,
      file = file.path(out.dir, "output_matrices.RData"))

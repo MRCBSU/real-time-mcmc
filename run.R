@@ -27,10 +27,10 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- FALSE
+run.code <- TRUE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- FALSE
+run.outputs <- TRUE
 
 ## Which code is being considered
 gp.flag <- 0
@@ -39,23 +39,27 @@ sero.flag <- 1
 viro.flag <- 0
 
 ## If these files don't already exits, make them
+dir.data <- "data"
+data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+if(sero.flag){
+  serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
+  seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
+} else {
+  serosam.files <- seropos.files <- NULL
+}
 if(format.inputs){
-  dir.data <- "data"
-  if(data.desc == "deaths"){
-      data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
-      source("R/data/format_deaths.R")
-      }
-  if(data.desc == "reports")
-      source("R/data/format_death_reports.R")
+  if(data.desc == "reports") {
+	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
+  } else {
+	  source(file.path(proj.dir, "R/data/format_deaths.R"))
+  }
   if(sero.flag){
-      serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
-      seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
-      source("R/data/format_sero.R")
+	  source(file.path(proj.dir, "R/data/format_sero.R"))
   }
 }
 
 ## Set up the model specification.
-source("set_up.R")
+source(file.path(proj.dir, "set_up.R"))
 
 ## Compile the code
 if(compile.code) {

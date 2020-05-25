@@ -1,0 +1,24 @@
+
+### Hospitalisation incidence {.tabset}
+
+#### By region
+```{r}
+make.plots(noisy_hosp, by = "region", data = hosp.dat)
+```
+
+#### By age
+```{r}
+make.plots(noisy_hosp, by = "age", data = hosp.dat)
+```
+
+### Cumulative hospitalisations {.tabset}
+
+#### By region
+```{r}
+make.plots(cum_hosp, by = "region")
+```
+
+#### By age
+```{r}
+make.plots(cum_hosp, by = "age")
+```
