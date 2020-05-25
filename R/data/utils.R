@@ -43,6 +43,15 @@ nhs.region <- function(x) {
 		x$nhs_region,
 		phe.to.nhs.region(x)
 	) %>%
+	recode(
+	   E40000003 = "London",
+	   E40000005 = "South East",
+	   E40000006 = "South West",
+	   E40000007 = "East of England",
+	   E40000008 = "Midlands",
+	   E40000009 = "North East and Yorkshire",
+	   E40000010 = "North West"
+	) %>%
 	str_replace_all(" ", "_")
 }
 

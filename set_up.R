@@ -33,10 +33,11 @@ if(flg.createfile){
         system(paste("mkdir -p", deparse(tmp.dir[i])))
 }
 ## Change the hard-wiring of the number of age groups
-header <- readLines("src/RTM_Header.h")
+header.file <- file.path(proj.dir, "src/RTM_Header.h")
+header <- readLines(header.file)
 intHea <- grep("NUM_AGE_GROUPS", header)
 header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nA, ")")
-write(header, file = "src/RTM_Header.h")
+write(header, file = header.file)
 
 ## Get the population sizes
 require(readr)

@@ -25,7 +25,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
 ## What is the date of publication of these data? If not specified, try to extract from filename
 if(!exists("date.sero")){
     fl.name <- basename(input.loc)
-    date.sero <- lubridate::as_date(strapplyc(fl.name, "[0-9/]{8,}", simplify = TRUE))
+    date.sero <- lubridate::ymd(strapplyc(fl.name, "[0-9/]{8,}", simplify = TRUE))
 }
 
 ## Define an age-grouping
@@ -121,7 +121,7 @@ sero.dat <- read_csv(input.loc,
                      col_types = sero.cols) %>%
     rename(!!!col.names) %>%
     mutate(SDate = fuzzy_date_parse(sample_date),
-           Positive = endsWith(Eoutcome, "+") | endsWith(Eoutcome, "Positive"))
+           Positive = endsWith(Eoutcome, "+") | Eoutcome == "Positive")
 
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
