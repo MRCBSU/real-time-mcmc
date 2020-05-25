@@ -42,6 +42,9 @@ if(nA == 1){
     pars.ifr[14] <- 112
 }
 
+## Infection hospitalisation rate
+pars.ihr <- c(1, 1)
+
 ## Initial seeding
 value.nu <- c(-19, -17.7)
 pars.nu <- c(-17.5, 1.25)
