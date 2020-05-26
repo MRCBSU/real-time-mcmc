@@ -31,9 +31,11 @@ if (!exists("infections")) {
   if (file.exists(output.required)) {
     load(file.path(out.dir, "mcmc.RData"))
     load(output.required)
-    parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-    outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+    int_iter <- 0:(num.iterations - 1)
+    parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+    outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
     parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+    iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
     stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
   } else {
     source(file.path(proj.dir, "R/output/tidy_output.R"))
@@ -59,7 +61,7 @@ get.aggregated.quantiles <- function(data, by, quantiles) {
 }
 
 get.infection.weighted.Rt <- function(R, infection, pars.to.out){
-    inf_by_region <- apply(infection, c("iteration", "date", "region"), sum)[seq(from = 1, to = length(pars.to.out), length.out = dim(R)[which(names(dimnames(R)) == "iteration")]), , ]
+    inf_by_region <- apply(infection, c("iteration", "date", "region"), sum)[pars.to.out, , ]
     Rt <- aperm(R, names(dimnames(inf_by_region)))
     stopifnot(all.equal(dim(Rt), dim(inf_by_region), check.names = FALSE))
     weighted_Rt_sum <- apply(inf_by_region * Rt, c("iteration", "date"), sum)

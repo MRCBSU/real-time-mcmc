@@ -102,10 +102,11 @@ contact.dist <- rep(c(1, rep(2, nm)), nr)
 contact.pars <- array(0, dim = c(2, length(prior.list), nr))
 contact.pars[, 1, ] <- prior.list$lock
 contact.pars[, 2, ] <- prior.list$relax
+contact.pars <- contact.pars[, 1:nm, ]
 contact.proposal <- rep(seq(0, by = 0.001, length.out = nm + 1), nr)
 contact.reduction <- rep(c(1, rep(int.effect, nm)), nr)
 
-## Serological test sensivitiy and specificity
+## Serological test sensitivity and specificity
 sero.sens <- 71.5 / 101
 sero.spec <- 777.5 / 787
 

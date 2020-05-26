@@ -74,7 +74,7 @@ contact_parameters = { param_value = `r paste(as.character(contact.reduction), c
 
 prior_distribution = `r paste(contact.dist, collapse = ", ")`;
 
-prior_parameters = `r paste(contact.pars[, 1:nm, ], collapse = ", ")`;
+prior_parameters = `r paste(contact.pars, collapse = ", ")`;
 
 proposal_variance = `r paste(contact.proposal, collapse = ", ")`;
 
