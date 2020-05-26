@@ -6,7 +6,7 @@ RTM_OPTIM_OBJS = $(SRC:src/%.cc=build/rtm_optim/%.o)
 RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
 
 LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp -lstdc++fs
-CXXFLAGS := $(CXXFLAGS) -g
+CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
