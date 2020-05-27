@@ -86,6 +86,10 @@ string flagclass::UPItoRMP(const int& iUPI_index)
     return "l_sensitivity";
   case SPEC_INDEX :
     return "l_specificity";
+  case SSENS_INDEX :
+    return "l_sero_sensitivity";
+  case SSPEC_INDEX :
+    return "l_sero_specificity";
   case DOW_EFFECTS_INDEX :
     return "l_day_of_week_effect";
   default :

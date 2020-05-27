@@ -7,7 +7,7 @@ Hospitalisation_flag `r hosp.flag`
 
 Deaths_flag	     0
 
-Sero_data_flag	     0
+Sero_data_flag	     `r sero.flag`
 
 Viro_data_flag	     0
 
@@ -63,9 +63,9 @@ Deaths_likelihood_start_day	   1
 
 Deaths_likelihood_end_day	   1
 
-Sero_likelihood_start_day	   1
+Sero_likelihood_start_day      1
 
-Sero_likelihood_end_day		   1
+Sero_likelihood_end_day      1
 
 Viro_likelihood_start_day	   1
 
@@ -164,6 +164,6 @@ prop_var_shrinkage   0.9
 
 maximum_block_size   9
 
-random_seed	     81
+random_seed	     82
 
 max_threads	     `r nr`

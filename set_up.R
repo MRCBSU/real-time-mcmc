@@ -15,8 +15,10 @@ thisFile <- function() {
 }
 
 ## Where are various directories?
-file.loc <- dirname(thisFile())
-proj.dir <- file.loc
+if(!exists("file.loc")){
+    file.loc <- dirname(thisFile())
+    proj.dir <- file.loc
+}
 ## ## Load required functions for reading in data
 source(file.path(proj.dir, "set_up_inputs.R"))
 source(file.path(proj.dir, "set_up_pars.R"))

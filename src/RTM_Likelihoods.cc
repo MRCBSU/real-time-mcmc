@@ -100,9 +100,9 @@ void prob_infection_RF_MA(
   gsl_vector_add(I, I_1);
 
   if(tk == cREEDFROST){
+	gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
     for (register int a = 0; a < prob_infection->size; ++a)
       {
-	gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
 	for (register int b = 0; b < prob_infection->size; ++b)
 	  {
 	    gsl_vector_set(p_beta,
@@ -110,8 +110,8 @@ void prob_infection_RF_MA(
 			   pow(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b), gsl_vector_get(I, b)));
 	  }
 	gsl_vector_set(prob_infection, a, 1 - gsl_double_product_of_vector_elements(p_beta));
-	gsl_vector_free(p_beta);
       }
+	gsl_vector_free(p_beta);
   } else if(tk == cMASSACTION){
     
     gsl_blas_dsymv(CblasLower, 1.0, force_infectious_contact_matrix, I, 0.0, prob_infection);
@@ -582,6 +582,7 @@ void fn_log_likelihood(likelihood& llhood,
 		       bool flag_update_GP_likelihood,
 		       bool flag_update_Hosp_likelihood,
 		       bool flag_update_Viro_likelihood,
+		       bool flag_update_Sero_likelihood,
 		       global_model_instance_parameters gmip,
 		       globalModelParams gmp_delays)
 {
@@ -609,14 +610,15 @@ void fn_log_likelihood(likelihood& llhood,
       // Does the transmission model need to be re-evaluated?
       // (Not necessary when updating parameters of the reporting model)
       if(flag_update_transmission_model)
-	{
 	  fn_transmission_model(meta_region[int_region].det_model_params,
 				gmip,
 				meta_region[int_region].population,
 				meta_region[int_region].region_modstats);
-
-	  // Having evaluated the transmission model alone we can evaluate the seropositivity likelihood
-	  if(gmip.l_Sero_data_flag){
+      
+      // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
+      if(gmip.l_Sero_data_flag &&
+	 (flag_update_transmission_model || flag_update_Sero_likelihood)
+	 ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
 	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
 	    // This proportion is age, but not time dependent.
 	    gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_seropositivity->size1, meta_region[int_region].region_modstats.d_seropositivity->size2);
@@ -637,6 +639,11 @@ void fn_log_likelihood(likelihood& llhood,
 	      }
 	    gsl_vector_free(prop_immune_baseline_nonseropositive);
 
+	    // ** Some account for test sensitivity and specificity. Will have to move from here
+	    // ** if these two quantities are ever to be allowed to vary by time, region or age.
+	    gsl_matrix_scale(test_positivity, meta_region[int_region].det_model_params.l_sero_sensitivity + meta_region[int_region].det_model_params.l_sero_specificity - 1);
+	    gsl_matrix_add_constant(test_positivity, 1 - meta_region[int_region].det_model_params.l_sero_specificity);
+	    
 	    // ** Is there any missing data - if dataset is of dimension less than the number of strata
 	    if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
 	      // ** Yes: Aggregate seropositivities using a weighted mean
@@ -659,8 +666,7 @@ void fn_log_likelihood(likelihood& llhood,
 	    lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Sero_lfx, int_region));
 	    gsl_vector_set(llhood.Sero_lfx, int_region, temp_log_likelihood);
 	    gsl_matrix_free(test_positivity);
-	  }
-	}
+      }
 
       double lfx_sub_increment = 0.0;
 

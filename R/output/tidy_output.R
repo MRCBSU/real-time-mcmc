@@ -97,9 +97,11 @@ if (!exists("conv")) {
 if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
 if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
-
-parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+int_iter <- 0:(num.iterations - 1)
+## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 
@@ -111,38 +113,66 @@ Rt.func <- function(vecS, matM){
   max(abs(eigen(M.star, only.values = TRUE)$value))
 }
 Rt <- list()
+R.star <- NULL
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
 m <- params$contact_parameters[iterations.for.Rt, ]
-R0 <- posterior.R0[iterations.for.Rt, , drop = F]
-for(idir in 1:length(cm.bases)){
-  M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
-  M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
-}
-m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
-names(M) <- names(M.mult) <- NULL
-pop.total <- all.pop[1, ]
-for(reg in regions){
-  ireg <- which(regions %in% reg)
+if(ncol(m) %% r != 0) {
+  warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
+} else {
+  m.per.region <- ncol(m) / r
+  R0 <- posterior.R0[iterations.for.Rt, , drop = F];colnames(R0) <- regions
   for(idir in 1:length(cm.bases)){
-    M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*2+M.mult[[idir]]]),
-                            dim = c(nA, nA, nrow(m)))
+    M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
+    M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
   }
-  M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
-  R.star <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
-  S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
-  S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
-  R.prime <- sapply(1:ndays,
-                    function(x) sapply(1:length(iterations.for.Rt), function(i){
-                      M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
-                      Rt.func(S[x, , i] / pop.total[ireg], M.temp)
-                    }
-                    )
-  ) ## IxT array
-  Rt[[reg]] <- R0[, ireg] * R.prime / R.star ## I*T array
+  m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
+  names(M) <- names(M.mult) <- NULL
+  pop.total <- all.pop[1, ];names(pop.total) <- regions
+  for(reg in regions){
+    ireg <- which(regions %in% reg)
+    for(idir in 1:length(cm.bases)){
+      M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]),
+                              dim = c(nA, nA, nrow(m)))
+    }
+    M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
+    R.star[ireg] <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+    S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
+    S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+    R.prime <- sapply(1:ndays,
+                      function(x) sapply(1:length(iterations.for.Rt), function(i){
+                        M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                        Rt.func(S[x, , i] / pop.total[ireg], M.temp)
+                      }
+                      )
+    ) ## IxT array
+    Rt[[reg]] <- R0[, ireg] * R.prime / R.star[ireg] ## I*T array
+  }
+  names(R.star) <- regions
 }
 ################################################################
+print('Calculating the intrinsic generation time distribution')
+colnames(regions.total.population) <- age.labs
+rownames(regions.total.population) <- regions
+source(file.path(Rfile.loc, "gen.time.R"))
+cM <- matrix(M.star[[1]][, , 1, drop = FALSE], nA, nA)
+ni <- nrow(R0)
+delta.t <- 0.5 ## time-step length
+Egt <- Vargt <- list()
+for(reg in regions){
+    gt <- lapply(1:ni, function(x) gen.time.dist(posterior.lp,
+                                                 posterior.aip[iterations.for.Rt[x], ],
+                                                 init.func(regions.total.population[reg, ] / pop.total[reg], cM),
+                                                 R0[x, reg] * cM / (pop.total[reg] * R.star[reg]))
+                 )
+    Egt[[reg]] <- sapply(gt, function(gx) sum(gx * seq(delta.t, by = delta.t, length.out = length(gx))))
+    Vargt[[reg]] <- sapply(gt, function(gx) sum(gx * (seq(delta.t, by = delta.t, length.out = length(gx))^2)))
+    Vargt[[reg]] <- Vargt[[reg]] - (Egt[[reg]]^2)
+}
+              
+################################################################
 print('Formatting time series')
+
 
 ## Extract length of dimensions
 num.regions <- length(regions)
@@ -286,8 +316,6 @@ if (gp.flag == 0) {
 }
 
 ## Get population
-colnames(regions.total.population) <- age.labs
-rownames(regions.total.population) <- regions
 population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
@@ -295,3 +323,4 @@ print('Saving results')
 save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
      hosp, noisy_hosp, cum_hosp, population, hosp.dat,
      file = file.path(out.dir, "output_matrices.RData"))
+save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))

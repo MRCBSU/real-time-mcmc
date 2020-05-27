@@ -34,6 +34,13 @@ run.outputs <- TRUE
 data.files <- file.path(proj.dir, "data", "RTM_format", "Lombardy",
 						paste0(date.data, ".txt"))
 
+## Which code is being considered
+gp.flag <- 0
+hosp.flag <- 1
+sero.flag <- 0
+viro.flag <- 0
+
+
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
 

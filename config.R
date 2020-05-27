@@ -6,13 +6,15 @@ library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
-if (length(args) < 3) args <- c(args, "1", "England")
+if (length(args) < 3) args <- c(args, "1", "Lombardy")
 
 if (!exists("date.data")) date.data <- args[1]
 nr <- as.integer(args[2])
 regions <- args[3:(nr+2)]
 stopifnot(length(regions) == nr)
 
+reporting.delay <- 5
+serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
 google.data.date <- format(ymd("20200522"), format = "%Y%m%d")
 ## Number of days to run the simulation for.

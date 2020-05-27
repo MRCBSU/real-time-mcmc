@@ -133,7 +133,7 @@ void globalModelParams_alloc(globalModelParams&, size_t);
 void globalModelParams_free(globalModelParams&);
 
 // REGION SPECIFIC PARAMETER STRUCTURE, FOR INPUT TO THE TRANSMISSION (AND DISEASE?) MODEL
-#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect;" 
+#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity;" 
 struct regional_model_params{
   gsl_vector* l_init_prop_sus; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
   gsl_vector* l_init_prop_sus_HI_geq_32; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
@@ -158,6 +158,8 @@ struct regional_model_params{
   gsl_matrix* l_gp_negbin_overdispersion;
   gsl_matrix* l_hosp_negbin_overdispersion;
   gsl_matrix* l_day_of_week_effect;
+  double l_sero_sensitivity;
+  double l_sero_specificity;
 };
 
 void regional_model_params_alloc(regional_model_params&, const int, const int, const int, const int, const mixing_model);

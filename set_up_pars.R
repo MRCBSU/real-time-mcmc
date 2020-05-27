@@ -1,5 +1,3 @@
-## shape.dL <- 35.1
-## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
 value.dl <- 2
 ## shape.dL <- 13.3
 ## rate.dL <- 4.16
@@ -32,6 +30,9 @@ if(nA == 1){
     pars.ifr[14] <- 112
 }
 
+## Infection hospitalisation rate
+pars.ihr <- c(1, 1)
+
 ## Initial seeding
 value.nu <- c(-19, -17.7)
 pars.nu <- c(-17.5, 1.25)
@@ -49,5 +50,6 @@ ddelay.mean <- 16.0
 ddelay.sd <- 12.6
 
 contact.dist <- rep(c(1, 2), nr)
-contact.pars <- rep(c(2, 2), nr)
+contact.pars <- rep(c(4, 4), nr)
 contact.reduction <- rep(1, nr * 2)
+contact.proposal <- rep(c(1, 0.001), nr * 2)

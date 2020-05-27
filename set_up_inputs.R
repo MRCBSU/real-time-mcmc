@@ -12,6 +12,8 @@ if(gp.flag){
     end.gp <- 1
 }
 
+## The 'hosp' stream in the code is linked to death data
+if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
 if(hosp.flag){
     start.hosp <- 1
     ## Total days of data, or NULL to infer from length of file
@@ -20,7 +22,19 @@ if(hosp.flag){
 	start.hosp <- 1
 	end.hosp <- 1
 }
-
+## The 'sero' stream in the code
+if(!exists("sero.flag")) sero.flag <- 1
+if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
+	if(exists("rtm.plot")) {
+		start.sero <- min(rtm.plot$date) - start.date + 1
+		end.sero <- max(rtm.plot$date) - start.date + 1
+	} else {
+		warning('Running sero likelihood for whole period')
+		start.sero <- 1
+		end.sero <- ndays 
+	}
+}
+## The 'viro' stream in the code
 viro.data <- NULL
 viro.denom <- NULL
 
@@ -76,8 +90,8 @@ cm.mults <- cm.mults[mult.order+1]
 num.iterations <- 200000
 burnin <- 20000
 adaptive.phase <- burnin / 2
-thin.outputs <- 80 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 40  # After how many iterations to output each set of parameters
+thin.outputs <- 40 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 20  # After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 
@@ -106,7 +120,9 @@ gp.denom <- "NULL"
 hosp.data <- "NULL"
 if (hosp.flag == 1) {
     hosp.data <- data.files
-    if(!all(file.exists(hosp.data)))
-        stop("One of the specified hospitalisation data files does not exist")
+    if(!all(file.exists(hosp.data))) {
+		print(hosp.data[which(!file.exists(hosp.data))])
+        stop("Above hospitalisation data files does not exist")
+	}
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }

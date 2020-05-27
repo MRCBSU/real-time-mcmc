@@ -59,13 +59,10 @@ proposal_variance = 0.1;
 }
 
 
-prop_case_to_GP_consultation = { param_value = `r value.pgp`;
+prop_case_to_GP_consultation = { param_value = 0.1;
 
 prior_distribution = `r ifelse(gp.flag, 3, 1)`;
 
-prior_parameters = `r paste(pars.pgp, collapse = ", ")`;
-
-proposal_variance = 0.002;
 
 }
 
@@ -76,7 +73,7 @@ prior_distribution = `r paste(contact.dist, collapse = ", ")`;
 
 prior_parameters = `r paste(contact.pars, collapse = ", ")`;
 
-proposal_variance = `r paste(rep(c(0, 0.0005), length(contact.reduction)), collapse = ", ")`
+proposal_variance = `r paste(contact.proposal, collapse = ", ")`;
 
 region_breakpoints = true;
 
@@ -189,6 +186,20 @@ test_specificity = { param_value = 1;
 prior_distributions = 1;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+sero_test_sensitivity = { param_value = 1;
+
+prior_distributions = 1;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+sero_test_specificity = { param_value = 1;
+
+prior_distributions = 1;
+
+}
 
 
 exponential_growth_rate_hyper = { param_value = 6.3, 57;

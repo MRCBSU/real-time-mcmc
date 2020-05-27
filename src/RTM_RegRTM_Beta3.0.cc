@@ -121,6 +121,7 @@ int main(void){
   		    global_fixedpars.l_GP_consultation_flag,
   		    global_fixedpars.l_Hospitalisation_flag,
   		    global_fixedpars.l_Viro_data_flag,
+		    global_fixedpars.l_Sero_data_flag,
   		    global_fixedpars,
   		    global_modpars);
 
