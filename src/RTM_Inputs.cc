@@ -366,6 +366,7 @@ void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
 
 
 void read_param_regression(regression_def& reg_def,
+			   const char* param_name,
 			   const int param_dimension,
 			   const string str_source,
 			   const int num_regions,
@@ -402,9 +403,13 @@ void read_param_regression(regression_def& reg_def,
       // THE DESIGN MATRIX...
       // SHOULD HAVE NUMBER OF COLUMNS EQUAL TO THE PARAMETER DIMENSION
       // SHOULD HAVE NUMBER OR ROWS EQUAL TO THE TOTAL NUMBER OF (region, time, age) GROUP COMBINATIONS
-      reg_def.design_matrix = gsl_matrix_alloc(dim_r * dim_t * dim_a, param_dimension);
+      int nrows = dim_r * dim_t * dim_a;
+      if(strcmp(param_name,
+		"contact_parameters") == 0) // ** EXCEPTIONAL BEHAVIOUR FOR CONTACT_PARAMETERS AS DON'T YET KNOW AN APPROPRIATE dim_t
+	nrows = FN_MAX(nrows, param_dimension);
+      reg_def.design_matrix = gsl_matrix_alloc(nrows, param_dimension);
 
-      // TO ALLOCATE THE MATRIX, EITHER A FILENAME SHOULD BE GIVEN OR A VECTOR OF NUMBERS
+      // TO POPULATE THE MATRIX, EITHER A FILENAME SHOULD BE GIVEN OR A VECTOR OF NUMBERS
       bool flag_infile = (bool) flag_int_or_string("regression_design", str_source);
       if(flag_infile){
 	string str_filename;
@@ -566,7 +571,7 @@ void read_modpar(updateable_model_parameter& modpar,
   }
 
   // ESTABLISH THE MAPS FROM THE PARAMETER VALUES TO THE VALUES PASSED TO THE REGIONAL STRUCTURES
-  read_param_regression(modpar.map_to_regional, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
+  read_param_regression(modpar.map_to_regional, param_name, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
 
 }
 

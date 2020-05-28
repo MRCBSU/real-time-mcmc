@@ -287,10 +287,19 @@ void regional_mixmod_parameter(mixing_model& out_mix, gsl_vector* param_value, c
 	  ERROR_INPUT_EXIT("Mismatch between mixing matrix parameterisation matrices and the size of the contact parameter, caught in function %s", "regional_mixmod_parameter");
 	}
 
-      // USE THIS VALUE TO PICK OUT THE APPROPRIATE VALUES FROM THE PARAMETER VECTOR
-      gsl_vector_view temp_subvec = gsl_vector_subvector(param_value, region_index * out_mix.scalants->size, out_mix.scalants->size);
-
-      gsl_vector_memcpy(out_mix.scalants, &temp_subvec.vector);
+      // USE THIS VALUE TO PICK OUT THE APPROPRIATE ROWS OF THE DESIGN MATRIX
+      gsl_matrix* subdesign = gsl_matrix_alloc(out_mix.scalants->size, map_to_regional.design_matrix->size2);
+      gsl_vector* temp_subvec = gsl_vector_alloc(subdesign->size1);
+      
+      // gsl_vector_view temp_subvec = gsl_vector_subvector(param_value, region_index * out_mix.scalants->size, out_mix.scalants->size);
+      select_design_matrix(subdesign,
+			   map_to_regional.design_matrix,
+			   dim_r == 1,
+			   region_index * out_mix.scalants->size,
+			   out_mix.scalants->size);
+      R_generalised_linear_regression(temp_subvec, subdesign, param_value, map_to_regional.regression_link);
+      
+      gsl_vector_memcpy(out_mix.scalants, temp_subvec);
 
     }
 

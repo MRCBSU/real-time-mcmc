@@ -127,7 +127,7 @@ int max_mm_param_int(const char *filename, const int nbreakpoints)
   return max_int_param;
 }
 
-
+// ** FOLLOWING FUNCTION NOT CURRENTLY IN USE.. MARK IT FOR DELETION? ** //
 void input_mixing_matrix_model(mixing_model &l_MIXMAT, const char* infile, const char* in_param_file)
 {
 

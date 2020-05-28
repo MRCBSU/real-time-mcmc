@@ -44,7 +44,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "sero_varSens_lp3_1m"
+scenario.name <- "sero_varSens_lp3_allmrw"
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {

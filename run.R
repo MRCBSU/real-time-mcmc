@@ -27,10 +27,10 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- TRUE
+run.code <- FALSE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- TRUE
+run.outputs <- FALSE
 
 ## Which code is being considered
 gp.flag <- 0

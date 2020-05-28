@@ -85,26 +85,43 @@ ldelay.mean <- 5.22
 ldelay.sd <- 3.59
 
 ## Contact model
-int.effect <- 0.521
+int.effect <- 0.0521
 nm <- max(mult.order)
-prior.list <- list(lock = c(4, 4),
-                   relax = c(163, 231,
-                             138, 231,
-                             245, 305,
-                             169, 241,
-                             160, 216,
-                             235, 289,
-                             126, 169)
+sd <- sqrt(log(5) - 2*log(2))
+design.flag <- grepl("2mrw", scenario.name, fixed = TRUE)
+rw.flag <- grepl("allmrw", scenario.name, fixed = TRUE)
+prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
+                   effect = c(0, sqrt(1/20) * sd),
+                   increments = c(0, sqrt(1/20) * sd)
                    )
+if(design.flag) prior.list$lock[2] * sqrt(19/20)
 ## prior.list <- list(relax = c(4, 4))
-contact.dist <- rep(c(1, rep(2, nm)), nr)
+contact.dist <- rep(c(1, rep(4, nm)), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
-contact.pars <- array(0, dim = c(2, length(prior.list), nr))
+contact.pars <- array(0, dim = c(2, nm, nr))
 contact.pars[, 1, ] <- prior.list$lock
-contact.pars[, 2, ] <- prior.list$relax
-contact.pars <- contact.pars[, 1:nm, ]
-contact.proposal <- rep(seq(0, by = 0.001, length.out = nm + 1), nr)
-contact.reduction <- rep(c(1, rep(int.effect, nm)), nr)
+if(nm > 1){
+    for(j in 2:nm)
+        contact.pars[, j, ] <- prior.list$increments
+}
+contact.proposal <- rep(c(0, rep(0.001, nm)), nr)
+contact.reduction <- rep(c(0, jitter(rep(int.effect, nm))), nr)
+contact.link <- as.integer(any(contact.dist == 4))
+require(Matrix)
+if(design.flag){
+    sub.design <- matrix(c(1, 1, -1, 1), 2, 2)
+}
+if(rw.flag){
+    sub.design <- matrix(1, nm, nm)
+    for(i in 1:(nm-1))
+        for(j in (i+1):nm)
+            sub.design[i,j] <- 0
+}
+if(design.flag | rw.flag){
+    m.design <- lapply(1:nr, function(x) bdiag(1, sub.design))
+    m.design <- bdiag(m.design)
+    write_tsv(as.data.frame(as.matrix(m.design)), file.path(out.dir, "m.design.txt"), col_names = FALSE)
+}
 
 ## Serological test sensitivity and specificity
 sero.sens <- 71.5 / 101

@@ -80,6 +80,10 @@ proposal_variance = `r paste(contact.proposal, collapse = ", ")`;
 
 region_breakpoints = true;
 
+regression_link = 1;
+
+`r ifelse(design.flag, "regression_design = m.design.txt;", "")`
+
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
