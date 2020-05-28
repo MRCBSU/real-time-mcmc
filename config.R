@@ -20,7 +20,7 @@ google.data.date <- format(ymd("20200522"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200201")
-m.param.breakpoints <- c(ymd("20200407"))
+m.param.breakpoints <- c(ymd("20200307"))
 nforecast.weeks <- 3
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
@@ -38,6 +38,6 @@ hosp.flag <- 1					# 0 = off, 1 = on
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-					 "Lombardy_prior_2_2"
+					 "Lombardy_fixed"
 					 )
 
