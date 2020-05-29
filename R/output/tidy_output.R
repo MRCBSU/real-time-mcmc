@@ -1,4 +1,5 @@
 suppressMessages(library(tidyverse))
+suppressMessages(library(Matrix))
 
 ## Location of this script
 thisFile <- function() {
@@ -90,6 +91,7 @@ if(!exists("proj.dir")){
 }
 if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 load(file.path(out.dir, "mcmc.RData"))
+rm(dth.dat)
 if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
@@ -121,6 +123,7 @@ m <- params$contact_parameters[iterations.for.Rt, ]
 ## Multiply by the design matrix if applicable
 if(rw.flag)
     m <- m %*% t(m.design)
+}
 ## Inverse transformation
 m <- exp(m)
 if(ncol(m) %% r != 0) {
@@ -225,9 +228,10 @@ infections <- array(
   dim = output.quantity.dims,
   dimnames = output.dimnames
 )
+rm(NNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 
-derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 5) {
+derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 1) {
   ## Calculate deaths
   if (num.ages > 1) {
     raw <- merge.youngest.age.groups(infections)
