@@ -71,16 +71,6 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
         x1 = ymd(20200307), 
         line = list(color = "blue"),
         hoverinfo = "Lockdown"
-    ),
-    list(
-        type = "line", 
-        y0 = 0, 
-        y1 = 1, 
-        yref = "paper",
-        x0 = ymd(20200511), 
-        x1 = ymd(20200511), 
-        line = list(color = "blue"),
-        hoverinfo = "Lockdown"
     )
   )
   title <- function(name) {
@@ -176,26 +166,9 @@ tbl_cum_inf_region <-
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data))
   
-tbl_ar_Eng <- get.aggregated.quantiles(cum_infections, NULL, c(0.025, 0.5, 0.975))  %>%
+tbl_inf_region <- get.aggregated.quantiles(infections, "region", c(0.025, 0.5, 0.975)) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
-  mutate(
-    population = sum(population$value),
-    region = "England"
-  )
-
-tbl_inf_region <-
-  bind_rows(
-    get.aggregated.quantiles(infections, NULL, c(0.025, 0.5, 0.975))  %>%
-    pivot_wider(names_from = quantile) %>%
-    filter(date == ymd(date.data)) %>%
-    mutate(
-      region = "England"
-    ),
-    get.aggregated.quantiles(infections, "region", c(0.025, 0.5, 0.975)) %>%
-    pivot_wider(names_from = quantile) %>%
-    filter(date == ymd(date.data))
-  )%>%
   mutate_at(vars(`0.025`, `0.5`, `0.975`), format_num) %>%
   transmute(
     Region = region,
@@ -205,10 +178,7 @@ tbl_inf_region <-
 ```
 
 ```{r cum-inf-disp}
-bind_rows(
-  select(tbl_ar_Eng, -population),
-  tbl_cum_inf_region
-) %>%
+tbl_cum_inf_region %>%
   mutate_at(vars(`0.025`, `0.5`, `0.975`), format_num) %>%
   transmute(
     Region = region,
@@ -225,13 +195,10 @@ The percentage of a given group that has been infected.
 #### By region
 
 ```{r attack-region}
-bind_rows(
-  tbl_ar_Eng,
-  population %>%
-    group_by(region) %>%
-    summarise(population = sum(value)) %>%
-    left_join(tbl_cum_inf_region, by = c('region' = 'region'))
-  ) %>%
+population %>%
+  group_by(region) %>%
+  summarise(population = sum(value)) %>%
+  left_join(tbl_cum_inf_region, by = c('region' = 'region')) %>%
   select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`, population) %>%
   mutate(
     Median = Median / population,
@@ -480,7 +447,7 @@ make.plots(cum_infections, by = "age")
 ### Rt
 ```{r}
 get.combined.Rt <- function(...) overall_Rt
-make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = get.combined.Rt)
+make.plots(Rt, by = "region", y.format = ".2f")
 ```
 
 <!--

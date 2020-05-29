@@ -49,7 +49,9 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- seq(from = 3, by = 7, length = 15)				# Day numbers where breaks happen
+first.matrix <- ymd(20200203)
+day.num.first.matrix <- first.matrix - start.date + 1
+cm.breaks <- seq(from = day.num.first.matrix, by = 7, length = 15)				# Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
 lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 lst$Lombardy$all$m <- lst$Lombardy$all$m * 1e7
