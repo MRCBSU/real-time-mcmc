@@ -301,6 +301,9 @@ void regional_mixmod_parameter(mixing_model& out_mix, gsl_vector* param_value, c
       
       gsl_vector_memcpy(out_mix.scalants, temp_subvec);
 
+      gsl_vector_free(temp_subvec);
+      gsl_matrix_free(subdesign);
+
     }
 
   mixing_matrix_parameterise(out_mix);

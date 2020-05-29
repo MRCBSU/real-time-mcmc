@@ -88,13 +88,10 @@ ldelay.sd <- 3.59
 int.effect <- 0.0521
 nm <- max(mult.order)
 sd <- sqrt(log(5) - 2*log(2))
-design.flag <- grepl("2mrw", scenario.name, fixed = TRUE)
-rw.flag <- grepl("allmrw", scenario.name, fixed = TRUE)
+rw.flag <- TRUE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
-                   effect = c(0, sqrt(1/20) * sd),
-                   increments = c(0, sqrt(1/20) * sd)
+                   increments = c(0, 0.1 * sd)
                    )
-if(design.flag) prior.list$lock[2] * sqrt(19/20)
 ## prior.list <- list(relax = c(4, 4))
 contact.dist <- rep(c(1, rep(4, nm)), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
@@ -108,19 +105,17 @@ contact.proposal <- rep(c(0, rep(0.001, nm)), nr)
 contact.reduction <- rep(c(0, jitter(rep(int.effect, nm))), nr)
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
-if(design.flag){
-    sub.design <- matrix(c(1, 1, -1, 1), 2, 2)
-}
 if(rw.flag){
     sub.design <- matrix(1, nm, nm)
     for(i in 1:(nm-1))
         for(j in (i+1):nm)
             sub.design[i,j] <- 0
 }
-if(design.flag | rw.flag){
+if(rw.flag){
     m.design <- lapply(1:nr, function(x) bdiag(1, sub.design))
     m.design <- bdiag(m.design)
-    write_tsv(as.data.frame(as.matrix(m.design)), file.path(out.dir, "m.design.txt"), col_names = FALSE)
+    m.design <- as.matrix(m.design)
+    write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
 
 ## Serological test sensitivity and specificity

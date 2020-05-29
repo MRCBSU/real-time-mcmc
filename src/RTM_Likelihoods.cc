@@ -100,17 +100,20 @@ void prob_infection_RF_MA(
   gsl_vector_add(I, I_1);
 
   if(tk == cREEDFROST){
-    for (register int a = 0; a < prob_infection->size; ++a)
+    for (int a = 0; a < prob_infection->size; ++a)
       {
-	gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
-	for (register int b = 0; b < prob_infection->size; ++b)
+	// gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
+	double lprod = 0;
+	for (int b = 0; b < prob_infection->size; ++b)
 	  {
-	    gsl_vector_set(p_beta,
-			   b,
-			   pow(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b), gsl_vector_get(I, b)));
+	    lprod += gsl_vector_get(I, b) * gsl_sf_log(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b));
+	    // gsl_vector_set(p_beta,
+	    // 		   b,
+	    // 		   pow(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b), gsl_vector_get(I, b)));
 	  }
-	gsl_vector_set(prob_infection, a, 1 - gsl_double_product_of_vector_elements(p_beta));
-	gsl_vector_free(p_beta);
+	// gsl_vector_set(prob_infection, a, 1 - gsl_double_product_of_vector_elements(p_beta));
+	// gsl_vector_free(p_beta);
+	gsl_vector_set(prob_infection, a, 1 - gsl_sf_exp(lprod));
       }
   } else if(tk == cMASSACTION){
     
@@ -404,14 +407,20 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   for (int k = 0; k < (max_days_data * in_gmip.l_reporting_time_steps_per_day); ++k)
     {  
       for (int j = 0; j < NUM_AGE_GROUPS; ++j)
-	{    
+	{
+	  double modelled_out = 0;
 	  for (int m = 0; m <= FN_MIN(distribution_function->size - 1, k); ++m)
-	    { 
-	      gsl_matrix_set(modelled_events,
-			     k,
-			     j,
-			     gsl_matrix_get(modelled_events, k, j) + (gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_matrix_get(severity_ratio, k, j) * gsl_vector_get(distribution_function, m))); // severity_ratio[k - m, j] HAS BEEN USED IN THE PAST - THIS GIVES THE PROPORTION OF SYMPTOMATIC CASES WHO 
+	    {
+	      modelled_out += gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
+	      // gsl_matrix_set(modelled_events,
+	      // 		     k,
+	      // 		     j,
+	      // 		     gsl_matrix_get(modelled_events, k, j) + (gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m))); // severity_ratio[k - m, j] HAS BEEN USED IN THE PAST - THIS GIVES THE PROPORTION OF SYMPTOMATIC CASES WHO 
 	    }// FOR
+	  gsl_matrix_set(modelled_events,
+			 k,
+			 j,
+			 modelled_out * gsl_matrix_get(severity_ratio, k, j));
 	}// FOR
     }// FOR
 

@@ -116,7 +116,13 @@ Rt <- list()
 R.star <- NULL
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
+## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
+## Multiply by the design matrix if applicable
+if(design.flag | rw.flag)
+    m <- m %*% t(m.design)
+## Inverse transformation
+m <- exp(m)
 if(ncol(m) %% r != 0) {
   warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
 } else {
