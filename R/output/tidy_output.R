@@ -123,7 +123,6 @@ m <- params$contact_parameters[iterations.for.Rt, ]
 ## Multiply by the design matrix if applicable
 if(rw.flag)
     m <- m %*% t(m.design)
-}
 ## Inverse transformation
 m <- exp(m)
 if(ncol(m) %% r != 0) {
