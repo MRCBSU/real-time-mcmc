@@ -119,7 +119,7 @@ iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to
 ## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
 ## Multiply by the design matrix if applicable
-if(design.flag | rw.flag)
+if(rw.flag)
     m <- m %*% t(m.design)
 ## Inverse transformation
 m <- exp(m)
@@ -299,7 +299,7 @@ if (gp.flag == 0) {
 print('Loading true data')
 load.data <- function(file.names) {
   col.names <- c('date', age.labs)
-  names(data.files) <- regions
+  names(file.names) <- regions
   to.combine <- dimnames(infections)$age[1:4]
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
