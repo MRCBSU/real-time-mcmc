@@ -90,6 +90,7 @@ if(!exists("proj.dir")){
 }
 if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 load(file.path(out.dir, "mcmc.RData"))
+rm(dth.dat)
 if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
@@ -119,8 +120,10 @@ iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to
 ## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
 ## Multiply by the design matrix if applicable
-if(design.flag | rw.flag)
+if(design.flag | rw.flag) {
+	library(Matrix)
     m <- m %*% t(m.design)
+}
 ## Inverse transformation
 m <- exp(m)
 if(ncol(m) %% r != 0) {
@@ -225,9 +228,10 @@ infections <- array(
   dim = output.quantity.dims,
   dimnames = output.dimnames
 )
+rm(NNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 
-derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 5) {
+derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 1) {
   ## Calculate deaths
   if (num.ages > 1) {
     raw <- merge.youngest.age.groups(infections)
@@ -299,7 +303,7 @@ if (gp.flag == 0) {
 print('Loading true data')
 load.data <- function(file.names) {
   col.names <- c('date', age.labs)
-  names(data.files) <- regions
+  names(file.names) <- regions
   to.combine <- dimnames(infections)$age[1:4]
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
