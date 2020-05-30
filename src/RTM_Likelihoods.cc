@@ -100,9 +100,9 @@ void prob_infection_RF_MA(
   gsl_vector_add(I, I_1);
 
   if(tk == cREEDFROST){
+	gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
     for (register int a = 0; a < prob_infection->size; ++a)
       {
-	gsl_vector* p_beta = gsl_vector_alloc(prob_infection->size);
 	for (register int b = 0; b < prob_infection->size; ++b)
 	  {
 	    gsl_vector_set(p_beta,
@@ -110,8 +110,8 @@ void prob_infection_RF_MA(
 			   pow(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b), gsl_vector_get(I, b)));
 	  }
 	gsl_vector_set(prob_infection, a, 1 - gsl_double_product_of_vector_elements(p_beta));
-	gsl_vector_free(p_beta);
       }
+	gsl_vector_free(p_beta);
   } else if(tk == cMASSACTION){
     
     gsl_blas_dsymv(CblasLower, 1.0, force_infectious_contact_matrix, I, 0.0, prob_infection);
