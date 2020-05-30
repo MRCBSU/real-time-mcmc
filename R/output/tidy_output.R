@@ -117,6 +117,9 @@ R.star <- NULL
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
 m <- params$contact_parameters[iterations.for.Rt, ]
+if (length(m) == 0) {
+	m <- array(1, dim = c(length(iterations.for.Rt), r))
+}
 if(ncol(m) %% r != 0) {
   warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
 } else {

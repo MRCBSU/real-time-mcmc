@@ -49,7 +49,8 @@ pars.eta.h <- c(1.0, 0.2)
 ddelay.mean <- 16.0
 ddelay.sd <- 12.6
 
-contact.dist <- rep(c(1, 2), nr)
-contact.pars <- rep(c(4, 4), nr)
-contact.reduction <- rep(1, nr * 2)
-contact.proposal <- rep(c(1, 0.001), nr * 2)
+nm <- length(m.param.breakpoints)
+contact.dist <- rep(c(1, rep(2, nm)), nr)
+contact.pars <- rep(c(4, 4), nr * nm)
+contact.reduction <- rep(1, nr * (nm + 1))
+contact.proposal <- rep(c(1, rep(0.001, nm)), nr)

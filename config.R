@@ -16,11 +16,17 @@ stopifnot(length(regions) == nr)
 reporting.delay <- 5
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
+scenario.name <- "no_m"
+
 google.data.date <- format(ymd("20200522"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200101")
-m.param.breakpoints <- c(ymd("20200307"))
+if (scenario.name == "no_m") {
+	m.param.breakpoints <- NULL
+} else {
+	m.param.breakpoints <- ymd("20200307")
+}
 nforecast.weeks <- 3
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
@@ -38,6 +44,6 @@ hosp.flag <- 1					# 0 = off, 1 = on
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-					 "Lombardy_early_start"
+					 paste0("Lombardy_early_start", scenario.name)
 					 )
 
