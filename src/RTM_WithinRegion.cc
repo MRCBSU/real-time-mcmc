@@ -132,6 +132,57 @@ void regional_scalar_parameter(double& out_val, const gsl_vector* param_value, c
     }
 }
 
+void regional_time_vector_parameter(gsl_vector* out_vec, const gsl_vector* param_value, const regression_def& map_to_regional, const int region_index, const int time_steps_per_day)
+{
+  // IN THIS FUNCTION, THE CODE LINES INVOLVING THE subdesign MATRICES HAVE BEEN DONE IN A VERY
+  // SAFE MANNER, ONCE WORKING, THIS MAY BE SPEEDED UP - INVESTIGATE
+
+  // PARAMETERS USING THIS FUNCTION SHOULD HAVE NO NEED OF VARIATION BY AGE VARIATION SPECIFIED
+  // BY AGE IN THE regression_def COMPONENT OF in_ump WILL THEREFORE BE IGNORED.
+
+
+  // if there's any temporal, regional or age variation then the design matrix should be non-zero
+  if(map_to_regional.design_matrix == 0)
+    {
+      // no variation, only first component of parameter value will be used.
+      gsl_vector_set_all(out_vec,
+			 gsl_vector_get(param_value, 0));
+    }
+  else
+    {
+      // the design matrix should be set.
+      // get the number of breakpoints for each region
+      int dim_r = (map_to_regional.region_breakpoints == 0) ? 1 : map_to_regional.region_breakpoints->size + 1;
+      int dim_t = (map_to_regional.time_breakpoints == 0) ? 1 : map_to_regional.time_breakpoints->size + 1;
+
+      gsl_matrix* subdesign = gsl_matrix_alloc(dim_t, map_to_regional.design_matrix->size2);
+      gsl_vector* intermediate_vec = gsl_vector_alloc(subdesign->size1);
+
+      select_design_matrix(subdesign, map_to_regional.design_matrix, dim_r == 1,
+			   region_index * dim_t, dim_t);
+
+      R_generalised_linear_regression(intermediate_vec, subdesign,
+				       param_value, map_to_regional.regression_link);
+
+      // now fill out the out_vec according to the breakpoints
+      gsl_vector_int* rescaled_temporal_breakpoints = 0;
+      if(dim_t > 1){
+	rescaled_temporal_breakpoints = gsl_vector_int_alloc(map_to_regional.time_breakpoints->size);
+	gsl_vector_int_memcpy(rescaled_temporal_breakpoints, map_to_regional.time_breakpoints);
+	gsl_vector_int_scale(rescaled_temporal_breakpoints, time_steps_per_day);
+      }
+      vec_breakpoint_cut(out_vec, rescaled_temporal_breakpoints, intermediate_vec);
+
+      // free any memory allocated within this scope
+      if(rescaled_temporal_breakpoints != 0)
+	gsl_vector_int_free(rescaled_temporal_breakpoints);
+      gsl_vector_free(intermediate_vec);
+      gsl_matrix_free(subdesign);
+
+    }
+
+}
+
 void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector* param_value, const regression_def& map_to_regional, const int region_index)
 {
   /// IN THIS FUNCTION, THE CODE LINES INVOLVING THE subdesign MATRICES HAVE BEEN DONE IN A VERY
@@ -340,6 +391,11 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
     }
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, in_umps[REL_INFECT_INDEX].param_value, in_umps[REL_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_lbeta_rw")){
+    regional_time_vector_parameter(out_rmp.l_lbeta_rw, in_umps[LBETA_RW_INDEX].param_value, in_umps[LBETA_RW_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+    if(0 != gsl_vector_get(out_rmp.l_lbeta_rw, 0))
+      gsl_vector_scale(out_rmp.l_lbeta_rw, 1 / gsl_vector_get(out_rmp.l_lbeta_rw, 0)); // Random-walk necessarily centred on 0.
+  }
   if(update_flags.getFlag("l_sensitivity"))
     { // STRICTLY A SCALAR QUANTITY
       fixed_quantity(out_rmp.l_sensitivity,

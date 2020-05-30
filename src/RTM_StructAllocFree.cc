@@ -194,6 +194,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
   new_rmp.l_average_infectious_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// DO I WANT NUM_DAYS AND NUM_AGES? OR THE NUMBER OF TEMPORAL AND AGE BREAKPOINTS.
   new_rmp.l_latent_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// THE SAME GOES FOR MANY OF THE OTHER MATRICES
   new_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); // VARIATION NOT EXPECTED TO BE USED HERE
+  new_rmp.l_lbeta_rw = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
   new_rmp.l_pr_symp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
   new_rmp.l_pr_onset_to_GP = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
   new_rmp.l_pr_onset_to_Hosp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
@@ -224,6 +225,7 @@ void regional_model_params_alloc(regional_model_params& dest_rmp,
   dest_rmp.l_average_infectious_period = gsl_matrix_calloc(src_rmp.l_average_infectious_period->size1, src_rmp.l_average_infectious_period->size2);
   dest_rmp.l_latent_period = gsl_matrix_calloc(src_rmp.l_latent_period->size1, src_rmp.l_latent_period->size2);
   dest_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(src_rmp.l_relative_infectiousness_I2_wrt_I1->size1, src_rmp.l_relative_infectiousness_I2_wrt_I1->size2);
+  dest_rmp.l_lbeta_rw = gsl_vector_calloc(src_rmp.l_lbeta_rw->size);
   dest_rmp.l_pr_symp = gsl_matrix_calloc(src_rmp.l_pr_symp->size1, src_rmp.l_pr_symp->size2);
   dest_rmp.l_pr_onset_to_GP = gsl_matrix_calloc(src_rmp.l_pr_onset_to_GP->size1, src_rmp.l_pr_onset_to_GP->size2);
   dest_rmp.l_pr_onset_to_Hosp = gsl_matrix_calloc(src_rmp.l_pr_onset_to_Hosp->size1, src_rmp.l_pr_onset_to_Hosp->size2);
@@ -249,6 +251,7 @@ void regional_model_params_free(regional_model_params& old_rmp)
   gsl_matrix_free(old_rmp.l_average_infectious_period);
   gsl_matrix_free(old_rmp.l_latent_period);
   gsl_matrix_free(old_rmp.l_relative_infectiousness_I2_wrt_I1);
+  gsl_vector_free(old_rmp.l_lbeta_rw);
   gsl_matrix_free(old_rmp.l_pr_symp);
   gsl_matrix_free(old_rmp.l_pr_onset_to_GP);
   gsl_matrix_free(old_rmp.l_pr_onset_to_Hosp);
@@ -274,6 +277,8 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     gsl_matrix_memcpy(rmp_dest.l_latent_period, rmp_src.l_latent_period);
   if(update_flags.getFlag("l_relative_infectious_period"))
     gsl_matrix_memcpy(rmp_dest.l_relative_infectiousness_I2_wrt_I1, rmp_src.l_relative_infectiousness_I2_wrt_I1);
+  if(update_flags.getFlag("l_lbeta_rw"))
+    gsl_vector_memcpy(rmp_dest.l_lbeta_rw, rmp_src.l_lbeta_rw);
   if(update_flags.getFlag("l_EGR"))
     rmp_dest.l_EGR = rmp_src.l_EGR;
   if(update_flags.getFlag("l_R0_Amplitude"))

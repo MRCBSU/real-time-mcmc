@@ -74,7 +74,7 @@ if(!all(file.exists(cm.bases))){
 ## Modifiers (which element of contact_parameters to use)
 cm.mults <- file.path(proj.dir, "contact_mats", 
                       paste0("ag", nA, "_mult", 0:8, ".txt"))
-mult.order <- c(0, rep(1, sum(cm.breaks<85)), rep(2, sum(cm.breaks>=85)))
+mult.order <- c(0, rep(1, length(cm.breaks)))
 ## mult.order <- 0:length(cm.breaks)
 if(!all(file.exists(cm.mults))){
     mult.mat <- lapply(unique(mult.order), function(x) matrix(x, nA, nA))

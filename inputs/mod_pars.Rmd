@@ -87,6 +87,37 @@ regression_link = 1;
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
+log_beta_rw = { param_value = `r paste(rep(beta.rw.vals, nr), collapse = ", ")`;
+
+prior_distribution = `r paste(rep(4, nr * length(beta.rw.vals)), collapse = ", ")`;
+
+prior_parameters = "log_beta_rw_sd";
+
+proposal_variance = `r paste(beta.rw.props, collapse = ", ")`;
+
+prior_hyper = 1;
+
+regression_link = 1;
+
+regression_design = beta.design.txt;
+
+time_breakpoints = `r paste(cm.breaks[-1], collapse = ", ")`;
+
+region_breakpoints = true;
+
+}  ## WILL NEED TO GIVE A FACTOR OF 1 IN THE FIRST COMPONENT AFTER THE INVERSE CANONICAL LINK TRANSFORMATION IS APPLIED.
+
+
+log_beta_rw_sd = { param_value = 0, `r (0.1 * sd)`;
+
+prior_distribution = 1, 1;
+
+prior_parameters = 1, 5;
+
+proposal_variance = 0, 0;
+
+}
+
 R0_amplitude_kA = { param_value = 0.0;
 
 prior_distribution = 1;

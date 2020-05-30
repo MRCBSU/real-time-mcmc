@@ -88,7 +88,7 @@ ldelay.sd <- 3.59
 int.effect <- 0.0521
 nm <- max(mult.order)
 sd <- sqrt(log(5) - 2*log(2))
-rw.flag <- TRUE
+rw.flag <- FALSE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
                    increments = c(0, 0.1 * sd)
                    )
@@ -117,6 +117,16 @@ if(rw.flag){
     m.design <- as.matrix(m.design)
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
+
+nbetas <- length(cm.breaks)
+beta.rw.vals <- rep(0, nbetas)
+beta.rw.props <- rep(c(0, rep(0.001, nbetas - 1)), nr)
+beta.design <- matrix(1, nbetas, nbetas)
+for(i in 1:(nbetas-1))
+    for(j in (i+1):nbetas)
+        beta.design[i,j] <- 0
+beta.design <- as.matrix(bdiag(lapply(1:nr, function(x) beta.design)))
+write_tsv(as.data.frame(beta.design), file.path(out.dir, "beta.design.txt"), col_names = FALSE)
 
 ## Serological test sensitivity and specificity
 sero.sens <- 71.5 / 101

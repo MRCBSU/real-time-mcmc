@@ -345,7 +345,9 @@ void fn_transmission_model(regional_model_params in_dmp,
   // WRITE DOWN THE FLUCTUATION IN R_0 OVER TIME
   gsl_vector* R0_t = gsl_vector_alloc(in_dmp.d_R0_phase_differences->size);
   Seasonal_R0_function(R0_t, in_dmp.l_R0_init, in_dmp.l_R0_Amplitude, in_dmp.d_R0_phase_differences);
-
+  // ACCOUNT FOR THE FLUCTUATING BETA PARAMETER...
+  gsl_vector_mul(R0_t, in_dmp.l_lbeta_rw);
+  
   // INITIALISE THE SEIR MODEL
   gsl_vector* l_E1_0 = gsl_vector_alloc(NUM_AGE_GROUPS);
   gsl_vector* l_E2_0 = gsl_vector_alloc(NUM_AGE_GROUPS);

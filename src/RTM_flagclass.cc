@@ -56,6 +56,8 @@ string flagclass::UPItoRMP(const int& iUPI_index)
     return "l_average_infectious_period : l_R0_init : l_I0 : l_R0_Amplitude";
   case REL_INFECT_INDEX :
     return "l_relative_infectiousness_I2_wrt_I1";
+  case LBETA_RW_INDEX :
+    return "l_lbeta_rw";
   case PROP_SYMP_INDEX :
     return "l_pr_symp";
   case CONTACT_INDEX :
