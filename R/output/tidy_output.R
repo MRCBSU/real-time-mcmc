@@ -120,6 +120,7 @@ M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
 ## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
+beta <- exp(params$log_beta_rw[iterations.for.Rt, ] %*% t(beta.design))
 ## Multiply by the design matrix if applicable
 if(rw.flag)
     m <- m %*% t(m.design)
@@ -130,7 +131,9 @@ if(ncol(m) %% r != 0) {
   warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
 } else {
   m.per.region <- ncol(m) / r
-  R0 <- posterior.R0[iterations.for.Rt, , drop = F];colnames(R0) <- regions
+  beta.per.region <- ncol(beta) / r
+  R0 <- posterior.R0[iterations.for.Rt, , drop = F]
+  colnames(R0) <- regions
   for(idir in 1:length(cm.bases)){
 	# Read the matrices containing the transmission between age groups (from Ediwn)
     M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
@@ -140,13 +143,22 @@ if(ncol(m) %% r != 0) {
   }
   # m.levels[t] is the number of breakpoints passed on day t
   m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
+  beta.levels <- cut(1:ndays, c(0, cm.breaks[-1], Inf))
   names(M) <- names(M.mult) <- NULL
   pop.total <- all.pop[1, ];names(pop.total) <- regions
   for(reg in regions){
     ireg <- which(regions %in% reg)
     for(idir in 1:length(cm.bases)){
 	  # M.star[i] <- m[i] * M[i] but select the correct m for the region
-      M.star[[idir]] <- array(apply(m, 1, function(mm) M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]),
+      M.star[[idir]] <- array(apply(m, 1,
+			function(mm) {
+				M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
+			}),
+                              dim = c(nA, nA, nrow(m)))
+      M.star[[idir]] <- array(apply(beta, 1,
+			function(b) {
+				M.star[[idir]] * b[(ireg-1)*beta.per.region + max(1, idir - 1)]
+			}),
                               dim = c(nA, nA, nrow(m)))
     }
     M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
