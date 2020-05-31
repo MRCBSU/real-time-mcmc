@@ -45,10 +45,10 @@ col.names <- list(
     age = "age",
     region = "Region",
     sample_date = "SampleDate",
-    Eoutcome = "EuroImm_outcome",
-    Eresult = "EuroImm_Units",
+    Eoutcome = "EuroImmun_outcome",
+    Eresult = "EuroImmun_units",
     Routcome = "RBD_outcome",
-    Rresult = "RBD_Units"
+    Rresult = "RBD_units"
     )
 
 ## Given a row in the sero data file, return its region, formatted with no spaces

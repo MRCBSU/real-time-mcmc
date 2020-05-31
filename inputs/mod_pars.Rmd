@@ -110,11 +110,11 @@ region_breakpoints = true;
 
 log_beta_rw_sd = { param_value = 0, `r (0.1 * sd)`;
 
-prior_distribution = 1, 1;
+prior_distribution = 1, 2;
 
-prior_parameters = 1, 5;
+prior_parameters = 1, 20;
 
-proposal_variance = 0, 0;
+proposal_variance = 0.001, 0.0011;
 
 }
 

@@ -358,61 +358,61 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		    log_accep += theta_i->proposal_log_prior_dens;
 
 		    if(log_accep > GSL_NEGINF){
-		    // IS THIS PARAMETER A MODEL PARAMETER OR A HYPERPARAMETER?
-		    // HYPERPARAMETER IF IT HAS ANY CHILD NODES
+		      // IS THIS PARAMETER A MODEL PARAMETER OR A HYPERPARAMETER?
+		      // HYPERPARAMETER IF IT HAS ANY CHILD NODES
 		      if(theta_i->flag_any_child_nodes)
-		      {
+			{
 
-			// THE "LIKELIHOOD" COMES FROM THE PRIOR DENSITIES OF THE CHILD NODES
-			for(int int_child_node = 0; int_child_node < theta.size_param_list; int_child_node++)
-			  {
-			    if(int_child_node != int_param)
-			      if(theta_i->flag_child_nodes[int_child_node])
-				{
-				  updateable_model_parameter theta_child = theta.param_list[int_child_node];
+			  // THE "LIKELIHOOD" COMES FROM THE PRIOR DENSITIES OF THE CHILD NODES
+			  for(int int_child_node = 0; int_child_node < theta.size_param_list; int_child_node++)
+			    {
+			      if(int_child_node != int_param)
+				if(theta_i->flag_child_nodes[int_child_node])
+				  {
+				    updateable_model_parameter* theta_child = theta.param_list + int_child_node;
 
-				  theta_child.proposal_log_prior_dens = 0;
+				    theta_child->proposal_log_prior_dens = 0;
 
-				  for(int int_j = 0; int_j < theta_child.param_value->size; int_j++)
-				    theta_child.proposal_log_prior_dens += R_univariate_prior_log_density(gsl_vector_get(theta_child.param_value, int_j),
-													  (distribution_type) gsl_vector_int_get(theta_child.prior_distribution, 0),
-													  theta_i->proposal_value);
+				    for(int int_j = 0; int_j < theta_child->param_value->size; int_j++)
+				      theta_child->proposal_log_prior_dens += R_univariate_prior_log_density(gsl_vector_get(theta_child->param_value, int_j),
+													     (distribution_type) gsl_vector_int_get(theta_child->prior_distribution, 0),
+													     theta_i->proposal_value);
 
-				  log_accep += theta_child.proposal_log_prior_dens - theta_child.log_prior_dens;
-				}
+				    log_accep += theta_child->proposal_log_prior_dens - theta_child->log_prior_dens;
+				  }
 
-			  }
-		      }
+			    }
+			}
 		    
-		    else
-		      {
+		      else
+			{
 		       
-			// ADJUST THE COPIED REGION STRUCTURES TO THE PROPOSED VALUE
-			// evaluate_regional_parameters work by using the param_value... need to temporarily switch the two
-			gsl_vector* tempvec = theta_i->param_value;
-			theta_i->param_value = theta_i->proposal_value; // temporarily switch the value of the pointer
-			for(int int_reg = 0; int_reg < nregions; ++int_reg)
+			  // ADJUST THE COPIED REGION STRUCTURES TO THE PROPOSED VALUE
+			  // evaluate_regional_parameters work by using the param_value... need to temporarily switch the two
+			  gsl_vector* tempvec = theta_i->param_value;
+			  theta_i->param_value = theta_i->proposal_value; // temporarily switch the value of the pointer
+			  for(int int_reg = 0; int_reg < nregions; ++int_reg)
     
-			  evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
+			    evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
     
-			theta_i->param_value = tempvec; // and then re-set to the original address
+			  theta_i->param_value = tempvec; // and then re-set to the original address
 
-			// EVALUATE THE NEW LIKELIHOOD (ESSENTIALLY, ADJUST THE LIKELIHOOD STRUCTURE FOR THE PROPOSED VALUES)
-			fn_log_likelihood(prop_lfx, 
-					  prop_country,
-					  0,
-					  theta_i->flag_transmission_model,
-					  theta_i->flag_reporting_model,
-					  theta_i->flag_GP_likelihood,
-					  theta_i->flag_Hosp_likelihood,
-					  theta_i->flag_Viro_likelihood,
-					  theta_i->flag_Sero_likelihood,
-					  gmip,
-					  theta);
+			  // EVALUATE THE NEW LIKELIHOOD (ESSENTIALLY, ADJUST THE LIKELIHOOD STRUCTURE FOR THE PROPOSED VALUES)
+			  fn_log_likelihood(prop_lfx, 
+					    prop_country,
+					    0,
+					    theta_i->flag_transmission_model,
+					    theta_i->flag_reporting_model,
+					    theta_i->flag_GP_likelihood,
+					    theta_i->flag_Hosp_likelihood,
+					    theta_i->flag_Viro_likelihood,
+					    theta_i->flag_Sero_likelihood,
+					    gmip,
+					    theta);
 
-			log_accep += prop_lfx.total_lfx - lfx.total_lfx;
+			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 
-		      }
+			}
 		    }
 		  }
 		  // dbl_A and dbl_U variables need to be defined to govern acceptance.
@@ -431,22 +431,6 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			}
 		      theta_i->log_prior_dens += theta_i->proposal_log_prior_dens;
 
-		      for(int int_reg = 0; int_reg < nregions; int_reg++){
-			// COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
-			// SPECIFICALLY THE det_model_params MEMBER AND THE region_modstats
-			// det_model_params:
-			regional_model_params_memcpy(state_country[int_reg].det_model_params, prop_country[int_reg].det_model_params, update_flags);
-
-			// region_modstats:
-			model_statistics_memcpy(state_country[int_reg].region_modstats, prop_country[int_reg].region_modstats,
-						theta_i->flag_transmission_model,
-						theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
-						theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
-						theta_i->flag_Sero_likelihood,
-						theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
-
-		      }
-
 		      // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
 		      if(theta_i->flag_any_child_nodes)
 			{ // NEED TO UPDATE THE PRIOR DENSITY OF THE CHILD NODES
@@ -454,38 +438,57 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			    if(theta_i->flag_child_nodes[int_child_node])
 			      theta.param_list[int_child_node].log_prior_dens = theta.param_list[int_child_node].proposal_log_prior_dens;
 			}
-		      else // MEMCPY THE LIKELIHOOD STRUCTURE
+		      else {
+			// MEMCPY THE LIKELIHOOD STRUCTURE
 			likelihood_memcpy(lfx, prop_lfx);
-		    }
-		  else
-		    {
-		      // PRETTY MUCH NEED TO TAKE THE OPPOSITE STEPS OF THE ACCEPTANCE CLAUSE
-		      for(int int_component = 0; int_component < gsl_vector_int_get(block_size, int_param); int_component++)
-			{
-			  int a_component = gsl_vector_int_get(a[int_param], int_component);
-			  gsl_vector_set(theta_i->proposal_value, a_component, gsl_vector_get(theta_i->param_value, a_component));
+
+			for(int int_reg = 0; int_reg < nregions; int_reg++){
+			  // COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
+			  // SPECIFICALLY THE det_model_params MEMBER AND THE region_modstats
+			  // det_model_params:
+			  regional_model_params_memcpy(state_country[int_reg].det_model_params, prop_country[int_reg].det_model_params, update_flags);
+			  
+			  // region_modstats:
+			  model_statistics_memcpy(state_country[int_reg].region_modstats, prop_country[int_reg].region_modstats,
+						  theta_i->flag_transmission_model,
+						  theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
+						  theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
+						  theta_i->flag_Sero_likelihood,
+						  theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
+			  
 			}
-		      for(int int_reg = 0; int_reg < nregions; int_reg++){
-			// COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
-			// SPECIFICALLY THE det_model_params MEMBER AND THE region_modstats
-			// det_model_params:
-			regional_model_params_memcpy(prop_country[int_reg].det_model_params, state_country[int_reg].det_model_params, update_flags);
-
-			// region_modstats:
-			model_statistics_memcpy(prop_country[int_reg].region_modstats, state_country[int_reg].region_modstats,
-						theta_i->flag_transmission_model,
-						theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
-						theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
-						theta_i->flag_Sero_likelihood,
-						theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
-
+			
 		      }
-
-		      // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
-		      if(!theta_i->flag_any_child_nodes)
-			likelihood_memcpy(prop_lfx, lfx);
+		      
+		    }
+		  else {
+		    // PRETTY MUCH NEED TO TAKE THE OPPOSITE STEPS OF THE ACCEPTANCE CLAUSE
+		    for(int int_component = 0; int_component < gsl_vector_int_get(block_size, int_param); int_component++)
+		      {
+			int a_component = gsl_vector_int_get(a[int_param], int_component);
+			gsl_vector_set(theta_i->proposal_value, a_component, gsl_vector_get(theta_i->param_value, a_component));
+		      }
+		    for(int int_reg = 0; int_reg < nregions; int_reg++){
+		      // COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
+		      // SPECIFICALLY THE det_model_params MEMBER AND THE region_modstats
+		      // det_model_params:
+		      regional_model_params_memcpy(prop_country[int_reg].det_model_params, state_country[int_reg].det_model_params, update_flags);
+			
+		      // region_modstats:
+		      model_statistics_memcpy(prop_country[int_reg].region_modstats, state_country[int_reg].region_modstats,
+					      theta_i->flag_transmission_model,
+					      theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
+					      theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
+					      theta_i->flag_Sero_likelihood,
+					      theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
 
 		    }
+
+		    // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
+		    if(!theta_i->flag_any_child_nodes)
+		      likelihood_memcpy(prop_lfx, lfx);
+
+		  }
 
 		}
 	      // iterate the posterior_mean and posterior_sumsq members of the updateable_model_parameter structure regardless of whether the move is accepted or not
@@ -518,7 +521,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 	} // END FOR(int_param < size_param_list)
 
-      // OUTPUT TO THE LIKELIHOOD CHAIN
+	  // OUTPUT TO THE LIKELIHOOD CHAIN
       if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every))
 	output_coda_lfx.write(reinterpret_cast<char const*>(&lfx.total_lfx), sizeof(double));
 

@@ -129,13 +129,14 @@ beta.design <- as.matrix(bdiag(lapply(1:nr, function(x) beta.design)))
 write_tsv(as.data.frame(beta.design), file.path(out.dir, "beta.design.txt"), col_names = FALSE)
 
 ## Serological test sensitivity and specificity
-sero.sens <- 71.5 / 101
-sero.spec <- 777.5 / 787
-
+## sero.sens <- 71.5 / 101
+## sero.spec <- 777.5 / 787
+sero.sens <- 137.5 / 174
+sero.spec <- 699.5 / 708
 ssens.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
-ssens.prior.pars <- c(71.5, 29.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
+ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 sspec.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
-sspec.prior.pars <- c(777.5, 9.5)
+sspec.prior.pars <- c(699.5, 8.5)
 
 ssens.prop <- 0.001
 sspec.prop <- 0.001
