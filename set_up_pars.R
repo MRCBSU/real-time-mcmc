@@ -15,11 +15,11 @@ value.dl <- 1
 ## Use these to deduce the mean infectious period 2*(serial - latent)
 ## shape.dI <- 4.47
 ## rate.dI <- 0.972
-value.dI <- 0.972
+value.dI <- 0.299
 pars.dI <- c(1.43, 0.549)
 
 ## Exponential growth rate
-value.egr <- 0.25
+value.egr <- 0.26
 pars.egr <- c(31.36, 224)
 
 ## Ascertainment parameters
@@ -28,8 +28,8 @@ pars.pgp <- c(2.12, 15.8)
 
 ## Infection to fatality ratio
 if(nA > 1){
-    value.ifr <- jitter(rep(0.001, nA - 1))
-    var.ifr <- rep(0.005, nA - 1)
+    value.ifr <- c(1e-5, 1e-5, 3e-5, 3e-4, 0.00390, 0.025, 0.243)
+    var.ifr <- rep(0.0004, nA - 1)
 } else {
     value.ifr <- 0.007
     var.ifr <- 0.005
@@ -47,7 +47,7 @@ if(nA == 1){
 pars.ihr <- c(1, 1)
 
 ## Initial seeding
-value.nu <- c(-19, -17.7)
+value.nu <- c(-16.2, -14.5, -15.0, -17.1, -15.7, -15.2, -16.0)
 pars.nu <- c(-17.5, 1.25)
 
 ## GP Overdispersion
@@ -55,7 +55,7 @@ value.eta <- 1.0;
 pars.eta <- c(1.0, 0.2);
 
 ## Hosp Overdispersion
-value.eta.h <- 0.3
+value.eta.h <- 0.287
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
@@ -101,8 +101,8 @@ if(nm > 1){
     for(j in 2:nm)
         contact.pars[, j, ] <- prior.list$increments
 }
-contact.proposal <- rep(c(0, rep(0.001, nm)), nr)
-contact.reduction <- rep(c(0, jitter(rep(int.effect, nm))), nr)
+contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
+contact.reduction <- c(0, 0.102, 0, -0.948, 0, -0.0328, 0, 0.332, 0, 0.515, 0, 0.515, 0, -0.00722)
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
 if(rw.flag){
@@ -122,7 +122,7 @@ nbetas <- length(cm.breaks)
 beta.rw.vals <- rep(0, nbetas)
 beta.update <- FALSE
 beta.rw.flag <- FALSE
-beta.rw.props <- rep(c(0, rep(0.001, nbetas - 1)), nr)
+beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
     for(j in (i+1):nbetas)
@@ -134,12 +134,12 @@ beta.rw.sd.pars <- c(1, 100)
 ## Serological test sensitivity and specificity
 ## sero.sens <- 71.5 / 101
 ## sero.spec <- 777.5 / 787
-sero.sens <- 137.5 / 174
-sero.spec <- 699.5 / 708
+sero.sens <- 0.779
+sero.spec <- 0.970
 ssens.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
 ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 sspec.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
 sspec.prior.pars <- c(699.5, 8.5)
 
 ssens.prop <- 0.001
-sspec.prop <- 0.001
+sspec.prop <- 0.08
