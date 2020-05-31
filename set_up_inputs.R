@@ -161,3 +161,5 @@ if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261,
 cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
 cm.mults <- file.path(proj.dir, "contact_mats", cm.mults)
 }
+
+num.threads <- nr
