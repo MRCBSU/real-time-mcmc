@@ -1,0 +1,105 @@
+#!/bin/bash
+#!
+
+#!#############################################################
+#!#### Modify the options in this section as appropriate ######
+#!#############################################################
+
+#! sbatch directives begin here ###############################
+#! Name of the job:
+#SBATCH -J 20200530_deaths_sero_covid_rws
+#! How many whole nodes should be allocated?
+#SBATCH --nodes=1
+#! How many tasks will need performing in parallel?
+#SBATCH --ntasks=1
+#! How many CPUs?
+#SBATCH --cpus-per-task=8
+#! How much wallclock time will be required?
+#SBATCH --time=24:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+#SBATCH --array=1-2
+
+#! sbatch directives end here (put any additional directives above this line)
+#SBATCH --output=model_run_20200530_rw_sero%A_%a.out
+#SBATCH --error=model_run_20200530_rw_sero%A_%a.err
+
+#! PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
+PATH=$PATH:$HOME/bin:$HOME/usr/bin:$HOME/usr/gsl/bin
+
+#! Work directory (i.e. where the job will run):
+# The value of SLURM_SUBMIT_DIR sets workdir to the directory
+# in which sbatch is run.
+if [ $SLURM_ARRAY_TASK_ID == 1 ]
+then
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200530/oldsero_varSens_lp3_allbetarw__matrices_20200522_deaths/"
+else
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200530/oldsero_varSens_lp3_allbetarw__matrices_20200529_deaths/"
+fi
+
+# if [ $SLURM_ARRAY_TASK_ID -lt 5 ]
+# then
+#     stoch="var"
+# else
+#     stoch="fix"
+# fi
+
+# if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
+# then
+#     latp="lp4"
+# else
+#     latp="lp3"
+# fi
+
+# if [ $(( $SLURM_ARRAY_TASK_ID % 4 )) -lt 2 ]
+# then
+#     dist=""
+# else
+#     dist="newOtoD_"
+# fi
+
+# workdir="${workdir}${stoch}Sens_${latp}_${dist}matrices_20200522/"
+echo -e $workdir
+
+# workdir="$SLURM_SUBMIT_DIR/model_runs/20200516/age_and_region_matrices20200509/"
+
+#! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
+#! safe value to no more than 16:
+export OMP_NUM_THREADS=8
+
+
+#! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
+CMD="../../../rtm_optim"
+
+
+###############################################################
+### You should not have to change anything below this line ####
+###############################################################
+
+cd $workdir
+echo -e "Changed directory to `pwd`.\n"
+
+JOBID=$SLURM_JOB_ID
+
+echo -e "JobID: $JOBID\n======"
+echo "Time: `date`"
+echo "Running on master node: `hostname`"
+echo "Current directory: `pwd`"
+
+if [ "$SLURM_JOB_NODELIST" ]; then
+        #! Create a machine file:
+        echo -e "\nNodes allocated:\n================"
+        echo `cat machine.file.$JOBID | sed -e 's/\..*$//g'`
+fi
+
+echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks_per_node (OMP_NUM_THREADS=$OMP_NUM_THREADS)"
+
+echo -e "\nExecuting command:\n==================\n$CMD\n"
+
+eval $CMD

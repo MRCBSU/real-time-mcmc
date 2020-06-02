@@ -93,7 +93,7 @@ for(reg in regions){
 
 Rt.func <- function(vecS, matM){
     if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
-    M.star <- sweep(matM, 2, vecS, `*`)
+    M.star <- sweep(matM, 1, vecS, `*`)
     max(abs(eigen(M.star)$value))
 }
 

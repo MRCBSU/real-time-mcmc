@@ -111,13 +111,14 @@ stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to
 print('Calculating Rt')
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
-  M.star <- sweep(matM, 2, vecS, `*`)
+  M.star <- sweep(matM, 1, vecS, `*`)
   max(abs(eigen(M.star, only.values = TRUE)$value))
 }
 Rt <- list()
 R.star <- NULL
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
+outputs.for.Rt <- which(parameter.to.outputs %in% iterations.for.Rt)
 ## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
 beta <- exp(params$log_beta_rw[iterations.for.Rt, ] %*% t(beta.design))
@@ -155,27 +156,29 @@ if(ncol(m) %% r != 0) {
 				M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
 			}),
                               dim = c(nA, nA, nrow(m)))
-      M.star[[idir]] <- array(apply(beta, 1,
+      M.star[[idir]] <- array(sapply(1:nrow(beta),
 			function(b) {
-				M.star[[idir]] * b[(ireg-1)*beta.per.region + max(1, idir - 1)]
+				M.star[[idir]][,,b] * beta[b,(ireg-1)*beta.per.region + max(1, idir - 1)]
 			}),
                               dim = c(nA, nA, nrow(m)))
     }
     M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
-	# Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.
+    ## Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.
     R.star[ireg] <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
-	# Calculate number of susceptiables for each day
-    S <- apply(NNI[[reg]], c(1, 3), cumsum)[,,seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]  ## TxAxI array
+    ## Calculate number of susceptiables for each day
+    S <- apply(NNI[[reg]][,,outputs.for.Rt], c(1, 3), cumsum)  ## TxAxI array
     S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
-	# Calculate the relative Rt values as a function of the next generation matrix for each day
+    ## Calculate the relative Rt values as a function of the next generation matrix for each day
     R.prime <- sapply(1:ndays,
-                      function(x) sapply(1:length(iterations.for.Rt), function(i){
-                        M.temp <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
-                        Rt.func(S[x, , i] / pop.total[ireg], M.temp)
-                      }
-                      )
-    ) ## IxT array
-	# Scale the relative Rt values to give the correct R0s
+                      function(x) sapply(1:length(iterations.for.Rt),
+                                         function(i){
+                                             MM <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                                             Rt.func(S[x, , i] / pop.total[ireg], MM)
+                                         }
+                                         )
+                      ) ## IxT array
+    
+    ## Scale the relative Rt values to give the correct R0s
     Rt[[reg]] <- R0[, ireg] * R.prime / R.star[ireg] ## I*T array
   }
   names(R.star) <- regions
