@@ -102,7 +102,7 @@ if(nm > 1){
         contact.pars[, j, ] <- prior.list$increments
 }
 contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
-contact.reduction <- c(0, 0.102, 0, -0.948, 0, -0.0328, 0, 0.332, 0, 0.515, 0, 0.515, 0, -0.00722)
+contact.reduction <- c(0, 0.102, 0, -0.948, 0, -0.0328, 0, 0.332, 0, 0.515, 0, 0.515, 0, -0.00722)[1:(nr*2)]
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
 if(rw.flag){
