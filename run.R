@@ -64,7 +64,6 @@ source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
 if(compile.code) {
     system("make rtm_optim")
-	system("chmod a-w coda* NNI* posterior* adaptive*")
 }
 
 ## Run the code
@@ -72,6 +71,7 @@ startwd <- getwd()
 setwd(out.dir)
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+	 system("chmod a-w coda* NNI* posterior* adaptive*")
 } else save.image("tmp.RData")
 
 ## Post processing the results.
