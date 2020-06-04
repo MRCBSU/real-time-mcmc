@@ -32,7 +32,7 @@ build/rtm_debug/%.o: src/%.cc
 
 build/rtm/%.o: src/%.cc
 	@mkdir -p build/rtm
-	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native
 
 build/rtm_optim/%.o: src/%.cc
 	@mkdir -p build/rtm_optim
