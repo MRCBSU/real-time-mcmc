@@ -1,3 +1,5 @@
+library(rmarkdown)
+
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -79,7 +81,7 @@ Rfile.loc <- file.path(file.loc, "R/output")
 
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
-	rmarkdown::render(
+	render(
 		file.path(Rfile.loc, 'report-updated.Rmd'),
 		html_document(pandoc_args = "--self-contained"),
 		output_dir = out.dir,
