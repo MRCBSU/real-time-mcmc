@@ -166,4 +166,4 @@ maximum_block_size   9
 
 random_seed	     82
 
-max_threads	     `r nr`
+max_threads	     `r num.threads`
