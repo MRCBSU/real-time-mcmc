@@ -99,9 +99,9 @@ prior_hyper = `r as.integer(beta.update)`;
 
 regression_link = 1;
 
-`r ifelse(rw.flag, "regression_design = beta.design.txt;", "")`
+`r ifelse(beta.rw.flag, "regression_design = beta.design.txt;", "")`
 
-time_breakpoints = `r paste(cm.breaks[-1], collapse = ", ")`;
+time_breakpoints = `r paste(beta.breaks, collapse = ", ")`;
 
 region_breakpoints = true;
 
@@ -112,7 +112,7 @@ log_beta_rw_sd = { param_value = 0, `r (0.1 * sd)`;
 
 prior_distribution = 1, 2;
 
-prior_parameters = `r paste(beta.rw.sd.pars, collapse = "m ")`;
+prior_parameters = `r paste(beta.rw.sd.pars, collapse = ", ")`;
 
 proposal_variance = 0.001, 0.0011;
 

@@ -118,10 +118,11 @@ if(rw.flag){
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
 
-nbetas <- length(cm.breaks)
+beta.breaks <- cm.breaks[seq(2, length(cm.breaks), by = 2)]
+nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- rep(0, nbetas)
-beta.update <- FALSE
-beta.rw.flag <- FALSE
+beta.update <- TRUE
+beta.rw.flag <- TRUE
 beta.rw.props <- rep(c(0, rep(0.001, nbetas - 1)), nr)
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
