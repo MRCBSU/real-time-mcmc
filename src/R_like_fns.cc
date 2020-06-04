@@ -3,6 +3,8 @@
 
 using std::numeric_limits;
 
+const double normlnorm = -log(2 * M_PI) / 2;
+
 void R_gl_fac_sublevel(gsl_vector_int* factor_sequence, const int start_level, const int start_sublevel, const int num_sublevels, const int sequence_length)
 {
 
@@ -54,6 +56,7 @@ double R_univariate_prior_log_density(const double& x,
 				      const gsl_vector* params)
 {
 
+  double ldf;
   switch(dist) {
   case cCONSTANT :
     return 0;
@@ -62,7 +65,13 @@ double R_univariate_prior_log_density(const double& x,
   case cBETA :
     return gsl_sf_log(gsl_ran_beta_pdf(x, gsl_vector_get(params, 0), gsl_vector_get(params, 1)));
   case cNORMAL :
-    return gsl_sf_log(gsl_ran_gaussian_pdf(x - gsl_vector_get(params, 0), gsl_vector_get(params, 1)));
+    ldf = gsl_ran_gaussian_pdf(x - gsl_vector_get(params, 0), gsl_vector_get(params, 1));
+    if (ldf > 0){
+      return gsl_sf_log(ldf);
+    } else {
+      ldf = (x - gsl_vector_get(params, 0)) / gsl_vector_get(params, 1);
+      return normlnorm - ((1/2) * ldf * ldf) - gsl_sf_log(gsl_vector_get(params, 1));
+    }
   case cHALFNORMAL :
     return gsl_sf_log(2 * gsl_ran_gaussian_pdf(x - gsl_vector_get(params, 0), gsl_vector_get(params, 1)));
   case cMVNORMAL : // SHOULD BE EVALUATED BY A DIFFERENT FUNCTION
