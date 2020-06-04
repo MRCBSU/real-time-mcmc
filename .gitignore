@@ -1,6 +1,6 @@
 rtm
 rtm_debug
-rtm_optim
+rtm_optim*
 **.swp
 **.swo
 build/**
@@ -15,3 +15,4 @@ sitrep_outputs/**
 **~
 Report_structure*
 date_*/**
+R/output/*_cache

@@ -1,23 +1,23 @@
 ### Deaths incidence {.tabset}
 
 #### By region
-```{r}
-make.plots(noisy_deaths, by = "region", data = dth.dat)
+```{r reg-death, cache=TRUE, cache.extra=results_hash}
+make.plots(noisy_deaths, by = "region", data = dth.dat, x.label = "Date of death")
 ```
 
 #### By age
-```{r}
-make.plots(noisy_deaths, by = "age", data = dth.dat)
+```{r age-death, cache=TRUE, cache.extra=results_hash}
+make.plots(noisy_deaths, by = "age", data = dth.dat, x.label = "Date of death")
 ```
 
 ### Cumulative deaths {.tabset}
 
 #### By region
-```{r}
-make.plots(cum_deaths, by = "region")
+```{r cum-reg-death, cache=TRUE, cache.extra=results_hash}
+make.plots(cum_deaths, by = "region", x.label = "Date of death")
 ```
 
 #### By age
-```{r}
-make.plots(cum_deaths, by = "age")
+```{r cum-age-death, cache=TRUE, cache.extra=results_hash}
+make.plots(cum_deaths, by = "age", x.label = "Date of death")
 ```

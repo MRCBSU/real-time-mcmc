@@ -605,9 +605,6 @@ void fn_log_likelihood(likelihood& llhood,
   double lfx_increment = 0.0;
 
 #ifdef USE_THREADS
-  omp_set_nested(1);
-  omp_set_dynamic(1);
-
   int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
   int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
 #else
