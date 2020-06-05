@@ -106,8 +106,8 @@ parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & i
 outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
-save.image("tmptmp.RData")
-stop()
+## save.image("tmptmp.RData")
+## stop()
 ################################################################
 print('Calculating Rt')
 Rt.func <- function(vecS, matM){
@@ -147,8 +147,8 @@ if(ncol(m) %% r != 0) {
   # m.levels[t] is the number of breakpoints passed on day t
   m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
   if(beta.update) {
-      beta.levels <- cut(1:ndays, c(0, cm.breaks[-1], Inf))
-      beta.map <- as.numeric(cut(1:length(cm.bases),c(0, which(cm.breaks %in% beta.breaks), 10)))
+      beta.levels <- cut(1:ndays, c(0, beta.breaks, Inf))
+      beta.map <- as.numeric(cut(1:length(cm.bases),c(0, which(cm.breaks %in% beta.breaks), Inf)))
   }
   names(M) <- names(M.mult) <- NULL
   pop.total <- all.pop[1, ];names(pop.total) <- regions
