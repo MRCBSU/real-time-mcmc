@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -20,10 +20,9 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-reporting.delay <- 5
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200529"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200605"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -44,7 +43,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "newsero_varSens_betarw_step2wk"
+scenario.name <- "newsero2_varSens_betarw_fullrw_newDFE"
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {

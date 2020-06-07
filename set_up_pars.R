@@ -118,7 +118,7 @@ if(rw.flag){
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
 
-beta.breaks <- cm.breaks[seq(2, length(cm.breaks), by = 2)]
+beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- rep(0, nbetas)
 beta.update <- TRUE
