@@ -106,7 +106,8 @@ parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & i
 outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
-
+## save.image("tmptmp.RData")
+## stop()
 ################################################################
 print('Calculating Rt')
 Rt.func <- function(vecS, matM){
@@ -121,7 +122,8 @@ iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to
 outputs.for.Rt <- which(parameter.to.outputs %in% iterations.for.Rt)
 ## Get the right iterations of the marginal contact parameter chain
 m <- params$contact_parameters[iterations.for.Rt, ]
-beta <- exp(params$log_beta_rw[iterations.for.Rt, ] %*% t(beta.design))
+if(beta.update)
+    beta <- exp(params$log_beta_rw[iterations.for.Rt, ] %*% t(beta.design))
 ## Multiply by the design matrix if applicable
 if(rw.flag)
     m <- m %*% t(m.design)
@@ -132,7 +134,7 @@ if(ncol(m) %% r != 0) {
   warning('Number of m parameters is not a multiple of number of regions, cannot caclulate Rt')
 } else {
   m.per.region <- ncol(m) / r
-  beta.per.region <- ncol(beta) / r
+  if(beta.update) beta.per.region <- ncol(beta) / r
   R0 <- posterior.R0[iterations.for.Rt, , drop = F]
   colnames(R0) <- regions
   for(idir in 1:length(cm.bases)){
@@ -144,23 +146,27 @@ if(ncol(m) %% r != 0) {
   }
   # m.levels[t] is the number of breakpoints passed on day t
   m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))
-  beta.levels <- cut(1:ndays, c(0, cm.breaks[-1], Inf))
+  if(beta.update) {
+      beta.levels <- cut(1:ndays, c(0, beta.breaks, Inf))
+      beta.map <- as.numeric(cut(1:length(cm.bases),c(0, which(cm.breaks %in% beta.breaks), Inf)))
+  }
   names(M) <- names(M.mult) <- NULL
   pop.total <- all.pop[1, ];names(pop.total) <- regions
   for(reg in regions){
     ireg <- which(regions %in% reg)
     for(idir in 1:length(cm.bases)){
-	  # M.star[i] <- m[i] * M[i] but select the correct m for the region
-      M.star[[idir]] <- array(apply(m, 1,
-			function(mm) {
-				M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
-			}),
-                              dim = c(nA, nA, nrow(m)))
-      M.star[[idir]] <- array(sapply(1:nrow(beta),
-			function(b) {
-				M.star[[idir]][,,b] * beta[b,(ireg-1)*beta.per.region + max(1, idir - 1)]
-			}),
-                              dim = c(nA, nA, nrow(m)))
+        ## M.star[i] <- m[i] * M[i] but select the correct m for the region
+        M.star[[idir]] <- array(apply(m, 1,
+                                      function(mm) {
+                                          M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
+                                      }),
+                                dim = c(nA, nA, nrow(m)))
+        if(beta.update)
+            M.star[[idir]] <- array(sapply(1:nrow(beta),
+                                           function(b) {
+                                               M.star[[idir]][,,b] * beta[b,(ireg-1)*beta.per.region + beta.map[idir]]
+                                           }),
+                                    dim = c(nA, nA, nrow(m)))
     }
     M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
     ## Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.

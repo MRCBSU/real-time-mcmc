@@ -51,7 +51,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92) ## Day numbers where breaks happen
+cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99) ## Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
 lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
@@ -73,7 +73,7 @@ if(!all(file.exists(cm.bases))){
 }
 ## Modifiers (which element of contact_parameters to use)
 cm.mults <- file.path(proj.dir, "contact_mats", 
-                      paste0("ag", nA, "_mult", 0:8, ".txt"))
+                      paste0("ag", nA, "_mult", 0:9, ".txt"))
 mult.order <- c(0, rep(1, length(cm.breaks)))
 ## mult.order <- 0:length(cm.breaks)
 if(!all(file.exists(cm.mults))){

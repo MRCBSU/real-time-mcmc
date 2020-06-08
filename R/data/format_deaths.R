@@ -168,7 +168,7 @@ dth.dat <- dth.dat %>%
     mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 
 if(flg.confirmed)
-    dth.dat <- dth.dat %>% filter(death_type == "Confirmed")
+    dth.dat <- dth.dat %>% filter(death_type == "Lab Confirmed")
 
 rtm.dat <- dth.dat %>%
 	group_by(Date, Region, Age.Grp, .drop = FALSE) %>%
