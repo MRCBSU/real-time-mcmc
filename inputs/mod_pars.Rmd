@@ -99,7 +99,7 @@ prior_hyper = `r as.integer(beta.update)`;
 
 regression_link = 1;
 
-`r ifelse(rw.flag, "regression_design = beta.design.txt;", "")`
+`r ifelse(beta.rw.flag, "regression_design = beta.design.txt;", "")`
 
 time_breakpoints = `r paste(cm.breaks[-1], collapse = ", ")`;
 
