@@ -21,7 +21,7 @@ scenario.name <- "no_m"
 google.data.date <- format(ymd("20200522"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
-start.date <- lubridate::as_date("20200101")
+start.date <- lubridate::as_date("20200201")
 if (scenario.name == "no_m") {
 	m.param.breakpoints <- NULL
 } else {
@@ -47,3 +47,4 @@ out.dir <- file.path(proj.dir,
 					 paste0("Lombardy_early_start", scenario.name)
 					 )
 
+deaths.loc <- "/data/italy/output/20200530_italy_deaths_listings.csv"

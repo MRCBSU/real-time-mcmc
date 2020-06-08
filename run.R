@@ -31,7 +31,7 @@ run.code <- TRUE
 run.outputs <- TRUE
 
 ## Do the required data files exist?? If not, create them
-data.files <- file.path(proj.dir, "data", "RTM_format", "Lombardy",
+hosp.data <- data.files <- file.path(proj.dir, "data", "RTM_format", "Lombardy",
 						paste0(date.data, ".txt"))
 
 ## Which code is being considered
@@ -40,9 +40,12 @@ hosp.flag <- 1
 sero.flag <- 0
 viro.flag <- 0
 
+source(file.path(proj.dir, "config.R"))
+source(file.path(proj.dir, "R/data/format_Lombardy_deaths.R"))
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
+
 
 ## Compile the code
 if(compile.code) {
