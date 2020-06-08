@@ -24,10 +24,10 @@ if(nA > 1){
 if(nA == 1){
     pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
 } else {
-    means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+    means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2) * 11599/15411
     pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
-    pars.ifr[13] <- 9.50
-    pars.ifr[14] <- 112
+    pars.ifr[13] <- 9.72
+    pars.ifr[14] <- 156
 }
 
 ## Infection hospitalisation rate
