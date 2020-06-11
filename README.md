@@ -1,6 +1,6 @@
 # real-time-mcmc
 
-Hosting of the PHE real-time model for pandemic influenza
+Hosting of the PHE/Cambridge real-time model for pandemic influenza
 
 ## Process overview
 
