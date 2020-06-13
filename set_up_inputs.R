@@ -72,16 +72,26 @@ if(!all(file.exists(cm.bases))){
     }
 }
 ## Modifiers (which element of contact_parameters to use)
-cm.mults <- file.path(proj.dir, "contact_mats", 
-                      paste0("ag", nA, "_mult", 0:9, ".txt"))
-mult.order <- c(0, rep(1, length(cm.breaks)))
-## mult.order <- 0:length(cm.breaks)
-if(!all(file.exists(cm.mults))){
+if(contact.model == 1){
+    cm.mults <- file.path(proj.dir, "contact_mats", 
+                          paste0("ag", nA, "_mult", 0:9, ".txt"))
+    mult.order <- c(0, rep(1, length(cm.breaks)))
+    ## mult.order <- 0:length(cm.breaks)
     mult.mat <- lapply(unique(mult.order), function(x) matrix(x, nA, nA))
+} else if(contact.model == 2){
+    cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_3levels", 0:9, ".txt"))
+    mult.order <- c(0, rep(1, length(cm.breaks)))
+    mult.mat <- lapply(unique(mult.order), function(x){
+        y <- (2*x)-(1:0)
+        if(x==0) y <- rep(0, 2)
+        matrix(c(rep(y[1], nA * (nA - 1)),
+               rep(y[2], nA)), nA, nA, byrow = TRUE)
+    })
+}
+if(!all(file.exists(cm.mults)))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
-                                           cm.mults[i],
-                                           col_names = FALSE)
-    }
+                                       cm.mults[i],
+                                       col_names = FALSE)
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings

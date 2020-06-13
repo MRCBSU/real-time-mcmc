@@ -86,7 +86,7 @@ ldelay.sd <- 3.59
 
 ## Contact model
 int.effect <- 0.0521
-nm <- max(mult.order)
+nm <- max(unlist(mult.mat))
 sd <- sqrt(log(5) - 2*log(2))
 rw.flag <- FALSE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
@@ -96,13 +96,15 @@ prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
 contact.dist <- rep(c(1, rep(4, nm)), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
 contact.pars <- array(0, dim = c(2, nm, nr))
-contact.pars[, 1, ] <- prior.list$lock
-if(nm > 1){
-    for(j in 2:nm)
-        contact.pars[, j, ] <- prior.list$increments
-}
+for(i in 1:nm)
+contact.pars[, i, ] <- prior.list$lock
+## if(nm > 1){
+##     for(j in 2:nm)
+##         contact.pars[, j, ] <- prior.list$increments
+## }
 contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
-contact.reduction <- c(0, 0.102, 0, -0.948, 0, -0.0328, 0, 0.332, 0, 0.515, 0, 0.515, 0, -0.00722)[1:(nr*2)]
+contact.reduction <- rnorm(length(contact.proposal))
+contact.reduction[1 + ((nm+1)*(0:(nr-1)))] <- 0
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
 if(rw.flag){

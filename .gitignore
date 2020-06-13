@@ -13,6 +13,7 @@ spi-forecasts/**
 sitrep_outputs/**
 **/spim*
 **~
+**zip
 Report_structure*
 date_*/**
 R/output/*_cache
