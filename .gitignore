@@ -16,3 +16,4 @@ sitrep_outputs/**
 Report_structure*
 date_*/**
 R/output/*_cache
+phe-nowcasts/**
