@@ -140,9 +140,10 @@ beta.rw.sd.pars <- c(1, 100)
 sero.sens <- 0.779
 sero.spec <- 0.970
 ssens.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
-ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
+## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
+ssens.prior.pars <- c(23.5, 9.5)
 sspec.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
-sspec.prior.pars <- c(699.5, 8.5)
-
+## sspec.prior.pars <- c(699.5, 8.5)
+sspec.prior.pars <- c(569.5, 5.5)
 ssens.prop <- 0.001
 sspec.prop <- 0.08

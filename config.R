@@ -22,7 +22,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200605"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200612"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -43,8 +43,8 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "nwsero_varSens_"
-contact.model <- 1
+scenario.name <- "newsero2_varNewSens_newContactModel"
+contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
