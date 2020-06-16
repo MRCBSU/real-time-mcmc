@@ -7,7 +7,10 @@ output:
     self_contained: no
 ---
 
+<base target="_parent">
+
 ```{r preamble, include=FALSE}
+if (!exists("external")) external = FALSE
 knitr::opts_chunk$set(echo = FALSE)
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -118,15 +121,23 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       add_lines(y = ~`0.5`, color = I("black"),
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
       layout(xaxis = list(title = x.label))
-    if (is.null(data)) return(plot)
-    plot %>%
-      add_markers(
-        data = data,
-        x = ~date,
-        y = ~True,
-        color = I("red"),
-        hovertemplate = "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
-      )
+    if (is.null(data)) {
+      return(plot)
+    } else {
+      if (external) {
+        data.hover <- ""
+      } else {
+        data.hover <- "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
+      }
+      plot %>%
+        add_markers(
+          data = data,
+          x = ~date,
+          y = ~True,
+          color = I("red"),
+          hovertemplate = data.hover
+        )
+    }
   }
   plots <- NULL
   if (!is.null(Eng_projection)) plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
@@ -550,29 +561,6 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```
 
-<!--
-## Methods {.tabset}
+# 
 
-### Overview
-
-Model figure here
-
-### Transmission
-
-SEIR model parameterisation
-
-### Contact matrices
-
-How we account for the lockdown
-
-### Disease Severity
-
-What proportion of infections will lead to death
-
-### Disease Reporting
-
-When will we know about the deaths, relative to disease onset.
-
-
--->
-
+Copyright © MRC Biostatistics Unit, University of Cambridge
