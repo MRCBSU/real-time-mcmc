@@ -156,7 +156,7 @@ dth.dat %>%
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ymd(date.data) - reporting.delay
+latest.date <- ymd(date.data) ## - reporting.delay
 earliest.date <- ymd("2020-02-17")
 
 dth.dat <- dth.dat %>%
@@ -211,10 +211,11 @@ write_csv(rtm.dat, file.path(out.dir, "deaths_data.csv"))
 require(ggplot2)
 rtm.dat %>%
     group_by(Date, Region) %>%
-    summarise(count = sum(n)) -> rtm.dat.plot
+    summarise(count = sum(n)) %>%
+    mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
 
 gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
-    geom_line() +
+    geom_line(aes(linetype = ignore)) +
     geom_point() +
     theme_minimal() +
     ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
@@ -224,9 +225,9 @@ gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
         legend.position = "top",
         legend.justification = "left",
         )
-plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf")
+plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d.pdf")
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
-       gp,
-       width = 8.15,
-       height = 6)
+       gp + guides(linetype=FALSE),
+       width = 2.5*8.5,
+       height = 2.5*6)

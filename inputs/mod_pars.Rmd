@@ -22,7 +22,7 @@ prior_distribution = `r 1 + hosp.flag`;
 
 prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
 
-proposal_variance = 0.468;
+proposal_variance = 3.131109;
 
 } 
 
@@ -54,7 +54,7 @@ prior_distribution = 2;
 
 prior_parameters = `r paste(pars.dI, collapse = ", ")`;
 
-proposal_variance = 0.000003;
+proposal_variance = 0.004521;
 
 }
 
@@ -87,7 +87,7 @@ regression_link = 1;
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
-log_beta_rw = { param_value = `r paste(rep(beta.rw.vals, nr), collapse = ", ")`;
+log_beta_rw = { param_value = `r paste(beta.rw.vals, collapse = ", ")`;
 
 prior_distribution = `r paste(rep(ifelse(beta.update, 4, 1), nr * length(beta.rw.vals)), collapse = ", ")`;
 
@@ -108,13 +108,13 @@ region_breakpoints = true;
 }  ## WILL NEED TO GIVE A FACTOR OF 1 IN THE FIRST COMPONENT AFTER THE INVERSE CANONICAL LINK TRANSFORMATION IS APPLIED.
 
 
-log_beta_rw_sd = { param_value = 0, `r (0.1 * sd)`;
+log_beta_rw_sd = { param_value = 0, `r beta.rw.sd`;
 
 prior_distribution = 1, 2;
 
 prior_parameters = `r paste(beta.rw.sd.pars, collapse = ", ")`;
 
-proposal_variance = 0, 0.160;
+proposal_variance = 0, 0.128885;
 
 }
 
@@ -132,13 +132,13 @@ prior_distribution = 1;
 }
 
 
-exponential_growth_rate = { param_value = `r repeat.for.regions(value.egr)`;
+exponential_growth_rate = { param_value = `r paste(value.egr, collapse = ", ")`;
 
 prior_distribution = `r repeat.for.regions(2)`;
 
 prior_parameters = `r repeat.for.regions(pars.egr)`;
 
-proposal_variance = `r repeat.for.regions(0.0007)`;
+proposal_variance = `r repeat.for.regions(0.000003)`;
 
 region_breakpoints = true;
 
@@ -151,7 +151,7 @@ prior_distribution = `r paste(rep(4, nr), collapse = ", ")`;
 
 prior_parameters = `r paste(rep(pars.nu, nr), collapse = ", ")`;
 
-proposal_variance = 0.00035;
+proposal_variance = 0.000318;
 
 region_breakpoints = true;
 
