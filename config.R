@@ -43,8 +43,8 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "newsero2_varNewSens_newContactModel"
-contact.model <- 3
+scenario.name <- "newsero_varNewSens_oldContactModel"
+contact.model <- 1
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
