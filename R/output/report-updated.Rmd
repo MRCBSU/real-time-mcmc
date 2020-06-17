@@ -1,13 +1,16 @@
 ---
 title: 'COVID-19: nowcast and forecast'
-author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, Daniela De Angelis, Joint PHE Modelling Cell, and MRC Biostatistics Unit COVID-19 Working Group."
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, Joint PHE Modelling Cell, MRC Biostatistics Unit COVID-19 Working Group, and Daniela De Angelis."
 date: "`r lubridate::today()`"
 output:
   html_document:
     self_contained: no
 ---
 
+<base target="_parent">
+
 ```{r preamble, include=FALSE}
+if (!exists("external")) external = FALSE
 knitr::opts_chunk$set(echo = FALSE)
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -103,7 +106,9 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     projections <- filter(projections, date <= ymd(date.data))
   }
   plot.names <- unique(projections$by)
-  num.rows <- ceiling(length(plot.names)/2)
+  num.plots <- length(plot.names)
+  if (!is.null(Eng_projection)) num.plots <- num.plots + 1
+  num.rows <- ceiling(num.plots/2)
   date <- ymd(date.data)
   create.subplot <- function(projections, subplot_title, data) {
     plot <- projections %>%
@@ -116,15 +121,23 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       add_lines(y = ~`0.5`, color = I("black"),
                 hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
       layout(xaxis = list(title = x.label))
-    if (is.null(data)) return(plot)
-    plot %>%
-      add_markers(
-        data = data,
-        x = ~date,
-        y = ~True,
-        color = I("red"),
-        hovertemplate = "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
-      )
+    if (is.null(data)) {
+      return(plot)
+    } else {
+      if (external) {
+        data.hover <- ""
+      } else {
+        data.hover <- "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
+      }
+      plot %>%
+        add_markers(
+          data = data,
+          x = ~date,
+          y = ~True,
+          color = I("red"),
+          hovertemplate = data.hover
+        )
+    }
   }
   plots <- NULL
   if (!is.null(Eng_projection)) plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
@@ -164,12 +177,12 @@ The Cambridge/PHE Joint Modelling Team real-time modelling system has been updat
 
 #### Findings
 
-1. We estimate that across England there are 12,000 (3,700--40,000, 95% credible interval) new infections arising each day
-1. We estimate that the number of deaths each day is likely to fall to between 100-200 by mid-June
-1. We believe it is highly probable that $R_t$ is below 1 in all regions of England with the exception of the South West
-1. In the South West, although $R_t$ is around 1, the numbers of new infections occurring in the region on a  daily basis is relatively low
-1. There is some evidence that $R_t$ has risen in all regions and we believe that this is probably due to increasing mobility and mixing between households and in public and workplace settings
-1. An increase in $R_t$ will lead to a slowdown in the decrease in new infections and deaths
+1. We estimate that across England there are 17,000 (11,000--25,000, 95% credible interval) new infections arising each day
+1. We estimate that the number of deaths each day is likely to fall to between 100--250 by mid-June
+1. We believe it is probable that Rt is below 1 in all regions of England with the exception of the North West and the South West
+1. In the South West, although Rt is around 1, the numbers of new infections occurring in the region on a daily basis is relatively low
+1. There is some evidence that Rt has risen in all regions and we believe that this is probably due to increasing mobility and mixing between households and in public and workplace settings
+1. An increase in Rt will lead to a slowdown in the decrease in new infections and deaths
 1. There is evidence, from the forecast of deaths for the whole of England, that the increases in the regional reproductive numbers may result in the decline in the national death rate being arrested by mid-June
 
 
@@ -548,29 +561,6 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```
 
-<!--
-## Methods {.tabset}
+# 
 
-### Overview
-
-Model figure here
-
-### Transmission
-
-SEIR model parameterisation
-
-### Contact matrices
-
-How we account for the lockdown
-
-### Disease Severity
-
-What proportion of infections will lead to death
-
-### Disease Reporting
-
-When will we know about the deaths, relative to disease onset.
-
-
--->
-
+Copyright © MRC Biostatistics Unit, University of Cambridge
