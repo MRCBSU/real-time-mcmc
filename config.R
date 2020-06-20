@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -43,7 +43,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "newsero2_varNewSens_newContactModel"
+scenario.name <- "newsero_varNewSens_newContactModel"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
