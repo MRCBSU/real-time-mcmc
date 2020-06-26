@@ -51,7 +51,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106) ## Day numbers where breaks happen
+cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113) ## Day numbers where breaks happen
 mat.dates <- start.date + cm.breaks - 1
 lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 lst$England$all$m <- lst$England$all$m * 1e7
@@ -103,12 +103,12 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 700000
+num.iterations <- 900000
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
-burnin <- 50000
+burnin <- 90000
 adaptive.phase <- burnin / 2
-thin.outputs <- 200 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 100  # After how many iterations to output each set of parameters
+thin.outputs <- 250 	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 125  # After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 
