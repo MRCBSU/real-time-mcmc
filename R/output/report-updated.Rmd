@@ -1,6 +1,6 @@
 ---
 title: 'COVID-19: nowcast and forecast'
-author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, Joint PHE Modelling Cell, MRC Biostatistics Unit COVID-19 Working Group, and Daniela De Angelis."
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, and Daniela De Angelis."
 date: "`r lubridate::today()`"
 output:
   html_document:
@@ -10,8 +10,8 @@ output:
 <base target="_parent">
 
 ```{r preamble, include=FALSE}
-if (!exists("external")) external = FALSE
-knitr::opts_chunk$set(echo = FALSE)
+if (!exists("external")) external = T
+knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 QUANTILES <- c(0.025, 0.5, 0.975)
 
 suppressMessages(library(knitr))
@@ -125,7 +125,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       return(plot)
     } else {
       if (external) {
-        data.hover <- ""
+        data.hover <- "%{x} <extra>Observed deaths</extra>"
       } else {
         data.hover <- "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
       }
@@ -164,31 +164,21 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
 
 #### Model and report changes
 
-The Cambridge/PHE Joint Modelling Team real-time modelling system has been updated to improve its functionality:
-  
-1. Data from the NHS Blood Transfusion service on antibody testing are now being included in the analysis, to provide information on the cumulative number of infections. 
-1. Work has been done and is ongoing to give a more realistic assessment of the uncertainty in the estimates.
-2. This report now provides:
-    * reconstruction of both deaths and infections over the full course of the pandemic 
-    * now-casts of the number of daily infections and deaths
-    * forecasts of the number of daily deaths over the next  three weeks
-    * estimates of the reproduction number $R_t$ and of the probability that $R_t$ is greater than 1.
-3.  The modelling focusses on regional data and we no longer report an estimate of $R_t$ for   England. This is better provided through the modelling consensus statement supplied by SPI-M and SAGE.
+Our real-time model  has been further updated to allow higher susceptibility to infection in the over-75s. The modelling focusses on regional data and we no longer report an estimate of $R_t$ for England. This is better  provided through the modelling consensus statement supplied by SPI-M and SAGE.
 
-#### Findings
 
-1. We estimate that across England there are 17,000 (11,000--25,000, 95% credible interval) new infections arising each day
-1. We estimate that the number of deaths each day is likely to fall to between 100--250 by mid-June
-1. We believe it is probable that Rt is below 1 in all regions of England with the exception of the North West and the South West
-1. In the South West, although Rt is around 1, the numbers of new infections occurring in the region on a daily basis is relatively low
-1. There is some evidence that Rt has risen in all regions and we believe that this is probably due to increasing mobility and mixing between households and in public and workplace settings
-1. An increase in Rt will lead to a slowdown in the decrease in new infections and deaths
-1. There is evidence, from the forecast of deaths for the whole of England, that the increases in the regional reproductive numbers may result in the decline in the national death rate being arrested by mid-June
+#### Updated findings
+
+1. We estimate that across England there are 4,300 (2,400--7,300, 95% credible interval) new infections arising each day
+1. We predict  that the number of deaths each day is likely to fall to between 60 and 90 by the end of the first week of July.
+1. We estimate that it is very likely that $R_t$ is below 1 in each region of England.
+1. The South West has the highest probability (30%) that $R_t$ is above 1 and a central estimate for $R_t$ of 0.94. However, the numbers of new infections occurring in this region on a daily basis is relatively low.
+1. The data used are only weakly informative on $R_t$ over the last two weeks. Therefore, the now-cast for current incidence and the forecast of deaths are quite uncertain.
 
 
 ### Summary
 
-Real-time tracking of an epidemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. A team of statistical modellers at the MRC Biostatistics Unit (BSU), University of Cambridge, are working with Public Health England (PHE) to provide regular now-casts and forecasts of COVID-19 infections and deaths. This information feeds directly to the SAGE sub-group, Scientific Pandemic Influenza sub-group on Modelling (SPI-M), and to regional PHE teams.
+Real-time tracking of an epidemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. A team of statistical modellers at the MRC Biostatistics Unit (BSU), University of Cambridge, are working to provide regular now-casts and forecasts of COVID-19 infections and deaths. This information feeds directly to the SAGE sub-group, Scientific Pandemic Influenza sub-group on Modelling (SPI-M), and to regional Public Health England (PHE) teams.
 
 ### Methods
 
@@ -198,7 +188,7 @@ We fit a transmission model ([Birrell et al. 2016](https://www.nature.com/articl
 
 We use:
   
-1. Data on COVID-19 confirmed deaths from the PHE-generated line-listing   This consists of a combination of deaths notified to:
+1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing   This consists of a combination of deaths notified to:
     * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnosed with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20th March, 2020).
     * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
     * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020)
@@ -211,6 +201,7 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
     * A Survey that describes relative rates of contacts between different age groups ([Mossong et al. 2008](https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074)).
     * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the May 23rd lockdown measures.
     * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
+    * Data from the Department for Education describing the proportion of children currently attending school.
 
 
 ## Epidemic summary {.tabset}
@@ -456,20 +447,20 @@ infections.growth.rates <- calc.growth.rate(infections)
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
-NB: negative growth rates are decline rates. Values are daily changes.
+NB: negative growth rates are rates of decline. Values are daily changes.
 
 `r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be Inf.
+Halving times in days, if a region shows growth than value will be N/A.
 
 ```{r inf-halving}
 
 infections.growth.rates %>%
   mutate_at(
     vars(-'Region'),
-    ~ifelse(. > 0, Inf, -1/log2(1+.))
+    ~ifelse(. > 0, NA, -1/log2(1+.))
   ) %>%
   knitr::kable(digits = 2, align = 'lccc')
 
@@ -480,7 +471,7 @@ infections.growth.rates %>%
 
 #### Growth rates
 
-NB: negative growth rates are decline rates. Values are daily changes.
+NB: negative growth rates are rates of decline. Values are daily changes.
 
 ```{r death-growth, eval=!is.null(deaths)}
 knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
@@ -488,14 +479,14 @@ knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be Inf.
+Halving times in days, if a region shows growth than value will be N/A.
 
 ```{r death-halving, eval=!is.null(deaths)}
 
 deaths.growth.rates %>%
   mutate_at(
     vars(-'Region'),
-    ~ifelse(. > 0, Inf, -1/log2(1+.))
+    ~ifelse(. > 0, NA, -1/log2(1+.))
   ) %>%
   knitr::kable(digits = 2, align = 'lccc')
 
