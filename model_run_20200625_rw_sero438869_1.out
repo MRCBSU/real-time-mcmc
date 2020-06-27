@@ -1,0 +1,15 @@
+/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200626/base_varserology6day_matrices_20200619_deaths/
+Changed directory to /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200626/base_varserology6day_matrices_20200619_deaths.
+
+JobID: 438870
+======
+Time: Sat 27 Jun 11:06:16 BST 2020
+Running on node: compute-elgar
+Current directory: /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200626/base_varserology6day_matrices_20200619_deaths
+
+Num tasks = , Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+../../../rtm_optim
+

@@ -1,0 +1,1 @@
+/var/spool/slurm/slurmd/job438874/slurm_script: line 102: 61763 Segmentation fault      (core dumped) ../../../rtm_optim
