@@ -131,7 +131,7 @@ dth.dat <- read_csv(input.loc,
 if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
 	print("WARNING: The following rows have implausible death dates and have been excluded: ")
-	(x.out <- implausible.dates %>% select(c(finalid, Date, Onset))) %>% print(n=1000)
+	(x.out <- implausible.dates %>% select(c(finalid, Date, Onset, death_type))) %>% print(n=1000)
 	dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
@@ -229,5 +229,5 @@ plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.da
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
        gp + guides(linetype=FALSE),
-       width = 2.5*8.5,
-       height = 2.5*6)
+       width = 1.5*8.5,
+       height = 1.5*6)
