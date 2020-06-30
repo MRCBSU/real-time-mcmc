@@ -11,9 +11,9 @@ if(!exists("date.data"))
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc"))
     ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
-	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
+	#deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
     #deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(date.data, ".csv"))
-	#deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
+	deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -30,10 +30,10 @@ if(!exists("regions")){
 col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
-	onset_date = "symptom_onset_date",
-	nhs_region = "NHSER_name",
-	phe_region = "PHEC_name",
-	utla_name = "UTLA_name"
+	onset_date = "onsetdate",
+	nhs_region = "nhser_name",
+	phe_region = "phec_name",
+	utla_name = "utla_name"
 )
 
 # Given a row in a deaths file, return its region.
@@ -168,7 +168,7 @@ dth.dat <- dth.dat %>%
     mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 
 if(flg.confirmed)
-    dth.dat <- dth.dat %>% filter(death_type == "Confirmed")
+    dth.dat <- dth.dat %>% filter(death_type == "Lab Confirmed")
 
 rtm.dat <- dth.dat %>%
 	group_by(Date, Region, Age.Grp, .drop = FALSE) %>%
