@@ -157,8 +157,9 @@ sero.sens <- 0.707875480848508
 sero.spec <- 0.965012479451016
 ssens.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
-ssens.prior.pars <- c(23.5, 9.5) ## Based on testing intervals 21-27 days.
-## ssens.prior.pars <- c(132.5, 28.5) ## Based on all testing intervals >21 days
+## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
+ssens.prior.pars <- ifelse(grepl("altSens", scenario.name), c(132.5, 28.5), c(23.5, 9.5))
+
 sspec.prior.dist <- ifelse(grepl("var", scenario.name), 3, 1)
 ## sspec.prior.pars <- c(699.5, 8.5)
 sspec.prior.pars <- c(569.5, 5.5)
