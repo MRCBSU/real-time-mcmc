@@ -71,10 +71,11 @@ if(compile.code) {
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
+save.image("tmp.RData")
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
-} else save.image("tmp.RData")
+}
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")
