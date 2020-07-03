@@ -1,6 +1,6 @@
 ---
 title: 'COVID-19: nowcast and forecast'
-author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, and Daniela De Angelis."
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
 date: "`r lubridate::today()`"
 output:
   html_document:
@@ -26,6 +26,10 @@ if(exists("Rfile.loc")) {
   source("results_api.R")
 }
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
+if (external && exists("dth.dat")) {
+	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
+	results_hash = NULL
+}
 
 ```
 
@@ -403,6 +407,13 @@ params$prop_case_to_hosp %>%
 #### Growth rates
 
 ```{r growth-rate-func}
+signed_inf <- function(num) {
+  ifelse(
+    num == 0, 0,
+    ifelse(num > 0, +Inf, -Inf)
+  )
+}
+
 add.England <- function(data) {
   sum.all(infections)
   data <- apply(infections, c("region", "iteration", "date"), sum)
@@ -432,7 +443,12 @@ calc.growth.rate <- function(data) {
     ) %>%
     arrange(date, iteration) %>%
     group_by(region, iteration) %>%
-    summarise(growth = ((lead(value) - lag(value)) / (2 * value))[2]) %>%
+    mutate(gradient = lead(value) - lag(value)) %>%
+    summarise(growth = 
+                ifelse(value == 0,
+                       signed_inf(gradient),
+                       gradient / (2 * value))[2]
+    ) %>%
     group_by(region) %>%
     summarise(Median = median(growth),
               `95% CrI (lower)` = quantile(growth, 0.025),
