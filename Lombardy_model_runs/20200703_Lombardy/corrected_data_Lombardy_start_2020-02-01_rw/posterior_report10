@@ -1,0 +1,98 @@
+
+log_beta_rw_sd
+==============
+posterior_mean0 = 0.000000 (-0.000000)
+posterior_mean1 = 0.211911 (0.038590)
+acceptance_ratio1 = 0.249898
+acceptance_ratio2 = 0.249898
+
+
+hosp_negbin_overdispersion
+==========================
+posterior_mean0 = 0.518100 (0.147052)
+acceptance_ratio1 = 0.267362
+
+
+infectious_period
+=================
+posterior_mean0 = 0.382148 (0.336969)
+acceptance_ratio1 = 0.307030
+
+
+contact_parameters
+==================
+posterior_mean0 = 0.000000 (-0.000000)
+posterior_mean1 = -0.120336 (0.459836)
+posterior_mean2 = 0.208297 (0.282192)
+posterior_mean3 = 0.852257 (0.397586)
+acceptance_ratio1 = 0.250131
+acceptance_ratio2 = 0.250131
+acceptance_ratio3 = 0.250131
+acceptance_ratio4 = 0.250131
+
+
+log_beta_rw
+===========
+posterior_mean0 = 0.000000 (-0.000000)
+posterior_mean1 = 0.430195 (0.225030)
+posterior_mean2 = 0.276322 (0.235546)
+posterior_mean3 = 0.021647 (0.185483)
+posterior_mean4 = -0.333653 (0.167802)
+posterior_mean5 = -0.469276 (0.135110)
+posterior_mean6 = -0.362688 (0.171466)
+posterior_mean7 = 0.097947 (0.171649)
+posterior_mean8 = 0.448537 (0.182651)
+posterior_mean9 = 0.363778 (0.184356)
+posterior_mean10 = 0.117099 (0.190242)
+posterior_mean11 = -0.039019 (0.194165)
+posterior_mean12 = -0.063379 (0.201653)
+posterior_mean13 = -0.021236 (0.210469)
+acceptance_ratio1 = 0.266014
+acceptance_ratio2 = 0.249173
+acceptance_ratio3 = 0.252870
+acceptance_ratio4 = 0.244488
+acceptance_ratio5 = 0.249787
+acceptance_ratio6 = 0.250670
+acceptance_ratio7 = 0.251942
+acceptance_ratio8 = 0.250356
+acceptance_ratio9 = 0.244742
+acceptance_ratio10 = 0.249107
+acceptance_ratio11 = 0.256232
+acceptance_ratio12 = 0.255054
+acceptance_ratio13 = 0.251834
+acceptance_ratio14 = 0.250927
+
+
+exponential_growth_rate
+=======================
+posterior_mean0 = 0.180380 (0.028371)
+acceptance_ratio1 = 0.304536
+
+
+log_p_lambda_0
+==============
+posterior_mean0 = -17.167731 (0.807035)
+acceptance_ratio1 = 0.247121
+
+
+prop_case_to_hosp
+=================
+posterior_mean0 = 0.000009 (0.000009)
+posterior_mean1 = 0.000009 (0.000009)
+posterior_mean2 = 0.000008 (0.000011)
+posterior_mean3 = 0.000146 (0.000078)
+posterior_mean4 = 0.002844 (0.001450)
+posterior_mean5 = 0.032696 (0.015860)
+posterior_mean6 = 0.075262 (0.018779)
+acceptance_ratio1 = 0.257910
+acceptance_ratio2 = 0.257910
+acceptance_ratio3 = 0.257910
+acceptance_ratio4 = 0.257910
+acceptance_ratio5 = 0.257910
+acceptance_ratio6 = 0.257910
+acceptance_ratio7 = 0.257910
+
+
+likelihood
+==========
+lfx_bar = 40089.059585 (4.192749)

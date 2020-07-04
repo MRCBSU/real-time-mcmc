@@ -1,0 +1,102 @@
+
+log_beta_rw_sd
+==============
+acceptance_ratio1 = 0.240000
+acceptance_ratio2 = 0.240000
+
+proposal_variance1 = 0.000000
+proposal_variance2 = 0.265034
+
+
+hosp_negbin_overdispersion
+==========================
+acceptance_ratio1 = 0.200000
+
+proposal_variance1 = 1.436656
+
+
+infectious_period
+=================
+acceptance_ratio1 = 0.170000
+
+proposal_variance1 = 0.374150
+
+
+contact_parameters
+==================
+acceptance_ratio1 = 0.290000
+acceptance_ratio2 = 0.290000
+acceptance_ratio3 = 0.290000
+acceptance_ratio4 = 0.290000
+
+proposal_variance1 = 0.000000
+proposal_variance2 = 0.003411
+proposal_variance3 = 0.000032
+proposal_variance4 = 0.000581
+
+
+log_beta_rw
+===========
+acceptance_ratio1 = 0.280000
+acceptance_ratio2 = 0.257426
+acceptance_ratio3 = 0.213592
+acceptance_ratio4 = 0.233010
+acceptance_ratio5 = 0.220183
+acceptance_ratio6 = 0.319149
+acceptance_ratio7 = 0.265306
+acceptance_ratio8 = 0.250000
+acceptance_ratio9 = 0.277778
+acceptance_ratio10 = 0.260000
+acceptance_ratio11 = 0.317647
+acceptance_ratio12 = 0.231579
+acceptance_ratio13 = 0.291667
+acceptance_ratio14 = 0.239583
+
+proposal_variance1 = 0.000000
+proposal_variance2 = 0.000005
+proposal_variance3 = 0.000006
+proposal_variance4 = 0.000021
+proposal_variance5 = 0.000043
+proposal_variance6 = 0.000130
+proposal_variance7 = 0.000255
+proposal_variance8 = 0.000456
+proposal_variance9 = 0.001039
+proposal_variance10 = 0.001440
+proposal_variance11 = 0.001648
+proposal_variance12 = 0.004149
+proposal_variance13 = 0.013020
+proposal_variance14 = 0.023299
+
+
+exponential_growth_rate
+=======================
+acceptance_ratio1 = 0.220000
+
+proposal_variance1 = 0.000055
+
+
+log_p_lambda_0
+==============
+acceptance_ratio1 = 0.250000
+
+proposal_variance1 = 0.004489
+
+
+prop_case_to_hosp
+=================
+acceptance_ratio1 = 0.240000
+acceptance_ratio2 = 0.240000
+acceptance_ratio3 = 0.240000
+acceptance_ratio4 = 0.240000
+acceptance_ratio5 = 0.240000
+acceptance_ratio6 = 0.240000
+acceptance_ratio7 = 0.240000
+
+proposal_variance1 = 0.001295
+proposal_variance2 = 0.001295
+proposal_variance3 = 0.001295
+proposal_variance4 = 0.001295
+proposal_variance5 = 0.001295
+proposal_variance6 = 0.001295
+proposal_variance7 = 0.001295
+

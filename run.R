@@ -81,6 +81,7 @@ Rfile.loc <- file.path(file.loc, "R/output")
 
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
+	external = FALSE
 	render(
 		file.path(Rfile.loc, 'report-updated.Rmd'),
 		html_document(pandoc_args = "--self-contained"),
