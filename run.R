@@ -29,15 +29,15 @@ format.inputs <- TRUE
 compile.code <- FALSE
 
 ## Do we want to actually run the code?
-run.code <- FALSE
+run.code <- TRUE
 
 ## Do we want to automatically run post-processing R code?
-run.outputs <- FALSE
+run.outputs <- TRUE
 
 ## Which code is being considered
 gp.flag <- 0
 hosp.flag <- 1
-sero.flag <- 1
+sero.flag <- 0
 viro.flag <- 0
 
 ## If these files don't already exits, make them

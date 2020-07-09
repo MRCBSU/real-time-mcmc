@@ -5,8 +5,8 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
-if (length(args) < 3) args <- c(args, "All", "England")
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) < 3) args <- c(args, 1, "Scotland")
 
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
@@ -34,10 +34,6 @@ ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
 age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "All ages"
 nA <- length(age.labs)
-
-if(!exists("regions")) regions <- "England"
-
-region.code <- "Eng"
 
 # Possible values:
 # deaths: confirmed deaths only, by date of death
