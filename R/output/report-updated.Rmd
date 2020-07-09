@@ -144,7 +144,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     }
   }
   plots <- NULL
-  if (!is.null(Eng_projection)) plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
+  if (!is.null(Eng_projection)) plots <- list("Total" = create.subplot(Eng_projection, "Total", Eng_data))
   for(subplot in plot.names) {
     if (is.null(data)) {
       plot.data <- NULL
@@ -241,7 +241,7 @@ tbl_ar_Eng <- get.aggregated.quantiles(cum_infections, NULL, c(0.025, 0.5, 0.975
   filter(date == ymd(date.data)) %>%
   mutate(
     population = sum(population$value),
-    region = "England"
+    region = "Total"
   )
 
 tbl_inf_region <-
@@ -250,7 +250,7 @@ tbl_inf_region <-
     pivot_wider(names_from = quantile) %>%
     filter(date == ymd(date.data)) %>%
     mutate(
-      region = "England"
+      region = "Total"
     ),
     get.aggregated.quantiles(infections, "region", c(0.025, 0.5, 0.975)) %>%
     pivot_wider(names_from = quantile) %>%
@@ -419,7 +419,7 @@ add.England <- function(data) {
   sum.all(infections)
   data <- apply(infections, c("region", "iteration", "date"), sum)
   data <- aperm(data, c("date", "region", "iteration", "age"))
-  data["England",,] <- apply(infections, c("iteration", "date"), sum)
+  data["Total",,] <- apply(infections, c("iteration", "date"), sum)
 }
 
 today.int <- as.integer(ymd(date.data))
@@ -437,7 +437,7 @@ calc.growth.rate <- function(data) {
       apply(data, c("iteration", "date"), sum) %>%
       as.tbl_cube(met_name = "value") %>%
       as_tibble() %>%
-      mutate(region = "England")
+      mutate(region = "Total")
     ) %>%
     mutate(
       date = lubridate::as_date(date)
@@ -455,7 +455,7 @@ calc.growth.rate <- function(data) {
               `95% CrI (lower)` = quantile(growth, 0.025),
               `95% CrI (upper)` = quantile(growth, 0.975)
               ) %>%
-    arrange(match(region, c("England", regions))) %>%
+    arrange(match(region, c("Total", regions))) %>%
     mutate(Region = str_replace_all(region, "_", " ")) %>%
     select(Region, everything()) %>%
     select(-region)
