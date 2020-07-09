@@ -35,6 +35,8 @@ if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessari
 		start.sero <- 1
 		end.sero <- ndays 
 	}
+} else {
+	start.sero <- end.sero <- 1
 }
 ## The 'viro' stream in the code
 viro.data <- NULL
