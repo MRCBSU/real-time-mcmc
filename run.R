@@ -1,3 +1,5 @@
+library(rmarkdown)
+
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -64,22 +66,24 @@ source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
 if(compile.code) {
     system("make rtm_optim")
-	system("chmod a-w coda* NNI* posterior* adaptive*")
 }
 
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
+save.image("tmp.RData")
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
-} else save.image("tmp.RData")
+	 system("chmod a-w coda* NNI* posterior* adaptive*")
+}
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")
 
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
-	rmarkdown::render(
+	external = FALSE
+	render(
 		file.path(Rfile.loc, 'report-updated.Rmd'),
 		html_document(pandoc_args = "--self-contained"),
 		output_dir = out.dir,

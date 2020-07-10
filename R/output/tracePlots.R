@@ -63,15 +63,17 @@ regions.total.population <- t(matrix(get.variable.value(out.dir, "regions_popula
 ## ## DEFINE PRIOR MODEL ###################################
 
 ### WHICH VARIABLES ARE STOCHASTIC?
-var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw")
+var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw", "log_beta_rw_sd")
 ### PRIOR INFORMATION
 var.priors <- list(distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL,
-                                       rep(lapply(1:(max(mult.order)+1), function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
+                                       rep(lapply(1:(max(unlist(mult.mat))+1), function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
                                        NULL, NULL, rep(list(dgamma), r), rep(list(dnorm), r), NULL, NULL, NULL, 
                                        rep(list(dbeta), nA - 1), NULL, NULL, NULL, NULL, NULL, list(dbeta), list(dbeta), NULL, 
-                                       rep(lapply(1:nbetas, function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr)), ## informative prior specification
+                                       rep(lapply(1:nbetas, function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
+                                       list(NULL, dgamma)), ## informative prior specification
                    parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, as.vector(contact.pars), NA, NA, pars.egr, rep(pars.nu, r), NA, NA, NA,
-                                     pars.ifr, NA, NA, NA, NA, NA, ssens.prior.pars, sspec.prior.pars, NA, rep(c(0, sd), (nbetas - 1) * r))
+                                     pars.ifr, NA, NA, NA, NA, NA, ssens.prior.pars, sspec.prior.pars, NA, rep(c(0, sd), (nbetas - 1) * r),
+                                     c(1, 20))
                    )
 ## save the prior specification for use elsewhere.
 save(var.names, var.priors, file = file.path(out.dir, "prior.spec.RData"))

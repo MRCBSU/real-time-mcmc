@@ -1,6 +1,6 @@
 init.func <- function(vecS, matM){
     if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
-    M.star <- sweep(matM, 2, vecS, `*`)
+    M.star <- sweep(matM, 1, vecS, `*`)
     eM <- eigen(M.star)$vectors[, 1]
     eM / sum(eM)
 }

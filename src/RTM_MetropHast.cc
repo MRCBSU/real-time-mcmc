@@ -567,13 +567,15 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	}
 
       // OUTPUT MCMC SAMPLER PROGRESS REPORTS...
-      if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-	write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
-			      theta, lfx, false, true, true);
-      if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
-      if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
-	write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
-			      theta, lfx, true, true, false);
+	  if (int_progress_report < simulation_parameters.num_progress_reports) {
+		  if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
+		write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
+					  theta, lfx, false, true, true);
+		  else if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
+		write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+					  theta, lfx, true, true, false);
+	  }
+	  if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
 
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase
       // or the end of the burn-in
