@@ -38,7 +38,7 @@
 #include <omp.h>
 
 // GLOBAL CONSTANTS
-#define NUM_AGE_GROUPS (8)
+#define NUM_AGE_GROUPS (1)
 #define DAYS_IN_YEAR 365.25
 
 // USEFUL INLINE FUNCTIONS

@@ -31,8 +31,7 @@ nforecast.weeks <- 3
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
 ## What age groupings are being used?
-age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
-age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "All ages"
+age.labs <- c("All") ## "All ages"
 nA <- length(age.labs)
 
 # Possible values:
