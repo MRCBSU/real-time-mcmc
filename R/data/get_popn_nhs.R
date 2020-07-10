@@ -61,7 +61,9 @@ nhs.regions <- list("London" = "London",
 					"North_West" = "North West",
 					"South_East" = "South East",
 					"South_West" = "South West",
-					"SCOTLAND" = "SCOTLAND"
+					"Scotland" = "SCOTLAND",
+					"Wales" = "WALES",
+					"Northern_Ireland" = "NORTHERN IRELAND"
                     )
 
 

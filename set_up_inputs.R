@@ -134,7 +134,7 @@ get.nhs.region <- function(reg, rlist = nhs.regions){
 }
 ## Check that regions have population specified
 for (region in regions) {
-    if (!get.nhs.region(region) %in% names(nhs.regions) && region != "Scotland") {
+    if (!get.nhs.region(region) %in% names(nhs.regions)) {
         stop(paste(region, "is not specified in `nhs.regions`. Options are:",
                    paste0(names(nhs.regions), collapse=", ")))
     }
