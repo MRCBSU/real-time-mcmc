@@ -1,0 +1,2 @@
+/var/spool/slurm/slurmd/job439241/slurm_script: line 88: cd: /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200706/base_newMats_newSero_6day_matrices_20200703_deaths/: No such file or directory
+/var/spool/slurm/slurmd/job439241/slurm_script: line 105: ../../../rtm_optim: No such file or directory

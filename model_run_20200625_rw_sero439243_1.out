@@ -1,0 +1,15 @@
+/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200706/base_newMats_newSero_4wk6day_matrices_20200703_deaths/
+Changed directory to /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200706/base_newMats_newSero_4wk6day_matrices_20200703_deaths.
+
+JobID: 439244
+======
+Time: Mon  6 Jul 17:35:46 BST 2020
+Running on node: compute-elgar
+Current directory: /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200706/base_newMats_newSero_4wk6day_matrices_20200703_deaths
+
+Num tasks = , Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+../../../rtm_optim
+
