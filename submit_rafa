@@ -27,8 +27,8 @@
 #SBATCH --array=1-2
 
 #! sbatch directives end here (put any additional directives above this line)
-#SBATCH --output=model_run_20200530_rw_sero%A_%a.out
-#SBATCH --error=model_run_20200530_rw_sero%A_%a.err
+#SBATCH --output=model_run_20200607_rw_sero%A_%a.out
+#SBATCH --error=model_run_20200607_rw_sero%A_%a.err
 
 #! PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 PATH=$PATH:$HOME/bin:$HOME/usr/bin:$HOME/usr/gsl/bin
@@ -38,9 +38,9 @@ PATH=$PATH:$HOME/bin:$HOME/usr/bin:$HOME/usr/gsl/bin
 # in which sbatch is run.
 if [ $SLURM_ARRAY_TASK_ID == 1 ]
 then
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200530/oldsero_varSens_lp3_allbetarw__matrices_20200522_deaths/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200607/newsero_varSens_betarw_fullrw_matrices_20200529_deaths/"
 else
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200530/oldsero_varSens_lp3_allbetarw__matrices_20200529_deaths/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200607/newsero2_varSens_betarw_fullrw_newDFE_matrices_20200605_deaths/"
 fi
 
 # if [ $SLURM_ARRAY_TASK_ID -lt 5 ]
