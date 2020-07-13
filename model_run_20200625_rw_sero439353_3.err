@@ -1,0 +1,3 @@
+gsl: fprintf_source.c:164: ERROR: fscanf failed
+Default GSL error handler invoked.
+/var/spool/slurm/slurmd/job439356/slurm_script: line 105: 40435 Aborted                 (core dumped) ../../../rtm_optim

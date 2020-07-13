@@ -172,10 +172,10 @@ Our real-time model  has been further updated to allow higher susceptibility to 
 
 
 #### Updated findings
-1. We have revised last week's estimate of the number of infections arising each day across England from 3,000 (1,500--5,800, 95% credible interval) to 5,300  (3,500--7,600, 95% credible interval). Over the last week there is no evidence of any further change in the number of daily new infections with the current estimate being 5,300 (3,000--9,000, 95% credible interval).
-1. We predict that the number of deaths each day is likely to be between 70 and 135 by the third week of July.
-1. We estimate it is likely that $R_t$ is below 1 in most regions of England.
-1. The North East & Yorkshire has the highest probability (50%) that $R_t$ is above 1, while for the East of England it is 47%. This probability has increased significantly in each region, though it remains very low for the South West.
+1. We have revised last week's estimate of the number of infections arising each day across England from 5,300 (3,000--9,000, 95% credible interval) to 3,600  (2,400--5,400, 95% credible interval). Over the last week there is no evidence of any further change in the number of daily new infections with the current estimate being 3,300 (1,900--5,700, 95% credible interval).
+1. We predict that the number of deaths each day is likely to be between 45 and 85 by the end of July.
+1. We estimate it is very likely that $R_t$ is below 1 in all regions of England.
+1. The East of England and the North East & Yorkshire have the highest probabilities (33% and 32% respectively) that $R_t$ is above 1. This probability is $\leq 5$% for the North West and the Midlands.
 1. The data used are only weakly informative on $R_t$ over the last two weeks. Therefore, the now-cast for current incidence and the forecast of deaths are quite uncertain.
 
 

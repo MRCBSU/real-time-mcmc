@@ -34,7 +34,7 @@
 ## Can be an arbitrary list of comma-separated ranges, eg 1-5,10-15,20-25
 ## The %nn is optional, and restricts SLURM to running nn jobs simultaneously.
 ## #SBATCH --array=1-100%50
-#SBATCH --array=1-2
+#SBATCH --array=1-4
 
 #! sbatch directives end here (put any additional directives above this line)
 #SBATCH --output=model_run_20200625_rw_sero%A_%a.out
@@ -57,19 +57,19 @@ module load default-login             # REQUIRED - loads the basic environment
 ## Section 3: Run your application
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200706/base_newMats_newSero"
+workdir="$SLURM_SUBMIT_DIR/model_runs/202007"
 if [ $SLURM_ARRAY_TASK_ID == 1 ]
 then
-    workdir="${workdir}_4wk6day_matrices_20200703_deaths/"
+    workdir="${workdir}09/base_Thurs6day_matrices_20200703_deaths/"
 elif [ $SLURM_ARRAY_TASK_ID == 2 ]
 then
-    workdir="${workdir}6day_matrices_20200703_deaths/"
-# elif [ $SLURM_ARRAY_TASK_ID == 3 ]
-# then
-#     workdir="${workdir}3/base_newMats_newSero6day_matrices_20200703_deaths/"
-# elif [ $SLURM_ARRAY_TASK_ID == 4 ]
-# then
-#     workdir="${workdir}3/base_newMats6day_matrices_20200703_deaths/"
+    workdir="${workdir}10/base_Thurs6day_matrices_20200703_deaths/"
+elif [ $SLURM_ARRAY_TASK_ID == 3 ]
+then
+    workdir="${workdir}10/base_new_contacts6day_matrices_20200710_deaths/"
+elif [ $SLURM_ARRAY_TASK_ID == 4 ]
+then
+    workdir="${workdir}10/base_new_contacts_new_sero6day_matrices_20200710_deaths/"
 fi
 echo -e $workdir
 
