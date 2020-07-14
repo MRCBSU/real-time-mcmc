@@ -109,7 +109,6 @@ outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & in
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 ## save.image("tmptmp.RData")
-## stop()
 ################################################################
 print('Calculating Rt')
 Rt.func <- function(vecS, matM){

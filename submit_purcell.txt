@@ -8,7 +8,7 @@
 ## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
 
 ## Enter a short name for the job, to be shown in SLURM output
-#SBATCH -J RTM
+#SBATCH -J RTM_20200625
 
 ## Enter the wall-clock time limit for for your jobs.
 ## If jobs reach this limit they are automatically killed.
@@ -34,6 +34,12 @@
 ## Can be an arbitrary list of comma-separated ranges, eg 1-5,10-15,20-25
 ## The %nn is optional, and restricts SLURM to running nn jobs simultaneously.
 ## #SBATCH --array=1-100%50
+#SBATCH --array=1-4
+
+#! sbatch directives end here (put any additional directives above this line)
+#SBATCH --output=model_run_20200625_rw_sero%A_%a.out
+#SBATCH --error=model_run_20200625_rw_sero%A_%a.err
+
 
 ##  - - - - - - - - - - - - - -
 
@@ -50,6 +56,23 @@ module load default-login             # REQUIRED - loads the basic environment
 
 ## Section 3: Run your application
 
+# Navigate to the correct working directory
+workdir="$SLURM_SUBMIT_DIR/model_runs/202007"
+if [ $SLURM_ARRAY_TASK_ID == 1 ]
+then
+    workdir="${workdir}09/base_Thurs6day_matrices_20200703_deaths/"
+elif [ $SLURM_ARRAY_TASK_ID == 2 ]
+then
+    workdir="${workdir}10/base_Thurs6day_matrices_20200703_deaths/"
+elif [ $SLURM_ARRAY_TASK_ID == 3 ]
+then
+    workdir="${workdir}10/base_new_contacts6day_matrices_20200710_deaths/"
+elif [ $SLURM_ARRAY_TASK_ID == 4 ]
+then
+    workdir="${workdir}10/base_new_contacts_new_sero6day_matrices_20200710_deaths/"
+fi
+echo -e $workdir
+
 # You can use any arbitrary set of Linux commands here
 
 CMD="../../../rtm_optim"
@@ -61,6 +84,9 @@ CMD="../../../rtm_optim"
 ###############################################################
 ### You should not have to change anything below this line ####
 ###############################################################
+
+cd $workdir
+echo -e "Changed directory to `pwd`.\n"
 
 JOBID=$SLURM_JOB_ID
 

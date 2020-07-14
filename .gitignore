@@ -18,4 +18,5 @@ Report_structure*
 date_*/**
 R/output/*_cache
 slurm-*
-Lombardy*/**
+phe-nowcasts/**
+Lombdardy*/**
