@@ -6,7 +6,7 @@ library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
-if (length(args) < 3) args <- c(args, 1, "Scotland")
+if (length(args) < 3) args <- c(args, 1, "Northern_Ireland")
 
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
@@ -39,8 +39,8 @@ nA <- length(age.labs)
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_newMats_newSero"
-contact.model <- 3
+scenario.name <- "NI"
+contact.model <- 1
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
