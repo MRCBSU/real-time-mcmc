@@ -68,7 +68,7 @@ var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susc
 var.priors <- list(distribution = list(NULL, NULL, NULL, rep(list(dgamma), gp.flag), rep(list(dgamma), hosp.flag), NULL, list(dgamma), NULL, NULL,
                                        rep(lapply(1:(max(unlist(mult.mat))+1), function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
                                        NULL, NULL, rep(list(dgamma), r), rep(list(dnorm), r), NULL, NULL, NULL, 
-                                       rep(list(dbeta), nA - 1), NULL, NULL, NULL, NULL, NULL, list(dbeta), list(dbeta), NULL, 
+                                       rep(list(dbeta), max(1, nA - 1)), NULL, NULL, NULL, NULL, NULL, list(dbeta), list(dbeta), NULL, 
                                        rep(lapply(1:nbetas, function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
                                        list(NULL, dgamma)), ## informative prior specification
                    parameters = list(NA, NA, NA, pars.eta, pars.eta.h, NA, pars.dI, NA, NA, as.vector(contact.pars), NA, NA, pars.egr, rep(pars.nu, r), NA, NA, NA,

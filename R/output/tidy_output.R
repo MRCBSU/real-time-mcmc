@@ -51,6 +51,7 @@ apply.param.to.output <- function(output, param, func, over = NULL,
 }
 
 merge.youngest.age.groups <- function(mat, num.to.group = 2, new.name = NULL) {
+  if (num.ages < num.to.group) {return(mat)}
   add.function <- function(x) {
     to.merge <- x[1:num.to.group]
     to.preserve <- x[(num.to.group+1):length(x)]
@@ -173,7 +174,7 @@ if(ncol(m) %% r != 0) {
     ## Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.
     R.star[ireg] <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
     ## Calculate number of susceptiables for each day
-    S <- apply(NNI[[reg]][,,outputs.for.Rt], c(1, 3), cumsum)  ## TxAxI array
+    S <- apply(NNI[[reg]][,,outputs.for.Rt, drop = FALSE], c(1, 3), cumsum)  ## TxAxI array
     S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
     ## Calculate the relative Rt values as a function of the next generation matrix for each day
     R.prime <- sapply(1:ndays,
@@ -335,14 +336,16 @@ print('Loading true data')
 load.data <- function(file.names) {
   col.names <- c('date', age.labs)
   names(file.names) <- regions
-  to.combine <- dimnames(infections)$age[1:4]
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
-  return(do.call(bind_rows, dat.raw) %>%
-    mutate(`<25` = rowSums(.[to.combine])) %>%
-    select(-all_of(to.combine)) %>%
-    pivot_longer(-c(date, region), names_to = "age")
-  )
+  tbl_dat <- do.call(bind_rows, dat.raw)
+  if (num.ages > 1) {
+    to.combine <- dimnames(infections)$age[1:4]
+    tbl_dat <- tbl_dat %>%
+      mutate(`<25` = rowSums(.[to.combine])) %>%
+      select(-all_of(to.combine))
+  }
+  return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
 }
 if (hosp.flag == 0) {
   dth.dat <- NULL
