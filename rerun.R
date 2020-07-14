@@ -6,6 +6,7 @@ out.dir <- getwd()
 require(rmarkdown)
 
 Rfile.loc <- file.path(file.loc, "R/output")
+external <- FALSE
 
 if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
