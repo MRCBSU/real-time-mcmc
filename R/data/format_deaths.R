@@ -5,15 +5,30 @@ suppressMessages(library(tidyverse))
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
+# Given a vector, return the first element where predicate is true
+# Returns NULL if not true for any
+first.where.true <- function(vec, predicate) {
+	true.at <- which(predicate(vec))
+	if (length(true.at) == 0) return(NULL)
+	index.to.use <- min(true.at)
+	return(vec[index.to.use])
+}	
+
 if(!exists("date.data"))
     date.data <- (today() - days(1)) %>% format("%Y%m%d")
 
 ## Where to find the data, if NULL use command line argument
-if(!exists("deaths.loc"))
-    ## deaths.loc <- paste(date.data, "COVID19 Deaths.csv") ## NULL
-	deaths.loc <- paste0("Dataset Modelling " , date.data, ".csv") ## NULL
-    #deaths.loc <- file.path(proj.dir, "data/raw/deaths", paste0(date.data, ".csv"))
-	#deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
+if(!exists("deaths.loc")) {
+	possible.deaths.locations <- c(
+		file.path(proj.dir, paste0("data/raw/Dataset Modelling " , date.data, ".csv")),
+		paste(date.data, "COVID19 Deaths.csv"),
+		deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
+	)
+	deaths.loc <- first.where.true(possible.deaths.locations, file.exists)
+	if (is.null(deaths.loc)) {
+		stop(paste('No valid deaths data files, tried:', possible.deaths.locations))
+	}
+}
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -27,14 +42,25 @@ if(!exists("regions")){
 }
 
 ## Map our names for columns (LHS) to data column names (RHS)
-col.names <- list(
+possible.col.names <- list(
 	death_date = "dod",
 	finalid = "finalid",
-	onset_date = "symptom_onset_date",
-	nhs_region = "NHSER_name",
-	phe_region = "PHEC_name",
-	utla_name = "UTLA_name"
+	onset_date = c("symptom_onset_date", "onsetdate"),
+	nhs_region = c("NHSER_name", "nhser_name"),
+	phe_region = c("PHEC_name", "phec_name"),
+	utla_name = c("UTLA_name", "utla_name"),
+	death_type = "death_type",
+	age = "age"
 )
+input.col.names <- suppressMessages(names(read_csv('/data/covid-19/data-raw/deaths/2020-07-07.csv', n_max=0)))
+is.valid.col.name <- function(name) {name %in% input.col.names}
+first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
+col.names <- lapply(possible.col.names, first.valid.col.name)
+invalid.col.names <- sapply(col.names, is.null)
+if (any(invalid.col.names)) {
+	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+	stop(paste("No valid column name for:", names.invalid.cols))
+}
 
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
@@ -88,7 +114,9 @@ death.col.args[[col.names[["finalid"]]]] <- col_double()
 death.col.args[[col.names[["nhs_region"]]]] <- col_character()
 death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.col.args[[col.names[["utla_name"]]]] <- col_character()
-death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
+death.col.args[[col.names[["death_type"]]]] <- col_character()
+death.col.args[[col.names[["age"]]]] <- col_integer()
+death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
 	return(dates <= today() & dates >= ymd("2020-01-01"))
@@ -113,12 +141,7 @@ fix.dates <- function(df) {
 }
 
 ## Read the file and rename columns
-if (is.null(deaths.loc)) {
-	input.loc = commandArgs(trailingOnly = TRUE)[1]
-} else {
-	if (startsWith(deaths.loc, "/")) input.loc <- deaths.loc
-	else input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
-}
+input.loc <- deaths.loc
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%

@@ -43,6 +43,7 @@ viro.flag <- 0
 ## If these files don't already exits, make them
 dir.data <- "data"
 data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+names(data.files) <- regions
 if(sero.flag){
   serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
   seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
@@ -52,8 +53,17 @@ if(sero.flag){
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
-  } else {
+  } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
+  }
+  if ("Scotland" %in% regions) {
+	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+  }
+  if ("Northern_Ireland" %in% regions) {
+	  source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+  }
+  if ("Wales" %in% regions) {
+	  source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
   }
   if(sero.flag){
 	  source(file.path(proj.dir, "R/data/format_sero.R"))
@@ -71,10 +81,11 @@ if(compile.code) {
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
+save.image("tmp.RData")
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
-} else save.image("tmp.RData")
+}
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")
