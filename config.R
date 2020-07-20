@@ -12,7 +12,8 @@ if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
 	regions <- c("East_of_England", "London", "Midlands",
 									  "North_East_and_Yorkshire", "North_West",
-									  "South_East", "South_West")
+									  "South_East", "South_West", "Scotland",
+									  "Northern_Ireland", "Wales")
 	nr <- length(regions)
 } else {
 	nr <- as.integer(args[2])
@@ -80,3 +81,8 @@ data.dirs <- file.path(proj.dir,
 names(data.dirs) <- c("deaths", "sero")
       
 flg.confirmed = TRUE
+
+English.regions <- c("East_of_England", "London", "Midlands",
+								  "North_East_and_Yorkshire", "North_West",
+								  "South_East", "South_West", "England")
+running.England <- any(regions %in% English.regions)

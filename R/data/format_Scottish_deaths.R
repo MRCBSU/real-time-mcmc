@@ -6,15 +6,16 @@ suppressMessages(library(tidyverse))
 #########################################################
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- NULL
+deaths.loc <- paste0("/data/covid-19/data-raw/deaths-scotland/", ymd(date.data), ".csv")
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
-	death_date = "NRS.Date.Death"
+	death_date = "NRS.Date.Death",
+	age = "NRS.Age"
 )
 
 ## Inputs that are dependent on the output required.
-reporting.delay <- 7
+reporting.delay <- 3
 
 
 ####################################################################
@@ -39,16 +40,19 @@ thisFile <- function() {
 }
 
 ## Where are various directories?
-file.loc <- dirname(thisFile())
-proj.dir <- dirname(dirname(file.loc))
+if (!exists("proj.dir")) {
+	file.loc <- dirname(thisFile())
+	proj.dir <- dirname(dirname(file.loc))
+}
 dir.data <- file.path(proj.dir, "data")
-source(file.path(file.loc, "utils.R"))
+source(file.path(proj.dir, "R/data/utils.R"))
 source(file.path(proj.dir, "config.R"))
 
 ## Which columns are we interested in?
 death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
-death.cols <- do.call(cols, death.col.args)	# Calling with a list so use do.call
+death.col.args[[col.names[["age"]]]] <- col_integer()
+death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
 	return(dates <= today() & dates >= ymd("2020-01-01"))
@@ -78,18 +82,15 @@ fix.dates <- function(df) {
 }
 
 ## Read the file and rename columns
-if (is.null(deaths.loc)) {
-	input.loc = commandArgs(trailingOnly = TRUE)[1]
-} else {
-	input.loc = build.data.filepath(subdir = "raw/deaths", deaths.loc)
-}
+input.loc <- deaths.loc
 print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
     mutate(Date = fuzzy_date_parse(death_date)) %>%
     fix.dates %>%
-    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
+    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date),
+    	   age_group = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 
 if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
@@ -98,7 +99,7 @@ if (!all(dth.dat$plausible_death_date)) {
 	dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
-print("WARNING: the following rows have had onset and/or death date changed to become plausible: ")
+print("WARNING: the following rows have had death dates changed to become plausible: ")
 dth.dat %>%
    filter(orig_date != Date) %>%
    select(c(Date, orig_date)) %>%
@@ -109,39 +110,42 @@ dth.dat %>%
    print(n=1000)
 
 latest.date <- ymd(date.data) - reporting.delay
-earliest.date <- ymd("2020-02-17")
-
-dth.dat <- dth.dat %>%
-    filter(Date <= latest.date) %>%
-    filter(Date >= earliest.date)
+earliest.date <- start.date
 
 rtm.dat <- dth.dat %>%
-	group_by(Date, .drop = FALSE) %>%
+    filter(Date <= latest.date) %>%
+    filter(Date >= earliest.date) %>%
+	group_by(Date, age_group, .drop = FALSE) %>%
 	tally %>%
 	right_join(		# Add missing rows
-		expand_grid(Date = as_date(earliest.date:latest.date)),
-		by = c("Date")
+		expand_grid(
+			Date = as_date(earliest.date:latest.date),
+			age_group = age.labs,
+		),
+		by = c("Date", "age_group")
 	) %>%
-	replace_na(list(n = 0)) %>%		# 0 if just added
-	arrange(Date)
+	replace_na(list(n = 0))
 
-## Write rtm.dat to data file
-for(reg in regions) {
-	region.dat <- rtm.dat %>%
-		select(Date, n)
-		
-	print(paste(
-		"Writing to",
-		build.data.filepath("RTM_format", "deaths", date.data, "_Scotland.txt"),
-		"(", sum(region.dat$n), "total deaths,", nrow(region.dat), "rows.)"
-	))
+region.dat <- pivot_wider(
+		  rtm.dat,
+		  id_cols = 1,
+		  names_from = age_group,
+		  values_from = n
+	)
 
-	region.dat %>%
-		write_tsv(
-			build.data.filepath("RTM_format", "deaths", date.data, "_Scotland.txt"),
-            col_names = FALSE
-		)
-}
+output.file <- data.files["Scotland"]
+print(paste(
+	"Writing to",
+	output.file,
+	"(", sum(rtm.dat$n), "total deaths,", nrow(region.dat), "rows.)"
+))
+
+region.dat %>%
+	arrange(Date) %>%
+	write_tsv(
+		output.file,
+		col_names = FALSE
+	)
 
 ## Save a quick plot of the data...
 require(ggplot2)
@@ -156,7 +160,7 @@ gp <- ggplot(rtm.dat, aes(x = Date, y = n)) +
         legend.position = "top",
         legend.justification = "left",
         )
-plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, ".pdf")
+plot.filename <- build.data.filepath("RTM_format/deaths_Scotland", "deaths_plot", date.data, ".pdf")
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
        gp,
