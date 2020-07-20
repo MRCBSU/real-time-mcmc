@@ -146,8 +146,8 @@ print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
-    mutate(Date = fuzzy_date_parse(death_date),
-           Onset = fuzzy_date_parse(onset_date)) %>%
+    mutate(Date = fuzzy_date_parse(death_date) %>% recode(ymd(18991231) = NA),
+           Onset = fuzzy_date_parse(onset_date) %>% recode(ymd(18991231) = NA)) %>%
     fix.dates %>%
     mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
 
