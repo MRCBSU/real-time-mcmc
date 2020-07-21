@@ -53,29 +53,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-<<<<<<< HEAD
 cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141) ## Day numbers where breaks happen
-## cm.breaks <- c(36, 64, 92, 120)
-mat.dates <- start.date + cm.breaks - 1
-lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
-lst$England$all$m <- lst$England$all$m * 1e7
-cm.files <- "england_8ag_contact.txt"
-for(i in 1:length(cm.breaks))
-    cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date, ".txt"))
-cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
-cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
-cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
-idx <- 1
-if(!all(file.exists(cm.bases))){
-    adf <- as.data.frame(lst$England$all$m)
-    write_tsv(adf, cm.bases[idx], col_names = FALSE)
-    for(fl in cm.lockdown){
-        idx <- idx + 1
-        mat <- read_csv(fl) * adf 
-        write_tsv(mat, cm.bases[idx], col_names = FALSE)
-    }
-=======
-cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134) ## Day numbers where breaks happen
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
 	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
@@ -99,7 +77,6 @@ if (nA == 1) {
           write_tsv(mat, cm.bases[idx], col_names = FALSE)
       }
    }
->>>>>>> 9aa6416525fe10efc3c2de8a8084a147ad92853b
 }
 ## Modifiers (which element of contact_parameters to use)
 if(contact.model == 1){
