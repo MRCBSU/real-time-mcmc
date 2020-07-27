@@ -83,7 +83,7 @@ startwd <- getwd()
 setwd(out.dir)
 save.image("tmp.RData")
 if(run.code){
-    system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+    system(file.path(proj.dir, "rtm_optim_1ag"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
 }
 
