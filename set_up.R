@@ -1,4 +1,4 @@
-require(rmarkdown)
+library(knitr)
 
 ## Location of this script
 thisFile <- function() {
@@ -67,16 +67,7 @@ for(reg in regions){
 ## Remove spaces from region name.
 regions <- gsub(" ", "_", regions, fixed = TRUE)
 
-plain_document <- output_format(
-    knitr = knitr_options(),
-    pandoc = pandoc_options(
-		to = "plain",
-		ext = ".txt",
-		from = rmarkdown_format(extensions = "-smart")
-	)
-)
-
 pars.template.loc <- file.path(proj.dir, "inputs", "mod_pars.Rmd")
+knit(input = pars.template.loc, output = file.path(out.dir, "mod_pars.txt"))
 inputs.template.loc <- file.path(proj.dir, "inputs", "mod_inputs.Rmd")
-render(pars.template.loc, output_dir = out.dir, output_format = plain_document)
-render(inputs.template.loc, output_dir = out.dir, output_format = plain_document)
+knit(input = inputs.template.loc, output = file.path(out.dir, "mod_inputs.txt"))
