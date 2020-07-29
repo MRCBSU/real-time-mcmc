@@ -20,7 +20,7 @@ if(!exists("date.data"))
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {
 	possible.deaths.locations <- c(
-		file.path(proj.dir, paste0("data/raw/Dataset Modelling " , date.data, ".csv")),
+		file.path(proj.dir, paste0("data/raw/deaths/Dataset Modelling " , date.data, ".csv")),
 		paste(date.data, "COVID19 Deaths.csv"),
 		deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 	)
@@ -52,7 +52,7 @@ possible.col.names <- list(
 	death_type = "death_type",
 	age = "age"
 )
-input.col.names <- suppressMessages(names(read_csv('/data/covid-19/data-raw/deaths/2020-07-07.csv', n_max=0)))
+input.col.names <- suppressMessages(names(read_csv(deaths.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
 first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
 col.names <- lapply(possible.col.names, first.valid.col.name)

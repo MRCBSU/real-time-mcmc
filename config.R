@@ -11,9 +11,10 @@ if (length(args) < 3) args <- c(args, "All", "England")
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
 	regions <- c("East_of_England", "London", "Midlands",
-									  "North_East_and_Yorkshire", "North_West",
-									  "South_East", "South_West", "Scotland",
-									  "Northern_Ireland", "Wales")
+                     "North_East_and_Yorkshire", "North_West",
+                     "South_East", "South_West"## ,
+                     ## "Scotland", "Northern_Ireland", "Wales"
+                     )
 	nr <- length(regions)
 } else {
 	nr <- as.integer(args[2])
@@ -44,7 +45,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_newContacts_newSero_altSens"
+scenario.name <- "base_altSens"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
