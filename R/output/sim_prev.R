@@ -15,14 +15,14 @@ thisFile <- function() {
     return(rstudioapi::getSourceEditorContext()$path)
   } else {
     # 'source'd via R console
-    return(normalizePath(sys.frames()[[1]]$ofile))
+    return(normalizePath(sys.frames()[[5]]$ofile))
   }
 }
 ############################
 R.dir <- dirname(thisFile())
 proj.dir <- dirname(dirname(R.dir))
 source(file.path(R.dir, "seir_reporting_functions.R"))
-out.dir <- file.path(proj.dir, "model_runs", "20200731", "base_varSens6day_matrices_20200724_deaths")
+out.dir <- file.path(proj.dir, "model_runs", "20200713", "base_6day_matrices_20200710_deaths")
 
 load(file.path(out.dir, "tmp.RData"))
 

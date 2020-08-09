@@ -71,8 +71,7 @@ plain_document <- output_format(
     knitr = knitr_options(),
     pandoc = pandoc_options(
 		to = "plain",
-		ext = ".txt",
-		from = rmarkdown_format(extensions = "-smart")
+		ext = ".txt"
 	)
 )
 

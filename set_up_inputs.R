@@ -53,7 +53,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141) ## Day numbers where breaks happen
+cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141, 148, 155) ## Day numbers where breaks happen
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
 	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
@@ -183,8 +183,8 @@ if (sero.flag == 1) {
 }
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
-cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
-cm.mults <- file.path(proj.dir, "contact_mats", cm.mults)
+    cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
+    cm.mults <- file.path(proj.dir, "contact_mats", cm.mults)
 }
 
 num.threads <- nr

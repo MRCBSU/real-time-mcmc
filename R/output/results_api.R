@@ -26,8 +26,11 @@ if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
-if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 if (!exists("infections")) {
+  if (!exists("out.dir")) {
+	  warning("Importing config.R as no out.dir found")
+	  source(file.path(proj.dir, "config.R"))
+  }
   output.required <- file.path(out.dir, "output_matrices.RData")
   if (file.exists(output.required)) {
     load(file.path(out.dir, "mcmc.RData"))

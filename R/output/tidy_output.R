@@ -1,5 +1,5 @@
 suppressMessages(library(tidyverse))
-suppressMessages(library(cubelyr))
+suppressPackageStartupMessages(suppressWarnings(require(cubelyr)))
 suppressMessages(library(Matrix))
 
 ## Location of this script

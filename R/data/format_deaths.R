@@ -20,7 +20,7 @@ if(!exists("date.data"))
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {
 	possible.deaths.locations <- c(
-		file.path(proj.dir, paste0("data/raw/Dataset Modelling " , date.data, ".csv")),
+		file.path(proj.dir, paste0("data/raw/deaths/Dataset Modelling " , date.data, ".csv")),
 		paste(date.data, "COVID19 Deaths.csv"),
 		deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
 	)
@@ -43,16 +43,17 @@ if(!exists("regions")){
 
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
-	death_date = "dod",
-	finalid = "finalid",
-	onset_date = c("symptom_onset_date", "onsetdate"),
-	nhs_region = c("NHSER_name", "nhser_name"),
-	phe_region = c("PHEC_name", "phec_name"),
-	utla_name = c("UTLA_name", "utla_name"),
-	death_type = "death_type",
-	age = "age"
+    death_date = "dod",
+    finalid = "finalid",
+    onset_date = c("symptom_onset_date", "onsetdate"),
+    nhs_region = c("NHSER_name", "nhser_name"),
+    phe_region = c("PHEC_name", "phec_name"),
+    utla_name = c("UTLA_name", "utla_name"),
+    death_type = "death_type",
+    age = "age",
+    pillars = "pillars"
 )
-input.col.names <- suppressMessages(names(read_csv('/data/covid-19/data-raw/deaths/2020-07-07.csv', n_max=0)))
+input.col.names <- suppressMessages(names(read_csv(deaths.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
 first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
 col.names <- lapply(possible.col.names, first.valid.col.name)
@@ -116,6 +117,7 @@ death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.col.args[[col.names[["death_type"]]]] <- col_character()
 death.col.args[[col.names[["age"]]]] <- col_integer()
+death.col.args[[col.names[["pillars"]]]] <- col_character()
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -146,8 +148,8 @@ print(paste("Reading from", input.loc))
 dth.dat <- read_csv(input.loc,
                     col_types = death.cols) %>%
     rename(!!!col.names) %>%
-    mutate(Date = fuzzy_date_parse(death_date),
-           Onset = fuzzy_date_parse(onset_date)) %>%
+    mutate(Date = fuzzy_date_parse(death_date) %>% na_if(ymd("1899-12-31")),
+           Onset = fuzzy_date_parse(onset_date) %>% na_if(ymd("1899-12-31"))) %>%
     fix.dates %>%
     mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
 
@@ -228,7 +230,7 @@ for(reg in regions) {
 }
 
 ## Save the data as processed
-write_csv(rtm.dat, file.path(out.dir, "deaths_data.csv"))
+save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
 
 ## Save a quick plot of the data...
 require(ggplot2)
