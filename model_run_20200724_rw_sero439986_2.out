@@ -1,0 +1,16 @@
+/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200724/base_altSens6day_matrices_20200717_deaths/
+Changed directory to /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200724/base_altSens6day_matrices_20200717_deaths.
+
+JobID: 439986
+======
+Time: Mon 27 Jul 00:57:51 BST 2020
+Running on node: compute-elgar
+Current directory: /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200724/base_altSens6day_matrices_20200717_deaths
+
+Num tasks = , Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+../../../rtm_optim
+
+Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.Elapsed program time in hours: 16.6061
