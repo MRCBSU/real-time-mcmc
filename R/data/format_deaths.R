@@ -43,14 +43,15 @@ if(!exists("regions")){
 
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
-	death_date = "dod",
-	finalid = "finalid",
-	onset_date = c("symptom_onset_date", "onsetdate"),
-	nhs_region = c("NHSER_name", "nhser_name"),
-	phe_region = c("PHEC_name", "phec_name"),
-	utla_name = c("UTLA_name", "utla_name"),
-	death_type = "death_type",
-	age = "age"
+    death_date = "dod",
+    finalid = "finalid",
+    onset_date = c("symptom_onset_date", "onsetdate"),
+    nhs_region = c("NHSER_name", "nhser_name"),
+    phe_region = c("PHEC_name", "phec_name"),
+    utla_name = c("UTLA_name", "utla_name"),
+    death_type = "death_type",
+    age = "age",
+    pillars = "pillars"
 )
 input.col.names <- suppressMessages(names(read_csv(deaths.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -116,6 +117,7 @@ death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.col.args[[col.names[["death_type"]]]] <- col_character()
 death.col.args[[col.names[["age"]]]] <- col_integer()
+death.col.args[[col.names[["pillars"]]]] <- col_character()
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -228,7 +230,7 @@ for(reg in regions) {
 }
 
 ## Save the data as processed
-write_csv(rtm.dat, file.path(out.dir, "deaths_data.csv"))
+save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
 
 ## Save a quick plot of the data...
 require(ggplot2)
