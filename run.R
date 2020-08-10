@@ -56,6 +56,7 @@ if(format.inputs){
   } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
+  stop
   if ("Scotland" %in% regions) {
 	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
   }

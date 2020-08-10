@@ -11,9 +11,10 @@ if (length(args) < 3) args <- c(args, 1, "Scotland")
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
 	regions <- c("East_of_England", "London", "Midlands",
-									  "North_East_and_Yorkshire", "North_West",
-									  "South_East", "South_West", "Scotland",
-									  "Northern_Ireland", "Wales")
+                     "North_East_and_Yorkshire", "North_West",
+                     "South_East", "South_West"## ,
+                     ## "Scotland", "Northern_Ireland", "Wales"
+                     )
 	nr <- length(regions)
 } else {
 	nr <- as.integer(args[2])
@@ -23,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200807"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200731"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -40,7 +41,7 @@ nA <- length(age.labs)
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_newContacts_newSero_altSens"
+scenario.name <- "base_varSens"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
