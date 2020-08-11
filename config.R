@@ -39,7 +39,7 @@ nA <- length(age.labs)
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- ifelse(nr == 1, paste0(regions, "_", ""))
+scenario.name <- paste0(ifelse(nr == 1, paste0(regions, "_", "")), "relax_sd_prior_")
 contact.model <- 1
 
 flg.confirmed <- (data.desc != "all")
