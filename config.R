@@ -28,7 +28,7 @@ google.data.date <- format(ymd("20200807"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
-nforecast.weeks <- 3
+nforecast.weeks <- 7
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
 ## What age groupings are being used?
@@ -67,7 +67,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date,
+                     paste0("more_cores_", scenario.name, "_matrices_", google.data.date,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
