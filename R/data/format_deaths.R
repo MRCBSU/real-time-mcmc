@@ -256,3 +256,7 @@ ggsave(plot.filename,
        gp + guides(linetype=FALSE),
        width = 1.5*8.5,
        height = 1.5*6)
+
+## rtm.dat.plot %>%
+##     group_by(Date, ignore) %>%
+##     summarise(count = sum(count)) -> rtm.dat.Eng.plot
