@@ -50,6 +50,11 @@ if(sero.flag){
 } else {
   serosam.files <- seropos.files <- NULL
 }
+if(gp.flag){
+  cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2.txt")
+} else {
+  cases.files <- NULL
+}
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
@@ -68,6 +73,9 @@ if(format.inputs){
   }
   if(sero.flag){
 	  source(file.path(proj.dir, "R/data/format_sero.R"))
+  }
+  if(gp.flag){
+	  source(file.path(proj.dir, "R/data/format_linelist.R"))
   }
 }
 

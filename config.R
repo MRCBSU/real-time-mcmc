@@ -77,9 +77,10 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
-                         "data/RTM_format/serology")
+                         "data/RTM_format/serology",
+                         "data/RTM_format/cases")
                        )
-names(data.dirs) <- c("deaths", "sero")
+names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
