@@ -67,7 +67,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0("more_cores_", scenario.name, "_matrices_", google.data.date,
+                     paste0(scenario.name, "_matrices_", google.data.date,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")

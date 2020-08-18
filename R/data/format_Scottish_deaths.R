@@ -6,7 +6,7 @@ suppressMessages(library(tidyverse))
 #########################################################
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- paste0("/data/covid-19/data-raw/deaths-scotland/", ymd(date.data), ".csv")
+deaths.loc <- paste0("/data/covid-19/data-raw/manual-downloads/deaths-scotland/", ymd(date.data), ".csv")
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
