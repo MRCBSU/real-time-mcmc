@@ -41,7 +41,7 @@ nA <- length(age.labs)
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_altSens_newSerology"
+scenario.name <- "quick_Scot"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
