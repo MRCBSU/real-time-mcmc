@@ -42,7 +42,14 @@ viro.flag <- 0
 
 ## If these files don't already exits, make them
 dir.data <- "data"
-data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+data.files <- paste0(data.dirs["deaths"], "/",
+                     data.desc,
+                     date.data, "_",
+                     regions, "_",
+                     nA, "ag",
+                     ifelse(flg.confirmed, "CONF", ""),
+                     reporting.delay, "delay",
+                     ifelse(flg.cutoff, paste0("cutoff", str.cutoff), ""),".txt")
 names(data.files) <- regions
 if(sero.flag){
   serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
