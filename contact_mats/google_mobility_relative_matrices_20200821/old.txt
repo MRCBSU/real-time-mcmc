@@ -1,0 +1,730 @@
+base_matrices.rds
+contact_mat.tar
+East of England2020-02-03all.csv
+East of England2020-02-03physical.csv
+East of England2020-02-10all.csv
+East of England2020-02-10physical.csv
+East of England2020-02-17all.csv
+East of England2020-02-17physical.csv
+East of England2020-02-24all.csv
+East of England2020-02-24physical.csv
+East of England2020-03-02all.csv
+East of England2020-03-02physical.csv
+East of England2020-03-09all.csv
+East of England2020-03-09physical.csv
+East of England2020-03-16all.csv
+East of England2020-03-16physical.csv
+East of England2020-03-23all.csv
+East of England2020-03-23physical.csv
+East of England2020-03-30all.csv
+East of England2020-03-30physical.csv
+East of England2020-04-06all.csv
+East of England2020-04-06physical.csv
+East of England2020-04-13all.csv
+East of England2020-04-13physical.csv
+East of England2020-04-20all.csv
+East of England2020-04-20physical.csv
+East of England2020-04-27all.csv
+East of England2020-04-27physical.csv
+East of England2020-05-04all.csv
+East of England2020-05-04physical.csv
+East of England2020-05-11all.csv
+East of England2020-05-11physical.csv
+East of England2020-05-18all.csv
+East of England2020-05-18physical.csv
+East of England2020-05-25all.csv
+East of England2020-05-25physical.csv
+East of England2020-06-01all.csv
+East of England2020-06-01physical.csv
+East of England2020-06-08all.csv
+East of England2020-06-08physical.csv
+East of England2020-06-15all.csv
+East of England2020-06-15physical.csv
+East of England2020-06-22all.csv
+East of England2020-06-22physical.csv
+East of England2020-06-29all.csv
+East of England2020-06-29physical.csv
+East of England2020-07-06all.csv
+East of England2020-07-06physical.csv
+East of England2020-07-13all.csv
+East of England2020-07-13physical.csv
+East of England2020-07-20all.csv
+East of England2020-07-20physical.csv
+East of England2020-07-27all.csv
+East of England2020-07-27physical.csv
+East of England2020-08-03all.csv
+East of England2020-08-03physical.csv
+East of England2020-08-10all.csv
+East of England2020-08-10physical.csv
+England2020-02-03all.csv
+England2020-02-03physical.csv
+England2020-02-10all.csv
+England2020-02-10physical.csv
+England2020-02-17all.csv
+England2020-02-17physical.csv
+England2020-02-24all.csv
+England2020-02-24physical.csv
+England2020-03-02all.csv
+England2020-03-02physical.csv
+England2020-03-09all.csv
+England2020-03-09physical.csv
+England2020-03-16all.csv
+England2020-03-16physical.csv
+England2020-03-23all.csv
+England2020-03-23physical.csv
+England2020-03-30all.csv
+England2020-03-30physical.csv
+England2020-04-06all.csv
+England2020-04-06physical.csv
+England2020-04-13all.csv
+England2020-04-13physical.csv
+England2020-04-20all.csv
+England2020-04-20physical.csv
+England2020-04-27all.csv
+England2020-04-27physical.csv
+England2020-05-04all.csv
+England2020-05-04physical.csv
+England2020-05-11all.csv
+England2020-05-11physical.csv
+England2020-05-18all.csv
+England2020-05-18physical.csv
+England2020-05-25all.csv
+England2020-05-25physical.csv
+England2020-06-01all.csv
+England2020-06-01physical.csv
+England2020-06-08all.csv
+England2020-06-08physical.csv
+England2020-06-15all.csv
+England2020-06-15physical.csv
+England2020-06-22all.csv
+England2020-06-22physical.csv
+England2020-06-29all.csv
+England2020-06-29physical.csv
+England2020-07-06all.csv
+England2020-07-06physical.csv
+England2020-07-13all.csv
+England2020-07-13physical.csv
+England2020-07-20all.csv
+England2020-07-20physical.csv
+England2020-07-27all.csv
+England2020-07-27physical.csv
+England2020-08-03all.csv
+England2020-08-03physical.csv
+England2020-08-10all.csv
+England2020-08-10physical.csv
+Lombardy2020-02-03all.csv
+Lombardy2020-02-03physical.csv
+Lombardy2020-02-10all.csv
+Lombardy2020-02-10physical.csv
+Lombardy2020-02-17all.csv
+Lombardy2020-02-17physical.csv
+Lombardy2020-02-24all.csv
+Lombardy2020-02-24physical.csv
+Lombardy2020-03-02all.csv
+Lombardy2020-03-02physical.csv
+Lombardy2020-03-09all.csv
+Lombardy2020-03-09physical.csv
+Lombardy2020-03-16all.csv
+Lombardy2020-03-16physical.csv
+Lombardy2020-03-23all.csv
+Lombardy2020-03-23physical.csv
+Lombardy2020-03-30all.csv
+Lombardy2020-03-30physical.csv
+Lombardy2020-04-06all.csv
+Lombardy2020-04-06physical.csv
+Lombardy2020-04-13all.csv
+Lombardy2020-04-13physical.csv
+Lombardy2020-04-20all.csv
+Lombardy2020-04-20physical.csv
+Lombardy2020-04-27all.csv
+Lombardy2020-04-27physical.csv
+Lombardy2020-05-04all.csv
+Lombardy2020-05-04physical.csv
+Lombardy2020-05-11all.csv
+Lombardy2020-05-11physical.csv
+Lombardy2020-05-18all.csv
+Lombardy2020-05-18physical.csv
+Lombardy2020-05-25all.csv
+Lombardy2020-05-25physical.csv
+Lombardy2020-06-01all.csv
+Lombardy2020-06-01physical.csv
+Lombardy2020-06-08all.csv
+Lombardy2020-06-08physical.csv
+Lombardy2020-06-15all.csv
+Lombardy2020-06-15physical.csv
+Lombardy2020-06-22all.csv
+Lombardy2020-06-22physical.csv
+Lombardy2020-06-29all.csv
+Lombardy2020-06-29physical.csv
+Lombardy2020-07-06all.csv
+Lombardy2020-07-06physical.csv
+Lombardy2020-07-13all.csv
+Lombardy2020-07-13physical.csv
+Lombardy2020-07-20all.csv
+Lombardy2020-07-20physical.csv
+Lombardy2020-07-27all.csv
+Lombardy2020-07-27physical.csv
+Lombardy2020-08-03all.csv
+Lombardy2020-08-03physical.csv
+Lombardy2020-08-10all.csv
+Lombardy2020-08-10physical.csv
+London2020-02-03all.csv
+London2020-02-03physical.csv
+London2020-02-10all.csv
+London2020-02-10physical.csv
+London2020-02-17all.csv
+London2020-02-17physical.csv
+London2020-02-24all.csv
+London2020-02-24physical.csv
+London2020-03-02all.csv
+London2020-03-02physical.csv
+London2020-03-09all.csv
+London2020-03-09physical.csv
+London2020-03-16all.csv
+London2020-03-16physical.csv
+London2020-03-23all.csv
+London2020-03-23physical.csv
+London2020-03-30all.csv
+London2020-03-30physical.csv
+London2020-04-06all.csv
+London2020-04-06physical.csv
+London2020-04-13all.csv
+London2020-04-13physical.csv
+London2020-04-20all.csv
+London2020-04-20physical.csv
+London2020-04-27all.csv
+London2020-04-27physical.csv
+London2020-05-04all.csv
+London2020-05-04physical.csv
+London2020-05-11all.csv
+London2020-05-11physical.csv
+London2020-05-18all.csv
+London2020-05-18physical.csv
+London2020-05-25all.csv
+London2020-05-25physical.csv
+London2020-06-01all.csv
+London2020-06-01physical.csv
+London2020-06-08all.csv
+London2020-06-08physical.csv
+London2020-06-15all.csv
+London2020-06-15physical.csv
+London2020-06-22all.csv
+London2020-06-22physical.csv
+London2020-06-29all.csv
+London2020-06-29physical.csv
+London2020-07-06all.csv
+London2020-07-06physical.csv
+London2020-07-13all.csv
+London2020-07-13physical.csv
+London2020-07-20all.csv
+London2020-07-20physical.csv
+London2020-07-27all.csv
+London2020-07-27physical.csv
+London2020-08-03all.csv
+London2020-08-03physical.csv
+London2020-08-10all.csv
+London2020-08-10physical.csv
+Midlands2020-02-03all.csv
+Midlands2020-02-03physical.csv
+Midlands2020-02-10all.csv
+Midlands2020-02-10physical.csv
+Midlands2020-02-17all.csv
+Midlands2020-02-17physical.csv
+Midlands2020-02-24all.csv
+Midlands2020-02-24physical.csv
+Midlands2020-03-02all.csv
+Midlands2020-03-02physical.csv
+Midlands2020-03-09all.csv
+Midlands2020-03-09physical.csv
+Midlands2020-03-16all.csv
+Midlands2020-03-16physical.csv
+Midlands2020-03-23all.csv
+Midlands2020-03-23physical.csv
+Midlands2020-03-30all.csv
+Midlands2020-03-30physical.csv
+Midlands2020-04-06all.csv
+Midlands2020-04-06physical.csv
+Midlands2020-04-13all.csv
+Midlands2020-04-13physical.csv
+Midlands2020-04-20all.csv
+Midlands2020-04-20physical.csv
+Midlands2020-04-27all.csv
+Midlands2020-04-27physical.csv
+Midlands2020-05-04all.csv
+Midlands2020-05-04physical.csv
+Midlands2020-05-11all.csv
+Midlands2020-05-11physical.csv
+Midlands2020-05-18all.csv
+Midlands2020-05-18physical.csv
+Midlands2020-05-25all.csv
+Midlands2020-05-25physical.csv
+Midlands2020-06-01all.csv
+Midlands2020-06-01physical.csv
+Midlands2020-06-08all.csv
+Midlands2020-06-08physical.csv
+Midlands2020-06-15all.csv
+Midlands2020-06-15physical.csv
+Midlands2020-06-22all.csv
+Midlands2020-06-22physical.csv
+Midlands2020-06-29all.csv
+Midlands2020-06-29physical.csv
+Midlands2020-07-06all.csv
+Midlands2020-07-06physical.csv
+Midlands2020-07-13all.csv
+Midlands2020-07-13physical.csv
+Midlands2020-07-20all.csv
+Midlands2020-07-20physical.csv
+Midlands2020-07-27all.csv
+Midlands2020-07-27physical.csv
+Midlands2020-08-03all.csv
+Midlands2020-08-03physical.csv
+Midlands2020-08-10all.csv
+Midlands2020-08-10physical.csv
+North East and Yorkshire2020-02-03all.csv
+North East and Yorkshire2020-02-03physical.csv
+North East and Yorkshire2020-02-10all.csv
+North East and Yorkshire2020-02-10physical.csv
+North East and Yorkshire2020-02-17all.csv
+North East and Yorkshire2020-02-17physical.csv
+North East and Yorkshire2020-02-24all.csv
+North East and Yorkshire2020-02-24physical.csv
+North East and Yorkshire2020-03-02all.csv
+North East and Yorkshire2020-03-02physical.csv
+North East and Yorkshire2020-03-09all.csv
+North East and Yorkshire2020-03-09physical.csv
+North East and Yorkshire2020-03-16all.csv
+North East and Yorkshire2020-03-16physical.csv
+North East and Yorkshire2020-03-23all.csv
+North East and Yorkshire2020-03-23physical.csv
+North East and Yorkshire2020-03-30all.csv
+North East and Yorkshire2020-03-30physical.csv
+North East and Yorkshire2020-04-06all.csv
+North East and Yorkshire2020-04-06physical.csv
+North East and Yorkshire2020-04-13all.csv
+North East and Yorkshire2020-04-13physical.csv
+North East and Yorkshire2020-04-20all.csv
+North East and Yorkshire2020-04-20physical.csv
+North East and Yorkshire2020-04-27all.csv
+North East and Yorkshire2020-04-27physical.csv
+North East and Yorkshire2020-05-04all.csv
+North East and Yorkshire2020-05-04physical.csv
+North East and Yorkshire2020-05-11all.csv
+North East and Yorkshire2020-05-11physical.csv
+North East and Yorkshire2020-05-18all.csv
+North East and Yorkshire2020-05-18physical.csv
+North East and Yorkshire2020-05-25all.csv
+North East and Yorkshire2020-05-25physical.csv
+North East and Yorkshire2020-06-01all.csv
+North East and Yorkshire2020-06-01physical.csv
+North East and Yorkshire2020-06-08all.csv
+North East and Yorkshire2020-06-08physical.csv
+North East and Yorkshire2020-06-15all.csv
+North East and Yorkshire2020-06-15physical.csv
+North East and Yorkshire2020-06-22all.csv
+North East and Yorkshire2020-06-22physical.csv
+North East and Yorkshire2020-06-29all.csv
+North East and Yorkshire2020-06-29physical.csv
+North East and Yorkshire2020-07-06all.csv
+North East and Yorkshire2020-07-06physical.csv
+North East and Yorkshire2020-07-13all.csv
+North East and Yorkshire2020-07-13physical.csv
+North East and Yorkshire2020-07-20all.csv
+North East and Yorkshire2020-07-20physical.csv
+North East and Yorkshire2020-07-27all.csv
+North East and Yorkshire2020-07-27physical.csv
+North East and Yorkshire2020-08-03all.csv
+North East and Yorkshire2020-08-03physical.csv
+North East and Yorkshire2020-08-10all.csv
+North East and Yorkshire2020-08-10physical.csv
+Northern Ireland2020-02-03all.csv
+Northern Ireland2020-02-03physical.csv
+Northern Ireland2020-02-10all.csv
+Northern Ireland2020-02-10physical.csv
+Northern Ireland2020-02-17all.csv
+Northern Ireland2020-02-17physical.csv
+Northern Ireland2020-02-24all.csv
+Northern Ireland2020-02-24physical.csv
+Northern Ireland2020-03-02all.csv
+Northern Ireland2020-03-02physical.csv
+Northern Ireland2020-03-09all.csv
+Northern Ireland2020-03-09physical.csv
+Northern Ireland2020-03-16all.csv
+Northern Ireland2020-03-16physical.csv
+Northern Ireland2020-03-23all.csv
+Northern Ireland2020-03-23physical.csv
+Northern Ireland2020-03-30all.csv
+Northern Ireland2020-03-30physical.csv
+Northern Ireland2020-04-06all.csv
+Northern Ireland2020-04-06physical.csv
+Northern Ireland2020-04-13all.csv
+Northern Ireland2020-04-13physical.csv
+Northern Ireland2020-04-20all.csv
+Northern Ireland2020-04-20physical.csv
+Northern Ireland2020-04-27all.csv
+Northern Ireland2020-04-27physical.csv
+Northern Ireland2020-05-04all.csv
+Northern Ireland2020-05-04physical.csv
+Northern Ireland2020-05-11all.csv
+Northern Ireland2020-05-11physical.csv
+Northern Ireland2020-05-18all.csv
+Northern Ireland2020-05-18physical.csv
+Northern Ireland2020-05-25all.csv
+Northern Ireland2020-05-25physical.csv
+Northern Ireland2020-06-01all.csv
+Northern Ireland2020-06-01physical.csv
+Northern Ireland2020-06-08all.csv
+Northern Ireland2020-06-08physical.csv
+Northern Ireland2020-06-15all.csv
+Northern Ireland2020-06-15physical.csv
+Northern Ireland2020-06-22all.csv
+Northern Ireland2020-06-22physical.csv
+Northern Ireland2020-06-29all.csv
+Northern Ireland2020-06-29physical.csv
+Northern Ireland2020-07-06all.csv
+Northern Ireland2020-07-06physical.csv
+Northern Ireland2020-07-13all.csv
+Northern Ireland2020-07-13physical.csv
+Northern Ireland2020-07-20all.csv
+Northern Ireland2020-07-20physical.csv
+Northern Ireland2020-07-27all.csv
+Northern Ireland2020-07-27physical.csv
+Northern Ireland2020-08-03all.csv
+Northern Ireland2020-08-03physical.csv
+Northern Ireland2020-08-10all.csv
+Northern Ireland2020-08-10physical.csv
+North West2020-02-03all.csv
+North West2020-02-03physical.csv
+North West2020-02-10all.csv
+North West2020-02-10physical.csv
+North West2020-02-17all.csv
+North West2020-02-17physical.csv
+North West2020-02-24all.csv
+North West2020-02-24physical.csv
+North West2020-03-02all.csv
+North West2020-03-02physical.csv
+North West2020-03-09all.csv
+North West2020-03-09physical.csv
+North West2020-03-16all.csv
+North West2020-03-16physical.csv
+North West2020-03-23all.csv
+North West2020-03-23physical.csv
+North West2020-03-30all.csv
+North West2020-03-30physical.csv
+North West2020-04-06all.csv
+North West2020-04-06physical.csv
+North West2020-04-13all.csv
+North West2020-04-13physical.csv
+North West2020-04-20all.csv
+North West2020-04-20physical.csv
+North West2020-04-27all.csv
+North West2020-04-27physical.csv
+North West2020-05-04all.csv
+North West2020-05-04physical.csv
+North West2020-05-11all.csv
+North West2020-05-11physical.csv
+North West2020-05-18all.csv
+North West2020-05-18physical.csv
+North West2020-05-25all.csv
+North West2020-05-25physical.csv
+North West2020-06-01all.csv
+North West2020-06-01physical.csv
+North West2020-06-08all.csv
+North West2020-06-08physical.csv
+North West2020-06-15all.csv
+North West2020-06-15physical.csv
+North West2020-06-22all.csv
+North West2020-06-22physical.csv
+North West2020-06-29all.csv
+North West2020-06-29physical.csv
+North West2020-07-06all.csv
+North West2020-07-06physical.csv
+North West2020-07-13all.csv
+North West2020-07-13physical.csv
+North West2020-07-20all.csv
+North West2020-07-20physical.csv
+North West2020-07-27all.csv
+North West2020-07-27physical.csv
+North West2020-08-03all.csv
+North West2020-08-03physical.csv
+North West2020-08-10all.csv
+North West2020-08-10physical.csv
+OutsideLondon2020-02-03all.csv
+OutsideLondon2020-02-03physical.csv
+OutsideLondon2020-02-10all.csv
+OutsideLondon2020-02-10physical.csv
+OutsideLondon2020-02-17all.csv
+OutsideLondon2020-02-17physical.csv
+OutsideLondon2020-02-24all.csv
+OutsideLondon2020-02-24physical.csv
+OutsideLondon2020-03-02all.csv
+OutsideLondon2020-03-02physical.csv
+OutsideLondon2020-03-09all.csv
+OutsideLondon2020-03-09physical.csv
+OutsideLondon2020-03-16all.csv
+OutsideLondon2020-03-16physical.csv
+OutsideLondon2020-03-23all.csv
+OutsideLondon2020-03-23physical.csv
+OutsideLondon2020-03-30all.csv
+OutsideLondon2020-03-30physical.csv
+OutsideLondon2020-04-06all.csv
+OutsideLondon2020-04-06physical.csv
+OutsideLondon2020-04-13all.csv
+OutsideLondon2020-04-13physical.csv
+OutsideLondon2020-04-20all.csv
+OutsideLondon2020-04-20physical.csv
+OutsideLondon2020-04-27all.csv
+OutsideLondon2020-04-27physical.csv
+OutsideLondon2020-05-04all.csv
+OutsideLondon2020-05-04physical.csv
+OutsideLondon2020-05-11all.csv
+OutsideLondon2020-05-11physical.csv
+OutsideLondon2020-05-18all.csv
+OutsideLondon2020-05-18physical.csv
+OutsideLondon2020-05-25all.csv
+OutsideLondon2020-05-25physical.csv
+OutsideLondon2020-06-01all.csv
+OutsideLondon2020-06-01physical.csv
+OutsideLondon2020-06-08all.csv
+OutsideLondon2020-06-08physical.csv
+OutsideLondon2020-06-15all.csv
+OutsideLondon2020-06-15physical.csv
+OutsideLondon2020-06-22all.csv
+OutsideLondon2020-06-22physical.csv
+OutsideLondon2020-06-29all.csv
+OutsideLondon2020-06-29physical.csv
+OutsideLondon2020-07-06all.csv
+OutsideLondon2020-07-06physical.csv
+OutsideLondon2020-07-13all.csv
+OutsideLondon2020-07-13physical.csv
+OutsideLondon2020-07-20all.csv
+OutsideLondon2020-07-20physical.csv
+OutsideLondon2020-07-27all.csv
+OutsideLondon2020-07-27physical.csv
+OutsideLondon2020-08-03all.csv
+OutsideLondon2020-08-03physical.csv
+OutsideLondon2020-08-10all.csv
+OutsideLondon2020-08-10physical.csv
+Scotland2020-02-03all.csv
+Scotland2020-02-03physical.csv
+Scotland2020-02-10all.csv
+Scotland2020-02-10physical.csv
+Scotland2020-02-17all.csv
+Scotland2020-02-17physical.csv
+Scotland2020-02-24all.csv
+Scotland2020-02-24physical.csv
+Scotland2020-03-02all.csv
+Scotland2020-03-02physical.csv
+Scotland2020-03-09all.csv
+Scotland2020-03-09physical.csv
+Scotland2020-03-16all.csv
+Scotland2020-03-16physical.csv
+Scotland2020-03-23all.csv
+Scotland2020-03-23physical.csv
+Scotland2020-03-30all.csv
+Scotland2020-03-30physical.csv
+Scotland2020-04-06all.csv
+Scotland2020-04-06physical.csv
+Scotland2020-04-13all.csv
+Scotland2020-04-13physical.csv
+Scotland2020-04-20all.csv
+Scotland2020-04-20physical.csv
+Scotland2020-04-27all.csv
+Scotland2020-04-27physical.csv
+Scotland2020-05-04all.csv
+Scotland2020-05-04physical.csv
+Scotland2020-05-11all.csv
+Scotland2020-05-11physical.csv
+Scotland2020-05-18all.csv
+Scotland2020-05-18physical.csv
+Scotland2020-05-25all.csv
+Scotland2020-05-25physical.csv
+Scotland2020-06-01all.csv
+Scotland2020-06-01physical.csv
+Scotland2020-06-08all.csv
+Scotland2020-06-08physical.csv
+Scotland2020-06-15all.csv
+Scotland2020-06-15physical.csv
+Scotland2020-06-22all.csv
+Scotland2020-06-22physical.csv
+Scotland2020-06-29all.csv
+Scotland2020-06-29physical.csv
+Scotland2020-07-06all.csv
+Scotland2020-07-06physical.csv
+Scotland2020-07-13all.csv
+Scotland2020-07-13physical.csv
+Scotland2020-07-20all.csv
+Scotland2020-07-20physical.csv
+Scotland2020-07-27all.csv
+Scotland2020-07-27physical.csv
+Scotland2020-08-03all.csv
+Scotland2020-08-03physical.csv
+Scotland2020-08-10all.csv
+Scotland2020-08-10physical.csv
+South East2020-02-03all.csv
+South East2020-02-03physical.csv
+South East2020-02-10all.csv
+South East2020-02-10physical.csv
+South East2020-02-17all.csv
+South East2020-02-17physical.csv
+South East2020-02-24all.csv
+South East2020-02-24physical.csv
+South East2020-03-02all.csv
+South East2020-03-02physical.csv
+South East2020-03-09all.csv
+South East2020-03-09physical.csv
+South East2020-03-16all.csv
+South East2020-03-16physical.csv
+South East2020-03-23all.csv
+South East2020-03-23physical.csv
+South East2020-03-30all.csv
+South East2020-03-30physical.csv
+South East2020-04-06all.csv
+South East2020-04-06physical.csv
+South East2020-04-13all.csv
+South East2020-04-13physical.csv
+South East2020-04-20all.csv
+South East2020-04-20physical.csv
+South East2020-04-27all.csv
+South East2020-04-27physical.csv
+South East2020-05-04all.csv
+South East2020-05-04physical.csv
+South East2020-05-11all.csv
+South East2020-05-11physical.csv
+South East2020-05-18all.csv
+South East2020-05-18physical.csv
+South East2020-05-25all.csv
+South East2020-05-25physical.csv
+South East2020-06-01all.csv
+South East2020-06-01physical.csv
+South East2020-06-08all.csv
+South East2020-06-08physical.csv
+South East2020-06-15all.csv
+South East2020-06-15physical.csv
+South East2020-06-22all.csv
+South East2020-06-22physical.csv
+South East2020-06-29all.csv
+South East2020-06-29physical.csv
+South East2020-07-06all.csv
+South East2020-07-06physical.csv
+South East2020-07-13all.csv
+South East2020-07-13physical.csv
+South East2020-07-20all.csv
+South East2020-07-20physical.csv
+South East2020-07-27all.csv
+South East2020-07-27physical.csv
+South East2020-08-03all.csv
+South East2020-08-03physical.csv
+South East2020-08-10all.csv
+South East2020-08-10physical.csv
+South West2020-02-03all.csv
+South West2020-02-03physical.csv
+South West2020-02-10all.csv
+South West2020-02-10physical.csv
+South West2020-02-17all.csv
+South West2020-02-17physical.csv
+South West2020-02-24all.csv
+South West2020-02-24physical.csv
+South West2020-03-02all.csv
+South West2020-03-02physical.csv
+South West2020-03-09all.csv
+South West2020-03-09physical.csv
+South West2020-03-16all.csv
+South West2020-03-16physical.csv
+South West2020-03-23all.csv
+South West2020-03-23physical.csv
+South West2020-03-30all.csv
+South West2020-03-30physical.csv
+South West2020-04-06all.csv
+South West2020-04-06physical.csv
+South West2020-04-13all.csv
+South West2020-04-13physical.csv
+South West2020-04-20all.csv
+South West2020-04-20physical.csv
+South West2020-04-27all.csv
+South West2020-04-27physical.csv
+South West2020-05-04all.csv
+South West2020-05-04physical.csv
+South West2020-05-11all.csv
+South West2020-05-11physical.csv
+South West2020-05-18all.csv
+South West2020-05-18physical.csv
+South West2020-05-25all.csv
+South West2020-05-25physical.csv
+South West2020-06-01all.csv
+South West2020-06-01physical.csv
+South West2020-06-08all.csv
+South West2020-06-08physical.csv
+South West2020-06-15all.csv
+South West2020-06-15physical.csv
+South West2020-06-22all.csv
+South West2020-06-22physical.csv
+South West2020-06-29all.csv
+South West2020-06-29physical.csv
+South West2020-07-06all.csv
+South West2020-07-06physical.csv
+South West2020-07-13all.csv
+South West2020-07-13physical.csv
+South West2020-07-20all.csv
+South West2020-07-20physical.csv
+South West2020-07-27all.csv
+South West2020-07-27physical.csv
+South West2020-08-03all.csv
+South West2020-08-03physical.csv
+South West2020-08-10all.csv
+South West2020-08-10physical.csv
+Wales2020-02-03all.csv
+Wales2020-02-03physical.csv
+Wales2020-02-10all.csv
+Wales2020-02-10physical.csv
+Wales2020-02-17all.csv
+Wales2020-02-17physical.csv
+Wales2020-02-24all.csv
+Wales2020-02-24physical.csv
+Wales2020-03-02all.csv
+Wales2020-03-02physical.csv
+Wales2020-03-09all.csv
+Wales2020-03-09physical.csv
+Wales2020-03-16all.csv
+Wales2020-03-16physical.csv
+Wales2020-03-23all.csv
+Wales2020-03-23physical.csv
+Wales2020-03-30all.csv
+Wales2020-03-30physical.csv
+Wales2020-04-06all.csv
+Wales2020-04-06physical.csv
+Wales2020-04-13all.csv
+Wales2020-04-13physical.csv
+Wales2020-04-20all.csv
+Wales2020-04-20physical.csv
+Wales2020-04-27all.csv
+Wales2020-04-27physical.csv
+Wales2020-05-04all.csv
+Wales2020-05-04physical.csv
+Wales2020-05-11all.csv
+Wales2020-05-11physical.csv
+Wales2020-05-18all.csv
+Wales2020-05-18physical.csv
+Wales2020-05-25all.csv
+Wales2020-05-25physical.csv
+Wales2020-06-01all.csv
+Wales2020-06-01physical.csv
+Wales2020-06-08all.csv
+Wales2020-06-08physical.csv
+Wales2020-06-15all.csv
+Wales2020-06-15physical.csv
+Wales2020-06-22all.csv
+Wales2020-06-22physical.csv
+Wales2020-06-29all.csv
+Wales2020-06-29physical.csv
+Wales2020-07-06all.csv
+Wales2020-07-06physical.csv
+Wales2020-07-13all.csv
+Wales2020-07-13physical.csv
+Wales2020-07-20all.csv
+Wales2020-07-20physical.csv
+Wales2020-07-27all.csv
+Wales2020-07-27physical.csv
+Wales2020-08-03all.csv
+Wales2020-08-03physical.csv
+Wales2020-08-10all.csv
+Wales2020-08-10physical.csv
