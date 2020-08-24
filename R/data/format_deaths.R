@@ -51,7 +51,9 @@ possible.col.names <- list(
     utla_name = c("UTLA_name", "utla_name"),
     death_type = "death_type",
     age = "age",
-    pillars = "pillars"
+    pillars = "pillars",
+    death28 = "death_type28",
+    death60cod = "death_type60cod"
 )
 input.col.names <- suppressMessages(names(read_csv(deaths.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -118,6 +120,8 @@ death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.col.args[[col.names[["death_type"]]]] <- col_character()
 death.col.args[[col.names[["age"]]]] <- col_integer()
 death.col.args[[col.names[["pillars"]]]] <- col_character()
+death.col.args[[col.names[["death28"]]]] <- col_character()
+death.col.args[[col.names[["death60cod"]]]] <- col_character()
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -194,7 +198,10 @@ dth.dat <- dth.dat %>%
 
 if(flg.confirmed)
     dth.dat <- dth.dat %>% filter(death_type == "Lab Confirmed")
-
+if(flg.cutoff){
+    strField <- paste0("death", str.cutoff)
+    dth.dat <- dth.dat %>% filter((!!sym(strField)) == "1")
+    }
 rtm.dat <- dth.dat %>%
 	group_by(Date, Region, Age.Grp, .drop = FALSE) %>%
 	tally %>%
@@ -250,7 +257,7 @@ gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
         legend.position = "top",
         legend.justification = "left",
         )
-plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d.pdf")
+plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
        gp + guides(linetype=FALSE),

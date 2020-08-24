@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200814"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200821"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -41,7 +41,7 @@ nA <- length(age.labs)
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "quick_Scot"
+scenario.name <- "Scot"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
@@ -50,7 +50,9 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-	reporting.delay <- 6
+    flg.cutoff <- TRUE
+    if(flg.cutoff) str.cutoff <- "60cod"
+    reporting.delay <- 14
 } else {
 	stop("Unknown data description")
 }
@@ -73,9 +75,10 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
-                         "data/RTM_format/serology")
+                         "data/RTM_format/serology",
+                         "data/RTM_format/cases")
                        )
-names(data.dirs) <- c("deaths", "sero")
+names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
