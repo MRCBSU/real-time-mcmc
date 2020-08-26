@@ -264,6 +264,5 @@ if (grepl("altSens", scenario.name)) {
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)
-
 ssens.prop <- 0.1
 sspec.prop <- 0.077976

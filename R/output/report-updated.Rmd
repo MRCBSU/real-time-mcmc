@@ -168,16 +168,23 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
 
 #### Model and report changes
 
-Our real-time model  has been further updated to allow higher susceptibility to infection in the over-75s. The modelling focusses on regional data and we no longer report an estimate of $R_t$ for England. This is better  provided through the modelling consensus statement supplied by SPI-M and SAGE.
-
+Our real-time model has been further updated to allow for uncertainty in the sensitivity and specificity of the serological testing. The modelling focusses on regional data and we do not report an estimate of $R_t$ for England. This is better provided through the modelling consensus statement supplied by SPI-M and SAGE.
 
 #### Updated findings
-1. We have revised last week's estimate of the number of infections arising each day across England from 5,300 (3,000--9,000, 95% credible interval) to 3,600  (2,400--5,400, 95% credible interval). Over the last week there is no evidence of any further change in the number of daily new infections with the current estimate being 3,300 (1,900--5,700, 95% credible interval).
-1. We predict that the number of deaths each day is likely to be between 45 and 85 by the end of July.
-1. We estimate it is very likely that $R_t$ is below 1 in all regions of England.
-1. The East of England and the North East & Yorkshire have the highest probabilities (33% and 32% respectively) that $R_t$ is above 1. This probability is $\leq 5$% for the North West and the Midlands.
-1. The data used are only weakly informative on $R_t$ over the last two weeks. Therefore, the now-cast for current incidence and the forecast of deaths are quite uncertain.
+1. Our current estimate of the number of infections arising each day across England is 3,200 (1,700–5,800, 95% credible interval).
+1. We predict that the number of deaths each day is likely to be between 47 and 91 by the end of the third week of August.
+1. We estimate it is very likely that $R_t$ is close to 1 in most regions of England.
+    a. The South West is the region in which it is most likely that $R_t$ is above 1, with a probability of 60%, although the number of new infections is very low.
+    a. The probability of $R_t$  exceeding 1 is less than 20% for London and the South East and is less than 5% in the East of England.
+1. London, followed by the North West continues to have the highest attack rate (16% and  10% respectively), the proportion of the population who have ever been infected. The South West continues to have the lowest (3%).
 
+#### Interpretation
+
+1. The estimated epidemic growth rate for England of 0.0 (-0.02--0.03) indicates a plateau in the number of new infections. This is supported by the estimated level of infections remaining around 3,000 per day for the last three weeks.
+1. The central estimates for incidence in each region are less than 800 infections per day, a substantial proportion of which will be asymptomatic.
+1. In the regions where the central estimate for $R_t$ is greater than or equal to 1, the estimation is uncertain and the number of daily new infections is low. These two factors combined indicate that there is no particular public health concern for any of these regions, though the situation should be monitored closely.
+1. Only one region, the East of England, can be said with any certainty to have a value of $R_t$ that is below 1, indicating a continued decline in transmission.
+1. The deaths data used are only weakly informative on $R_t$ over the last two weeks. Therefore, the now-cast for current incidence and the forecast of deaths are naturally quite uncertain. At present, this uncertainty is increased by the current low levels of mortality.
 
 ### Summary
 
@@ -202,7 +209,7 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
 3. Published information on the the natural history of COVID-19 ([Verity et al., 2020](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099%2920%2930243-7/abstract); [Li et al, 2020](https://www.nejm.org/doi/10.1056/NEJMoa2001316)) 
 4. Information on contacts between different age groups from:
     * A Survey that describes relative rates of contacts between different age groups ([Mossong et al. 2008](https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074)).
-    * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the May 23rd lockdown measures.
+    * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the March 23rd lockdown measures.
     * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
     * Data from the Department for Education describing the proportion of children currently attending school.
 
@@ -227,7 +234,7 @@ get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
 
 ```{r cum-inf-sum}
 format_num <- function(x) {
-  return(format(signif(x, 3), big.mark = ",", scientific = FALSE, width = 0))
+  return(format(round(signif(x, 3)), big.mark = ",", scientific = FALSE, width = 0))
 }
 
 tbl_cum_inf_region <-
@@ -469,7 +476,7 @@ NB: negative growth rates are rates of decline. Values are daily changes.
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r inf-halving}
 
@@ -495,7 +502,7 @@ knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r death-halving, eval=!is.null(deaths)}
 
