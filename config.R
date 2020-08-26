@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -45,7 +45,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_altSens_newSerology"
+scenario.name <- "base_varSens_60cod"
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")
@@ -54,7 +54,9 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-	reporting.delay <- 6
+    flg.cutoff <- TRUE
+    if(flg.cutoff) str.cutoff <- "60cod"
+    reporting.delay <- 14
 } else {
 	stop("Unknown data description")
 }
@@ -77,9 +79,10 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
-                         "data/RTM_format/serology")
+                         "data/RTM_format/serology",
+                         "data/RTM_format/cases")
                        )
-names(data.dirs) <- c("deaths", "sero")
+names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
