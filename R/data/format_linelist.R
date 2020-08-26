@@ -5,7 +5,6 @@ suppressMessages(library(tidyverse))
 #########################################################
 ## Inputs that should (or may) change on a daily basis
 #########################################################
-
 lubridate.date <- ymd(date.data)
 
 # Given a vector, return the first element where predicate is true
@@ -20,7 +19,8 @@ first.where.true <- function(vec, predicate) {
 ## Where to find the data, if NULL use command line argument
 if(!exists("cases")) {
 	possible.cases.locations <- c(
-		glue::glue("/data/covid-19/data-raw/dstl/{lubridate.date}/Anonymised Combined Line List {format(lubridate.date, '%Y%m%d')}.xlsx")
+            glue::glue("/data/covid-19/data-raw/dstl/{lubridate.date}/Anonymised Combined Line List {format(lubridate.date, '%Y%m%d')}.xlsx"),
+            file.path("~","CoVID-19", "Data streams", "Line list EpiCell",  glue::glue("Anonymised Combined Line List {format(lubridate.date, '%Y%m%d')}.xlsx"))
 	)
 	cases.loc <- first.where.true(possible.cases.locations, file.exists)
 	if (is.null(cases.loc)) {
@@ -85,7 +85,7 @@ if(!exists("file.loc")){
 }
 
 ## Which columns are we interested in?
-case.cols <- c("numeric", rep("text", 10), "numeric", rep("date", 3), "text")	# Calling with a list so use do.call
+case.cols <- c("numeric", rep("text", 10), "numeric", rep("date", 3), rep("text", 2), rep("numeric", 2))	# Calling with a list so use do.call
 
 within.range <- function(dates) {
 	return(dates <= today() & dates >= ymd("2020-01-01"))
@@ -131,8 +131,8 @@ case.dat %>%
 	) %>%
    print(n=1000)
 
-latest.date <- ymd(date.data) ## - reporting.delay
-earliest.date <- ymd("2020-06-01")
+## latest.date <- ymd(date.data) ## - reporting.delay
+## earliest.date <- ymd("2020-06-01")
 
 case.dat <- case.dat %>%
     filter(
@@ -145,7 +145,7 @@ case.dat <- case.dat %>%
     filter(Region %in% regions) %>%
     mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 
-rtm.dat <- case.dat %>%
+ll.dat <- case.dat %>%
 	group_by(Date, Region, Age.Grp, .drop = FALSE) %>%
 	tally %>%
 	right_join(		# Add missing rows
@@ -155,41 +155,60 @@ rtm.dat <- case.dat %>%
 	replace_na(list(n = 0)) %>%		# 0 if just added
 	arrange(Date)
 
-## Write rtm.dat to data file
-names(cases.files) <- regions
+## Write ll.dat to data file
+names(cases.files) <- names(denoms.files) <- regions
+pop.mat <- matrix(pop.input, nr, nA, byrow = TRUE);rownames(pop.mat) <- regions;colnames(pop.mat) <- age.labs
+region.dat <- denom.dat <- list()
 for(reg in regions) {
-    region.dat <- pivot_wider(rtm.dat %>%
+    region.dat[[reg]] <- pivot_wider(ll.dat %>%
                               filter(Region == reg),
                               id_cols = 1,
                               names_from = Age.Grp,
                               values_from = n)
     tmpFile <- cases.files[reg]
-	dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+    dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
     
     print(paste(
         "Writing to",
         tmpFile,
-        "(", sum(region.dat[, -1]), "total cases,", nrow(region.dat), "rows.)"
+        "(", sum(region.dat[[reg]][, -1]), "total cases,", nrow(region.dat[[reg]]), "rows.)"
     ))
     
-    region.dat %>%
+    region.dat[[reg]] %>%
         write_tsv(
             tmpFile,
             col_names = FALSE
         )
+
+    ## Code also requires a (trivial) denominator file
+    denom.dat[[reg]] <- pop.mat %>%
+        as.data.frame() %>%
+        rownames_to_column("Region") %>%
+        filter(Region == reg) %>%
+        mutate(nr = nrow(region.dat[[reg]])) %>%
+        group_by_at(vars(-nr)) %>%
+        expand(count = seq(1:nr)) %>%
+        mutate(Date = region.dat[[reg]]$Date) %>%
+        select(-count) %>%
+        ungroup() %>%
+        select(-Region) %>%
+        select(Date, everything()) %>%
+        write_tsv(
+            denoms.files[reg],
+            col_names = FALSE)
 }
 
 ## Save the data as processed
-save(case.dat, rtm.dat, file = file.path(out.dir, "cases_data.RData"))
+save(case.dat, ll.dat, file = file.path(out.dir, "cases_data.RData"))
 
 ## Save a quick plot of the data...
 require(ggplot2)
-rtm.dat %>%
+ll.dat %>%
     group_by(Date, Region) %>%
     summarise(count = sum(n)) %>%
-    mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
+    mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> ll.dat.plot
 
-gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
+gp <- ggplot(ll.dat.plot, aes(x = Date, y = count, color = Region)) +
     geom_line(aes(linetype = ignore)) +
     geom_point() +
     theme_minimal() +

@@ -59,13 +59,21 @@ proposal_variance = 0.007562;
 }
 
 
-prop_case_to_GP_consultation = { param_value = `r value.pgp`;
+prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
 
-prior_distribution = `r ifelse(gp.flag, 3, 1)`;
+prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, 5), 1), length(value.pgp)), collapse = ", ")`;
 
-prior_parameters = `r paste(pars.pgp, collapse = ", ")`;
+`r ifelse(gp.flag, paste0("prior_parameters = ", paste(pars.pgp, collapse = ", "), ";"), "")`
 
-proposal_variance = 0.002;
+`r ifelse(gp.flag, paste0("proposal_variance = ", paste(rep(0.002, length(value.pgp)), collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag & nA != 1, "age_breakpoints = 3, 4, 5, 6, 7;", "")`
+
+`r ifelse(gp.flag, "region_breakpoints = true;", "")`
+
+`r ifelse(gp.flag, "regression_link = 2;", "")`
+
+`r ifelse(gp.flag, "regression_design = icr.design.txt;", "")`
 
 }
 
@@ -157,7 +165,6 @@ region_breakpoints = true;
 
 }
 
-
 prop_susceptible = { param_value = 1.0;
 
 prior_distributions = 1;
@@ -181,13 +188,20 @@ prior_distributions = 1;
 
 prop_case_to_hosp = { param_value = `r paste(value.ifr, collapse = ", ")`;
 
-prior_distributions = `r paste(rep(ifelse(hosp.flag, 3, 1), length(value.ifr)), collapse = ", ")`;
+prior_distributions = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
 
 prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
 
 proposal_variance = `r paste(var.ifr, collapse = ", ")`;
 
 `r ifelse(nA == 1, "", "age_breakpoints = 2, 3, 4, 5, 6, 7;")`
+
+`r ifelse(single.ifr, "", paste("time_breakpoints = ", paste(tbreaks.ifr, collapse = ", "), ";"))`
+
+`r ifelse(single.ifr, "", "regression_link = 2;")`
+
+`r ifelse(single.ifr, "", "regression_design = ifr.design.txt;")`
+
 }
 
 
@@ -205,12 +219,21 @@ prior_distributions = 1;
 }
 
 
-day_of_week_effects = { param_value = 1;
+day_of_week_effects = { param_value = `r ifelse(gp.flag, paste(pars.dow, collapse = ", "), 1)`;
 
-prior_distributions = 1;
+prior_distributions = `r paste(rep(ifelse(gp.flag, 5, 1), length(pars.dow)), collapse = ", ")`;
+
+`r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
+
+`r ifelse(gp.flag, "proposal_variance = 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04;", "")`
+
+`r ifelse(gp.flag, paste0("time_breakpoints = ", paste(start.gp:(end.gp - 1), collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, "regression_link = 1;", "")`
+
+`r ifelse(gp.flag, "regression_design = d_o_w_design_file.txt;", "")`
 
 }
-
 
 test_sensitivity = { param_value = 1;
 

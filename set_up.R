@@ -39,31 +39,33 @@ intHea <- grep("NUM_AGE_GROUPS", header)
 header[intHea] <- paste0("#define NUM_AGE_GROUPS (", nA, ")")
 write(header, file = header.file)
 
-## Get the population sizes
-require(readr)
-require(tidyr)
-require(dplyr)
-load(build.data.filepath("population", "pop_nhs.RData"))
-pop.input <- NULL
-for(reg in regions){
-    reg.nhs <- get.nhs.region(reg)
-	if (reg == "Scotland" && age.labs[1] == "All") {
-		pop.input <- c(pop.input, 5438100)
-	} else {
-		pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
-		pop.full <- apply(pop.full, 2, sum)
-		if(age.labs[1] == "All"){
-                    pop.input <- c(pop.input, pop.full["All ages"])
-                } else {
-                    pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
-                    pdf <- pdf %>%
-                        mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
-                        group_by(age.grp) %>%
-                        summarise(count = sum(count))
-                    pop.input <- c(pop.input, pdf$count)
-                }
-        }
-}
+## ## Get the population sizes
+## require(readr)
+## require(tidyr)
+## require(dplyr)
+## load(build.data.filepath("population", "pop_nhs.RData"))
+## pop.input <- NULL
+## cat("regions 3", regions, "\n")
+## for(reg in regions){
+##     reg.nhs <- get.nhs.region(reg)
+## 	if (reg == "Scotland" && age.labs[1] == "All") {
+## 		pop.input <- c(pop.input, 5438100)
+## 	} else {
+## 		pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+## 		pop.full <- apply(pop.full, 2, sum)
+## 		if(age.labs[1] == "All"){
+##                     pop.input <- c(pop.input, pop.full["All ages"])
+##                 } else {
+##                     pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
+##                     pdf <- pdf %>%
+##                         mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
+##                         group_by(age.grp) %>%
+##                         summarise(count = sum(count))
+##                     pop.input <- c(pop.input, pdf$count)
+##                 }
+##         }
+## }
+
 ## Remove spaces from region name.
 regions <- gsub(" ", "_", regions, fixed = TRUE)
 

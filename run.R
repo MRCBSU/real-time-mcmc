@@ -35,13 +35,51 @@ run.code <- FALSE
 run.outputs <- FALSE
 
 ## Which code is being considered
-gp.flag <- 0
-hosp.flag <- 1
-sero.flag <- 1
-viro.flag <- 0
+if(!exists("gp.flag")) gp.flag <- 1
+if(!exists("hosp.flag")) hosp.flag <- 1
+if(!exists("sero.flag")) sero.flag <- 1
+if(!exists("viro.flag")) viro.flag <- 0
+
+## Get the population sizes
+require(readr)
+require(tidyr)
+require(dplyr)
+dir.data <- "data"
+load(build.data.filepath("population", "pop_nhs.RData"))
+get.nhs.region <- function(reg, rlist = nhs.regions){
+    if(reg %in% names(nhs.regions)){
+        return(reg)
+    } else if(toupper(reg) %in% names(nhs.regions)) return(toupper(reg))
+}
+## Check that regions have population specified
+for (region in regions) {
+    if (!get.nhs.region(region) %in% names(nhs.regions)) {
+        stop(paste(region, "is not specified in `nhs.regions`. Options are:",
+                   paste0(names(nhs.regions), collapse=", ")))
+    }
+}
+pop.input <- NULL
+for(reg in regions){
+    reg.nhs <- get.nhs.region(reg)
+	if (reg == "Scotland" && age.labs[1] == "All") {
+		pop.input <- c(pop.input, 5438100)
+	} else {
+		pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+		pop.full <- apply(pop.full, 2, sum)
+		if(age.labs[1] == "All"){
+                    pop.input <- c(pop.input, pop.full["All ages"])
+                } else {
+                    pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
+                    pdf <- pdf %>%
+                        mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
+                        group_by(age.grp) %>%
+                        summarise(count = sum(count))
+                    pop.input <- c(pop.input, pdf$count)
+                }
+        }
+}
 
 ## If these files don't already exits, make them
-dir.data <- "data"
 data.files <- paste0(data.dirs["deaths"], "/",
                      data.desc,
                      date.data, "_",
@@ -58,9 +96,11 @@ if(sero.flag){
   serosam.files <- seropos.files <- NULL
 }
 if(gp.flag){
-  cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2.txt")
+    cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2.txt")
+    denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")
 } else {
-  cases.files <- NULL
+    cases.files <- NULL
+    denoms.files <- NULL
 }
 if(format.inputs){
   if(data.desc == "reports") {
@@ -97,6 +137,7 @@ if(compile.code) {
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
+rm(outpp)
 save.image("tmp.RData")
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)

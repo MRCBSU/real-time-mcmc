@@ -4,10 +4,9 @@ require(lubridate)
 #######################################################################
 ## INPUT SETTINGS
 #######################################################################
-
 if(gp.flag){
-    start.gp <- 15			# What day to start running the likelihood on
-    end.gp <- NULL			# Total days of data, or NULL to infer from length of file
+    start.gp <- ll.start.date - start.date + 1			## What day to start running the likelihood on
+    end.gp <- lubridate::as_date(date.data) - ll.reporting.delay - start.date + 1 ## Total days of data, or NULL to infer from length of file
 } else {
     start.gp <- 1
     end.gp <- 1
@@ -131,19 +130,6 @@ if(sys.nframe() <= 4){ ## Check if below source files might have already been lo
 ## These no longer calculated `on the fly' and should be handled within the data/population folder.
 ## Use objects nhs.regions and pop
 load(build.data.filepath("population", "pop_nhs.RData"))
-
-get.nhs.region <- function(reg, rlist = nhs.regions){
-    if(reg %in% names(nhs.regions)){
-        return(reg)
-    } else if(toupper(reg) %in% names(nhs.regions)) return(toupper(reg))
-}
-## Check that regions have population specified
-for (region in regions) {
-    if (!get.nhs.region(region) %in% names(nhs.regions)) {
-        stop(paste(region, "is not specified in `nhs.regions`. Options are:",
-                   paste0(names(nhs.regions), collapse=", ")))
-    }
-}
 
 # If end.gp and/or end.hosp are none then read from data files
 set.end.date <- function(user.value, data.file) {

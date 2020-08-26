@@ -23,36 +23,125 @@ value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383
 pars.egr <- c(31.36, 224)
 
 ## Ascertainment parameters
-value.pgp <- 0.1
-pars.pgp <- c(2.12, 15.8)
+if(nA == 1){
+    value.pgp <- 0.1
+    pars.pgp <- c(2.12, 15.8)
+} else {
+    ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
+    ll.prior.days <- ll.start.date - days(1:7)
+    ll.prior <- ll.dat %>%
+        filter(Date %in% ll.prior.days) %>%
+        group_modify(~ {.x %>% mutate(Age = ifelse(Age.Grp %in% c("<1yr", "1-4", "5-14"), "<15yr", Age.Grp))}) %>%
+        group_by(Region, Age) %>%
+        summarise(n = sum(n) / 7)        
+    ## Find an estimate of incidence at this time.
+    idx <- which(lubridate::as_date(as.integer(dimnames(outpp$infections)$date)) == min(ll.prior.days))
+    infections <- outpp$infections[, idx, , ] ## get infections on the first day of the aggregation
+    infections <- apply(infections,
+                        c("iteration", "region"),
+                        function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
+    names(dimnames(infections))[1] <- "age"
+    dimnames(infections)$age[1] <- "<15yr"
+    med.infec <- apply(infections, c("age", "region"), median) %>%
+        as.data.frame() %>%
+        rownames_to_column(var = "Age") %>%
+        pivot_longer(-Age, names_to = "Region") %>%
+        inner_join(ll.prior) %>%
+        mutate(p = n / value) %>%
+        arrange(Region, Age)    
+    ## Weighted regression
+    ex6 <- suppressWarnings(glm(p~Region + Age,
+               weights = value,
+               family = binomial,
+               data = med.infec,
+               contrasts = list(Age = "contr.sum", Region = "contr.sum")))
+    ## Use mean and covariance of estimates to formulate a prior distribution.
+    value.pgp <- jitter(ex6$coefficients)
+    pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
+    write_tsv(as.data.frame(model.matrix(ex6)), file.path(out.dir, "icr.design.txt"), col_names = FALSE)
+}
 
 ## Infection to fatality ratio
-if(nA > 1){
-    value.ifr <- c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791)
-    var.ifr <- rep(0.000360, nA - 1)
-} else {
-    value.ifr <- 0.007
-    var.ifr <- 0.005
-}
-if(nA == 1){
-    pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
-} else {
-    means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
-    pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
-    pars.ifr[13] <- 9.50
-    pars.ifr[14] <- 112
+if(single.ifr){
+    if(nA > 1){
+        value.ifr <- c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791)
+        var.ifr <- rep(0.000360, nA - 1)
+    } else {
+        value.ifr <- 0.007
+        var.ifr <- 0.005
+    }
+    if(nA == 1){
+        pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
+    } else {
+        means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+        pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
+        pars.ifr[13] <- 9.50
+        pars.ifr[14] <- 112
+    }
+} else { ## IFR changes over time, presume logistically...
+    logit <- function(p) log(p/(1-p))
+    expit <- function(x) exp(x)/(1+exp(x))
+    if(nA > 1){
+        value.ifr <- logit(c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791))
+        var.ifr <- rep(0.000360, nA)
+    } else {
+        value.ifr <- logit(c(0.007, 1))
+        var.ifr <- rep(0.005, 2)
+    }
+    if(nA == 1){
+        pars.ifr <- c(0.00705, 0.00304)
+    } else {
+        means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+        pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
+        pars.ifr[13] <- 9.50
+        pars.ifr[14] <- 112
+        ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
+        ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
+        pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters
+        ## gradients from Brian's Co-CIN analysis
+        grad.samp <- cbind(
+        (logit(rbeta(1000000, 23/4.625,977/4.625))-logit(rbeta(1000000, 13.5, 39*13.5))) / 30, ## 0-44
+        (logit(rbeta(1000000, 76/2.875, 924/2.875))-logit(rbeta(1000000, 23*5.25, 175*5.25))) / 30, ## 45-64
+        (logit(rbeta(1000000, 195/2.9375, 805/2.9375))-logit(rbeta(1000000, 281/1.240235,719/1.240235))) / 30, ## 65-74
+        (logit(rbeta(1000000, 321/1.375, 679/1.375))-logit(rbeta(1000000, 382*2.625, 618*2.625))) / 30 ## 75+
+        )
+        pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))));rm(grad.samp)
+        value.ifr <- c(value.ifr, rep(0, (length(pars.ifr) / 2) - length(value.ifr)))
+        var.ifr <- c(var.ifr, rep(0.00036, length(value.ifr) - length(var.ifr)))
+        tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June
+        ## Put together the model matrix.
+        times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
+        ages <- 1:(nA - 1)
+        TA <- expand.grid(ages, times);colnames(TA) <- c("age", "time")
+        TA$age.grad <- TA$age
+        TA$age.grad[TA$age <= 4] <- 4
+        TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
+        TA$y <- rnorm(nrow(TA))
+        lm.TA2 <- lm(y ~ 0 + age + age.grad:time, data = TA)
+        write_tsv(as.data.frame(model.matrix(lm.TA2)), file.path(out.dir, "ifr.design.txt"), col_names = FALSE)
+    }
 }
 
-## Infection hospitalisation rate
-pars.ihr <- c(1, 1)
+## Day of the week effects in the reporting of `deaths'.
+if(gp.flag){
+    require(Matrix)
+    bank.holiday.days <- ymd(c("20200101", "20200410", "20200413", "20200508", "20200525", "20200831", "20201225", "20201228"))
+    ll.days <- ll.start.date + days(0:(end.gp - start.gp))
+    DAYS <- wday(ll.days, label = TRUE)
+    DAYS[ll.days %in% bank.holiday.days] <- "Sun"
+    lm.mat <- model.matrix(~ DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
+        as.data.frame() %>%
+        write_tsv(file.path(out.dir, "d_o_w_design_file.txt"), col_names = FALSE)
+    pars.dow <- c(0.9840207, 0.9915403, 1.0024927, 0.98667, -0.6, -2.1)
+}
 
 ## Initial seeding
 value.nu <- c(-16.7064769395683, -14.3327333035582, -15.0542472007424, -17.785749594464, -15.8038617705659, -15.3720269985272, -16.3667281951197)[1:nr]
 pars.nu <- c(-17.5, 1.25)
 
 ## GP Overdispersion
-value.eta <- 0.0406967;
-pars.eta <- c(1.0, 0.2);
+value.eta <- 0.406967;
+pars.eta <- c(1.0, 0.02);
 
 ## Hosp Overdispersion
 value.eta.h <- 0.06729983
@@ -81,8 +170,8 @@ if(grepl("reports", data.desc, fixed = T)){
     rdelay.sd <- 0
 }
 ## Delays in the line listing data
-ldelay.mean <- 5.22
-ldelay.sd <- 3.59
+ldelay.mean <- 3
+ldelay.sd <- 3
 
 ## Contact model
 int.effect <- 0.0521
