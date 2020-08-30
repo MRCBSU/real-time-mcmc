@@ -338,6 +338,8 @@ population %>%
 
 
 ```{r ifr, eval=!is.null(dth.dat)}
+ifr.start <- ifr[, , 1]
+ifr.today <- ifr[, , ymd(date.data) - start.date]
 today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum)
 merge.youngest.age.groups <- function(mat, num.to.group = 2) {
   if (num.ages <= 1) {return(mat)}
@@ -350,34 +352,48 @@ merge.youngest.age.groups <- function(mat, num.to.group = 2) {
   return(result)
 }
 
-overall_ifr <- today_cum_inf_by_age %>%
-  merge.youngest.age.groups() %>%
-  t() %>%
-  `*`(params$prop_case_to_hosp[parameter.to.outputs,]) %>%
-  rowSums() %>%
-  `/`(colSums(today_cum_inf_by_age)) %>%
-  quantile(QUANTILES) %>%
-  enframe(name = "quantile") %>%
-  mutate(age = "Overall")
+overall_ifr <- function(day.ifr)
+  today_cum_inf_by_age %>%
+    merge.youngest.age.groups() %>%
+    t() %>%
+    `*` (day.ifr[parameter.to.outputs, ]) %>%
+    rowSums() %>%
+    `/`(colSums(today_cum_inf_by_age)) %>%
+    quantile(QUANTILES) %>%
+    enframe(name = "quantile") %>%
+    mutate(age = "Overall")
 
-params$prop_case_to_hosp %>%
-  as.matrix() %>%
-  `colnames<-`(dimnames(deaths)$age) %>%
-  as_tibble() %>%
-  pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
-  group_by(age) %>%
-  summarise(value = list(quantile(ifr, QUANTILES))) %>%
-  mutate(quantile = list(names(value[[1]]))) %>%
-  unnest(c(quantile, value)) %>%
-  bind_rows(overall_ifr) %>%
-  mutate(
-    quantile = parse.percentage(quantile),
-    value = paste0(signif(100 * value, 2), "%")
-  ) %>%
-  pivot_wider(names_from = quantile, values_from = value) %>%
-  select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
-  arrange(match(Age, c("Overall", dimnames(deaths)$age))) %>%
-  datatable()
+overall_ifr_start <- overall_ifr(ifr.start)
+overall_ifr_today <- overall_ifr(ifr.today)
+
+ifr.table <- function(x, overall_x)
+  x %>%
+    as.matrix() %>%
+    `colnames<-`(dimnames(deaths)$age) %>%
+    as_tibble() %>%
+    pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+    group_by(age) %>%
+    summarise(value = list(quantile(ifr, QUANTILES))) %>%
+    mutate(quantile = list(names(value[[1]]))) %>%
+    unnest(c(quantile, value)) %>%
+    bind_rows(overall_x) %>%
+    mutate(
+	quantile = parse.percentage(quantile),
+    	value = paste0(signif(100 * value, 2), "%")
+  	) %>%
+    pivot_wider(names_from = quantile, values_from = value) %>%
+    select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
+    arrange(match(Age, c("Overall", dimnames(deaths)$age)))
+
+ifr.table(ifr.start, overall_ifr_start) %>%
+  inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
+  rename(Med_early = Median.x,
+    Lower_early = `95% CrI (lower).x`,
+    Upper_early = `95% CrI (upper).x`,
+    Med_late = Median.y,
+    Lower_late = `95% CrI (lower).y`,
+    Upper_late = `95% CrI (upper).y`) %>%
+    datatable()
 
 # (params$prop_case_to_hosp %>%
 #   as.matrix() %>%

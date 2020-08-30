@@ -23,10 +23,10 @@ value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383
 pars.egr <- c(31.36, 224)
 
 ## Ascertainment parameters
-if(nA == 1){
+if(gp.flag & nA == 1){
     value.pgp <- 0.1
     pars.pgp <- c(2.12, 15.8)
-} else {
+} else if (gp.flag){
     ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
     ll.prior.days <- ll.start.date - days(1:7)
     ll.prior <- ll.dat %>%
@@ -42,6 +42,7 @@ if(nA == 1){
                         function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
     names(dimnames(infections))[1] <- "age"
     dimnames(infections)$age[1] <- "<15yr"
+    abreaks.icr <- 3:7
     med.infec <- apply(infections, c("age", "region"), median) %>%
         as.data.frame() %>%
         rownames_to_column(var = "Age") %>%
@@ -59,6 +60,7 @@ if(nA == 1){
     value.pgp <- jitter(ex6$coefficients)
     pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
     write_tsv(as.data.frame(model.matrix(ex6)), file.path(out.dir, "icr.design.txt"), col_names = FALSE)
+    rm(infections)
 }
 
 ## Infection to fatality ratio

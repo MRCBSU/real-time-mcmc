@@ -1,6 +1,7 @@
 suppressMessages(library(tidyverse))
 suppressPackageStartupMessages(suppressWarnings(require(cubelyr)))
 suppressMessages(library(Matrix))
+suppressMessages(extract <- R.utils::extract)
 
 ## Location of this script
 thisFile <- function() {
@@ -40,9 +41,9 @@ apply.over.named.array <- function(arr, over, func,
 
 apply.param.to.output <- function(output, param, func, over = NULL,
                                   target.dimnames = dimnames(output)) {
-  param.to.use <- param[parameter.to.outputs,]
+  param.to.use <- extract(param, "1" = parameter.to.outputs, drop = FALSE)
   func.with.param <- function(x) {
-    func(x, t(param.to.use))
+    func(x, aperm(param.to.use, perm = length(dim(param.to.use)):1))
   }
   dims.to.preserve <- drop.from.names(output.dimnames, c(over, "iteration"))
   mat <- aperm(output, c(over, "iteration", dims.to.preserve))
@@ -254,79 +255,123 @@ Rt <- array(
 )
 
 ## Get NNI into nice format
-infections <- array(
-  unlist(NNI),
-  dim = output.quantity.dims,
-  dimnames = output.dimnames
-)
+nice.array <- function(x)
+    array(
+        unlist(x),
+        dim = output.quantity.dims,
+        dimnames = output.dimnames)
+
+infections <- nice.array(NNI)
 rm(NNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
-
-derived.quantity <- function(scaling.param, overdispersion.param, convolution, noise.replicates = 1) {
-  ## Calculate deaths
-  if (num.ages > 1) {
-    raw <- merge.youngest.age.groups(infections)
-  } else {
-    raw <- infections
-  }
-  mean <- raw %>%
-    apply.convolution(convolution) %>%
-    apply.param.to.output(scaling.param, `*`, "age")
-  neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
-    stopifnot(is.null(dim(drop(overdispersion))))
-    size <- mu / overdispersion
-    return(rnbinom(
-      n = length(mu) * replicates,
-      mu = rep(mu, each = replicates),
-      size = rep(size, each = replicates)
-    ))
-  }
-  noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
-  noise.dimnames <- dimnames(mean)
-  noise.dimnames$iteration <- noise.iterations
-  noisy.out <- mean %>%
-    apply.param.to.output(overdispersion.param, neg.binom.noise,
-                          target.dimnames = noise.dimnames) %>%
-    merge.youngest.age.groups(3, "<25")
-  return(list(
-    mean = mean,
-    noisy.out = noisy.out,
-    cumulative = noisy.out %>% apply.over.named.array("date", cumsum)
-  ))
+if(dths.flag){
+    deaths2 <- nice.array(Deaths)
+    rm(Deaths)
 }
-if (hosp.flag == 0) {
+
+derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
+                             overdispersion.param, convolution,
+                             series = infections,
+                             noise.replicates = 1, observe.babies = FALSE) {
+    if(!observe.babies & num.ages > 1){
+        ## ## Merging of youngest age groups needs to be done prior to adding negbin noise.
+        raw <- merge.youngest.age.groups(series)
+    } else {
+        raw <- series
+    }
+    mean <- raw %>%
+        apply.convolution(convolution) %>%
+        apply.param.to.output(scaling.param, `*`, scaling.idxs)
+    neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
+        stopifnot(is.null(dim(drop(overdispersion))))
+        size <- mu / overdispersion
+        return(rnbinom(
+            n = length(mu) * replicates,
+            mu = rep(mu, each = replicates),
+            size = rep(size, each = replicates)
+        ))
+    }
+    noise.iterations <- 1:(noise.replicates * length(outputs.iterations))
+    noise.dimnames <- dimnames(mean)
+    noise.dimnames$iteration <- noise.iterations
+    noisy.out <- mean %>%
+        apply.param.to.output(array(overdispersion.param, dim = dim(overdispersion.param)),
+                              neg.binom.noise,
+                              target.dimnames = noise.dimnames) %>%
+        merge.youngest.age.groups(3, "<25")
+    return(list(
+        mean = mean,
+        noisy.out = noisy.out,
+        cumulative = noisy.out %>% apply.over.named.array("date", cumsum)
+    ))
+}
+
+if (!dths.flag) {
   deaths <- noisy_deaths <- cum_deaths <- NULL
 } else {
-	delay.to.death <- list(
-	  incub.mean = 4,
-	  incub.sd = 1.41,
-	  disease.mean = ddelay.mean,
-	  disease.sd = ddelay.sd,
-	  report.mean = 0,
-	  report.sd = 0
-	)
-	F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
-  death.data <- derived.quantity(params$prop_case_to_hosp, params$hosp_negbin_overdispersion, F.death)
-  deaths <- death.data$mean
-  noisy_deaths <- death.data$noisy.out
-  cum_deaths <- death.data$cumulative
+    delay.to.death <- list(
+        incub.mean = 4,
+        incub.sd = 1.41,
+        disease.mean = ddelay.mean,
+        disease.sd = ddelay.sd,
+        report.mean = rdelay.mean,
+        report.sd = rdelay.sd
+    )
+    F.death <- discretised.delay.cdf(delay.to.death, steps.per.day = 1)
+    ## Do we have a single IFR for each region, or do we need a design matrix?
+    if(single.ifr){
+        ifr <- array(params$prop_case_to_hosp, dim = c(dim(params$prop_case_to_hosp), ndays))
+    } else {
+        ## the manipulation of the IFR below was originally written in tidy syntax but it caused memory problems
+        lths <- diff(c(0, tbreaks.ifr, ndays))
+        ifr <- expit(params$prop_case_to_hosp %*% t(model.matrix(lm.TA2)))
+        ## ncols gives the number of different values for the IFR, need to spread them out over time and age
+        ifr <- array(ifr, dim = c(dim(ifr)[1], nA - 1, length(tbreaks.ifr) + 1))
+        ## expand the date dimension according to the specified breakpoints
+        ifr <- apply(ifr, 1:2, function(x) unlist(lapply(1:(length(tbreaks.ifr)+1), function(y) rep(x[y], lths[y]))))
+        ifr <- aperm(ifr, c(2, 3, 1))
+    }
+    death.data <- derived.quantity(ifr,
+                                   overdispersion.param = params$hosp_negbin_overdispersion,
+                                   convolution = F.death)
+    deaths <- death.data$mean
+    noisy_deaths <- death.data$noisy.out
+    cum_deaths <- death.data$cumulative
 }
-if (gp.flag == 0) {
-  hosp <- noisy_hosp <- cum_hosp <- NULL
+stop()
+if (!cases.flag) {
+  cases <- noisy_cases <- cum_cases <- NULL
 } else {
-	delay.to.hosp <- list(
-	  incub.mean = 4,
-	  incub.sd = 1.41,
-	  disease.mean = hdelay.mean,
-	  disease.sd = hdelay.sd,
-	  report.mean = 0,
-	  report.sd = 0
-	)
-	F.hosp <- discretised.delay.cdf(delay.to.hosp, steps.per.day = 1)
-  hosp.data <- derived.quantity(params$prop_case_to_GP_consultation, params$gp_negbin_overdispersion, F.hosp)
-  hosp <- hosp.data$mean
-  noisy_hosp <- hosp.data$noisy.out
-  cum_hosp <- hosp.data$cumulative
+    delay.to.case <- list(
+        incub.mean = 4,
+        incub.sd = 1.41,
+        disease.mean = 0,
+        disease.sd = 0,
+        report.mean = ldelay.mean,
+        report.sd = ldelay.sd
+    )
+    F.case <- discretised.delay.cdf(delay.to.case, steps.per.day = 1)
+    if(nA == 1){
+        icr <- array(params$prop_case_to_GP_consultation, dim = c(dim(params$prop_case_to_GP_consultation), nA))
+    } else {
+        icr <- expit(params$prop_case_to_GP_consultation %*% t(model.matrix(ex6)))
+        ## icr has regional and age variation at present
+        icr <- array(icr, dim = c(dim(icr)[1], dim(icr)[2] / r, r))
+        icr <- aperm(icr, c(1, 3, 2))
+        if(gp.flag & nA != 1){ ## this will usually mean the are age breakpoints
+            lths <- diff(c(0, abreaks.icr, nA))
+            icr <- apply(icr, 1:2, function(x) unlist(lapply(1:(length(abreaks.icr)+1), function(y) rep(x[y], lths[y]))))
+            icr <- aperm(icr, c(2, 1, 3))
+        }
+    }
+    case.data <- derived.quantity(icr,
+                                  scaling.idxs = c("region", "age"),
+                                  overdispersion.param = params$gp_negbin_overdispersion,
+                                  convolution = F.case,
+                                  observe.babies = TRUE)
+    case <- case.data$mean
+    noisy_case <- case.data$noisy.out
+    cum_case <- case.data$cumulative
 }
 
 

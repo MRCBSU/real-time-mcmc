@@ -20,12 +20,12 @@ thisFile <- function() {
 }
 
 ###############################################################
-
 ## Load files
 if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
+## Do we need to re-run all the calculations?
 if (!exists("infections")) {
   if (!exists("out.dir")) {
 	  warning("Importing config.R as no out.dir found")
