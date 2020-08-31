@@ -26,7 +26,7 @@ pars.egr <- c(31.36, 224)
 if(!gp.flag | nA == 1){
     value.pgp <- 0.1
     pars.pgp <- c(2.12, 15.8)
-} else {
+} else if (gp.flag){
     ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
     ll.prior.days <- ll.start.date - days(1:7)
     ll.prior <- ll.dat %>%
@@ -42,6 +42,7 @@ if(!gp.flag | nA == 1){
                         function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
     names(dimnames(infections))[1] <- "age"
     dimnames(infections)$age[1] <- "<15yr"
+    abreaks.icr <- 3:7
     med.infec <- apply(infections, c("age", "region"), median) %>%
         as.data.frame() %>%
         rownames_to_column(var = "Age") %>%

@@ -36,17 +36,33 @@ if(exists("var.priors")){
   
   ## ## OPEN FILE CONNECTIONS ## ##
   NNI <- NNI.files <- vector("list", r)
+  dths.flag <- FALSE
+  if(hosp.flag & !SMC.output) {
+      Deaths <- Deaths.files <- vector("list", r)
+      dths.flag <- !dths.flag
+  }
+  cases.flag <- FALSE
+  if(gp.flag & !SMC.output) {
+      Cases <- Cases.files <- vector("list", r)
+      cases.flag <- !cases.flag
+  }
   if(SMC.output) states <- state.files <- vector("list", r)
   
   ## NNI files
   for(intr in 1:r)
     {
-      NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
-      if(SMC.output)
-        ## state files
-        state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
+        NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
+        if(dths.flag)
+            Deaths.files[[intr]] <- file(file.path(target.dir, paste0("Hosp_", regions[intr])), "rb")
+        if(cases.flag)
+            Cases.files[[intr]] <- file(file.path(target.dir, paste0("GP_", regions[intr])), "rb")
+        if(SMC.output)
+            ## state files
+            state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
     }
   names(NNI.files) <- regions
+  if(dths.flag) names(Deaths.files) <- regions
+  if(cases.flag) names(Cases.files) <- regions
   if(SMC.output) names(state.files) <- regions
   
   ## lfx files
@@ -62,15 +78,25 @@ if(exists("var.priors")){
     {
       NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * ndays * nA)
       NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
+      if(dths.flag){
+          Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = i.summary * end.hosp * nA) %>%
+              array(dim = c(nA, ndays, i.summary))
+      }
+      if(cases.flag){
+          Cases[[intr]] <- readBin(Cases.files[[intr]], double(), n = i.summary * end.gp * nA) %>%
+              array(dim = c(nA, ndays, i.summary))
+      }
     }
   names(NNI) <- regions
+  if(dths.flag) names(Deaths) <- regions
+  if(cases.flag) names(Cases) <- regions
   
   lfx <- readBin(lfx.files, double(), n = i.saved)
   
   if(SMC.output)
-    {
+  {
       for(intr in 1:r)
-        states[[intr]] <- readBin(state.files[[intr]], double(), n = nA * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
+          states[[intr]] <- readBin(state.files[[intr]], double(), n = nA * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
       names(states) <- regions
     }
   
@@ -97,8 +123,11 @@ if(exists("var.priors")){
   ## ## ## ##
   
   ## ## CLOSE FILE CONNECTIONS ## ##
-  for(intr in 1:r)
-    close(NNI.files[[intr]])
+  for(intr in 1:r){
+      close(NNI.files[[intr]])
+      if(dths.flag) close(Deaths.files[[intr]])
+      if(cases.flag) close(Cases.files[[intr]])
+  }
   close(lfx.files)
   if(SMC.output)
     for(intr in 1:r)
