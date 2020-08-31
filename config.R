@@ -50,9 +50,9 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-    flg.cutoff <- TRUE
+    flg.cutoff <- FALSE
     if(flg.cutoff) str.cutoff <- "60cod"
-    reporting.delay <- 14
+    reporting.delay <- 4
 } else {
 	stop("Unknown data description")
 }
