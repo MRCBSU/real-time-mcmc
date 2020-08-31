@@ -106,8 +106,8 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
       	       	 regions_population = `r paste(pop.input, collapse = ", ")`;
 
 
-		 regions_gp_count_data = `r paste(cases.files, collapse = ", ")`;
-		 regions_gp_coverage_data = `r paste(denoms.files, collapse = ", ")`;
+		 regions_gp_count_data = `r ifelse(gp.flag, paste(cases.files, collapse = ", "), "NULL")`;
+		 regions_gp_coverage_data = `r ifelse(gp.flag, paste(denoms.files, collapse = ", "), "NULL")`;
 
 
 		 regions_hosp_data = `r paste(hosp.data, collapse = ", ")`;
