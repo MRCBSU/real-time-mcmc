@@ -82,6 +82,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         hoverinfo = "Lockdown"
     )
   )
+  lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150
   return(
     plot_ly(data, x = ~date, width = 800, height = plot.height) %>%
@@ -363,7 +364,8 @@ overall_ifr <- function(day.ifr)
     enframe(name = "quantile") %>%
     mutate(age = "Overall")
 
-overall_ifr_start <- overall_ifr(ifr.start)
+if(!single.ifr)
+	overall_ifr_start <- overall_ifr(ifr.start)
 overall_ifr_today <- overall_ifr(ifr.today)
 
 ifr.table <- function(x, overall_x)
@@ -385,15 +387,20 @@ ifr.table <- function(x, overall_x)
     select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
     arrange(match(Age, c("Overall", dimnames(deaths)$age)))
 
-ifr.table(ifr.start, overall_ifr_start) %>%
-  inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
-  rename(Med_early = Median.x,
-    Lower_early = `95% CrI (lower).x`,
-    Upper_early = `95% CrI (upper).x`,
-    Med_late = Median.y,
-    Lower_late = `95% CrI (lower).y`,
-    Upper_late = `95% CrI (upper).y`) %>%
-    datatable()
+if(!single.ifr){
+	ifr.table(ifr.start, overall_ifr_start) %>%
+  			     inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
+  			     rename(Med_early = Median.x,
+    			     		      Lower_early = `95% CrI (lower).x`,
+    					      Upper_early = `95% CrI (upper).x`,
+    					      Med_late = Median.y,
+    					      Lower_late = `95% CrI (lower).y`,
+    					      Upper_late = `95% CrI (upper).y`) %>%
+   					       datatable()
+} else {
+  ifr.table(ifr.today, overall_ifr_today) %>%
+  		       datatable()
+}
 
 # (params$prop_case_to_hosp %>%
 #   as.matrix() %>%
@@ -564,7 +571,7 @@ make.plots(cum_infections, by = "age")
 ```
 
 
-```{r eval=!is.null(hosp.dat), child='hosp-report.Rmd'}
+```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
 ```
 
 ### Prob $R_t > 1$

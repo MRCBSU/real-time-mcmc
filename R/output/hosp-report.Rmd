@@ -1,24 +1,29 @@
 
-### Hospitalisation incidence {.tabset}
+### Pillar 2 cases {.tabset}
 
 #### By region
 ```{r}
-make.plots(noisy_hosp, by = "region", data = hosp.dat)
+dim.id <- which(names(dimnames(noisy_case)) == "date")
+noisy_case <- extract(noisy_case, indices = list(start.gp:end.gp), dims = dim.id)
+case.dat <- case.dat %>%
+	 filter(date >= start.date - 1 + start.gp,
+	 	date <= start.date - 1 + end.gp)
+make.plots(noisy_case, by = "region", data = case.dat)
 ```
 
 #### By age
 ```{r}
-make.plots(noisy_hosp, by = "age", data = hosp.dat)
+make.plots(noisy_case, by = "age", data = case.dat)
 ```
 
-### Cumulative hospitalisations {.tabset}
+<!-- ### Cumulative hospitalisations {.tabset} -->
 
-#### By region
-```{r}
-make.plots(cum_hosp, by = "region")
-```
+<!-- #### By region -->
+<!-- ```{r} -->
+<!-- make.plots(cum_case, by = "region") -->
+<!-- ``` -->
 
-#### By age
-```{r}
-make.plots(cum_hosp, by = "age")
-```
+<!-- #### By age -->
+<!-- ```{r} -->
+<!-- make.plots(cum_case, by = "age") -->
+<!-- ``` -->

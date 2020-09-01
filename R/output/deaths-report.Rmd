@@ -2,6 +2,7 @@
 
 #### By region
 ```{r reg-death, cache=TRUE, cache.extra=results_hash}
+dth.dat <- dth.dat %>% filter(date <= start.date + end.hosp - 1)
 make.plots(noisy_deaths, by = "region", data = dth.dat, x.label = "Date of death")
 ```
 

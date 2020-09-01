@@ -271,8 +271,8 @@ if(dths.flag){
 
 derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
                              overdispersion.param, convolution,
-                             series = infections,
-                             noise.replicates = 1, observe.babies = FALSE) {
+                             series = infections, dow = NULL,
+                             noise.replicates = 1, observe.babies = FALSE, merge.youngest.grps = 3, merge.youngest.label = "<25") {
     if(!observe.babies & num.ages > 1){
         ## ## Merging of youngest age groups needs to be done prior to adding negbin noise.
         raw <- merge.youngest.age.groups(series)
@@ -282,6 +282,8 @@ derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
     mean <- raw %>%
         apply.convolution(convolution) %>%
         apply.param.to.output(scaling.param, `*`, scaling.idxs)
+    if(!is.null(dow))
+        mean <- apply.param.to.output(mean, dow, `*`, "date")
     neg.binom.noise <- function(mu, overdispersion, replicates = noise.replicates) {
         stopifnot(is.null(dim(drop(overdispersion))))
         size <- mu / overdispersion
@@ -298,13 +300,18 @@ derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
         apply.param.to.output(array(overdispersion.param, dim = dim(overdispersion.param)),
                               neg.binom.noise,
                               target.dimnames = noise.dimnames) %>%
-        merge.youngest.age.groups(3, "<25")
+        merge.youngest.age.groups(merge.youngest.grps, merge.youngest.label)
     return(list(
         mean = mean,
         noisy.out = noisy.out,
         cumulative = noisy.out %>% apply.over.named.array("date", cumsum)
     ))
 }
+
+pad.fullrange <- function(in.vec, breaks, rmax){
+    lths <- diff(c(0, breaks, rmax))
+    unlist(lapply(1:(length(breaks)+1), function(y) rep(in.vec[y], lths[y])))
+    }
 
 if (!dths.flag) {
   deaths <- noisy_deaths <- cum_deaths <- NULL
@@ -323,12 +330,11 @@ if (!dths.flag) {
         ifr <- array(params$prop_case_to_hosp, dim = c(dim(params$prop_case_to_hosp), ndays))
     } else {
         ## the manipulation of the IFR below was originally written in tidy syntax but it caused memory problems
-        lths <- diff(c(0, tbreaks.ifr, ndays))
         ifr <- expit(params$prop_case_to_hosp %*% t(model.matrix(lm.TA2)))
         ## ncols gives the number of different values for the IFR, need to spread them out over time and age
         ifr <- array(ifr, dim = c(dim(ifr)[1], nA - 1, length(tbreaks.ifr) + 1))
         ## expand the date dimension according to the specified breakpoints
-        ifr <- apply(ifr, 1:2, function(x) unlist(lapply(1:(length(tbreaks.ifr)+1), function(y) rep(x[y], lths[y]))))
+        ifr <- apply(ifr, 1:2, pad.fullrange, breaks = tbreaks.ifr, rmax = ndays)
         ifr <- aperm(ifr, c(2, 3, 1))
     }
     death.data <- derived.quantity(ifr,
@@ -338,7 +344,6 @@ if (!dths.flag) {
     noisy_deaths <- death.data$noisy.out
     cum_deaths <- death.data$cumulative
 }
-stop()
 if (!cases.flag) {
   cases <- noisy_cases <- cum_cases <- NULL
 } else {
@@ -359,16 +364,20 @@ if (!cases.flag) {
         icr <- array(icr, dim = c(dim(icr)[1], dim(icr)[2] / r, r))
         icr <- aperm(icr, c(1, 3, 2))
         if(gp.flag & nA != 1){ ## this will usually mean the are age breakpoints
-            lths <- diff(c(0, abreaks.icr, nA))
-            icr <- apply(icr, 1:2, function(x) unlist(lapply(1:(length(abreaks.icr)+1), function(y) rep(x[y], lths[y]))))
+            icr <- apply(icr, 1:2, pad.fullrange, breaks = abreaks.icr, nA)
             icr <- aperm(icr, c(2, 1, 3))
         }
     }
+    dow <- exp(params$day_of_week_effects %*% t(lm.mat))
+    dow <- array(dow, dim = c(dim(dow)[1], end.gp - start.gp + 1))
+    dow <- apply(dow, 1, pad.fullrange, breaks = start.gp:(end.gp - 1), ndays)
     case.data <- derived.quantity(icr,
                                   scaling.idxs = c("region", "age"),
                                   overdispersion.param = params$gp_negbin_overdispersion,
                                   convolution = F.case,
-                                  observe.babies = TRUE)
+                                  dow = t(dow),
+                                  observe.babies = TRUE,
+                                  merge.youngest.label = "<15")
     case <- case.data$mean
     noisy_case <- case.data$noisy.out
     cum_case <- case.data$cumulative
@@ -377,16 +386,16 @@ if (!cases.flag) {
 
 ## Parse data
 print('Loading true data')
-load.data <- function(file.names) {
+load.data <- function(file.names, idx.age.to.combine = 1:4, label.age.to.combine = "<25") {
   col.names <- c('date', age.labs)
   names(file.names) <- regions
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
   tbl_dat <- do.call(bind_rows, dat.raw)
   if (num.ages > 1) {
-    to.combine <- dimnames(infections)$age[1:4]
+    to.combine <- dimnames(infections)$age[idx.age.to.combine]
     tbl_dat <- tbl_dat %>%
-      mutate(`<25` = rowSums(.[to.combine])) %>%
+      mutate(!!label.age.to.combine := rowSums(.[to.combine])) %>%
       select(-all_of(to.combine))
   }
   return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
@@ -397,9 +406,9 @@ if (hosp.flag == 0) {
   dth.dat <- load.data(data.files)
 }
 if (gp.flag == 0) {
-  hosp.dat <- NULL
+  case.dat <- NULL
 } else {
-  hosp.dat <- load.data(gp.data)
+  case.dat <- load.data(cases.files, 1:3, "<15")
 }
 
 ## Get population
@@ -407,7 +416,8 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
 print('Saving results')
-save(infections, cum_infections, deaths, cum_deaths, params, dth.dat, noisy_deaths, Rt,
-     hosp, noisy_hosp, cum_hosp, population, hosp.dat,
+save.objs <- c("infections", "cum_infections", "deaths", "cum_deaths", "params", "dth.dat", "noisy_deaths", "Rt",
+     "case", "noisy_case", "cum_case", "population", "case.dat")
+save(list = save.objs[sapply(save.objs, exists)],
      file = file.path(out.dir, "output_matrices.RData"))
 save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))
