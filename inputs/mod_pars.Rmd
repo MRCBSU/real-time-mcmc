@@ -97,7 +97,7 @@ regression_link = 1;
 
 log_beta_rw = { param_value = `r paste(beta.rw.vals, collapse = ", ")`;
 
-prior_distribution = `r paste(rep(ifelse(beta.update, 4, 1), nr * length(beta.rw.vals)), collapse = ", ")`;
+prior_distribution = `r paste(rep(ifelse(beta.update, 4, 1), length(beta.rw.vals)), collapse = ", ")`;
 
 prior_parameters = "log_beta_rw_sd";
 
@@ -221,7 +221,7 @@ prior_distributions = 1;
 
 day_of_week_effects = { param_value = `r ifelse(gp.flag, paste(pars.dow, collapse = ", "), 1)`;
 
-prior_distributions = `r paste(rep(ifelse(gp.flag, 5, 1), length(pars.dow)), collapse = ", ")`;
+prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
 
 `r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
 

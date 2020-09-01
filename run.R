@@ -137,7 +137,8 @@ if(compile.code) {
 ## Run the code
 startwd <- getwd()
 setwd(out.dir)
-rm(outpp)
+if(exists("outpp"))
+    rm(outpp)
 save.image("tmp.RData")
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
