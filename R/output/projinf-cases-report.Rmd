@@ -1,0 +1,11 @@
+### Cases {.tabset}
+
+#### By region
+```{r reg-medterm-cases, cache=TRUE, cache.extra=results_hash}
+make.plots(cases, by = "region", x.label = "Date of test", project.forwards = TRUE)
+```
+
+#### By age
+```{r age-medterm-cases, cache=TRUE, cache.extra=results_hash}
+make.plots(cases, by = "age", x.label = "Date of test", project.forwards = TRUE)
+```

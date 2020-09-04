@@ -22,7 +22,7 @@ thisFile <- function() {
 R.dir <- dirname(thisFile())
 proj.dir <- dirname(dirname(R.dir))
 source(file.path(R.dir, "seir_reporting_functions.R"))
-out.dir <- file.path(proj.dir, "model_runs", "20200821", "base_varSens6day_matrices_20200814_deaths")
+out.dir <- file.path(proj.dir, "model_runs", "20200828", "base_varSens6day_matrices_20200821_deaths")
 
 load(file.path(out.dir, "tmp.RData"))
 

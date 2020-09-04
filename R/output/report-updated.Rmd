@@ -169,23 +169,26 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
 
 #### Model and report changes
 
-Our real-time model has been further updated to allow for uncertainty in the sensitivity and specificity of the serological testing. The modelling focusses on regional data and we do not report an estimate of $R_t$ for England. This is better provided through the modelling consensus statement supplied by SPI-M and SAGE.
+1. Medium-term forecasts by region and age have been added at the bottom of the page. Click and drag over a selected area to zoom in.
+1. Over the forecast period, contact matrices have been adapted to account for the return to schools of school age children. This is an initial attempt at principled pandemic projections and we will shortly add in the impact of the re-opening of universities.
+1. Because posterior $R_t$ values straddle 1, there is great uncertainty in the future dynamics.
+1. Resurgence of infection to levels greater than 10x at present is anticipated by the third week of October.
+1. Deaths are lagging sufficiently behind infections that numbers are anticipated to still be small by the end of the period.
 
 #### Updated findings
-1. Our current estimate of the number of infections arising each day across England is 3,200 (1,700–5,800, 95% credible interval).
-1. We predict that the number of deaths each day is likely to be between 47 and 91 by the end of the third week of August.
+1. Our current estimate of the number of infections arising each day across England is 2,400 (1,300–4,500, 95% credible interval).
+1. We predict that the number of deaths each day is likely to be between 35 and 66 by mid-September.
 1. We estimate it is very likely that $R_t$ is close to 1 in most regions of England.
-    a. The South West is the region in which it is most likely that $R_t$ is above 1, with a probability of 60%, although the number of new infections is very low.
-    a. The probability of $R_t$  exceeding 1 is less than 20% for London and the South East and is less than 5% in the East of England.
-1. London, followed by the North West continues to have the highest attack rate (16% and  10% respectively), the proportion of the population who have ever been infected. The South West continues to have the lowest (3%).
+    a. London is the region in which it is most likely that $R_t$ is above 1, with a probability of 34%, although the number of new infections is very low.
+    a. The probability of $R_t$  exceeding 1 is less than 20% for the East of England and the South East and is less than 5% in the Midlands.
+1. London, followed by the North West continues to have the highest attack rate (17% and  10% respectively), the proportion of the population who have ever been infected. The South West continues to have the lowest (3%).
 
 #### Interpretation
 
-1. The estimated epidemic growth rate for England of 0.0 (-0.02--0.03) indicates a plateau in the number of new infections. This is supported by the estimated level of infections remaining around 3,000 per day for the last three weeks.
-1. The central estimates for incidence in each region are less than 800 infections per day, a substantial proportion of which will be asymptomatic.
-1. In the regions where the central estimate for $R_t$ is greater than or equal to 1, the estimation is uncertain and the number of daily new infections is low. These two factors combined indicate that there is no particular public health concern for any of these regions, though the situation should be monitored closely.
-1. Only one region, the East of England, can be said with any certainty to have a value of $R_t$ that is below 1, indicating a continued decline in transmission.
-1. The deaths data used are only weakly informative on $R_t$ over the last two weeks. Therefore, the now-cast for current incidence and the forecast of deaths are naturally quite uncertain. At present, this uncertainty is increased by the current low levels of mortality.
+1. The estimated epidemic growth rate for England of -0.01 (-0.03--0.02) indicates a plateau in the number of new infections. This is supported by the estimated level of infections remaining around 2,000--2,500 per day over the last few weeks.
+1. The central estimates for incidence in each region are less than 550 infections per day, a substantial proportion of which will be asymptomatic.
+1. Only one region, the Midlands, can be said with any certainty to have a value of $R_t$ that is below 1, indicating a continued decline in transmission.
+1. The deaths data used are only weakly informative on $R_t$ over the last two weeks and are now very small in number. Therefore, the now-cast for current incidence and the forecast of deaths are naturally quite uncertain.
 
 ### Summary
 
@@ -596,6 +599,9 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
 make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
+```
+
+```{r eval=file.exists(file.path(out.dir, "projections/projections.RData")), child='projinf-report.Rmd'}
 ```
 
 # 
