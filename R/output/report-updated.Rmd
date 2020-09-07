@@ -93,7 +93,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data,
-                       project.forwards = !is.null(data), x.label = "") {
+                       project.forwards = !(is.null(data) && external), x.label = "") {
 
   if (is.null(combine.to.England)) {
     Eng_projection <- Eng_data <- NULL
