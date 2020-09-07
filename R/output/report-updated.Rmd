@@ -182,7 +182,7 @@ get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
 
 ```{r cum-inf-sum}
 format_num <- function(x) {
-  return(format(signif(x, 3), big.mark = ",", scientific = FALSE, width = 0))
+  return(format(round(signif(x, 3)), big.mark = ",", scientific = FALSE, width = 0))
 }
 
 tbl_cum_inf_region <-
@@ -424,7 +424,7 @@ NB: negative growth rates are rates of decline. Values are daily changes.
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r inf-halving}
 
@@ -450,7 +450,7 @@ knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r death-halving, eval=!is.null(deaths)}
 

@@ -3,6 +3,8 @@ if(!exists("home.dir"))
 source(paste(home.dir, "R/functions/statdist/gamma_fns.R", sep = ""))
 
 ## ## C code source files
+if(!exists("R.dir"))
+    R.dir <- dirname(thisFile())
 source(file.path(R.dir, "convolution.R"))
 
 pw.cut.columns <- function(breakpoints, max.days, intervals.per.day, start = 0, end = max.days){
