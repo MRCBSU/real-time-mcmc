@@ -604,6 +604,10 @@ make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```{r eval=file.exists(file.path(out.dir, "projections/projections.RData")), child='projinf-report.Rmd'}
 ```
 
+```{r eval=(as.logical(gp.flag) & file.exists(file.path(out.dir, "projections/projections.RData"))), child='projinf-cases-report.Rmd'}
+```
+
+
 # 
 
 Copyright © MRC Biostatistics Unit, University of Cambridge

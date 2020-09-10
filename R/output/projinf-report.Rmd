@@ -24,6 +24,3 @@ make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = 
 ```{r age-medterm-death, cache=TRUE, cache.extra=results_hash}
 make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE)
 ```
-
-```{r eval=as.logical(gp.flag), child='projinf-cases-report.Rmd'}
-```

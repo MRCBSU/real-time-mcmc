@@ -23,6 +23,9 @@ thisFile <- function() {
 ###############################################################
 
 ## Functions
+logit <- function(p) log(p/(1-p))
+expit <- function(x) exp(x) / (1 + exp(x))
+
 drop.from.names <- function(x, value) {
   names(x)[!(names(x) %in% value)]
 }
