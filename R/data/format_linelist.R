@@ -37,7 +37,8 @@ possible.col.names <- list(
     utla_name = c("UTLA_name", "utla_name"),
     age = "age",
     cat = "cat",
-    pillar = "pillar"
+    pillar = "pillar",
+    asymptomatic = "asymptomatic_indicator"
 )
 input.col.names <- suppressMessages(names(read_excel(cases.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -85,7 +86,7 @@ if(!exists("file.loc")){
 }
 
 ## Which columns are we interested in?
-case.cols <- c("numeric", rep("text", 10), "numeric", rep("date", 3), rep("text", 2), rep("numeric", 2))	# Calling with a list so use do.call
+case.cols <- c("numeric", rep("text", 10), "numeric", rep("date", 3), rep("text", 3), rep("numeric", 2))	# Calling with a list so use do.call
 
 within.range <- function(dates) {
 	return(dates <= today() & dates >= ymd("2020-01-01"))
@@ -130,22 +131,29 @@ case.dat %>%
 							  NA, orig_date))
 	) %>%
    print(n=1000)
-
 ## latest.date <- ymd(date.data) ## - reporting.delay
 ## earliest.date <- ymd("2020-06-01")
 
 case.dat <- case.dat %>%
     filter(
-		Date <= latest.date,
+        Date <= latest.date,
     	Date >= earliest.date,
-		cat == "Residential dwelling (including houses, flats, sheltered accommodation)",
-		pillar == "Pillar 2"
-	) %>%
+        cat == "Residential dwelling (including houses, flats, sheltered accommodation)",
+        pillar == "Pillar 2"
+    ) %>%
     mutate(Region = get.region(.)) %>%
     filter(Region %in% regions) %>%
     mutate(Age.Grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
 
+## Get ll.start.date, the date from which we should be including the linelisting.
+ll.start.date <- (case.dat %>%
+                filter(asymptomatic == "U") %>%
+                slice(which.max(case_date)) %>%
+                pull(case_date) %>%
+                as.Date()) + 1
+
 ll.dat <- case.dat %>%
+        filter(asymptomatic %in% asymptomatic.states) %>%
 	group_by(Date, Region, Age.Grp, .drop = FALSE) %>%
 	tally %>%
 	right_join(		# Add missing rows

@@ -96,7 +96,7 @@ if(sero.flag){
   serosam.files <- seropos.files <- NULL
 }
 if(gp.flag){
-    cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2.txt")
+    cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2_", ifelse(symptoms, "symptoms", "all"), ".txt")
     denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")
 } else {
     cases.files <- NULL

@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200828"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200904"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -45,18 +45,18 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-## scenario.name <- "base_varSens_pillar2_ifr"
-scenario.name <- "base_varSens"
+scenario.name <- "base_varSens_pillar2_ifr"
+## scenario.name <- "base_varSens"
 ## scenario.name <- "base_varSens_pillar2"
 ## scenario.name <- "base_varSens_ifr"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to hospitalised cases
-gp.flag <- 0					# 0 = off, 1 = on
+gp.flag <- 1					# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Does each age group have a single IFR or one that varies over time?
-single.ifr <- TRUE
+single.ifr <- FALSE
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
@@ -99,10 +99,15 @@ running.England <- any(regions %in% English.regions)
 
 if(gp.flag){
     ll.reporting.delay <- 4
-    ll.start.date <- ymd("20200616")
+    ## ll.start.date <- ymd("20200616") -- this is now defined in format_linelist.R
     ## Location where to find some incidence estimates immediately prior to the above-specified date
     outpp <- new.env()
     load(file.path(proj.dir, "model_runs", "20200619", "newContactModel6day_matrices_20200612_deaths", "output_matrices.RData"),
          envir = outpp)
-
+    symptoms <- TRUE
+    if(symptoms){
+        scenario.name <- paste0(scenario.name, "_symptoms")
+        out.dir <- paste0(out.dir, "_symptoms")
+        asymptomatic.states <- "N"
+    } else asymptomatic.states <- c("Y", "N", "U")
 }
