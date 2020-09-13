@@ -1,3 +1,6 @@
+logit <- function(p) log(p/(1-p))
+expit <- function(x) exp(x)/(1+exp(x))
+
 ## Incubation period - best working estimate - mean 5.2 (4.1-7.0)
 ## Use these as simulation parameters for the latent period
 
@@ -81,8 +84,6 @@ if(single.ifr){
         pars.ifr[14] <- 112
     }
 } else { ## IFR changes over time, presume logistically...
-    logit <- function(p) log(p/(1-p))
-    expit <- function(x) exp(x)/(1+exp(x))
     if(nA > 1){
         value.ifr <- logit(c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791))
         var.ifr <- rep(0.000360, nA)
@@ -139,6 +140,7 @@ if(gp.flag){
 
 ## Initial seeding
 value.nu <- c(-16.7064769395683, -14.3327333035582, -15.0542472007424, -17.785749594464, -15.8038617705659, -15.3720269985272, -16.3667281951197)[1:nr]
+if(gp.flag) value.nu <- value.nu + logit(med.infec %>% filter(Age == "<15yr") %>% pull(p))
 pars.nu <- c(-17.5, 1.25)
 
 ## GP Overdispersion

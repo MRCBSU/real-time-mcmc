@@ -45,10 +45,10 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
+scenario.name <- "base_varSens"
+scenario.name <- "base_varSens_ifr"
 scenario.name <- "base_varSens_pillar2_ifr"
-## scenario.name <- "base_varSens"
 ## scenario.name <- "base_varSens_pillar2"
-## scenario.name <- "base_varSens_ifr"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to hospitalised cases
