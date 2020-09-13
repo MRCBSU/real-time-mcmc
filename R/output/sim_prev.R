@@ -22,7 +22,7 @@ thisFile <- function() {
 R.dir <- dirname(thisFile())
 proj.dir <- dirname(dirname(R.dir))
 source(file.path(R.dir, "seir_reporting_functions.R"))
-out.dir <- file.path(proj.dir, "model_runs", "20200828", "base_varSens6day_matrices_20200821_deaths")
+out.dir <- file.path(proj.dir, "model_runs", "20200904", "base_varSens_pillar26day_matrices_20200828_deaths_with_linelist")
 
 load(file.path(out.dir, "tmp.RData"))
 
@@ -47,6 +47,8 @@ for(i in 1:(length(cm.breaks) + 1)){
 }
 mixing.model$intervals <- M.intervals
 rm(base.mats, mult.mats, M.intervals)
+## infection to confirmed case ratio
+icr.mat <- model.matrix(ex6)
 
 get.prevalence <- function(iter, r){
     
@@ -58,7 +60,12 @@ get.prevalence <- function(iter, r){
     nu <- x$log_p_lambda_0[r]
     ntimes <- ndays / delta.t
     times <- 1:ntimes
-    
+    if("prop_case_to_GP_consultation" %in% names(x)){
+        mat.rows <- nrow(icr.mat) / nr
+        mat.rows <- ((r - 1)*mat.rows) + 1:mat.rows
+        value.pgp <- icr.mat[mat.rows, ] %*% x$prop_case_to_GP_consultation
+        }
+        
     ## beta model
     beta.block <- length(beta.breaks) + 1
     beta.rows <- ((r - 1) * beta.block) + (1:beta.block)
@@ -69,7 +76,7 @@ get.prevalence <- function(iter, r){
     rho <- 2 * delta.t / aip
     sigma <- delta.t * 2 / alp
     alpha <- exp(egr * delta.t) - 1
-    I0.tot <- mcmc.env$I0.func(aip, nu, R.init, value.pgp, mcmc.env$all.pop[1, r])
+    I0.tot <- mcmc.env$I0.func(aip, nu, R.init, value.pgp[1], mcmc.env$all.pop[1, r])
     m <- exp(x$contact_parameters[((r-1)*mixing.model$max.ind) + (1:mixing.model$max.ind)])
     mixing.model$M <- lapply(1:length(mixing.model$base),
                              function(mi) mixing.model$base[[mi]] * m[mixing.model$mults[[mi]]])
