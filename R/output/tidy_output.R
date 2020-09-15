@@ -181,7 +181,7 @@ if(ncol(m) %% r != 0) {
     ## Generation time distribution based on the initial contact matrix
     gt[[ireg]] <- lapply(1:ni, function(x) gen.time.dist(posterior.lp,
                                                          posterior.aip[iterations.for.Rt[x], ],
-                                                         init.func(regions.total.population[reg,] / pop.total[reg], M.star[[1]][,,x]),
+                                                         init.func(regions.total.population[reg,] / pop.total[reg], M.star[[1]][,,x,drop=FALSE]),
                                                          R0[x,reg] * M.star[[1]][,,x] / (pop.total[reg] * R.star[[ireg]][x]))
                          )
     ## Calculate number of susceptiables for each day
