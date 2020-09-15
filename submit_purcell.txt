@@ -8,11 +8,11 @@
 ## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
 
 ## Enter a short name for the job, to be shown in SLURM output
-#SBATCH -J RTM
+#SBATCH -J RTM_20200821
 
 ## Enter the wall-clock time limit for for your jobs.
 ## If jobs reach this limit they are automatically killed.
-#SBATCH --time=20:00:00
+#SBATCH --time=40:00:00
 
 ## For single-core jobs, this number should be '1'. 
 ## If your job has built-in parallelism, eg using OpenMP or 
@@ -34,6 +34,12 @@
 ## Can be an arbitrary list of comma-separated ranges, eg 1-5,10-15,20-25
 ## The %nn is optional, and restricts SLURM to running nn jobs simultaneously.
 ## #SBATCH --array=1-100%50
+#SBATCH --array=1-1
+
+#! sbatch directives end here (put any additional directives above this line)
+#SBATCH --output=model_run_20200821_rw_sero%A_%a.out
+#SBATCH --error=model_run_20200821_rw_sero%A_%a.err
+
 
 ##  - - - - - - - - - - - - - -
 
@@ -50,6 +56,27 @@ module load default-login             # REQUIRED - loads the basic environment
 
 ## Section 3: Run your application
 
+# Navigate to the correct working directory
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200821/base_varSens_pillar26day_matrices_20200814_deaths_with_linelist"
+# if [ $SLURM_ARRAY_TASK_ID == 1 ]
+# then
+#     workdir="${workdir}alt"
+# else
+#     workdir="${workdir}var"
+# fi
+# workdir="${workdir}Sens"
+# if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
+# then
+#     workdir="${workdir}_newSerology"
+# fi
+# workdir="${workdir}6day_matrices_20200814_deaths"
+# elif [ $SLURM_ARRAY_TASK_ID == 4 ]
+# then
+#     workdir="${workdir}/base_newContacts_newSero_altSens6day_matrices_20200717_deaths/"
+# fi
+# workdir="${workdir}Sens6day_matrices_20200724_deaths/"
+echo -e $workdir
+
 # You can use any arbitrary set of Linux commands here
 
 CMD="../../../rtm_optim"
@@ -61,6 +88,9 @@ CMD="../../../rtm_optim"
 ###############################################################
 ### You should not have to change anything below this line ####
 ###############################################################
+
+cd $workdir
+echo -e "Changed directory to `pwd`.\n"
 
 JOBID=$SLURM_JOB_ID
 

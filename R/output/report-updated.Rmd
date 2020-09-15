@@ -183,7 +183,7 @@ get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
 
 ```{r cum-inf-sum}
 format_num <- function(x) {
-  return(format(signif(x, 3), big.mark = ",", scientific = FALSE, width = 0))
+  return(format(round(signif(x, 3)), big.mark = ",", scientific = FALSE, width = 0))
 }
 
 tbl_cum_inf_region <-
@@ -425,7 +425,7 @@ NB: negative growth rates are rates of decline. Values are daily changes.
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r inf-halving}
 
@@ -436,6 +436,25 @@ infections.growth.rates %>%
   ) %>%
   knitr::kable(digits = 2, align = 'lccc')
 
+```
+
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r inf-doubling}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+    
 ```
 
 ### Change in deaths incidence {.tabset}
@@ -451,7 +470,7 @@ knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
 
 #### Halving times
 
-Halving times in days, if a region shows growth than value will be N/A.
+Halving times in days, if a region shows growth than value will be NA.
 
 ```{r death-halving, eval=!is.null(deaths)}
 
@@ -464,6 +483,24 @@ deaths.growth.rates %>%
 
 ```
 
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r death-doubling, eval=!is.null(deaths)}
+
+deaths.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, aligh = 'lccc')
+
+```
 
 ## Infections and deaths {.tabset}
 

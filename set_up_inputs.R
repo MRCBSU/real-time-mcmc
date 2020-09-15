@@ -59,25 +59,25 @@ if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
 	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
 } else {
-	mat.dates <- start.date + cm.breaks - 1
-	lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
-	lst$England$all$m <- lst$England$all$m * 1e7
-	cm.files <- paste0("england_", nA, "ag_contact.txt")
-	for(i in 1:length(cm.breaks))
-		cm.files <- c(cm.files, paste0("england_", nA, "ag_contact_ldwk", i, "_", google.data.date, ".txt"))
-	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
-	cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
-	cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
-	idx <- 1
-	if(!all(file.exists(cm.bases))){
-		adf <- as.data.frame(lst$England$all$m)
-		write_tsv(adf, cm.bases[idx], col_names = FALSE)
-		for(fl in cm.lockdown){
-			idx <- idx + 1
-			mat <- read_csv(fl) * adf 
-			write_tsv(mat, cm.bases[idx], col_names = FALSE)
-		}
-	}
+  mat.dates <- start.date + cm.breaks - 1
+  lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
+  lst$England$all$m <- lst$England$all$m * 1e7
+  cm.files <- "england_8ag_contact.txt"
+  for(i in 1:length(cm.breaks))
+      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date, ".txt"))
+  cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
+  cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
+  cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
+  idx <- 1
+  if(!all(file.exists(cm.bases))){
+      adf <- as.data.frame(lst$England$all$m)
+      write_tsv(adf, cm.bases[idx], col_names = FALSE)
+      for(fl in cm.lockdown){
+          idx <- idx + 1
+          mat <- read_csv(fl) * adf 
+          write_tsv(mat, cm.bases[idx], col_names = FALSE)
+      }
+   }
 }
 ## Modifiers (which element of contact_parameters to use)
 if(contact.model == 1){
@@ -184,8 +184,8 @@ if (sero.flag == 1) {
 }
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
-cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
-cm.mults <- file.path(proj.dir, "contact_mats", cm.mults)
+    cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
+    cm.mults <- file.path(proj.dir, "contact_mats", cm.mults)
 }
 
 num.threads <- nr

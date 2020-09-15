@@ -42,7 +42,14 @@ viro.flag <- 0
 
 ## If these files don't already exits, make them
 dir.data <- "data"
-data.files <- paste0(data.dirs["deaths"], "/", data.desc, date.data, "_", regions, "_", nA, "ag", ifelse(flg.confirmed, "CONF", ""), ".txt")
+data.files <- paste0(data.dirs["deaths"], "/",
+                     data.desc,
+                     date.data, "_",
+                     regions, "_",
+                     nA, "ag",
+                     ifelse(flg.confirmed, "CONF", ""),
+                     reporting.delay, "delay",
+                     ifelse(flg.cutoff, paste0("cutoff", str.cutoff), ""),".txt")
 names(data.files) <- regions
 if(sero.flag){
   serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
@@ -50,12 +57,18 @@ if(sero.flag){
 } else {
   serosam.files <- seropos.files <- NULL
 }
+if(gp.flag){
+  cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2.txt")
+} else {
+  cases.files <- NULL
+}
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
   } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
+  stop
   if ("Scotland" %in% regions) {
 	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
   }
@@ -67,6 +80,9 @@ if(format.inputs){
   }
   if(sero.flag){
 	  source(file.path(proj.dir, "R/data/format_sero.R"))
+  }
+  if(gp.flag){
+	  source(file.path(proj.dir, "R/data/format_linelist.R"))
   }
 }
 

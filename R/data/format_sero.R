@@ -9,7 +9,7 @@ suppressMessages(library(gsubfn))
 ## Where to find the data, if NULL use command line argument
 if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
-    input.loc <- "/data/covid-19/data-raw/seroprev"
+    input.loc <- "data/raw/serology"
     ## List the possible files in the directory
     sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("202*csv"))))
     ## Pick the most recently added

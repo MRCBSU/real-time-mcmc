@@ -11,9 +11,10 @@ if (length(args) < 3) args <- c(args, 1, "Northern_Ireland")
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
 	regions <- c("East_of_England", "London", "Midlands",
-									  "North_East_and_Yorkshire", "North_West",
-									  "South_East", "South_West", "Scotland",
-									  "Northern_Ireland", "Wales")
+                     "North_East_and_Yorkshire", "North_West",
+                     "South_East", "South_West"## ,
+                     ## "Scotland", "Northern_Ireland", "Wales"
+                     )
 	nr <- length(regions)
 } else {
 	nr <- as.integer(args[2])
@@ -48,7 +49,9 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-	reporting.delay <- 6
+    flg.cutoff <- TRUE
+    if(flg.cutoff) str.cutoff <- "60cod"
+    reporting.delay <- 14
 } else {
 	stop("Unknown data description")
 }
@@ -71,9 +74,10 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_hosp")
 data.dirs <- file.path(proj.dir,
                        c("data/RTM_format/deaths",
-                         "data/RTM_format/serology")
+                         "data/RTM_format/serology",
+                         "data/RTM_format/cases")
                        )
-names(data.dirs) <- c("deaths", "sero")
+names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
