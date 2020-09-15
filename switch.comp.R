@@ -16,4 +16,9 @@ with(setup.env, {
         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
 })
 
+## Temporary line to be deleted
+if(exists("infections")) rm(infections)
+## expit <- function(x) exp(x)/(1+exp(x))
+## abreaks.icr <- 3:7
+
 save(list = ls(envir = setup.env), file = "tmp.RData", envir = setup.env)

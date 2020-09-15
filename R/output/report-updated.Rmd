@@ -437,6 +437,25 @@ infections.growth.rates %>%
 
 ```
 
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r inf-doubling}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+    
+```
+
 ### Change in deaths incidence {.tabset}
 
 
@@ -463,6 +482,24 @@ deaths.growth.rates %>%
 
 ```
 
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r death-doubling, eval=!is.null(deaths)}
+
+deaths.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, aligh = 'lccc')
+
+```
 
 ## Infections and deaths {.tabset}
 

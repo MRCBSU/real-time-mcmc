@@ -42,11 +42,4 @@ gen.time.dist <- function(lp, ip, init.vec, M, tol = 0.01, delta.t = 0.5){
     gen.time <- apply(p.lambda, 1, sum)
     gen.time / sum(gen.time)
 }
-
-cM <- matrix(M.star[[1]][, , 1, drop = FALSE], nA, nA)
-gt <- gen.time.dist(posterior.lp,
-                    posterior.aip[iterations.for.Rt, ][i],
-                    init.func(regions.total.population[r, ] / pop.total[r], cM),
-                    R0[i, r] * cM / (pop.total[r] * R.star[r]))
-              
               
