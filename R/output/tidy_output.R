@@ -115,13 +115,17 @@ stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to
 ## save.image("tmptmp.RData")
 ################################################################
 print('Calculating Rt')
+source(file.path(Rfile.loc, "gen.time.R"))
 Rt.func <- function(vecS, matM){
   if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
   M.star <- sweep(matM, 1, vecS, `*`)
   max(abs(eigen(M.star, only.values = TRUE)$value))
 }
+colnames(regions.total.population) <- age.labs
+rownames(regions.total.population) <- regions
 Rt <- list()
-R.star <- NULL
+R.star <- vector("list", nr)
+gt <- vector("list", nr)
 M.star <- M <- M.mult <- list()
 iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
 outputs.for.Rt <- which(parameter.to.outputs %in% iterations.for.Rt)
@@ -141,6 +145,7 @@ if(ncol(m) %% r != 0) {
   m.per.region <- ncol(m) / r
   if(beta.update) beta.per.region <- ncol(beta) / r
   R0 <- posterior.R0[iterations.for.Rt, , drop = F]
+  ni <- nrow(R0)
   colnames(R0) <- regions
   for(idir in 1:length(cm.bases)){
 	# Read the matrices containing the transmission between age groups (from Ediwn)
@@ -173,9 +178,16 @@ if(ncol(m) %% r != 0) {
                                            }),
                                     dim = c(nA, nA, nrow(m)))
     }
-    M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
-    ## Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.
-    R.star[ireg] <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+    ## M.temp <- matrix(M.star[[1]][, , 1, drop = F], dim(M.star[[1]])[1], dim(M.star[[1]])[2])
+    ## ## Calculate the scaling R*, the value of Rt for the first matrix (unscaled) TODO: Check this description is correct.
+    ## R.star[ireg] <- Rt.func(regions.total.population[ireg, ] / pop.total[ireg], M.temp)
+    R.star[[ireg]] <- apply(M.star[[1]], 3, function(x) Rt.func(regions.total.population[ireg, ] / pop.total[ireg], x))
+    ## Generation time distribution based on the initial contact matrix
+    gt[[ireg]] <- lapply(1:ni, function(x) gen.time.dist(posterior.lp,
+                                                         posterior.aip[iterations.for.Rt[x], ],
+                                                         init.func(regions.total.population[reg,] / pop.total[reg], M.star[[1]][,,x]),
+                                                         R0[x,reg] * M.star[[1]][,,x] / (pop.total[reg] * R.star[[ireg]][x]))
+                         )
     ## Calculate number of susceptiables for each day
     S <- apply(NNI[[reg]][,,outputs.for.Rt, drop = FALSE], c(1, 3), cumsum)  ## TxAxI array
     S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
@@ -190,27 +202,23 @@ if(ncol(m) %% r != 0) {
                       ) ## IxT array
     
     ## Scale the relative Rt values to give the correct R0s
-    Rt[[reg]] <- R0[, ireg] * R.prime / R.star[ireg] ## I*T array
+    Rt[[reg]] <- R0[, ireg] * R.prime / R.star[[ireg]] ## I*T array
   }
   names(R.star) <- regions
 }
 ################################################################
 print('Calculating the intrinsic generation time distribution')
-colnames(regions.total.population) <- age.labs
-rownames(regions.total.population) <- regions
-source(file.path(Rfile.loc, "gen.time.R"))
-cM <- matrix(M.star[[1]][, , 1, drop = FALSE], nA, nA)
-ni <- nrow(R0)
 delta.t <- 0.5 ## time-step length
 Egt <- Vargt <- list()
+names(gt) <- regions
 for(reg in regions){
-    gt <- lapply(1:ni, function(x) gen.time.dist(posterior.lp,
-                                                 posterior.aip[iterations.for.Rt[x], ],
-                                                 init.func(regions.total.population[reg, ] / pop.total[reg], cM),
-                                                 R0[x, reg] * cM / (pop.total[reg] * R.star[reg]))
-                 )
-    Egt[[reg]] <- sapply(gt, function(gx) sum(gx * seq(delta.t, by = delta.t, length.out = length(gx))))
-    Vargt[[reg]] <- sapply(gt, function(gx) sum(gx * (seq(delta.t, by = delta.t, length.out = length(gx))^2)))
+    ## gt <- lapply(1:ni, function(x) gen.time.dist(posterior.lp,
+    ##                                              posterior.aip[iterations.for.Rt[x], ],
+    ##                                              init.func(regions.total.population[reg, ] / pop.total[reg], M.star[[1]][,,x]),
+    ##                                              R0[x, reg] * M.star[[1]][,,x] / (pop.total[reg] * R.star[[reg]][x]))
+    ##              )
+    Egt[[reg]] <- sapply(gt[[reg]], function(gx) sum(gx * seq(delta.t, by = delta.t, length.out = length(gx))))
+    Vargt[[reg]] <- sapply(gt[[reg]], function(gx) sum(gx * (seq(delta.t, by = delta.t, length.out = length(gx))^2)))
     Vargt[[reg]] <- Vargt[[reg]] - (Egt[[reg]]^2)
 }
               

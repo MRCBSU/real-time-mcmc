@@ -1,0 +1,16 @@
+/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200909/base_varSens_pillar26day_matrices_20200904_deaths_with_linelist_symptoms
+Changed directory to /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200909/base_varSens_pillar26day_matrices_20200904_deaths_with_linelist_symptoms.
+
+JobID: 458683
+======
+Time: Sun 13 Sep 16:49:08 BST 2020
+Running on node: compute-elgar
+Current directory: /project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200909/base_varSens_pillar26day_matrices_20200904_deaths_with_linelist_symptoms
+
+Num tasks = , Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+../../../rtm_optim
+
+Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.Elapsed program time in hours: 33.6644

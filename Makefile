@@ -18,13 +18,16 @@ rtm: $(RTM_OBJS) $(HEADERS)
 rtm_optim: $(RTM_OPTIM_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_optim
 
+rtm_hanson: $(RTM_OPTIM_OBJS) $(HEADERS)
+	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hanson
+
 .PHONY: all
-all: rtm rtm_debug rtm_optim
+all: rtm rtm_debug rtm_optim rtm_hanson
 
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f rtm rtm_debug rtm_optim
+	rm -f rtm rtm_debug rtm_optim rtm_hanson
 
 build/rtm_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_debug
@@ -36,4 +39,8 @@ build/rtm/%.o: src/%.cc
 
 build/rtm_optim/%.o: src/%.cc
 	@mkdir -p build/rtm_optim
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native
+
+build/rtm_hanson/%.o: src/%.cc
+	@mkdir -p build/rtm_hanson
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native

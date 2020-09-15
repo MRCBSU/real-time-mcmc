@@ -7,7 +7,7 @@ require(parallel)
 load("tmp.RData")
 load("mcmc.RData")
 
-source("tmp.R")
+source(file.path(Rfile.loc, "sim_func.R"))
 
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -42,6 +42,13 @@ repeat.last.row <- function(real.fl, dummy.fl){
 }
 symlink.design <- function(design)
     file.symlink(file.path(out.dir, design), "projections")
+## ## Compile a forecast output
+combine.rtm.output <- function(x, strFld){
+    oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
+    oList <- do.call(abind, args = list(oList, along = 0))
+    
+    }
+
 ## ## ## --------------------
 
 if(!file.exists(file.path(out.dir, "projections")))
@@ -139,38 +146,46 @@ niter <- min(sapply(params, nrow))
 
 ## ## For each iteration
 pct <- 0
-stop()
-xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1,)
+xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
 
+NNI <- lapply(xtmp, function(x) x$NNI)
+Deaths <- lapply(xtmp, function(x) x$Deaths)
+Cases <- lapply(xtmp, function(x) x$Cases)
+rm(xtmp)
 
-
-names(NNI) <- regions
-if(dths.flag) names(Deaths) <- regions
-if(cases.flag) names(Cases) <- regions
+## names(NNI) <- regions
+## if(dths.flag) names(Deaths) <- regions
+## if(cases.flag) names(Cases) <- regions
 ## ## ## --------------------
 
+melt.list <- function(xlist)
+    abind(lapply(xlist,
+                 abind,
+                 along = 3),
+          along = 0)
+
 ## ## ## SAVE SOME OUTPUTS
-dim.list <- list(age = age.labs,
+dim.list <- list(iteration = 1:niter,
+                 age = age.labs,
                  date = start.date + 0:(ndays - 1),
-                 iteration = 1:niter
+                 region = regions
                  )
-infections <- abind(NNI, along = 0);rm(NNI)
+infections <- melt.list(NNI);rm(NNI)
 save.list <- "infections"
-dimnames(infections)[-1] <- dim.list
-names(dimnames(infections)) <- c("region", names(dim.list))
+dimnames(infections) <- dim.list
 if(hosp.flag) {
-    deaths <- abind(Deaths, along = 0);rm(Deaths)
+    deaths <- melt.list(Deaths);rm(Deaths)
     save.list <- c(save.list, "deaths")
-    dimnames(deaths)[-1] <- dim.list
-    names(dimnames(deaths)) <- c("region", names(dim.list))
+    dimnames(deaths) <- dim.list
     }
 if(gp.flag){
-    cases <- abind(Cases, along = 0);rm(Cases)
+    cases <- melt.list(Cases);rm(Cases)
     save.list <- c(save.list, "cases")
-    dimnames(cases)[-1] <- dim.list
-    names(dimnames(cases)) <- c("region", names(dim.list))
+    dimnames(cases) <- dim.list
 }
 save(list = save.list, file = "projections.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
+lapply(cases.files, file.remove)
+lapply(denoms.files, file.remove)
