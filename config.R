@@ -40,8 +40,11 @@ nA <- length(age.labs)
 # deaths: confirmed deaths only, by date of death
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
-data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "Scot"
+data.desc <- "deaths"
+# Possible values are NRS or PHS
+scotland.data.desc <- "NRS"
+
+scenario.name <- paste0("Scot_", scotland.data.desc)
 contact.model <- 3
 
 flg.confirmed <- (data.desc != "all")

@@ -6,16 +6,44 @@ suppressMessages(library(tidyverse))
 #########################################################
 
 ## Where to find the data, if NULL use command line argument
-deaths.loc <- paste0("/data/covid-19/data-raw/manual-downloads/deaths-scotland/", ymd(date.data), ".csv")
+deaths.loc <- paste0("/data/covid-19/data-raw/manual-downloads/deaths-NRS/", ymd(date.data), ".csv")
 
 ## Map our names for columns (LHS) to data column names (RHS)
 col.names <- list(
-	death_date = "NRS.Date.Death",
-	age = "NRS.Age"
+	death_date = "ddod",
+	NRS_age_group = "ageband",
+	count = "deaths",
+	registration_date = "dor"
 )
 
-## Inputs that are dependent on the output required.
-reporting.delay <- 3
+## Reporting delay is the Thursday before the date.data
+reporting.delay <- wday(ymd(date.data)) + 2
+
+NRS_to_RTM_ages <- list(
+  "0" = "<1yr",
+  "1 to 4" = "1-4",
+  "5 to 9" = "5-14",
+  "10 to 14" = "15-24",
+  "15 to 19" = "15-24",
+  "20 to 24" = "15-24",
+  "25 to 29" = "25-44",
+  "30 to 34" = "25-44",
+  "35 to 39" = "25-44",
+  "40 to 44" = "25-44",
+  "45 to 49" = "45-64",
+  "50 to 54" = "45-64",
+  "55 to 59" = "45-64",
+  "60 to 64" = "45-64",
+  "65 to 69" = "65-74",
+  "70 to 74" = "65-74",
+  "75 to 79" = "75+",
+  "80 to 84" = "75+",
+  "85 to 89" = "75+",
+  "90 to 94" = "75+",
+  "95+" = "75+"
+)
+stopifnot(all(NRS_to_RTM_ages %in% age.labs))
+
 
 
 ####################################################################
@@ -51,7 +79,9 @@ source(file.path(proj.dir, "config.R"))
 ## Which columns are we interested in?
 death.col.args <- list()
 death.col.args[[col.names[["death_date"]]]] <- col_character()
-death.col.args[[col.names[["age"]]]] <- col_integer()
+death.col.args[[col.names[["registration_date"]]]] <- col_character()
+death.col.args[[col.names[["NRS_age_group"]]]] <- col_character()
+death.col.args[[col.names[["count"]]]] <- col_integer()
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -89,8 +119,13 @@ dth.dat <- read_csv(input.loc,
     rename(!!!col.names) %>%
     mutate(Date = fuzzy_date_parse(death_date)) %>%
     fix.dates %>%
-    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date),
-    	   age_group = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
+    mutate(plausible_death_date = plausible.death.date(.) & !is.na(death_date))
+
+# Covert age groupings
+recode_args = NRS_to_RTM_ages
+recode_args[[".x"]] = dth.dat$NRS_age_group
+dth.dat$age_group = do.call(recode, recode_args)
+stopifnot(all(!is.na(dth.dat$age_group)))
 
 if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
@@ -149,7 +184,7 @@ region.dat %>%
 
 ## Save a quick plot of the data...
 require(ggplot2)
-gp <- ggplot(rtm.dat, aes(x = Date, y = n)) +
+gp <- ggplot(rtm.dat, aes(x = Date, y = n, colour = age_group)) +
     geom_line() +
     geom_point() +
     theme_minimal() +
@@ -160,7 +195,7 @@ gp <- ggplot(rtm.dat, aes(x = Date, y = n)) +
         legend.position = "top",
         legend.justification = "left",
         )
-plot.filename <- build.data.filepath("RTM_format/deaths_Scotland", "PHS_deaths_plot", date.data, ".pdf")
+plot.filename <- build.data.filepath("RTM_format/deaths_Scotland", "NRS_deaths_plot", date.data, ".pdf")
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
        gp,

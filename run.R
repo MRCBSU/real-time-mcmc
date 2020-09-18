@@ -43,7 +43,8 @@ viro.flag <- 0
 ## If these files don't already exits, make them
 dir.data <- "data"
 data.files <- paste0(data.dirs["deaths"], "/",
-                     data.desc,
+                     data.desc, "_",
+                     scotland.data.desc, "_",
                      date.data, "_",
                      regions, "_",
                      nA, "ag",
@@ -68,9 +69,14 @@ if(format.inputs){
   } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
-  stop
   if ("Scotland" %in% regions) {
-	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+    if (scotland.data.desc == "PHS") {
+	    source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+    } else if (scotland.data.desc == "NRS") {
+      source(file.path(proj.dir, "R/data/format_NRS_deaths.R"))
+    } else {
+      stop(paste("Unknown type of Scottish deaths:", scotland.data.desc))
+    }
   }
   if ("Northern_Ireland" %in% regions) {
 	  source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
