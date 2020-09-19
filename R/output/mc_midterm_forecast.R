@@ -18,7 +18,7 @@ nforecast.weeks <- 8
 
 ## Enter dates at which it is anticipated that the contact model will change
 mm.breaks <- ymd("20200817") + (1:6 * days(7))
-google.data.date <- ymd("20200904")
+google.data.date <- ymd("20200911")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------

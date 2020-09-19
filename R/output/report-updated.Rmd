@@ -583,6 +583,9 @@ deaths.growth.rates %>%
 
 The blue lines is show when interventions have been introduced (lockdown on 23 Mar and the relaxation of measures on 11 May), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
+```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
+```
+
 ### Infection incidence {.tabset}
 
 #### By region
@@ -611,8 +614,6 @@ make.plots(cum_infections, by = "age")
 ```
 
 
-```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
-```
 
 ### Prob $R_t > 1$
 
@@ -638,10 +639,10 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```
 
-```{r eval=file.exists(file.path(out.dir, "projections/projections.RData")), child='projinf-report.Rmd'}
+```{r eval=file.exists(file.path(out.dir, "projections.RData")), child='projinf-report.Rmd'}
 ```
 
-```{r eval=(as.logical(gp.flag) & file.exists(file.path(out.dir, "projections/projections.RData"))), child='projinf-cases-report.Rmd'}
+```{r eval=(as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
 ```
 
 
