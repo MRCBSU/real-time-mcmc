@@ -53,7 +53,8 @@ possible.col.names <- list(
     age = "age",
     pillars = "pillars",
     death28 = "death_type28",
-    death60cod = "death_type60cod"
+    death60cod = "death_type60cod",
+    tt_death_cat = "tt_death_cat"
 )
 input.col.names <- suppressMessages(names(read_csv(deaths.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -122,6 +123,8 @@ death.col.args[[col.names[["age"]]]] <- col_integer()
 death.col.args[[col.names[["pillars"]]]] <- col_character()
 death.col.args[[col.names[["death28"]]]] <- col_character()
 death.col.args[[col.names[["death60cod"]]]] <- col_character()
+death.col.args[[col.names[["tt_death_cat"]]]] <- col_character()
+
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 
 within.range <- function(dates) {
@@ -199,6 +202,15 @@ dth.dat <- dth.dat %>%
 if(flg.confirmed)
     dth.dat <- dth.dat %>% filter(death_type == "Lab Confirmed")
 if(flg.cutoff){
+    if(str.cutoff == "60"){
+        dth.dat <- dth.dat %>%
+            mutate(death60 = ifelse(tt_death_cat != "61+",
+                                    "1",
+                                    "0")
+                   )
+            ## mutate(sample_date = pmin(specimen_date, date_swab, na.rm = TRUE)) %>%
+            ## mutate(delay_time = Date - as.Date(sample_date, format = "%d/%m/%Y"))
+        }
     strField <- paste0("death", str.cutoff)
     dth.dat <- dth.dat %>% filter((!!sym(strField)) == "1")
     }

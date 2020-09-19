@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200904"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200918"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -45,14 +45,14 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_varSens"
-scenario.name <- "base_varSens_ifr"
-scenario.name <- "base_varSens_pillar2_ifr"
+## scenario.name <- "base_varSens60"
+scenario.name <- "base_varSens_ifr60"
+## scenario.name <- "base_varSens_pillar2_ifr"
 ## scenario.name <- "base_varSens_pillar2"
 contact.model <- 3
 
-## The 'gp' stream in the code is linked to hospitalised cases
-gp.flag <- 1					# 0 = off, 1 = on
+## The 'gp' stream in the code is linked to the pillar testing data
+gp.flag <- 0					# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Does each age group have a single IFR or one that varies over time?
@@ -64,8 +64,8 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-    flg.cutoff <- FALSE
-    if(flg.cutoff) str.cutoff <- "60cod"
+    flg.cutoff <- TRUE
+    if(flg.cutoff) str.cutoff <- "60"
     reporting.delay <- 6
 } else {
 	stop("Unknown data description")
