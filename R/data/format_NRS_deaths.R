@@ -124,7 +124,7 @@ dth.dat <- read_csv(input.loc,
 # Covert age groupings
 recode_args = NRS_to_RTM_ages
 recode_args[[".x"]] = dth.dat$NRS_age_group
-dth.dat$age_group = do.call(recode, recode_args) %>% factor(levels = age.labs)
+dth.dat$age_group = do.call(recode, recode_args)
 stopifnot(all(!is.na(dth.dat$age_group)))
 
 if (!all(dth.dat$plausible_death_date)) {
@@ -148,8 +148,8 @@ latest.date <- ymd(date.data) - reporting.delay
 earliest.date <- start.date
 
 rtm.dat <- dth.dat %>%
-    filter(Date <= latest.date) %>%
-    filter(Date >= earliest.date) %>%
+  filter(Date <= latest.date) %>%
+  filter(Date >= earliest.date) %>%
 	group_by(Date, age_group, .drop = FALSE) %>%
 	tally %>%
 	right_join(		# Add missing rows
@@ -161,12 +161,13 @@ rtm.dat <- dth.dat %>%
 	) %>%
 	replace_na(list(n = 0))
 
-region.dat <- pivot_wider(
-		  rtm.dat,
+region.dat <- rtm.dat %>%
+  mutate(age_group = factor(age_group, levels = age.labs)) %>%
+  arrange(age_group, Date) %>%
+  pivot_wider(
 		  id_cols = 1,
 		  names_from = age_group,
-		  values_from = n,
-		  names_sort = TRUE
+		  values_from = n
 	)
 
 output.file <- data.files["Scotland"]
