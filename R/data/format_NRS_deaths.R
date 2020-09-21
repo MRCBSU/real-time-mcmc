@@ -124,7 +124,7 @@ dth.dat <- read_csv(input.loc,
 # Covert age groupings
 recode_args = NRS_to_RTM_ages
 recode_args[[".x"]] = dth.dat$NRS_age_group
-dth.dat$age_group = do.call(recode, recode_args)
+dth.dat$age_group = do.call(recode, recode_args) %>% factor(levels = age.labs)
 stopifnot(all(!is.na(dth.dat$age_group)))
 
 if (!all(dth.dat$plausible_death_date)) {
@@ -165,7 +165,8 @@ region.dat <- pivot_wider(
 		  rtm.dat,
 		  id_cols = 1,
 		  names_from = age_group,
-		  values_from = n
+		  values_from = n,
+		  names_sort = TRUE
 	)
 
 output.file <- data.files["Scotland"]
