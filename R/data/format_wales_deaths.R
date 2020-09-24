@@ -57,7 +57,7 @@ file.name <- possible.files[length(possible.files)]
 rtm.dat <- read_excel(
   file.name,
   "Extracted Data",
-  col_types = c("text", rep("numeric", 3), rep("text", 4), rep("numeric", 228)),
+  col_types = c("text", rep("numeric", 3), rep("text", 4), rep("numeric", 230)),
   na = c("", "*")
 ) %>%
   filter(Geography == "Wales") %>%
