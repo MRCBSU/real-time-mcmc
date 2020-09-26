@@ -71,6 +71,8 @@ prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, 5), 1), len
 
 `r ifelse(gp.flag, "region_breakpoints = true;", "")`
 
+`r ifelse(gp.flag & case.positivity, paste0("time_breakpoints = ", paste(start.gp:(end.gp - 1), collapse = ", "), ";"), "")`
+
 `r ifelse(gp.flag, "regression_link = 2;", "")`
 
 `r ifelse(gp.flag, "regression_design = icr.design.txt;", "")`

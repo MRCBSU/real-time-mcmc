@@ -52,7 +52,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- c(36, 43, 50, 57, 64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141, 148, 155, 162, 169, 176, 183, 190, 197) ## Day numbers where breaks happen
+cm.breaks <- seq(from = 36, to = 204, by = 7) ## Day numbers where breaks happen
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
 	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
