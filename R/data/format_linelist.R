@@ -259,7 +259,6 @@ ggsave(plot.filename,
 ##     group_by(Date, ignore) %>%
 ##     summarise(count = sum(count)) -> rtm.dat.Eng.plot
 
-
 ## ## Do we need to look at the negatives also?
 if(case.positivity){
     neg.age.labs <- c(paste(age.labs[1:2], collapse=","), age.labs[-(1:2)])
