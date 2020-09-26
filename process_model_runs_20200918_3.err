@@ -1,0 +1,16 @@
+Loading required package: rmarkdown
+Loading required package: coda
+Loading required package: stringr
+
+
+processing file: report-updated.Rmd
+
+
+processing file: ./hosp-report.Rmd
+
+
+processing file: ./deaths-report.Rmd
+output file: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2286day_matrices_20200918_deaths_with_linelist/report-updated.knit.md
+
+
+Output created: report-updated.html

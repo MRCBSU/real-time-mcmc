@@ -1,4 +1,4 @@
-sim_rtm <- function(iter){
+sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
 
     ## Fix output location
     out.loc <- file.path(out.dir, paste0("projections", Sys.getpid()))
@@ -37,7 +37,7 @@ sim_rtm <- function(iter){
     
     ## Run the code
     setwd(out.loc)
-    system(file.path(proj.dir, paste0("rtm_", Sys.info()["nodename"])), intern = TRUE)
+    system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = TRUE)
 
     ## Read the outputs in and append to output objects
     for(intr in 1:nr)

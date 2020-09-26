@@ -1,0 +1,18 @@
+Loading required package: rmarkdown
+Loading required package: coda
+Loading required package: stringr
+
+
+processing file: report-updated.Rmd
+
+
+processing file: ./hosp-report.Rmd
+
+
+processing file: ./deaths-report.Rmd
+Quitting from lines 5-7 (./deaths-report.Rmd) 
+Quitting from lines NA-24 (./deaths-report.Rmd) 
+Error in quantile.default(newX[, i], ...) : 
+  missing values and NaN's not allowed if 'na.rm' is FALSE
+Calls: source ... %>% -> eval -> eval -> apply -> FUN -> quantile.default
+Execution halted

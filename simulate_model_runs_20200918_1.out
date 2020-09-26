@@ -1,0 +1,13 @@
+/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_ifr6day_matrices_20200918_deaths
+JobID: 29063561
+======
+Time: Tue 22 Sep 10:22:46 BST 2020
+Running on node: cpu-e-1007
+Current directory: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_ifr6day_matrices_20200918_deaths
+
+Num tasks = 1, Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+Rscript --vanilla ../../../R/output/mc_midterm_forecast.R
+

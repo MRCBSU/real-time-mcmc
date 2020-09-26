@@ -1,0 +1,248 @@
+/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_diffuse6day_matrices_20200918_deaths_with_linelist
+JobID: 29097507
+======
+Time: Wed 23 Sep 00:10:38 BST 2020
+Running on node: cpu-e-512
+Current directory: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_diffuse6day_matrices_20200918_deaths_with_linelist
+
+Num tasks = 1, Num nodes = 1, OMP_NUM_THREADS = 1
+
+Executing command:
+==================
+Rscript --vanilla ../../../PostProcess.R
+
+  |                                                                         |                                                                 |   0%  |                                                                         |.                                                                |   2%
+   inline R code fragments
+
+  |                                                                         |...                                                              |   4%
+label: preamble (with options) 
+List of 1
+ $ include: logi FALSE
+
+  |                                                                         |....                                                             |   6%
+  ordinary text without R code
+
+  |                                                                         |.....                                                            |   8%
+label: plot-function
+  |                                                                         |.......                                                          |  10%
+  ordinary text without R code
+
+  |                                                                         |........                                                         |  12%
+label: Rt-table
+  |                                                                         |.........                                                        |  14%
+  ordinary text without R code
+
+  |                                                                         |...........                                                      |  16%
+label: cum-inf-sum
+  |                                                                         |............                                                     |  18%
+  ordinary text without R code
+
+  |                                                                         |.............                                                    |  20%
+label: cum-inf-disp
+  |                                                                         |...............                                                  |  22%
+  ordinary text without R code
+
+  |                                                                         |................                                                 |  24%
+label: attack-region
+  |                                                                         |.................                                                |  27%
+  ordinary text without R code
+
+  |                                                                         |...................                                              |  29%
+label: attack-age
+  |                                                                         |....................                                             |  31%
+  ordinary text without R code
+
+  |                                                                         |.....................                                            |  33%
+label: ifr (with options) 
+List of 1
+ $ eval: language !is.null(dth.dat)
+
+  |                                                                         |.......................                                          |  35%
+  ordinary text without R code
+
+  |                                                                         |........................                                         |  37%
+label: growth-rate-func
+  |                                                                         |.........................                                        |  39%
+   inline R code fragments
+
+  |                                                                         |...........................                                      |  41%
+label: inf-halving
+  |                                                                         |............................                                     |  43%
+  ordinary text without R code
+
+  |                                                                         |.............................                                    |  45%
+label: inf-doubling
+  |                                                                         |...............................                                  |  47%
+  ordinary text without R code
+
+  |                                                                         |................................                                 |  49%
+label: death-growth (with options) 
+List of 1
+ $ eval: language !is.null(deaths)
+
+  |                                                                         |.................................                                |  51%
+  ordinary text without R code
+
+  |                                                                         |..................................                               |  53%
+label: death-halving (with options) 
+List of 1
+ $ eval: language !is.null(deaths)
+
+  |                                                                         |....................................                             |  55%
+  ordinary text without R code
+
+  |                                                                         |.....................................                            |  57%
+label: death-doubling (with options) 
+List of 1
+ $ eval: language !is.null(deaths)
+
+  |                                                                         |......................................                           |  59%
+   inline R code fragments
+
+  |                                                                         |........................................                         |  61%
+label: unnamed-chunk-1 (with options) 
+List of 2
+ $ eval : language !is.null(case.dat)
+ $ child: chr "hosp-report.Rmd"
+
+  |                                                                         |                                                                 |   0%  |                                                                         |.............                                                    |  20%
+  ordinary text without R code
+
+  |                                                                         |..........................                                       |  40%
+label: reg-pillar2 (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |.......................................                          |  60%
+  ordinary text without R code
+
+  |                                                                         |....................................................             |  80%
+label: unnamed-chunk-5
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
+
+
+  |                                                                         |.........................................                        |  63%
+  ordinary text without R code
+
+  |                                                                         |..........................................                       |  65%
+label: reg-inf (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |............................................                     |  67%
+  ordinary text without R code
+
+  |                                                                         |.............................................                    |  69%
+label: age-inf (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |..............................................                   |  71%
+  ordinary text without R code
+
+  |                                                                         |................................................                 |  73%
+label: reg-cum-inf-reg (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |.................................................                |  76%
+  ordinary text without R code
+
+  |                                                                         |..................................................               |  78%
+label: r-cum-inf-age (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |....................................................             |  80%
+  ordinary text without R code
+
+  |                                                                         |.....................................................            |  82%
+label: unnamed-chunk-2 (with options) 
+List of 2
+ $ eval : language !is.null(dth.dat)
+ $ child: chr "deaths-report.Rmd"
+
+  |                                                                         |                                                                 |   0%  |                                                                         |........                                                         |  12%
+  ordinary text without R code
+
+  |                                                                         |................                                                 |  25%
+label: reg-death (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |........................                                         |  38%
+  ordinary text without R code
+
+  |                                                                         |................................                                 |  50%
+label: age-death (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |.........................................                        |  62%
+  ordinary text without R code
+
+  |                                                                         |.................................................                |  75%
+label: cum-reg-death (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |.........................................................        |  88%
+  ordinary text without R code
+
+  |                                                                         |.................................................................| 100%
+label: cum-age-death (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+
+  |                                                                         |......................................................           |  84%
+  ordinary text without R code
+
+  |                                                                         |........................................................         |  86%
+label: P-R-gt-1 (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |.........................................................        |  88%
+  ordinary text without R code
+
+  |                                                                         |..........................................................       |  90%
+label: Rt-plot (with options) 
+List of 2
+ $ cache      : logi TRUE
+ $ cache.extra: symbol results_hash
+
+  |                                                                         |............................................................     |  92%
+  ordinary text without R code
+
+  |                                                                         |.............................................................    |  94%
+label: unnamed-chunk-3 (with options) 
+List of 2
+ $ eval : language file.exists(file.path(out.dir, "projections.RData"))
+ $ child: chr "projinf-report.Rmd"
+
+  |                                                                         |..............................................................   |  96%
+  ordinary text without R code
+
+  |                                                                         |................................................................ |  98%
+label: unnamed-chunk-4 (with options) 
+List of 2
+ $ eval : language, mode "(": (as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData")))
+ $ child: chr "projinf-cases-report.Rmd"
+
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
+
+
+/usr/local/software/pandoc/2.0.6/bin/pandoc +RTS -K512m -RTS /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_diffuse6day_matrices_20200918_deaths_with_linelist/report-updated.utf8.md --to html4 --from markdown+autolink_bare_uris+ascii_identifiers+tex_math_single_backslash+smart --output /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_diffuse6day_matrices_20200918_deaths_with_linelist/report-updated.html --email-obfuscation none --self-contained --self-contained --standalone --section-divs --template /home/pjb51/R/x86_64-pc-linux-gnu-library/3.6/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable 'theme:bootstrap' --include-in-header /tmp/Rtmpkrts3s/rmarkdown-str540d47f3ac9c8.html --mathjax --variable 'mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' 

@@ -271,7 +271,7 @@ nice.array <- function(x)
         unlist(x),
         dim = output.quantity.dims,
         dimnames = output.dimnames)
-
+stop()
 infections <- nice.array(NNI)
 rm(NNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
@@ -390,6 +390,7 @@ if (!cases.flag) {
                                   observe.babies = TRUE,
                                   merge.youngest.label = "<15")
     case <- case.data$mean
+    stop()
     noisy_case <- case.data$noisy.out
     cum_case <- case.data$cumulative
 }
