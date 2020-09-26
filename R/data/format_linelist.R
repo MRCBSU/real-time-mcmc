@@ -26,6 +26,27 @@ if(!exists("cases")) {
 	if (is.null(cases.loc)) {
 		stop(paste('No valid cases data files, tried:', possible.cases.locations))
 	}
+        ## Do we also need the negatives
+        if(case.positivity){
+            possible.negs.locations <- c(
+                file.path("~", "CoVID-19", "Data streams", "Negative SARS-CoV-2 tests - file monthly", glue::glue("{format(lubridate.date, '%Y%m%d')} Negative SARS-CoV-2 tests.zip")))
+            negs.loc <- first.where.true(possible.negs.locations, file.exists)
+            if(is.null(negs.loc)){
+                stop(paste("No valid file on negative tests. Tried:", possible.negs.locations))
+                }
+            ## Data file is a zip archive. Transfer locally.
+            new.negs.loc <- file.path(dirname(proj.dir), "Data", "LineList_negatives")
+            file.copy(negs.loc, new.negs.loc, overwrite = TRUE)
+            ## Unzip - get filename
+            negs.loc <- file.path(new.negs.loc, basename(negs.loc))
+            unzip(negs.loc, exdir=dirname(negs.loc))
+            ## File name?
+            possible.negs.files <- file.path(new.negs.loc, c(
+                                                               glue::glue("{format(lubridate.date, '%Y%m%d')} Negatives pillar2.csv")
+                                                           )
+                                             )
+            negs.file <- first.where.true(possible.negs.files, file.exists)
+        }
 }
 
 
@@ -237,3 +258,61 @@ ggsave(plot.filename,
 ## rtm.dat.plot %>%
 ##     group_by(Date, ignore) %>%
 ##     summarise(count = sum(count)) -> rtm.dat.Eng.plot
+
+
+## ## Do we need to look at the negatives also?
+if(case.positivity){
+    neg.age.labs <- c(paste(age.labs[1:2], collapse=","), age.labs[-(1:2)])
+    all_dat <- read_csv(negs.file) %>%
+        mutate(Age.Grp = recode(agegroup,
+                               "0 to 4" = neg.age.labs[1],
+                               "5 to 9" = neg.age.labs[2],
+                               "10 to 14" = neg.age.labs[2],
+                               "15 to 19" = neg.age.labs[3],
+                               "20 to 24" = neg.age.labs[3],
+                               "25 to 29" = neg.age.labs[4],
+                               "30 to 34" = neg.age.labs[4],
+                               "35 to 39" = neg.age.labs[4],
+                               "40 to 44" = neg.age.labs[4],
+                               "45 to 49" = neg.age.labs[5],
+                               "50 to 54" = neg.age.labs[5],
+                               "55 to 59" = neg.age.labs[5],
+                               "60 to 64" = neg.age.labs[5],
+                               "65 to 69" = neg.age.labs[6],
+                               "70 to 74" = neg.age.labs[6],
+                               "75 to 79" = neg.age.labs[7],
+                               "80 to 84" = neg.age.labs[7],
+                               "85 to 89" = neg.age.labs[7],
+                               "90 or older" = neg.age.labs[7]),
+               Region = str_replace_all(nhsregion, " ", "_")) %>%
+        filter(Age.Grp %in% neg.age.labs) %>%
+        group_by(Region, earliestspecimendate, Age.Grp) %>%
+        summarise(nneg = sum(negative)) %>%
+        rename(Date = earliestspecimendate) %>%
+        right_join(
+            expand_grid(Date = as_date(start.date:latest.date), Region = regions, Age.Grp = neg.age.labs),
+            by = c("Date", "Region", "Age.Grp")
+        ) %>%
+        replace_na(list(nneg = 0)) %>%
+        inner_join(ll.dat %>%
+                   mutate(Age.Grp = recode(Age.Grp,
+                                           "<1yr" = neg.age.labs[1],
+                                           "1-4" = neg.age.labs[1])) %>%
+                   group_by(Region,Date,Age.Grp) %>%
+                   summarise(npos = sum(n))) %>%
+        filter(Date >= (ll.start.date - 7)) %>%
+        mutate(n = nneg + npos) %>%
+        inner_join(pop.mat %>%
+                   as.data.frame() %>%
+                   rownames_to_column("Region") %>%
+                   pivot_longer(cols = -1, names_to = "Age.Grp", values_to = "pop") %>%
+                   mutate(Age.Grp = recode(Age.Grp,
+                                           "<1yr" = neg.age.labs[1],
+                                           "1-4" = neg.age.labs[1])) %>%
+                   group_by(Region, Age.Grp) %>%
+                   summarise(pop = sum(pop))
+                   ) %>%
+        arrange(Date) %>%
+        mutate(nbar = n / pop)
+    
+} else all_dat <- ll.dat %>% rename(npos = n)

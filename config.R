@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20200918"), format = "%Y%m%d")
+google.data.date <- format(ymd("20200925"), format = "%Y%m%d")
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -45,18 +45,16 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-## scenario.name <- "base_varSens60"
-scenario.name <- "base_varSens_ifr60"
-## scenario.name <- "base_varSens_pillar2_ifr"
-## scenario.name <- "base_varSens_pillar2"
+scenario.name <- "base_varSens"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
-gp.flag <- 0					# 0 = off, 1 = on
+gp.flag <- 1	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Does each age group have a single IFR or one that varies over time?
-single.ifr <- FALSE
+single.ifr <- TRUE
+if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
@@ -64,8 +62,11 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-    flg.cutoff <- TRUE
-    if(flg.cutoff) str.cutoff <- "60"
+    flg.cutoff <- FALSE
+    if(flg.cutoff) {
+        str.cutoff <- "28"
+        scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
+    }
     reporting.delay <- 6
 } else {
 	stop("Unknown data description")
@@ -98,16 +99,18 @@ running.England <- any(regions %in% English.regions)
 
 
 if(gp.flag){
+    case.positivity <- TRUE ## include offsets for the number of tests taken
     ll.reporting.delay <- 4
     ## ll.start.date <- ymd("20200616") -- this is now defined in format_linelist.R
     ## Location where to find some incidence estimates immediately prior to the above-specified date
     outpp <- new.env()
     load(file.path(proj.dir, "model_runs", "20200619", "newContactModel6day_matrices_20200612_deaths", "output_matrices.RData"),
          envir = outpp)
-    symptoms <- TRUE
+    symptoms <- FALSE
     if(symptoms){
         scenario.name <- paste0(scenario.name, "_symptoms")
         out.dir <- paste0(out.dir, "_symptoms")
         asymptomatic.states <- "N"
     } else asymptomatic.states <- c("Y", "N", "U")
+    pgp.prior.diffuse <- FALSE
 }
