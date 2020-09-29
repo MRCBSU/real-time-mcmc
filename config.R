@@ -42,7 +42,7 @@ nA <- length(age.labs)
 # all: all deaths, by date of death
 data.desc <- "deaths"
 # Possible values are NRS or PHS
-scotland.data.desc <- "NRS"
+scotland.data.desc <- "PHS"
 
 scenario.name <- paste0("Scot_", scotland.data.desc)
 contact.model <- 3
