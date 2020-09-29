@@ -111,9 +111,9 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 160000
+num.iterations <- 350e3
 stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
-burnin <- 10000
+burnin <- 30e3
 adaptive.phase <- burnin / 2
 thin.outputs <- 15 	# After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 5  # After how many iterations to output each set of parameters
