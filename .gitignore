@@ -20,3 +20,4 @@ R/output/*_cache
 slurm-*
 phe-nowcasts/**
 Lombdardy*/**
+**.RData

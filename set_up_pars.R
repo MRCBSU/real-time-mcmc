@@ -30,61 +30,71 @@ if(!gp.flag | nA == 1){
     value.pgp <- 0.1
     pars.pgp <- c(2.12, 15.8)
 } else if (gp.flag){
-    ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
-    ll.prior.days <- ll.start.date - days(1:7)
-    ll.prior <- all_dat %>%
-        filter(Date %in% ll.prior.days) %>%
-        group_modify(~ {.x %>% mutate(Age = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
-        group_by(Region, Age) %>%
-        summarise(npos = sum(npos) / 7,
-                  nbar = ifelse("nbar" %in% names(all_dat), sum(nbar) / 7, 1)
-                  )
-    ## Find an estimate of incidence at this time.
-    idx <- which(lubridate::as_date(as.integer(dimnames(outpp$infections)$date)) == min(ll.prior.days))
-    infections <- outpp$infections[, idx, , ] ## get infections on the first day of the aggregation
-    infections <- apply(infections,
-                        c("iteration", "region"),
-                        function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
-    names(dimnames(infections))[1] <- "age"
-    dimnames(infections)$age[1] <- "<15yr"
     abreaks.icr <- 3:7
-    med.infec <- apply(infections, c("age", "region"), median) %>%
-        as.data.frame() %>%
-        rownames_to_column(var = "Age") %>%
-        pivot_longer(-Age, names_to = "Region") %>%
-        inner_join(ll.prior) %>%
-        mutate(p = npos / value) %>%
-        arrange(Region, Age)    
-    ## Weighted regression
-    ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
-               weights = value,
-               family = binomial,
-               data = med.infec,
-               contrasts = list(Age = "contr.sum", Region = "contr.sum")))
-    ## Use mean and covariance of estimates to formulate a prior distribution.
-    if(case.positivity){
-        value.pgp <- jitter(ex6$coefficients)
-        pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
-        ll.posterior.days <- start.date - 1 + (start.gp:end.gp)
-        ll.posterior <- all_dat %>%
-            filter(Date %in% ll.posterior.days) %>%
-            group_modify(~ {.x %>% mutate(Age.Grp = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
-            group_by(Region, Date, Age.Grp) %>%
-            summarise(n = sum(n),
-                      pop = sum(pop)) %>%
-            mutate(nbar = n / pop)
-        ex6 <- glm(n ~ Region + Age.Grp + log(nbar), data = ll.posterior, contrasts = list(Age.Grp = "contr.sum", Region = "contr.sum"))
-        mex6 <- model.matrix(ex6)
+    if(grepl("base_varSens", scenario.name)){
+        ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
+        ll.prior.days <- ll.start.date - days(1:7)
+        ll.prior <- all_dat %>%
+            filter(Date %in% ll.prior.days) %>%
+            group_modify(~ {.x %>% mutate(Age = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
+            group_by(Region, Age) %>%
+            summarise(npos = sum(npos) / 7,
+                      nbar = ifelse("nbar" %in% names(all_dat), sum(nbar) / 7, 1)
+                      )
+        ## Find an estimate of incidence at this time.
+        idx <- which(lubridate::as_date(as.integer(dimnames(outpp$infections)$date)) == min(ll.prior.days))
+        infections <- outpp$infections[, idx, , ] ## get infections on the first day of the aggregation
+        infections <- apply(infections,
+                            c("iteration", "region"),
+                            function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
+        names(dimnames(infections))[1] <- "age"
+        dimnames(infections)$age[1] <- "<15yr"
+        med.infec <- apply(infections, c("age", "region"), median) %>%
+            as.data.frame() %>%
+            rownames_to_column(var = "Age") %>%
+            pivot_longer(-Age, names_to = "Region") %>%
+            inner_join(ll.prior) %>%
+            mutate(p = npos / value) %>%
+            arrange(Region, Age)    
+        ## Weighted regression
+        ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
+                                    weights = value,
+                                    family = binomial,
+                                    data = med.infec,
+                                    contrasts = list(Age = "contr.sum", Region = "contr.sum")))
+        ## Use mean and covariance of estimates to formulate a prior distribution.
+        if(case.positivity){
+            value.pgp <- jitter(ex6$coefficients)
+            pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
+            ll.posterior.days <- start.date - 1 + (start.gp:end.gp)
+            ll.posterior <- all_dat %>%
+                filter(Date %in% ll.posterior.days) %>%
+                group_modify(~ {.x %>% mutate(Age.Grp = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
+                group_by(Region, Date, Age.Grp) %>%
+                summarise(n = sum(n),
+                          pop = sum(pop)) %>%
+                mutate(nbar = n / pop)
+            ex6 <- glm(n ~ Region + Age.Grp + log(nbar), data = ll.posterior, contrasts = list(Age.Grp = "contr.sum", Region = "contr.sum"))
+            mex6 <- model.matrix(ex6)
+        } else {
+            nl <- length(ex6$coefficients)
+            value.pgp <- jitter(ex6$coefficients[-nl])
+            pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
+            mex6 <- model.matrix(ex6)[,-nl]
+        }   
     } else {
-        nl <- length(ex6$coefficients)
-        value.pgp <- jitter(ex6$coefficients[-nl])
-        pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
-        mex6 <- model.matrix(ex6)[,-nl]
+        reg.mod.loc <- file.path(dirname(proj.dir), "Pillar2", "ascertatinment_regs.RData")
+        load(reg.mod.loc)
+        idx <- which(is.na(rfull.noinfec$coefficients$x$data[, 2]))
+        value.pgp <- rfull.noinfec$coefficients$x$data[-idx, 2]
+        pars.pgp <- as.vector(t(cbind(rep(0, times = length(value.pgp)), rep(5, times = length(value.pgp)))))
+        mex6 <- rfull.noinfec$design[,-idx]
     }
     write_tsv(as.data.frame(mex6), file.path(out.dir, "icr.design.txt"), col_names = FALSE)
-    rm(infections)
+    if(exists("infections"))
+        rm(infections)
     if(pgp.prior.diffuse)
-        pars.pgp <- as.vector(t(cbind(c(1, rep(0.5, length(ex6$coefficients) - 1)) * ex6$coefficients, round(4*vcov(ex6), digits = 5))))      
+        pars.pgp <- as.vector(t(cbind(rep(0, times = length(ex6$coefficients)), rep(2.5, times = length(ex6$coefficients)))))
 }
 
 ## Infection to fatality ratio
@@ -156,12 +166,24 @@ if(gp.flag){
     lm.mat <- model.matrix(~ DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
         as.data.frame() %>%
         write_tsv(file.path(out.dir, "d_o_w_design_file.txt"), col_names = FALSE)
-    pars.dow <- c(0.9840207, 0.9915403, 1.0024927, 0.98667, -0.6, -2.1)
+    if(grepl("base_varSens", scenario.name)){
+        pars.dow <- c(0.9840207, 0.9915403, 1.0024927, 0.98667, -0.6, -2.1)
+        prop.dow <- rep(2.2e-04, 6)
+    } else {
+        pars.dow <- rep(0, 6)
+        prop.dow <- rep(0, 6)
+    }
 }
 
 ## Initial seeding
 value.nu <- c(-16.7064769395683, -14.3327333035582, -15.0542472007424, -17.785749594464, -15.8038617705659, -15.3720269985272, -16.3667281951197)[1:nr]
-if(gp.flag) value.nu <- value.nu + logit(med.infec %>% filter(Age == "<15yr") %>% pull(p))
+if(gp.flag){
+    if(exists("med.infec")){
+        value.nu <- value.nu + logit(med.infec %>% filter(Age == "<15yr") %>% pull(p))
+    } else {
+        value.nu <- value.nu + logit(0.02)
+    }
+}
 pars.nu <- c(-17.5, 1.25)
 
 ## GP Overdispersion

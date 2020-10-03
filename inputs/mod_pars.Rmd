@@ -61,7 +61,7 @@ proposal_variance = 0.007562;
 
 prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
 
-prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, 5), 1), length(value.pgp)), collapse = ", ")`;
+prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, ifelse(pgp.prior.diffuse, 4, 5)), 1), length(value.pgp)), collapse = ", ")`;
 
 `r ifelse(gp.flag, paste0("prior_parameters = ", paste(pars.pgp, collapse = ", "), ";"), "")`
 
@@ -227,7 +227,7 @@ prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), col
 
 `r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
 
-`r ifelse(gp.flag, "proposal_variance = 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04, 2.2e-04;", "")`
+`r ifelse(gp.flag, paste0("proposal_variance = ", paste(prop.dow, collapse = ", "), ";"), "")`
 
 `r ifelse(gp.flag, paste0("time_breakpoints = ", paste(start.gp:(end.gp - 1), collapse = ", "), ";"), "")`
 

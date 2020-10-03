@@ -46,7 +46,10 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 data.desc <- "deaths" # Set to "reports" if running by reporting date
-scenario.name <- "base_varSens"
+## scenario.name <- "complex_pGPreg"
+## scenario.name <- "base_varSens"
+## scenario.name <- "base_varSens_diffuse"
+scenario.name <- "base_varSens_ifrprior"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -54,7 +57,7 @@ gp.flag <- 1	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Does each age group have a single IFR or one that varies over time?
-single.ifr <- TRUE
+single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 
 flg.confirmed <- (data.desc != "all")
@@ -63,7 +66,7 @@ if (data.desc == "all") {
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-    flg.cutoff <- FALSE
+    flg.cutoff <- TRUE
     if(flg.cutoff) {
         str.cutoff <- "28"
         scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
@@ -114,4 +117,4 @@ if(gp.flag){
         asymptomatic.states <- "N"
     } else asymptomatic.states <- c("Y", "N", "U")
     pgp.prior.diffuse <- FALSE
-}
+} else case.positivity <- FALSE
