@@ -107,7 +107,6 @@ if(exists("var.priors")){
 	if (num.params != parameter.dims[inti]) {
 		print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
                             "but", num.params, "found. Discarding extra ones and not plotting missing ones."))
-                stop()
 	}
 	## expected.num.samples <- parameter.dims[inti] * i.saved
 	if (num.samples != i.saved) {

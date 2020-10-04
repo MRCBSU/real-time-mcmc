@@ -34,8 +34,8 @@
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_model_runs_20200918_%a.out
-#SBATCH --error=simulate_model_runs_20200918_%a.err
+#SBATCH --output=simulate_model_runs_20200925_%a.out
+#SBATCH --error=simulate_model_runs_20200925_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -60,7 +60,7 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200918/base_varSens_ifr6day_matrices_20200918_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200925/base_varSens_ifr_28cutoff6day_matrices_20200925_deaths"
 
 echo -e $workdir
 
@@ -126,10 +126,7 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-if [ $SLURM_ARRAY_TASK_ID -gt 2 ]
-then
-    eval $CMD
-fi
+eval $CMD
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

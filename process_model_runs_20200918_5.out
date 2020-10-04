@@ -1,118 +1,13 @@
-/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_ifr6day_matrices_20200918_deaths_with_linelist
-JobID: 29097506
+/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200925/base_varSens_28cutoff6day_matrices_20200925_deaths_with_linelist
+JobID: 29484824
 ======
-Time: Wed 23 Sep 00:10:38 BST 2020
-Running on node: cpu-e-512
-Current directory: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_pillar2_ifr6day_matrices_20200918_deaths_with_linelist
+Time: Wed 30 Sep 02:21:42 BST 2020
+Running on node: cpu-e-562
+Current directory: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200925/base_varSens_28cutoff6day_matrices_20200925_deaths_with_linelist
 
 Num tasks = 1, Num nodes = 1, OMP_NUM_THREADS = 1
 
 Executing command:
 ==================
 Rscript --vanilla ../../../PostProcess.R
-
-  |                                                                         |                                                                 |   0%  |                                                                         |.                                                                |   2%
-   inline R code fragments
-
-  |                                                                         |...                                                              |   4%
-label: preamble (with options) 
-List of 1
- $ include: logi FALSE
-
-  |                                                                         |....                                                             |   6%
-  ordinary text without R code
-
-  |                                                                         |.....                                                            |   8%
-label: plot-function
-  |                                                                         |.......                                                          |  10%
-  ordinary text without R code
-
-  |                                                                         |........                                                         |  12%
-label: Rt-table
-  |                                                                         |.........                                                        |  14%
-  ordinary text without R code
-
-  |                                                                         |...........                                                      |  16%
-label: cum-inf-sum
-  |                                                                         |............                                                     |  18%
-  ordinary text without R code
-
-  |                                                                         |.............                                                    |  20%
-label: cum-inf-disp
-  |                                                                         |...............                                                  |  22%
-  ordinary text without R code
-
-  |                                                                         |................                                                 |  24%
-label: attack-region
-  |                                                                         |.................                                                |  27%
-  ordinary text without R code
-
-  |                                                                         |...................                                              |  29%
-label: attack-age
-  |                                                                         |....................                                             |  31%
-  ordinary text without R code
-
-  |                                                                         |.....................                                            |  33%
-label: ifr (with options) 
-List of 1
- $ eval: language !is.null(dth.dat)
-
-  |                                                                         |.......................                                          |  35%
-  ordinary text without R code
-
-  |                                                                         |........................                                         |  37%
-label: growth-rate-func
-  |                                                                         |.........................                                        |  39%
-   inline R code fragments
-
-  |                                                                         |...........................                                      |  41%
-label: inf-halving
-  |                                                                         |............................                                     |  43%
-  ordinary text without R code
-
-  |                                                                         |.............................                                    |  45%
-label: inf-doubling
-  |                                                                         |...............................                                  |  47%
-  ordinary text without R code
-
-  |                                                                         |................................                                 |  49%
-label: death-growth (with options) 
-List of 1
- $ eval: language !is.null(deaths)
-
-  |                                                                         |.................................                                |  51%
-  ordinary text without R code
-
-  |                                                                         |..................................                               |  53%
-label: death-halving (with options) 
-List of 1
- $ eval: language !is.null(deaths)
-
-  |                                                                         |....................................                             |  55%
-  ordinary text without R code
-
-  |                                                                         |.....................................                            |  57%
-label: death-doubling (with options) 
-List of 1
- $ eval: language !is.null(deaths)
-
-  |                                                                         |......................................                           |  59%
-   inline R code fragments
-
-  |                                                                         |........................................                         |  61%
-label: unnamed-chunk-1 (with options) 
-List of 2
- $ eval : language !is.null(case.dat)
- $ child: chr "hosp-report.Rmd"
-
-  |                                                                         |                                                                 |   0%  |                                                                         |.............                                                    |  20%
-  ordinary text without R code
-
-  |                                                                         |..........................                                       |  40%
-label: reg-pillar2 (with options) 
-List of 2
- $ cache      : logi TRUE
- $ cache.extra: symbol results_hash
-
-
 

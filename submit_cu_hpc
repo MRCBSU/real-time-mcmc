@@ -17,7 +17,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=14
+#SBATCH --cpus-per-task=28
 #! How much wallclock time will be required?
 #SBATCH --time=36:00:00
 #! What types of email messages do you wish to receive?
@@ -28,14 +28,14 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-8
+#SBATCH --array=1-1
 
 #SBATCH -p skylake
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=model_runs_20200925_%a.out
-#SBATCH --error=model_runs_20200925_%a.err
+#SBATCH --output=model_runs_20200930_%a.out
+#SBATCH --error=model_runs_20200930_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -60,27 +60,34 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200925/base_varSens"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
+workdir="$SLURM_SUBMIT_DIR/model_runs/20200930/"
+if [ $SLURM_ARRAY_TASK_ID -lt 2 ]
 then
-    workdir="${workdir}_ifr"
+    workdir="${workdir}complex_pGPreg_"
+else
+    workdir="${workdir}base_varSens_"
 fi
-if (( $SLURM_ARRAY_TASK_ID % 4 < 2 ))
+if [ $SLURM_ARRAY_TASK_ID -eq 2 ]
 then
-    workdir="${workdir}_28cutoff"
+    workdir="${workdir}diffuse_"
 fi
-# workdir="${workdir}Sens"
-# if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
-# then
-#     workdir="${workdir}_newSerology"
-# fi
-# workdir="${workdir}6day_matrices_20200814_deaths"
-# elif [ $SLURM_ARRAY_TASK_ID == 4 ]
-# then
-#     workdir="${workdir}/base_newContacts_newSero_altSens6day_matrices_20200717_deaths/"
-# fi
-workdir="${workdir}6day_matrices_20200925_deaths"
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]
+if [ $SLURM_ARRAY_TASK_ID -eq 3 ]
+then
+    workdir="${workdir}ifrprior_"
+fi
+if [ $SLURM_ARRAY_TASK_ID -eq 4 ]
+then
+    workdir="${workdir}negbin_"
+fi
+workdir="${workdir}ifr_"
+if [ $SLURM_ARRAY_TASK_ID -lt 7 ]
+then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff6day_matrices_20200925_deaths"
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ] || [ $SLURM_ARRAY_TASK_ID -eq 6 ] || [ $SLURM_ARRAY_TASK_ID -eq 8 ]
 then
     workdir="${workdir}_with_linelist"
 fi
@@ -150,9 +157,10 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-eval $CMD
-
-
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]
+then
+    eval $CMD
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

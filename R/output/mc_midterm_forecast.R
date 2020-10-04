@@ -17,8 +17,8 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 nforecast.weeks <- 8
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd("20200831") + (1:6 * days(7))
-google.data.date <- ymd("20200918")
+mm.breaks <- ymd("20200907") + (1:6 * days(7))
+google.data.date <- ymd("20200925")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------

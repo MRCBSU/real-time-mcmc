@@ -3,7 +3,6 @@
 
 #### By region
 ```{r reg-pillar2, cache=TRUE, cache.extra=results_hash}
-stop()o
 dim.id <- which(names(dimnames(noisy_case)) == "date")
 noisy_case <- extract(noisy_case, indices = list(start.gp:end.gp), dims = dim.id)
 case.dat <- case.dat %>%

@@ -1,18 +1,11 @@
 Loading required package: rmarkdown
-Loading required package: coda
-Loading required package: stringr
 
 
 processing file: report-updated.Rmd
 
 
-processing file: ./hosp-report.Rmd
-
-
 processing file: ./deaths-report.Rmd
-Quitting from lines 5-7 (./deaths-report.Rmd) 
-Quitting from lines NA-24 (./deaths-report.Rmd) 
-Error in quantile.default(newX[, i], ...) : 
-  missing values and NaN's not allowed if 'na.rm' is FALSE
-Calls: source ... %>% -> eval -> eval -> apply -> FUN -> quantile.default
-Execution halted
+output file: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200925/base_varSens_ifr_28cutoff6day_matrices_20200925_deaths/report-updated.knit.md
+
+
+Output created: report-updated.html
