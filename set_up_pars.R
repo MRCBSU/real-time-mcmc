@@ -30,61 +30,71 @@ if(!gp.flag | nA == 1){
     value.pgp <- 0.1
     pars.pgp <- c(2.12, 15.8)
 } else if (gp.flag){
-    ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
-    ll.prior.days <- ll.start.date - days(1:7)
-    ll.prior <- all_dat %>%
-        filter(Date %in% ll.prior.days) %>%
-        group_modify(~ {.x %>% mutate(Age = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
-        group_by(Region, Age) %>%
-        summarise(npos = sum(npos) / 7,
-                  nbar = ifelse("nbar" %in% names(all_dat), sum(nbar) / 7, 1)
-                  )
-    ## Find an estimate of incidence at this time.
-    idx <- which(lubridate::as_date(as.integer(dimnames(outpp$infections)$date)) == min(ll.prior.days))
-    infections <- outpp$infections[, idx, , ] ## get infections on the first day of the aggregation
-    infections <- apply(infections,
-                        c("iteration", "region"),
-                        function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
-    names(dimnames(infections))[1] <- "age"
-    dimnames(infections)$age[1] <- "<15yr"
     abreaks.icr <- 3:7
-    med.infec <- apply(infections, c("age", "region"), median) %>%
-        as.data.frame() %>%
-        rownames_to_column(var = "Age") %>%
-        pivot_longer(-Age, names_to = "Region") %>%
-        inner_join(ll.prior) %>%
-        mutate(p = npos / value) %>%
-        arrange(Region, Age)    
-    ## Weighted regression
-    ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
-               weights = value,
-               family = binomial,
-               data = med.infec,
-               contrasts = list(Age = "contr.sum", Region = "contr.sum")))
-    ## Use mean and covariance of estimates to formulate a prior distribution.
-    if(case.positivity){
-        value.pgp <- jitter(ex6$coefficients)
-        pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
-        ll.posterior.days <- start.date - 1 + (start.gp:end.gp)
-        ll.posterior <- all_dat %>%
-            filter(Date %in% ll.posterior.days) %>%
-            group_modify(~ {.x %>% mutate(Age.Grp = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
-            group_by(Region, Date, Age.Grp) %>%
-            summarise(n = sum(n),
-                      pop = sum(pop)) %>%
-            mutate(nbar = n / pop)
-        ex6 <- glm(n ~ Region + Age.Grp + log(nbar), data = ll.posterior, contrasts = list(Age.Grp = "contr.sum", Region = "contr.sum"))
-        mex6 <- model.matrix(ex6)
+    if(grepl("base_varSens", scenario.name)){
+        ## For each region and age, get the number of cases immediately prior to the inclusion of the Pillar 2 data.
+        ll.prior.days <- ll.start.date - days(1:7)
+        ll.prior <- all_dat %>%
+            filter(Date %in% ll.prior.days) %>%
+            group_modify(~ {.x %>% mutate(Age = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
+            group_by(Region, Age) %>%
+            summarise(npos = sum(npos) / 7,
+                      nbar = ifelse("nbar" %in% names(all_dat), sum(nbar) / 7, 1)
+                      )
+        ## Find an estimate of incidence at this time.
+        idx <- which(lubridate::as_date(as.integer(dimnames(outpp$infections)$date)) == min(ll.prior.days))
+        infections <- outpp$infections[, idx, , ] ## get infections on the first day of the aggregation
+        infections <- apply(infections,
+                            c("iteration", "region"),
+                            function(x) c(sum(x[1:3]), x[-(1:3)])) ## group first three age groups together
+        names(dimnames(infections))[1] <- "age"
+        dimnames(infections)$age[1] <- "<15yr"
+        med.infec <- apply(infections, c("age", "region"), median) %>%
+            as.data.frame() %>%
+            rownames_to_column(var = "Age") %>%
+            pivot_longer(-Age, names_to = "Region") %>%
+            inner_join(ll.prior) %>%
+            mutate(p = npos / value) %>%
+            arrange(Region, Age)    
+        ## Weighted regression
+        ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
+                                    weights = value,
+                                    family = binomial,
+                                    data = med.infec,
+                                    contrasts = list(Age = "contr.sum", Region = "contr.sum")))
+        ## Use mean and covariance of estimates to formulate a prior distribution.
+        if(case.positivity){
+            value.pgp <- jitter(ex6$coefficients)
+            pars.pgp <- as.vector(t(cbind(ex6$coefficients, round(vcov(ex6), digits = 5))))
+            ll.posterior.days <- start.date - 1 + (start.gp:end.gp)
+            ll.posterior <- all_dat %>%
+                filter(Date %in% ll.posterior.days) %>%
+                group_modify(~ {.x %>% mutate(Age.Grp = ifelse(Age.Grp %in% c("<1yr", "1-4", "<1yr,1-4", "5-14"), "<15yr", Age.Grp))}) %>%
+                group_by(Region, Date, Age.Grp) %>%
+                summarise(n = sum(n),
+                          pop = sum(pop)) %>%
+                mutate(nbar = n / pop)
+            ex6 <- glm(n ~ Region + Age.Grp + log(nbar), data = ll.posterior, contrasts = list(Age.Grp = "contr.sum", Region = "contr.sum"))
+            mex6 <- model.matrix(ex6)
+        } else {
+            nl <- length(ex6$coefficients)
+            value.pgp <- jitter(ex6$coefficients[-nl])
+            pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
+            mex6 <- model.matrix(ex6)[,-nl]
+        }   
     } else {
-        nl <- length(ex6$coefficients)
-        value.pgp <- jitter(ex6$coefficients[-nl])
-        pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
-        mex6 <- model.matrix(ex6)[,-nl]
+        reg.mod.loc <- file.path(dirname(proj.dir), "Pillar2", "ascertatinment_regs.RData")
+        load(reg.mod.loc)
+        idx <- which(is.na(rfull.noinfec$coefficients$x$data[, 2]))
+        value.pgp <- rfull.noinfec$coefficients$x$data[-idx, 2]
+        pars.pgp <- as.vector(t(cbind(rep(0, times = length(value.pgp)), rep(5, times = length(value.pgp)))))
+        mex6 <- rfull.noinfec$design[,-idx]
     }
     write_tsv(as.data.frame(mex6), file.path(out.dir, "icr.design.txt"), col_names = FALSE)
-    rm(infections)
+    if(exists("infections"))
+        rm(infections)
     if(pgp.prior.diffuse)
-        pars.pgp <- as.vector(t(cbind(c(1, rep(0.5, length(ex6$coefficients) - 1)) * ex6$coefficients, round(4*vcov(ex6), digits = 5))))      
+        pars.pgp <- as.vector(t(cbind(rep(0, times = length(ex6$coefficients)), rep(2.5, times = length(ex6$coefficients)))))
 }
 
 ## Infection to fatality ratio
@@ -156,12 +166,24 @@ if(gp.flag){
     lm.mat <- model.matrix(~ DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
         as.data.frame() %>%
         write_tsv(file.path(out.dir, "d_o_w_design_file.txt"), col_names = FALSE)
-    pars.dow <- c(0.9840207, 0.9915403, 1.0024927, 0.98667, -0.6, -2.1)
+    if(grepl("base_varSens", scenario.name)){
+        pars.dow <- c(0.9840207, 0.9915403, 1.0024927, 0.98667, -0.6, -2.1)
+        prop.dow <- rep(2.2e-04, 6)
+    } else {
+        pars.dow <- rep(0, 6)
+        prop.dow <- rep(0, 6)
+    }
 }
 
 ## Initial seeding
 value.nu <- c(-16.7064769395683, -14.3327333035582, -15.0542472007424, -17.785749594464, -15.8038617705659, -15.3720269985272, -16.3667281951197)[1:nr]
-if(gp.flag) value.nu <- value.nu + logit(med.infec %>% filter(Age == "<15yr") %>% pull(p))
+if(gp.flag){
+    if(exists("med.infec")){
+        value.nu <- value.nu + logit(med.infec %>% filter(Age == "<15yr") %>% pull(p))
+    } else {
+        value.nu <- value.nu + logit(0.02)
+    }
+}
 pars.nu <- c(-17.5, 1.25)
 
 ## GP Overdispersion
@@ -242,25 +264,25 @@ beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
 ## beta.breaks <- c(64, 92, 120)
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- c(
-    0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, 0.0163618520524716, 0.333494806429032, 0.21527031558633, 0.161083514287401, 0.0463132886726999, -0.0332667493328686, 0.0912165703264888, -0.0674068339766244, -0.191029847903661, -0.289385771665435, -0.0712357129236337, 0.17504363429134, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, -0.00579603465388075, 0.417311445648212, 0.126514200748151, -0.0263963964981505, -0.220355017816457, 0.118815574597186, 0.0313276812519405, -0.0517133569835031, -0.0767156700375162, -0.0381946610630543, -0.231271157270191, -0.13303507053379, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, -0.196305061435333, 0.284216630972756, 0.188116721872681, -0.0342462506148033, -0.0573009315823325, -0.0900636672344598, -0.00425473562060216, -0.32540002766214, 0.104877868600528, 0.114177956716661, 0.0821584040758182, -0.417164459028684, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, -0.348925402477912, 0.0679687980318762, 0.213164755977372, 0.074591979115163, 0.0750080453232727, 0.102336034443526, -0.229377011561744, 0.0520233979921866, -0.279980273239356, 0.0347612260908936, -0.114458350262099, 0.0545339652877542, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, 0.0163618520524716, 0.333494806429032, 0.21527031558633, 0.161083514287401, 0.0463132886726999, -0.0332667493328686, 0.0912165703264888, -0.0674068339766244, -0.191029847903661, -0.289385771665435, -0.0712357129236337, 0.17504363429134, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, -0.00579603465388075, 0.417311445648212, 0.126514200748151, -0.0263963964981505, -0.220355017816457, 0.118815574597186, 0.0313276812519405, -0.0517133569835031, -0.0767156700375162, -0.0381946610630543, -0.231271157270191, -0.13303507053379, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, -0.196305061435333, 0.284216630972756, 0.188116721872681, -0.0342462506148033, -0.0573009315823325, -0.0900636672344598, -0.00425473562060216, -0.32540002766214, 0.104877868600528, 0.114177956716661, 0.0821584040758182, -0.417164459028684, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, -0.348925402477912, 0.0679687980318762, 0.213164755977372, 0.074591979115163, 0.0750080453232727, 0.102336034443526, -0.229377011561744, 0.0520233979921866, -0.279980273239356, 0.0347612260908936, -0.114458350262099, 0.0545339652877542, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 )[1:(nbetas*nr)]
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
 beta.rw.props <- c(
-    0.000000, 0.000011, 0.000012, 0.000020, 0.000038, 0.000053, 0.000090, 0.000114, 0.000344, 0.000958, 0.001271, 0.005583, 0.011967, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000019, 0.000047, 0.000067, 0.000065, 0.000125, 0.000161, 0.000290, 0.000677, 0.001589, 0.003719, 0.005959, 0.010296, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000003, 0.000007, 0.000011, 0.000016, 0.000020, 0.000059, 0.000101, 0.000157, 0.000436, 0.001271, 0.004388, 0.008550, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000005, 0.000008, 0.000008, 0.000023, 0.000030, 0.000063, 0.000131, 0.000279, 0.000616, 0.001303, 0.004852, 0.009842, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000006, 0.000008, 0.000012, 0.000023, 0.000027, 0.000056, 0.000119, 0.000272, 0.000384, 0.001462, 0.004730, 0.013297, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
+    0.000000, 0.000011, 0.000012, 0.000020, 0.000038, 0.000053, 0.000090, 0.000114, 0.000344, 0.000958, 0.001271, 0.005583, 0.011967, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000019, 0.000047, 0.000067, 0.000065, 0.000125, 0.000161, 0.000290, 0.000677, 0.001589, 0.003719, 0.005959, 0.010296, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000003, 0.000007, 0.000011, 0.000016, 0.000020, 0.000059, 0.000101, 0.000157, 0.000436, 0.001271, 0.004388, 0.008550, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000005, 0.000008, 0.000008, 0.000023, 0.000030, 0.000063, 0.000131, 0.000279, 0.000616, 0.001303, 0.004852, 0.009842, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000006, 0.000008, 0.000012, 0.000023, 0.000027, 0.000056, 0.000119, 0.000272, 0.000384, 0.001462, 0.004730, 0.013297, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )[1:(nbetas*nr)]
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
