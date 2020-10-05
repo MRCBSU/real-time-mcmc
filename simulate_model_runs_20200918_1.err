@@ -1,1 +1,0 @@
-/var/spool/slurm/slurmd/job29423868/slurm_script: line 113: cd: /rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/model_runs/20200918/base_varSens_ifr_28cutoff6day_matrices_20200925_deaths: No such file or directory
