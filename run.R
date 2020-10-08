@@ -86,8 +86,11 @@ data.files <- paste0(data.dirs["deaths"], "/",
                      regions, "_",
                      nA, "ag",
                      ifelse(flg.confirmed, "CONF", ""),
-                     reporting.delay, "delay",
-                     ifelse(flg.cutoff, paste0("cutoff", str.cutoff), ""),".txt")
+                     reporting.delay, "delay")
+if (exists("flg.cutoff") && flg.cutoff) {
+	data.files <- paste0(data.files, "cutoff", str.cutoff)
+}
+data.files <- paste0(data.files, ".txt")
 names(data.files) <- regions
 if(sero.flag){
   serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
@@ -105,10 +108,11 @@ if(gp.flag){
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
+  } else if (data.desc == "adjusted") {
+	  source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
   } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))
   }
-  stop
   if ("Scotland" %in% regions) {
 	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
   }

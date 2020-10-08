@@ -45,7 +45,8 @@ region.code <- "Eng"
 # deaths: confirmed deaths only, by date of death
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
-data.desc <- "deaths" # Set to "reports" if running by reporting date
+# adjusted: reporting-delay adjusted deaths produced by Pantelis
+data.desc <- "adjusted"
 ## scenario.name <- "complex_pGPreg"
 ## scenario.name <- "base_varSens"
 ## scenario.name <- "base_varSens_diffuse"
@@ -61,17 +62,19 @@ single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 
 flg.confirmed <- (data.desc != "all")
+flg.cutoff <- TRUE
+if(flg.cutoff) {
+	str.cutoff <- "28"
+	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
+}
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
-    flg.cutoff <- TRUE
-    if(flg.cutoff) {
-        str.cutoff <- "60"
-        scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
-    }
     reporting.delay <- 6
+} else if (data.desc == "adjusted") {
+	reporting.delay <- 1
 } else {
 	stop("Unknown data description")
 }
