@@ -118,3 +118,5 @@ if(gp.flag){
     } else asymptomatic.states <- c("Y", "N", "U")
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
+
+threads.per.regions <- 2
