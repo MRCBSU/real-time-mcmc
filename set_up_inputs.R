@@ -29,9 +29,9 @@ if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessari
 		start.sero <- min(rtm.plot$date) - start.date + 1
 		end.sero <- max(rtm.plot$date) - start.date + 1
 	} else {
-		warning('Running sero likelihood for whole period')
-		start.sero <- 1
-		end.sero <- ndays 
+		warning('Running sero likelihood between 14 and 52 days')
+		start.sero <- 14
+		end.sero <- 52 
 	}
 } else {
 	start.sero <- end.sero <- 1
