@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -68,7 +68,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     flg.cutoff <- TRUE
     if(flg.cutoff) {
-        str.cutoff <- "28"
+        str.cutoff <- "60"
         scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
     }
     reporting.delay <- 6
