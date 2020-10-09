@@ -1,0 +1,20 @@
+### Updates
+
+#### Model and report changes
+
+1. The definition of deaths has been adapted to include all deaths that occur in individuals who have had lab-confirmed infection within 60 days from the date of their most recent positive test. This definition reflects more realistically the burden of CoVID-19.
+2. Using observations of improved survival in hospitalised CoVID-19 patients, we have allowed the probability of dying to given infection (the infection-fatality rate, IFR) to gradually change over the course of June 2020, with a decrease being estimated.
+3. The model uses seroprevalence data on the presence of COVID-19 antibodies in blood samples taken by NHSBT to estimate the levels of cumulative infection within the population over time. As, from early June, the NHSBT has been giving a constantly declining prevalence of antibodies, these data have been curtailed at this time.
+
+#### Updated findings
+
+1. Our current estimate of the number of infections occurring each day across England is 43,900 (24,700--77,800, 95% credible interval).
+2. We predict that the number of deaths each day is likely to be between 170 and 540 by mid-October.
+3. We estimate Rt to certainly be above 1 in the North West, the North-East and Yorkshire, London and the Midlands. The probability of Rt exceeding 1 is bigger than 90% in the East of England and the South East, and bigger than 85% in the South West.
+4. London, followed by the North West, continues to have the highest attack rate, the proportion of the population who have ever been infected, with 20% and 14% respectively. The South West continues to have the lowest attach rate (4%).
+
+#### Interpretation
+
+1. The estimated growth rate for England is 0.11 (0.09,0.13, 95% credible interval) per day. This means that the number of infections grows by 11% each day and it translates into a doubling in number in under one week.
+2. The central estimates for the number of new infections is particularly high in the North West and the Midlands (12,600 and 11,000 infections per day, respectively), followed by London and the North East and Yorkshire (7,830 and 7,410, respectively). In the East of England although there are signs of ongoing transmission from the estimated Rt, the number of daily infections is still relatively low (899 per day). Note that a substantial proportion of these daily infections will be asymptomatic.
+3. Also note that the deaths data used are only weakly informative on Rt over the last two weeks and are still occurring only in small numbers. Therefore, the now-cast for current incidence and the forecast of deaths are naturally quite uncertain.

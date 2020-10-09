@@ -165,30 +165,8 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
 
 ## {.tabset}
 
-### Updates
-
-#### Model and report changes
-
-1. Medium-term forecasts by region and age have been added at the bottom of the page. Click and drag over a selected area to zoom in.
-1. Over the forecast period, contact matrices have been adapted to account for the return to schools of school age children. This is an initial attempt at principled pandemic projections and we will shortly add in the impact of the re-opening of universities.
-1. Because posterior $R_t$ values straddle 1, there is great uncertainty in the future dynamics.
-1. Resurgence of infection to levels greater than 10x at present is anticipated by the third week of October.
-1. Deaths are lagging sufficiently behind infections that numbers are anticipated to still be small by the end of the period.
-
-#### Updated findings
-1. Our current estimate of the number of infections arising each day across England is 2,400 (1,300–4,500, 95% credible interval).
-1. We predict that the number of deaths each day is likely to be between 35 and 66 by mid-September.
-1. We estimate it is very likely that $R_t$ is close to 1 in most regions of England.
-    a. London is the region in which it is most likely that $R_t$ is above 1, with a probability of 34%, although the number of new infections is very low.
-    a. The probability of $R_t$  exceeding 1 is less than 20% for the East of England and the South East and is less than 5% in the Midlands.
-1. London, followed by the North West continues to have the highest attack rate (17% and  10% respectively), the proportion of the population who have ever been infected. The South West continues to have the lowest (3%).
-
-#### Interpretation
-
-1. The estimated epidemic growth rate for England of -0.01 (-0.03--0.02) indicates a plateau in the number of new infections. This is supported by the estimated level of infections remaining around 2,000--2,500 per day over the last few weeks.
-1. The central estimates for incidence in each region are less than 550 infections per day, a substantial proportion of which will be asymptomatic.
-1. Only one region, the Midlands, can be said with any certainty to have a value of $R_t$ that is below 1, indicating a continued decline in transmission.
-1. The deaths data used are only weakly informative on $R_t$ over the last two weeks and are now very small in number. Therefore, the now-cast for current incidence and the forecast of deaths are naturally quite uncertain.
+```{r eval=external, child='updates.Rmd'}
+```
 
 ### Summary
 
@@ -196,7 +174,7 @@ Real-time tracking of an epidemic, as data accumulate over time, is an essential
 
 ### Methods
 
-We fit a transmission model ([Birrell et al. 2016](https://www.nature.com/articles/srep29004)) to a number of data sources (see 'Data Sources'), to  reconstruct the number of  new COVID-19 infections over time in different age groups and NHS regions, estimate a measure of ongoing transmission and predict the number of new COVID-19 deaths.
+We fit a transmission model ([Birrell et al. 2020](https://www.medrxiv.org/content/10.1101/2020.08.24.20180737v1)) to a number of data sources (see 'Data Sources'), to  reconstruct the number of  new COVID-19 infections over time in different age groups and NHS regions, estimate a measure of ongoing transmission and predict the number of new COVID-19 deaths.
 
 ### Data sources
 
@@ -639,10 +617,10 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```
 
-```{r eval=file.exists(file.path(out.dir, "projections.RData")), child='projinf-report.Rmd'}
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
 ```
 
-```{r eval=(as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
+```{r eval=(!external & as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
 ```
 
 
