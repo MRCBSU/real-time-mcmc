@@ -413,7 +413,8 @@ load.data <- function(file.names, idx.age.to.combine = 1:4, label.age.to.combine
 if (hosp.flag == 0) {
   dth.dat <- NULL
 } else {
-  dth.dat <- load.data(data.files)
+  #dth.dat <- load.data(data.files)
+  dth.dat <- NULL
 }
 if (gp.flag == 0) {
   case.dat <- NULL
