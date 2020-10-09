@@ -271,7 +271,6 @@ nice.array <- function(x)
         unlist(x),
         dim = output.quantity.dims,
         dimnames = output.dimnames)
-
 infections <- nice.array(NNI)
 rm(NNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)

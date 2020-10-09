@@ -4,21 +4,23 @@ load("tmp.RData", envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
 in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
-out.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
+## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
+if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
+if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)
-var.names <- names(var.list)[unlist(var.list) == "character"]
+vbl.names <- names(var.list)[unlist(var.list) == "character"]
 
 ## Within the specified environment...
 with(setup.env, {
-    for(vars in var.names)
+    for(vars in vbl.names)
         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
 })
 
 ## Temporary line to be deleted
 if(exists("infections")) rm(infections)
 expit <- function(x) exp(x)/(1+exp(x))
-abreaks.icr <- 3:7
+## abreaks.icr <- 3:7
 
 save(list = ls(envir = setup.env), file = "tmp.RData", envir = setup.env)

@@ -4,8 +4,8 @@ require(rmarkdown)
 require(abind)
 require(parallel)
 
-load("tmp.RData")
 load("mcmc.RData")
+load("tmp.RData")
 
 source(file.path(Rfile.loc, "sim_func.R"))
 
@@ -17,8 +17,8 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 nforecast.weeks <- 8
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd("20200817") + (1:6 * days(7))
-google.data.date <- ymd("20200911")
+mm.breaks <- ymd("20200907") + (1:6 * days(7))
+google.data.date <- ymd("20200925")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
@@ -146,7 +146,13 @@ niter <- min(sapply(params, nrow))
 
 ## ## For each iteration
 pct <- 0
-xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
+## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
+if(Sys.info()["user"] == "pjb51"){
+    exe <- "hpc"
+} else exe <- Sys.info()["nodename"]
+cat("rtm.exe = ", exe, "\n")
+cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
+xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 
 NNI <- lapply(xtmp, function(x) x$NNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)

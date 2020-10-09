@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH -J trial_hpc_batch
+#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=14
+#SBATCH --time=36:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --array=1
+#SBATCH -p skylake
+
+
+#SBATCH --output=model_runs_20200918.out
+#SBATCH --error=model_runs_20200918.err
+
+module load gcc/9 intel/compilers/2020.2
+../../../rtm_hpc

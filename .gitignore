@@ -1,6 +1,7 @@
 rtm
 rtm_debug
 rtm_optim*
+rtm_hpc
 **.swp
 **.swo
 build/**
@@ -20,4 +21,6 @@ R/output/*_cache
 slurm-*
 phe-nowcasts/**
 Lombdardy*/**
+**out
+**err
 **.RData

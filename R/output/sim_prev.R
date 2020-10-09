@@ -22,7 +22,7 @@ thisFile <- function() {
 R.dir <- dirname(thisFile())
 proj.dir <- dirname(dirname(R.dir))
 source(file.path(R.dir, "seir_reporting_functions.R"))
-out.dir <- file.path(proj.dir, "model_runs", "20200904", "base_varSens_pillar26day_matrices_20200828_deaths_with_linelist")
+out.dir <- file.path(proj.dir, "model_runs", "20200930", "base_varSens_ifr_60cutoff6day_matrices_20200925_deaths")
 
 load(file.path(out.dir, "tmp.RData"))
 
@@ -48,7 +48,8 @@ for(i in 1:(length(cm.breaks) + 1)){
 mixing.model$intervals <- M.intervals
 rm(base.mats, mult.mats, M.intervals)
 ## infection to confirmed case ratio
-icr.mat <- model.matrix(ex6)
+if("prop_case_to_GP_consultation" %in% names(params))
+    icr.mat <- model.matrix(ex6)
 
 get.prevalence <- function(iter, r){
     
