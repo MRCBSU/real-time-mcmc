@@ -41,16 +41,27 @@ if(!exists("regions")){
 }
 
 ## Map our names for columns (LHS) to data column names (RHS)
-col.names <- list(
+possible.col.names <- list(
     surv = "surv",
     age = "age",
     region = "Region",
     sample_date = "SampleDate",
-    Eoutcome = "EuroImmun_outcome",
-    Eresult = "EuroImmun_units",
-    Routcome = "RBD_outcome",
-    Rresult = "RBD_units"
-    )
+    Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome"),
+    Eresult = c("EuroImmun_units", "EuroImm_Units"),
+    Routcome = c("RBD_units", "RBD_outcome"),
+    Rresult = c("RBD_units", "RBD_Units")
+)
+
+input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+is.valid.col.name <- function(name) {name %in% input.col.names}
+first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
+col.names <- lapply(possible.col.names, first.valid.col.name)
+invalid.col.names <- sapply(col.names, is.null)
+if (any(invalid.col.names)) {
+	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+	stop(paste("No valid column name for:", names.invalid.cols))
+}
+
 
 ## Given a row in the sero data file, return its region, formatted with no spaces
 get.region <- function(x) str_replace_all(x$region, " ", "_")
