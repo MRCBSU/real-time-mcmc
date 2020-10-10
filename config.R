@@ -47,9 +47,7 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
 data.desc <- "adjusted"
-## scenario.name <- "complex_pGPreg"
-## scenario.name <- "base_varSens"
-## scenario.name <- "base_varSens_diffuse"
+## Give the run a name to identify the configuratio
 scenario.name <- "base_varSens_shortsero"
 contact.model <- 3
 
