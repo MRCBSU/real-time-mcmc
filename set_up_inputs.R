@@ -40,6 +40,14 @@ if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessari
 viro.data <- NULL
 viro.denom <- NULL
 
+## The 'prev' stream in the code
+if(!exists("prev.flag")) prev.flag <- 0
+if(prev.flag){
+    start.prev <- min(prev.lik.days)
+    end.prev <- max(prev.lik.days)
+} else {
+    start.prev <- end.prev <- 1
+}
 # Vector of age-group descriptions
 if(!exists("age.labs"))
     age.labs <- "All"
@@ -165,6 +173,14 @@ if (sero.flag == 1) {
     if(!all(sapply(sero.data, function(x) all(file.exists(x)))))
         stop("One of the specified serology data files does not exist")
     if(is.null(end.sero)) end.sero <- set.end.date(end.sero, sero.data)
+}
+prev.data <- list(lmeans = "NULL",
+                  lsds = "NULL")
+if(prev.flag == 1){
+    prev.data <- list(lmeans = prev.mean.files, lsds = prev.sd.files)
+    if(!all(sapply(prev.data, function(x) all(file.exists(x)))))
+        stop("One of the specified prevalence data files does not exist")
+    if(is.null(end.prev)) end.prev <- set.end.date(end.prev, prev.data)
 }
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)

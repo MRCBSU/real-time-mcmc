@@ -11,7 +11,7 @@ Sero_data_flag	     `r sero.flag`
 
 Viro_data_flag	     0
 
-
+Prev_data_flag	     `r prev.flag`
 
 \#\# file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
 
@@ -71,7 +71,9 @@ Viro_likelihood_start_day	   1
 
 Viro_likelihood_end_day		   1
 
+Prev_likelihood_start_day	   `r start.prev`
 
+Prev_likelihood_end_day		   `r end.prev`
 
 
 
@@ -124,6 +126,8 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 		 regions_viropositives_data = NULL;
 		 regions_virosamples_data = NULL;
 
+		 regions_logprevalence_estimates = `r ifelse(prev.flag, paste(prev.data$lmeans, collapse = ", "), "NULL")`;
+		 regions_logprevalence_sd = `r ifelse(prev.flag, paste(prev.data$lsds, collapse = ", "), "NULL")`;
 	       
 	       }
 

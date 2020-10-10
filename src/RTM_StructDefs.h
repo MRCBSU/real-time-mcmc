@@ -32,6 +32,7 @@ struct global_model_instance_parameters{
   int l_Deaths_flag;
   int l_Sero_data_flag;
   int l_Viro_data_flag;
+  int l_Prev_data_flag;
   int l_GP_patch_flag;
   int l_Sero_delay; // NUMBER OF DAYS OF LAG BUILT INTO SEROLOGY DATA REPRESENTING THE TIME TAKEN FOR IMMUNOLOGICAL RESPONSE
   likelihood_bounds l_GP_likelihood; // WHICH DAYS/WEEKS OF DATA TO USE IN CALCULATING THE LIKELIHOOD, THIS ROW DOWN
@@ -39,6 +40,7 @@ struct global_model_instance_parameters{
   likelihood_bounds l_Deaths_likelihood;
   likelihood_bounds l_Sero_likelihood;
   likelihood_bounds l_Viro_likelihood;
+  likelihood_bounds l_Prev_likelihood;
 };
 
 // ALLOC FUNCTION FOR MEMORY ASSIGNED TO THE ABOVE TYPE OF STRUCTURE
@@ -78,6 +80,7 @@ struct updateable_model_parameter{
   bool flag_Hosp_likelihood; // DOES THE LIKELIHOOD FOR THE HOSPITALISATIONS NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
   bool flag_Sero_likelihood; // DOES THE LIKELIHOOD FOR THE SEROEPIDEMIOLOGY DATA NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
   bool flag_Viro_likelihood; // DOES THE LIKELIHOOD FOR THE VIROLOGY (POSITIVITY) DATA NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
+  bool flag_Prev_likelihood; // DOES THE LIKELIHOOD FOR THE PREVALENCE DATA/ESTIMATES NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
   bool flag_any_child_nodes; // TRUE IF ANY FLAG_CHILD_NODES ARE TRUE. FALSE OTHERWISE
   bool *flag_child_nodes; // FLAG FOR EACH OF THE OTHER PARAMETERS OF THE MODEL INDICATING WHETHER THEY ARE CHILD NODES OF THE CURRENT NODE
 };
@@ -133,12 +136,13 @@ void globalModelParams_alloc(globalModelParams&, size_t);
 void globalModelParams_free(globalModelParams&);
 
 // REGION SPECIFIC PARAMETER STRUCTURE, FOR INPUT TO THE TRANSMISSION (AND DISEASE?) MODEL
-#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_lbeta_rw, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity;" 
+#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_r1_period, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_lbeta_rw, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity;" 
 struct regional_model_params{
   gsl_vector* l_init_prop_sus; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
   gsl_vector* l_init_prop_sus_HI_geq_32; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
   gsl_matrix* l_average_infectious_period; // TEMPORALLY VARYING TO ALLOW FOR CHANGES DUE TO ACCESS TO ANTIVIRALS
   gsl_matrix* l_latent_period;
+  gsl_matrix* l_r1_period;
   gsl_matrix* l_relative_infectiousness_I2_wrt_I1;
   double l_EGR; // CURRENTLY NON-AGE DEPENDENT INITIAL EXPONENTIAL GROWTH RATE
   gsl_vector* l_lbeta_rw; // RANDOM-WALK SCALING TO APPLY TO THE WHOLE MATRIX, RANDOM WALKS OVER TIME.
@@ -176,12 +180,13 @@ struct model_statistics{
   gsl_matrix *d_Reported_Hospitalisations;
   gsl_matrix *d_seropositivity;
   gsl_matrix *d_viropositivity;
+  gsl_matrix *d_prevalence;
 };
 
 void model_statistics_alloc(model_statistics&, const int, const int);
 void model_statistics_aggregate(gsl_matrix*, const model_statistics&, const int);
 void model_statistics_memcpy(model_statistics&, const model_statistics,
-			     bool NNI_flag = true, bool GP_flag = true, bool Hosp_flag = true, bool Sero_flag = true, bool Viro_flag = true);
+			     bool NNI_flag = true, bool GP_flag = true, bool Hosp_flag = true, bool Sero_flag = true, bool Viro_flag = true, bool Prev_flag = true);
 void model_statistics_free(model_statistics&);
 
 // REGION STRUCTURE
@@ -196,6 +201,7 @@ struct Region{
   rtmData* Death_data;
   rtmData* Serology_data;
   rtmData* Virology_data;
+  rtmData* Prevalence_data;
   model_statistics region_modstats;
 };
 
@@ -237,6 +243,7 @@ struct likelihood{
   gsl_vector* Deaths_lfx;
   gsl_vector* Sero_lfx;
   gsl_vector* Viro_lfx;
+  gsl_vector* Prev_lfx;
 };
 
 void likelihood_alloc(likelihood&, const global_model_instance_parameters);

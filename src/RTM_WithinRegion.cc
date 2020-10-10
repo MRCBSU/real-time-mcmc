@@ -384,6 +384,11 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
       regional_matrix_parameter(out_rmp.l_average_infectious_period, in_umps[AIP_INDEX].param_value, in_umps[AIP_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_average_infectious_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
+  if(update_flags.getFlag("l_r1_period"))
+    {
+      regional_matrix_parameter(out_rmp.l_r1_period, in_umps[AR1_INDEX].param_value, in_umps[AR1_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      gsl_matrix_add_constant(out_rmp.l_r1_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / (2 * (double) in_gmip.l_transmission_time_steps_per_day));
+    }
   if(update_flags.getFlag("l_latent_period"))
     {
       regional_matrix_parameter(out_rmp.l_latent_period, in_umps[ALP_INDEX].param_value, in_umps[ALP_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);

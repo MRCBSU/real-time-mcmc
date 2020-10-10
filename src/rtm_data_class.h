@@ -38,6 +38,7 @@ class rtmData
   void data_population_sizes(const gsl_vector*);
   void normalise(const gsl_vector*);
   double lfx(gsl_matrix*, const gsl_matrix*);
+  double meld_lfx(gsl_matrix*);
   int getDim1();
   int getDim2();
   const gsl_vector* access_weights() const;

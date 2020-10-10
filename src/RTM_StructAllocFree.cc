@@ -20,6 +20,8 @@ void likelihood_alloc(likelihood& new_llhood, const global_model_instance_parame
   if(new_llhood.Sero_lfx != 0) gsl_vector_set_zero(new_llhood.Sero_lfx);
   new_llhood.Viro_lfx = (gmip.l_Viro_data_flag) ? gsl_vector_alloc(num_regions) : 0;
   if(new_llhood.Viro_lfx != 0) gsl_vector_set_zero(new_llhood.Viro_lfx);
+  new_llhood.Prev_lfx = (gmip.l_Prev_data_flag) ? gsl_vector_alloc(num_regions) : 0;
+  if(new_llhood.Prev_lfx != 0) gsl_vector_set_zero(new_llhood.Prev_lfx);
 }
 
 void likelihood_free(likelihood& old_llhood)
@@ -34,6 +36,8 @@ void likelihood_free(likelihood& old_llhood)
     gsl_vector_free(old_llhood.Sero_lfx);
   if(old_llhood.Viro_lfx != 0)
     gsl_vector_free(old_llhood.Viro_lfx);
+  if(old_llhood.Prev_lfx != 0)
+    gsl_vector_free(old_llhood.Prev_lfx);
 }
 
 void likelihood_memcpy(likelihood& dest_lfx, const likelihood& src_lfx)
@@ -51,6 +55,8 @@ void likelihood_memcpy(likelihood& dest_lfx, const likelihood& src_lfx)
     gsl_vector_memcpy(dest_lfx.Sero_lfx, src_lfx.Sero_lfx);
   if(src_lfx.Viro_lfx != 0)
     gsl_vector_memcpy(dest_lfx.Viro_lfx, src_lfx.Viro_lfx);
+  if(src_lfx.Prev_lfx != 0)
+    gsl_vector_memcpy(dest_lfx.Prev_lfx, src_lfx.Prev_lfx);
 }
 
 void mcmcPars_alloc(mcmcPars& in_mP)
@@ -192,6 +198,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
   new_rmp.l_init_prop_sus = gsl_vector_calloc(num_ages);
   new_rmp.l_init_prop_sus_HI_geq_32 = gsl_vector_calloc(num_ages);
   new_rmp.l_average_infectious_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// DO I WANT NUM_DAYS AND NUM_AGES? OR THE NUMBER OF TEMPORAL AND AGE BREAKPOINTS.
+  new_rmp.l_r1_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_latent_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// THE SAME GOES FOR MANY OF THE OTHER MATRICES
   new_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); // VARIATION NOT EXPECTED TO BE USED HERE
   new_rmp.l_lbeta_rw = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
@@ -223,6 +230,7 @@ void regional_model_params_alloc(regional_model_params& dest_rmp,
   dest_rmp.l_init_prop_sus = gsl_vector_calloc(src_rmp.l_init_prop_sus->size);
   dest_rmp.l_init_prop_sus_HI_geq_32 = gsl_vector_calloc(src_rmp.l_init_prop_sus_HI_geq_32->size);
   dest_rmp.l_average_infectious_period = gsl_matrix_calloc(src_rmp.l_average_infectious_period->size1, src_rmp.l_average_infectious_period->size2);
+  dest_rmp.l_r1_period = gsl_matrix_calloc(src_rmp.l_r1_period->size1, src_rmp.l_r1_period->size2);
   dest_rmp.l_latent_period = gsl_matrix_calloc(src_rmp.l_latent_period->size1, src_rmp.l_latent_period->size2);
   dest_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(src_rmp.l_relative_infectiousness_I2_wrt_I1->size1, src_rmp.l_relative_infectiousness_I2_wrt_I1->size2);
   dest_rmp.l_lbeta_rw = gsl_vector_calloc(src_rmp.l_lbeta_rw->size);
@@ -249,6 +257,7 @@ void regional_model_params_free(regional_model_params& old_rmp)
   gsl_vector_free(old_rmp.l_init_prop_sus);
   gsl_vector_free(old_rmp.l_init_prop_sus_HI_geq_32);
   gsl_matrix_free(old_rmp.l_average_infectious_period);
+  gsl_matrix_free(old_rmp.l_r1_period);
   gsl_matrix_free(old_rmp.l_latent_period);
   gsl_matrix_free(old_rmp.l_relative_infectiousness_I2_wrt_I1);
   gsl_vector_free(old_rmp.l_lbeta_rw);
@@ -273,6 +282,8 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     gsl_vector_memcpy(rmp_dest.l_init_prop_sus_HI_geq_32, rmp_src.l_init_prop_sus_HI_geq_32);
   if(update_flags.getFlag("l_average_infectious_period"))
     gsl_matrix_memcpy(rmp_dest.l_average_infectious_period, rmp_src.l_average_infectious_period);
+  if(update_flags.getFlag("l_r1_period"))
+    gsl_matrix_memcpy(rmp_dest.l_r1_period, rmp_src.l_r1_period);
   if(update_flags.getFlag("l_latent_period"))
     gsl_matrix_memcpy(rmp_dest.l_latent_period, rmp_src.l_latent_period);
   if(update_flags.getFlag("l_relative_infectious_period"))
@@ -330,6 +341,7 @@ void model_statistics_alloc(model_statistics &ms, const int times, const int age
   ms.d_Reported_Hospitalisations = gsl_matrix_alloc(times, age_classes);
   ms.d_seropositivity = gsl_matrix_alloc(times, age_classes);
   ms.d_viropositivity = gsl_matrix_alloc(times, age_classes);
+  ms.d_prevalence = gsl_matrix_alloc(times, age_classes);
 }
 
 void model_statistics_aggregate(gsl_matrix* output_NNI, const model_statistics& ms, const int contraction)
@@ -338,7 +350,7 @@ void model_statistics_aggregate(gsl_matrix* output_NNI, const model_statistics& 
 }
 
 void model_statistics_memcpy(model_statistics &ms_dest, const model_statistics ms_src,
-			     bool NNI_flag, bool GP_flag, bool Hosp_flag, bool Sero_flag, bool Viro_flag)
+			     bool NNI_flag, bool GP_flag, bool Hosp_flag, bool Sero_flag, bool Viro_flag, bool Prev_flag)
 {
   *ms_dest.d_end_state = *ms_src.d_end_state;
 if(NNI_flag)
@@ -354,6 +366,10 @@ if(NNI_flag)
     gsl_matrix_memcpy(ms_dest.d_seropositivity, ms_src.d_seropositivity);
   if(Viro_flag)
     gsl_matrix_memcpy(ms_dest.d_viropositivity, ms_src.d_viropositivity);
+  if(Viro_flag)
+    gsl_matrix_memcpy(ms_dest.d_viropositivity, ms_src.d_viropositivity);
+  if(Prev_flag)
+    gsl_matrix_memcpy(ms_dest.d_prevalence, ms_src.d_prevalence);
 }
 
 void model_statistics_free(struct model_statistics &ms)
@@ -365,6 +381,7 @@ void model_statistics_free(struct model_statistics &ms)
   gsl_matrix_free(ms.d_Reported_Hospitalisations);
   gsl_matrix_free(ms.d_seropositivity);
   gsl_matrix_free(ms.d_viropositivity);
+  gsl_matrix_free(ms.d_prevalence);
 }
 
 // ---- Overloaded region allocation function
@@ -381,13 +398,15 @@ void Region_alloc(Region& new_reg,
   else new_reg.GP_data = 0;
   if(src_gmip.l_Hospitalisation_flag) new_reg.Hospitalisation_data = new rtmData(src_gmip.l_Hosp_likelihood, src_gmip.l_hosp_count_likelihood);
   else new_reg.Hospitalisation_data = 0;
-  if(src_gmip.l_Deaths_flag) new_reg.Death_data = new rtmData(src_gmip.l_Deaths_likelihood, cPOISSON);
+  if(src_gmip.l_Deaths_flag) new_reg.Death_data = new rtmData(src_gmip.l_Deaths_likelihood, cPOISSON_LIK);
   else new_reg.Death_data = 0;
-  if(src_gmip.l_Sero_data_flag) new_reg.Serology_data = new rtmData(src_gmip.l_Sero_likelihood, cBINOMIAL);
+  if(src_gmip.l_Sero_data_flag) new_reg.Serology_data = new rtmData(src_gmip.l_Sero_likelihood, cBINOMIAL_LIK);
   else new_reg.Serology_data = 0;
-  if(src_gmip.l_Viro_data_flag) new_reg.Virology_data = new rtmData(src_gmip.l_Viro_likelihood, cBINOMIAL);
+  if(src_gmip.l_Viro_data_flag) new_reg.Virology_data = new rtmData(src_gmip.l_Viro_likelihood, cBINOMIAL_LIK);
   else new_reg.Virology_data = 0;
-
+  if(src_gmip.l_Prev_data_flag) new_reg.Prevalence_data = new rtmData(src_gmip.l_Prev_likelihood, cNORMAL_LIK);
+  else new_reg.Prevalence_data = 0;
+  
   // FUNCTIONS ALLOCATING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
   regional_model_params_alloc(new_reg.det_model_params, num_days, num_ages, src_gmip.l_transmission_time_steps_per_day, src_gmip.l_reporting_time_steps_per_day, src_mixmod);
   model_statistics_alloc(new_reg.region_modstats, num_days, num_ages, src_gmip.l_reporting_time_steps_per_day);
@@ -414,6 +433,7 @@ void Region_free(Region& old_reg, const global_model_instance_parameters src_gmi
     if(src_gmip.l_Deaths_flag) delete old_reg.Death_data;
     if(src_gmip.l_Sero_data_flag) delete old_reg.Serology_data;
     if(src_gmip.l_Viro_data_flag) delete old_reg.Virology_data;
+    if(src_gmip.l_Prev_data_flag) delete old_reg.Prevalence_data;
   }
   // FUNCTIONS FREEING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
   regional_model_params_free(old_reg.det_model_params);
@@ -436,7 +456,8 @@ void Region_memcpy(Region& reg_dest, const Region& reg_src, flagclass& update_fl
       reg_dest.Serology_data = reg_src.Serology_data;
   if(reg_src.Virology_data != 0)
       reg_dest.Virology_data = reg_src.Virology_data;
-
+  if(reg_src.Prevalence_data != 0)
+    reg_dest.Prevalence_data = reg_src.Prevalence_data;
 
   regional_model_params_memcpy(reg_dest.det_model_params, reg_src.det_model_params, update_flags);
   model_statistics_memcpy(reg_dest.region_modstats, reg_src.region_modstats);

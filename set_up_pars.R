@@ -21,6 +21,11 @@ value.dl <- 1
 value.dI <- 0.5033387
 pars.dI <- c(1.43, 0.549)
 
+## Duration of test positivity
+prior.r1 <- 2
+if(grepl("tight", scenario.name)) pars.r1 <- c(550000,100000)
+if(grepl("relax", scenario.name)) pars.r1 <- c(5.5, 1)
+
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235)[1:nr]
 pars.egr <- c(31.36, 224)
@@ -298,16 +303,16 @@ beta.rw.sd <- 0.151057317190954
 ## sero.spec <- 777.5 / 787
 sero.sens <- 0.707875480848508
 sero.spec <- 0.965012479451016
-ssens.prior.dist <- ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
+ssens.prior.dist <- 3 ## ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 ## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
-if (grepl("altSens", scenario.name)) {
-	ssens.prior.pars <- c(142.5, 29.5)
-	sspec.prior.pars <- c(1110.5, 8.5)
-} else {
+## if (grepl("altSens", scenario.name)) {
+## 	ssens.prior.pars <- c(142.5, 29.5)
+## 	sspec.prior.pars <- c(1110.5, 8.5)
+## } else {
 	ssens.prior.pars <- c(23.5, 9.5)
 	sspec.prior.pars <- c(569.5, 5.5)
-}
+## }
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)

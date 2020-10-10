@@ -39,12 +39,13 @@ int mix_timecat(const int, const gsl_vector_int*, const double);
 void mixing_matrix_parameterise(mixing_model&);
 
 // FUNCTIONS IN RTM_Likelihoods.cc
-void fn_log_likelihood(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool,
+void fn_log_likelihood(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
 		       global_model_instance_parameters, globalModelParams);
 void output_per_selected_period(const int&, const gsl_matrix*, gsl_matrix*);
 double fn_log_lik_positivity(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 double fn_log_lik_countdata(const gsl_matrix*, const gsl_matrix*);
 double fn_log_lik_negbindata(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
+double fn_log_lik_loggaussian_fixedsd(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 
 // FUNCTIONS IN RTM_MetropHast.cc
 void metrop_hast(const mcmcPars&, globalModelParams&, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);

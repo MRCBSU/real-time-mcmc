@@ -23,7 +23,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- FALSE
+format.inputs <- TRUE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -39,6 +39,7 @@ if(!exists("gp.flag")) gp.flag <- 1
 if(!exists("hosp.flag")) hosp.flag <- 1
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
+if(!exists("prev.flag")) prev.flag <- 0
 
 ## Get the population sizes
 require(readr)
@@ -87,7 +88,8 @@ data.files <- paste0(data.dirs["deaths"], "/",
                      nA, "ag",
                      ifelse(flg.confirmed, "CONF", ""),
                      reporting.delay, "delay")
-if (exists("flg.cutoff") && flg.cutoff) {
+if (exists("flg.cutoff"){
+    if(flg.cutoff) 
 	data.files <- paste0(data.files, "cutoff", str.cutoff)
 }
 data.files <- paste0(data.files, ".txt")
@@ -104,6 +106,13 @@ if(gp.flag){
 } else {
     cases.files <- NULL
     denoms.files <- NULL
+}
+if(prev.flag){
+    prev.mean.files <- paste0(data.dirs["prev"], "/", date.prev, "_", regions, "_ons_meanlogprev.txt")
+    prev.sd.files <- paste0(data.dirs["prev"], "/", date.prev, "_", regions, "_ons_sdlogprev.txt")
+} else {
+    prev.mean.files <- NULL
+    prev.sd.files <- NULL
 }
 if(format.inputs){
   if(data.desc == "reports") {
@@ -127,6 +136,9 @@ if(format.inputs){
   }
   if(gp.flag){
 	  source(file.path(proj.dir, "R/data/format_linelist.R"))
+  }
+  if(prev.flag){
+      source(file.path(proj.dir, "R", "data", "format_prev.R"))
   }
 }
 

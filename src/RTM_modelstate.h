@@ -18,13 +18,14 @@ class model_state
   vector<double> E_2;
   vector<double> I_1;
   vector<double> I_2;
+  vector<double> R_1;
   vector<double> p_lambda;
  public:
   model_state();
   model_state(const unsigned int);
   model_state(const model_state&);
   model_state& operator=(const model_state&);
-  void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
+  void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
   bool write(ofstream&);
 };
 

@@ -19,7 +19,7 @@ rtmData::rtmData()
 {
   lbounds.lower = 0;
   lbounds.upper = 100;
-  likelihood_type = cPOISSON;
+  likelihood_type = cPOISSON_LIK;
   NULL_ALLOC;
 }
 rtmData::rtmData(const likelihood_bounds& lfx_range, const data_type& lfx)
@@ -47,7 +47,7 @@ void rtmData::alloc(int& t, int& a)
   denoms = gsl_matrix_alloc(t, a);
   data_population = gsl_vector_alloc(a);
   if(a < NUM_AGE_GROUPS){
-    if(likelihood_type == cBINOMIAL)
+    if(likelihood_type == cBINOMIAL_LIK)
       popn_weights = gsl_vector_alloc(NUM_AGE_GROUPS);
   }
 }
@@ -74,7 +74,7 @@ void rtmData::read(const string& denomfile, const string& countfile)
     // YES: read denominator input file.
     data_matrices_fscanf(denomfile.c_str(), denoms, 1);
   else { // NO: are denominators required
-    if(likelihood_type == cBINOMIAL){
+    if(likelihood_type == cBINOMIAL_LIK){
       // YES: error.
       ERROR_TEXT("Required denominator file %s not found\n", denomfile.c_str());
     } else gsl_matrix_set_all(denoms, 1.0); // Default value of 1.. everyone is observable.
@@ -105,7 +105,7 @@ void rtmData::data_population_sizes(const gsl_vector* ptr_vec_popn)
 void rtmData::normalise(const gsl_vector* ptr_vec_popn)
 {
   // Don't do this if working with sample data
-  if(likelihood_type != cBINOMIAL){
+  if(likelihood_type != cBINOMIAL_LIK){
     data_population_sizes(ptr_vec_popn);
     // Loop through the rows of the denominator matrix, normalising each.
     for(int int_t = 0; int_t < denoms->size1; int_t++){
@@ -118,22 +118,29 @@ double rtmData::lfx(gsl_matrix* mat_expected, const gsl_matrix* mat_dispersion)
 { // Note this function will alter the contents of mat_expected after scaling by denoms.
   gsl_matrix_view N = gsl_matrix_submatrix(denoms, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, denoms->size2);
   gsl_matrix_view mu = gsl_matrix_submatrix(mat_expected, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected->size2);
-  if(likelihood_type != cBINOMIAL)
+  if(likelihood_type != cBINOMIAL_LIK)
     gsl_matrix_mul_elements(&mu.matrix, &N.matrix);
   gsl_matrix_view X = gsl_matrix_submatrix(counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, counts->size2);
   switch(likelihood_type){
-  case cPOISSON :
+  case cPOISSON_LIK :
     return fn_log_lik_countdata(&X.matrix, &mu.matrix);
-  case cNEGBIN :
+  case cNEGBIN_LIK :
     {
       gsl_matrix_const_view eta = gsl_matrix_const_submatrix(mat_dispersion, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_dispersion->size2);
       return fn_log_lik_negbindata(&X.matrix, &mu.matrix, &eta.matrix);
     }
-  case cBINOMIAL :
+  case cBINOMIAL_LIK :
     return fn_log_lik_positivity(&N.matrix, &X.matrix, &mu.matrix);
   default :
     DEFAULT_NO_LIKELIHOOD;
   }
+}
+double rtmData::meld_lfx(gsl_matrix* mat_expected)
+{ // Different function to the above as the variance is pre-specified as data, not a modelled or parametric quantity.
+  gsl_matrix_view X = gsl_matrix_submatrix(counts, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, counts->size2);
+  gsl_matrix_view emu = gsl_matrix_submatrix(mat_expected, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, mat_expected->size2);
+  gsl_matrix_view sd = gsl_matrix_submatrix(denoms, lbounds.lower - 1, 0, lbounds.upper - lbounds.lower + 1, denoms->size2);
+  return fn_log_lik_loggaussian_fixedsd(&X.matrix, &emu.matrix, &sd.matrix); 
 }
 int rtmData::getDim1(){
   return counts->size1;

@@ -172,6 +172,7 @@ void read_global_fixed_parameters(register global_model_instance_parameters& fix
   fixed_pars.l_Deaths_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Sero_data_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Viro_data_flag = READ_NEXT_VARIABLE_VALUE;
+  fixed_pars.l_Prev_data_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_GP_patch_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Sero_delay = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_GP_likelihood.lower = READ_NEXT_VARIABLE_VALUE;
@@ -192,6 +193,12 @@ void read_global_fixed_parameters(register global_model_instance_parameters& fix
     printf("Serological data likelihood interval greater than number of days\n");
   fixed_pars.l_Viro_likelihood.lower = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Viro_likelihood.upper = READ_NEXT_VARIABLE_VALUE;
+  if(fixed_pars.l_Viro_likelihood.upper > fixed_pars.l_duration_of_runs_in_days && fixed_pars.l_Viro_likelihood.upper < fixed_pars.l_Viro_likelihood.lower)  // daily data
+    printf("Invalid bounds for weekly data to be included in the virological data likelihood\n");
+  fixed_pars.l_Prev_likelihood.lower = READ_NEXT_VARIABLE_VALUE;
+  fixed_pars.l_Prev_likelihood.upper = READ_NEXT_VARIABLE_VALUE;
+  if(fixed_pars.l_Prev_likelihood.upper > fixed_pars.l_duration_of_runs_in_days)
+    printf("Prevalence data likelihood interval greater than number of days\n");
 
   // ALLOC MEMORY FOR ARRAYS WITHIN THE fixed.pars STRUCTURE
   alloc_global_model_instance(fixed_pars);
@@ -205,8 +212,6 @@ void read_global_fixed_parameters(register global_model_instance_parameters& fix
 		    fixed_pars.l_duration_of_runs_in_days);
 
   //  if(fixed_pars.l_Viro_likelihood.upper > gsl_vector_int_max(fixed_pars.d_week_numbers_by_day) && fixed_pars.l_Viro_likelihood.lower < gsl_vector_int_min(fixed_pars.d_week_numbers_by_day)) // weekly data
-  if(fixed_pars.l_Viro_likelihood.upper > fixed_pars.l_duration_of_runs_in_days && fixed_pars.l_Viro_likelihood.upper < fixed_pars.l_Viro_likelihood.lower)  // daily data
-    printf("Invalid bounds for weekly data to be included in the virological data likelihood\n");
 
 }
 
@@ -555,6 +560,7 @@ void read_modpar(updateable_model_parameter& modpar,
 	modpar.flag_Hosp_likelihood = atoi((likelihood_flags.substr(3, 1)).c_str());
 	modpar.flag_Sero_likelihood = atoi((likelihood_flags.substr(4, 1)).c_str());
 	modpar.flag_Viro_likelihood = atoi((likelihood_flags.substr(5, 1)).c_str());
+	modpar.flag_Prev_likelihood = atoi((likelihood_flags.substr(6, 1)).c_str());
       }
 
 
@@ -1182,7 +1188,16 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
 			       "regions_virosamples_data",
 			       "regions_viro_aggregation", str_var, cFALSE);
     }
-      
+  // IF PREVALENCE `DATA'?
+  if(meta_region->Prevalence_data != 0)
+    {
+      for(int_i = 0; int_i < num_regions; int_i++)
+	meta_data_type[int_i] = meta_region[int_i].Prevalence_data;
+      read_metaregion_datatype(meta_data_type, tempmat, countfiles, denomfiles, num_regions,
+			       "regions_logprevalence_estimates",
+			       "regions_logprevalence_sd",
+			       "regions_logprevalence_aggregation", str_var, cFALSE);
+    }
   // Free all allocated memory
   delete [] countfiles;
   delete [] denomfiles;

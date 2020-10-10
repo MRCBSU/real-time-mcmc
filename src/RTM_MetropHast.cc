@@ -232,7 +232,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Outputs
   ofstream* output_codas = new ofstream[num_component_updates->size];
   ofstream output_coda_lfx("coda_lfx", ios::out|ios::trunc|ios::binary);
-  ofstream *file_NNI, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_state;
+  ofstream *file_NNI, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
 
   fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, state_country);
   if(simulation_parameters.oType == cMCMC)
@@ -244,6 +244,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       }
       if(gmip.l_Hospitalisation_flag) 
 	fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, state_country);
+      if(gmip.l_Prev_data_flag)
+	fstream_model_statistics_open(file_Prev, "Prev", gmip.l_num_regions, state_country);
     }
   if(simulation_parameters.oType == cSMC)
     fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, state_country);
@@ -407,6 +409,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					    theta_i->flag_Hosp_likelihood,
 					    theta_i->flag_Viro_likelihood,
 					    theta_i->flag_Sero_likelihood,
+					    theta_i->flag_Prev_likelihood,
 					    gmip,
 					    theta);
 
@@ -454,7 +457,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 						  theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
 						  theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
 						  theta_i->flag_Sero_likelihood,
-						  theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
+						  theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag,
+						  theta_i->flag_Prev_likelihood && (bool) gmip.l_Prev_data_flag);
 			  
 			}
 			
@@ -480,7 +484,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					      theta_i->flag_GP_likelihood && (bool) gmip.l_GP_consultation_flag,
 					      theta_i->flag_Hosp_likelihood && (bool) gmip.l_Hospitalisation_flag,
 					      theta_i->flag_Sero_likelihood,
-					      theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag);
+					      theta_i->flag_Viro_likelihood && (bool) gmip.l_Viro_data_flag,
+					      theta_i->flag_Prev_likelihood && (bool) gmip.l_Prev_data_flag);
 
 		    }
 
@@ -545,6 +550,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			  }
 			if(gmip.l_Hospitalisation_flag)
 			  file_Hosp[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_Reported_Hospitalisations, int_i, int_j)), sizeof(double));
+			if(gmip.l_Prev_data_flag)
+			  file_Prev[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_prevalence, int_i, int_j)), sizeof(double));
 		      }
 		}
 	      else if(simulation_parameters.oType == cSMC)

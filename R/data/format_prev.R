@@ -1,0 +1,181 @@
+#########################################################
+## Inputs that should (or may) change on a daily basis
+#########################################################
+
+## Where to find the data as downloaded from the ONS?
+## --------------------------------------------------
+## Either already specified in the variable prev.loc
+## or found as the latest entry into a default
+## directory. If prev.loc is NULL, look for a
+## command-line argument.
+if(!exists("prev.loc")){ ## Set to default format for the filename
+    input.loc <- "data/raw/prevalence"
+    ## List the possible files in the directory
+    prev.loc <- file.info(file.path(input.loc, list.files(path = input.loc, pattern=glob2rx("202*csv"))))
+    ## Pick the most recently added
+    input.loc <- rownames(prev.loc)[which.max(prev.loc$mtime)]
+} else {
+    if(is.null(prev.loc)){
+        input.loc <- commandArgs(trailingOnly = TRUE)[1]
+    } else {
+        if(startsWith(prev.loc, "/")) input.loc <- prev.loc
+        else input.loc <- build.data.filepath(subdir = "raw", "prevalence", prev.loc)
+    }
+}
+
+## What is the date of publication of these data? If not specified, try to extract from filename
+if(!exists("date.prev")){
+    fl.name <- basename(input.loc)
+    date.prev <- lubridate::ymd(strapplyc(fl.name, "[0-9/]{8,}", simplify = TRUE))
+}
+
+## Define an age-grouping
+if(!exists("age.agg")){
+    age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
+    age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+")
+    }
+nA <- length(age.labs)
+
+## Map our names for columns (LHS) to data column names (RHS)
+possible.col.names <- list(
+    age = c("age", "age_rtm"),
+    region = "nhsregion",
+    sample_date = "date",
+    day = "study_day",
+    lmean = "lmean",
+    lsd = "lsd"
+    )
+input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+is.valid.col.name <- function(name) {name %in% input.col.names}
+first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
+col.names <- lapply(possible.col.names, first.valid.col.name)
+invalid.col.names <- sapply(col.names, is.null)
+if (any(invalid.col.names)) {
+	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+	stop(paste("No valid column name for:", names.invalid.cols))
+}
+
+## Given a row in the sero data file, return its region, formatted with no spaces
+get.region <- function(x) {
+    x %>% mutate(region = str_replace_all(region, " ", "_"),
+                 region = ifelse(region == "North_East", "North_East_and_Yorkshire", region)
+                 )
+}
+
+####################################################################
+## BELOW THIS LINE SHOULD NOT NEED EDITING
+####################################################################
+
+## Location of this script
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
+                # We're in RStudio
+                return(rstudioapi::getSourceEditorContext()$path)
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+
+## Where are various directories?
+if(!exists("file.loc")){
+    file.loc <- dirname(thisFile())
+    proj.dir <- dirname(dirname(file.loc))
+    dir.data <- file.path(proj.dir, "data")
+	source(file.path(file.loc, "utils.R"))
+	source(file.path(proj.dir, "config.R"))
+}
+if(!exists("prev.mean.files")){
+    prev.mean.files <- build.data.filepath("RTM_format/prevalence",
+                                           "prev",
+                                           date.prev,
+                                           "_",
+                                           regions,
+                                           "_ons_meanlogprev.txt")
+    prev.sd.files <- build.data.filepath("RTM_format/prevalence",
+                                         "prev",
+                                         date.prev,
+                                         "_",
+                                         regions,
+                                         "_ons_sdlogprev.txt")
+}
+
+## Which columns are we interested in?
+prev.col.args <- list()
+prev.col.args[[col.names[["sample_date"]]]] <- col_date(format = "%d/%m/%Y")
+prev.col.args[[col.names[["age"]]]] <- col_factor(ordered = TRUE)
+prev.col.args[[col.names[["region"]]]] <- col_character()
+prev.col.args[[col.names[["lmean"]]]] <- col_double()
+prev.col.args[[col.names[["lsd"]]]] <- col_double()
+prev.col.args[[col.names[["day"]]]] <- col_integer()
+prev.cols <- do.call(cols, prev.col.args)
+
+## Reading in the data ##
+print(paste("Reading from", input.loc))
+## strPos <- c("+", "Positive", "positive")
+prev.dat <- read_csv(input.loc,
+                     col_types = prev.cols) %>%
+    rename(!!!col.names)
+levels(prev.dat$age) <- age.labs[-1]
+
+## Filter to only those on or before the last day used in the likelihood.
+prev.dat <- prev.dat %>%
+    filter(sample_date <= (start.date + max(prev.lik.days) - 1)) %>%
+    mutate(day = sample_date - start.date + 1) %>%
+    ## Set equal to zero all those entries that are not going to be used in the likelihood.
+    mutate(include = (day %in% prev.lik.days) & !(age == "1-4"),
+           lmean = ifelse(include, lmean, 0),
+           lsd = ifelse(include, lsd, 0)) %>%
+    select(-include) %>%
+    get.region()
+
+## Pad data with some zeros to take it back to day 1.
+if(min(prev.dat$day) > 1){
+    add.dates <- lubridate::as_date(start.date:(min(prev.dat$sample_date) - 1)) %>%
+        as_tibble() %>%
+        rename(sample_date = value)
+    for(ag in age.labs)
+        add.dates <- mutate(add.dates, !!ag := 0)
+}
+
+## Get into format for use by the rtm
+names(prev.mean.files) <- names(prev.sd.files) <- regions
+for(reg in regions){
+    region.mean <- bind_rows(add.dates,
+                             pivot_wider(prev.dat %>%
+                               filter(region == reg),
+                               id_cols = 1,
+                               names_from = age,
+                               values_from = lmean) %>%
+                             mutate(!!age.labs[1] := 0)
+                             )
+    region.sd <- bind_rows(add.dates,
+                           pivot_wider(prev.dat %>%
+                               filter(region == reg),
+                               id_cols = 1,
+                               names_from = age,
+                               values_from = lsd) %>%
+                             mutate(!!age.labs[1] := 0)
+                           )
+
+    print(paste("Writing to",
+                prev.mean.files[reg],
+                "."))
+
+    region.mean %>%
+        write_tsv(prev.mean.files[reg], col_names = FALSE)
+
+    print(paste("Writing to",
+                prev.sd.files[reg],
+                "."))
+
+    region.sd %>%
+        write_tsv(prev.sd.files[reg], col_names = FALSE)
+    
+}
