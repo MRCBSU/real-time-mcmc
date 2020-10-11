@@ -716,7 +716,7 @@ void fn_log_likelihood(likelihood& llhood,
 		for(int int_k = 0; int_k < summed_prevalence->size1; int_k++)
 		  {
 		    gsl_vector_view full_strata_prev = gsl_matrix_row(meta_region[int_region].region_modstats.d_prevalence, int_k);
-		    gsl_vector_view agg_strata_prev = gsl_matric_row(summed_prevalence, int_k);
+		    gsl_vector_view agg_strata_prev = gsl_matrix_row(summed_prevalence, int_k);
 		    R_by_sum_gsl_vector_mono_idx(&agg_strata_prev.vector,
 						 NULL,
 						 &full_strata_prev.vector,
@@ -727,6 +727,7 @@ void fn_log_likelihood(likelihood& llhood,
 	      lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Prev_lfx, int_region));
 	      gsl_vector_set(llhood.Prev_lfx, int_region, temp_log_likelihood);
 	    }
+	  gsl_matrix_free(summed_prevalence);
 	}
       
       double lfx_sub_increment = 0.0;

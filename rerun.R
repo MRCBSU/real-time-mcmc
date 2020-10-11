@@ -7,10 +7,6 @@ require(rmarkdown)
 
 external <- FALSE
 
-if (!file.exists("mcmc.RData")) {
-	source(file.path(Rfile.loc, "tracePlots.R"))
-}
-
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -29,6 +25,10 @@ thisFile <- function() {
 file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 Rfile.loc <- file.path(file.loc, "R/output")
+
+if (!file.exists("mcmc.RData")) {
+	source(file.path(Rfile.loc, "tracePlots.R"))
+}
 
 render(
 	file.path(Rfile.loc, 'report-updated.Rmd'),
