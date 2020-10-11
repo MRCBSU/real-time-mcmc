@@ -88,7 +88,7 @@ data.files <- paste0(data.dirs["deaths"], "/",
                      nA, "ag",
                      ifelse(flg.confirmed, "CONF", ""),
                      reporting.delay, "delay")
-if (exists("flg.cutoff"){
+if (exists("flg.cutoff")){
     if(flg.cutoff) 
 	data.files <- paste0(data.files, "cutoff", str.cutoff)
 }

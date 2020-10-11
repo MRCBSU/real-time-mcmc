@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20201002"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201009"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -46,15 +46,17 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
-data.desc <- "adjusted"
+data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
-scenario.name <- "base_varSens_shortsero"
+scenario.name <- "NoPrev_shortsero"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
+## Do we want to include prevalence estimates from community surveys in the model?
+prev.flag <- 0
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
@@ -62,7 +64,7 @@ if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {
@@ -89,11 +91,9 @@ out.dir <- file.path(proj.dir,
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 data.dirs <- file.path(proj.dir,
-                       c("data/RTM_format/deaths",
-                         "data/RTM_format/serology",
-                         "data/RTM_format/cases")
+                       paste0("data/RTM_format/", c("deaths","serology","cases","prevalence"))                       
                        )
-names(data.dirs) <- c("deaths", "sero", "cases")
+names(data.dirs) <- c("deaths", "sero", "cases", "prev")
       
 flg.confirmed = TRUE
 
@@ -119,5 +119,14 @@ if(gp.flag){
     } else asymptomatic.states <- c("Y", "N", "U")
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
+
+if(prev.flag){
+    ## Get the date of the prevalence data
+    date.prev <- ymd("20200930")
+    ## Convert that to an analysis day number
+    prev.end.day <- date.prev - start.date + 1
+    ## Default system for getting the days on which the likelihood will be calculated.
+    prev.lik.days <- as.integer((prev.end.day - 4) - (28 * (2:0)))
+}
 
 threads.per.regions <- 2

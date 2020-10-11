@@ -62,9 +62,9 @@ r1_period = { param_value = 5.5;
 
 prior_distribution = `r prior.r1`;
 
-prior_parameters = `r paste(pars.r1, collapse = ", ")`;
+`r ifelse(prev.flag & (prior.r1 > 1), paste0("prior_parameters = ", paste(pars.r1, collapse = ", "), ";"), "")`
 
-proposal_variance = 0.007562;
+`r ifelse(prev.flag & (prior.r1 > 1), "proposal_variance = 0.007562;", "")`
 
 }
 
