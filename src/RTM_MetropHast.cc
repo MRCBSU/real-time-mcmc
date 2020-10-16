@@ -624,6 +624,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       }
       if(gmip.l_Hospitalisation_flag)
 	fstream_model_statistics_close(file_Hosp, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
+      if(gmip.l_Prev_data_flag)
+	fstream_model_statistics_close(file_Prev, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
     }
   if(simulation_parameters.oType == cSMC)
     delete [] file_state;

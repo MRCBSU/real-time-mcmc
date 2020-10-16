@@ -13,23 +13,27 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-3
+#SBATCH --array=1-4
 #SBATCH -p skylake
 
 
 #SBATCH --output=model_runs_2020prevjobs_%a.out
 #SBATCH --error=model_runs_2020prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201008/Prev"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201015/"
 
-if [ $SLURM_ARRAY_TASK_ID -eq 2 ]
+if [ $SLURM_ARRAY_TASK_ID -gt 2 ]
 then
-    workdir="${workdir}EstR1relax"
-elif [ $SLURM_ARRAY_TASK_ID -eq 3 ]
-then 
-    workdir="${workdir}EstR1tight"
+    workdir="${workdir}No"
 fi
-workdir="${workdir}_ifr_60cutoff6day_matrices_20201002_deaths"
+workdir="${workdir}Prev_relax_shortsero_ifr_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
+then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff6day_matrices_20201009_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
