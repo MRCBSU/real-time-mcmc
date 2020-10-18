@@ -278,7 +278,10 @@ if(dths.flag){
     deaths2 <- nice.array(Deaths)
     rm(Deaths)
 }
-
+if(prev.flag){
+    prevalence <- nice.array(Prev)
+    rm(Prev)
+}
 derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
                              overdispersion.param, convolution,
                              series = infections, dow = NULL,
@@ -355,7 +358,7 @@ if (!dths.flag) {
     cum_deaths <- death.data$cumulative
 }
 if (!cases.flag) {
-  cases <- noisy_cases <- cum_cases <- NULL
+  cases <- noisy_case <- cum_cases <- NULL
 } else {
     delay.to.case <- list(
         incub.mean = 4,
@@ -431,3 +434,4 @@ save.objs <- c("infections", "cum_infections", "deaths", "cum_deaths", "params",
 save(list = save.objs[sapply(save.objs, exists)],
      file = file.path(out.dir, "output_matrices.RData"))
 save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))
+

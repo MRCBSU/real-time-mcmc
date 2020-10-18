@@ -31,9 +31,10 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     sero.sens <- params$sero_test_sensitivity[iter, , drop = FALSE]
     sero.spec <- params$sero_test_specificity[iter, , drop = FALSE]
     
-    ## Compile the mod_pars.txt file
-    render(fl.pars, output_file = "mod_pars.txt",
-           output_dir = out.loc, output_format = plain_document, quiet = TRUE)
+    ## ## Compile the mod_pars.txt file
+    ## render(fl.pars, output_file = "mod_pars.txt",
+    ##        output_dir = out.loc, output_format = plain_document, quiet = TRUE)
+    knit(input = fl.pars, output = file.path(out.loc, "mod_pars.txt"), quiet = TRUE)
     
     ## Run the code
     setwd(out.loc)

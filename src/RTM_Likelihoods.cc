@@ -604,7 +604,7 @@ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix* mat_data,
 	  double sd = gsl_matrix_get(mat_sds, inti, intj);
 	  if(sd > DBL_EPSILON){
 	    double mu = gsl_sf_log(gsl_matrix_get(mat_emeans, inti, intj));
-	    double tmp = (gsl_matrix_get(mat_data, inti, intj) - mu / sd);
+	    double tmp = (gsl_matrix_get(mat_data, inti, intj) - mu) / sd;
 	    lfx -= (tmp * tmp / 2);
 	  }
 	}

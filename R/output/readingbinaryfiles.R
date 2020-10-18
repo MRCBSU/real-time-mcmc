@@ -46,6 +46,9 @@ if(exists("var.priors")){
       Cases <- Cases.files <- vector("list", r)
       cases.flag <- !cases.flag
   }
+  if(!exists("prev.flag")) prev.flag <- FALSE
+  if(prev.flag & !SMC.output)
+      Prev <- Prev.files <- vector("list", r)
   if(SMC.output) states <- state.files <- vector("list", r)
   
   ## NNI files
@@ -56,6 +59,8 @@ if(exists("var.priors")){
             Deaths.files[[intr]] <- file(file.path(target.dir, paste0("Hosp_", regions[intr])), "rb")
         if(cases.flag)
             Cases.files[[intr]] <- file(file.path(target.dir, paste0("GP_", regions[intr])), "rb")
+        if(prev.flag)
+            Prev.files[[intr]] <- file(file.path(target.dir, paste0("Prev_", regions[intr])), "rb")
         if(SMC.output)
             ## state files
             state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
@@ -63,6 +68,7 @@ if(exists("var.priors")){
   names(NNI.files) <- regions
   if(dths.flag) names(Deaths.files) <- regions
   if(cases.flag) names(Cases.files) <- regions
+  if(prev.flag) names(Prev.files) <- regions
   if(SMC.output) names(state.files) <- regions
   
   ## lfx files
@@ -79,17 +85,22 @@ if(exists("var.priors")){
       NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * ndays * nA)
       NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
       if(dths.flag){
-          Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = i.summary * end.hosp * nA) %>%
+          Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = i.summary * ndays * nA) %>%
               array(dim = c(nA, ndays, i.summary))
       }
       if(cases.flag){
-          Cases[[intr]] <- readBin(Cases.files[[intr]], double(), n = i.summary * end.gp * nA) %>%
+          Cases[[intr]] <- readBin(Cases.files[[intr]], double(), n = i.summary * ndays * nA) %>%
+              array(dim = c(nA, ndays, i.summary))
+      }
+      if(prev.flag){
+          Prev[[intr]] <- readBin(Prev.files[[intr]], double(), n = i.summary * ndays * nA) %>%
               array(dim = c(nA, ndays, i.summary))
       }
     }
   names(NNI) <- regions
   if(dths.flag) names(Deaths) <- regions
   if(cases.flag) names(Cases) <- regions
+  if(prev.flag) names(Prev) <- regions
   
   lfx <- readBin(lfx.files, double(), n = i.saved)
   
@@ -126,6 +137,7 @@ if(exists("var.priors")){
       close(NNI.files[[intr]])
       if(dths.flag) close(Deaths.files[[intr]])
       if(cases.flag) close(Cases.files[[intr]])
+      if(prev.flag) close(Prev.files[[intr]])
   }
   close(lfx.files)
   if(SMC.output)

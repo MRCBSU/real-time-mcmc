@@ -21,7 +21,8 @@ R/output/*_cache
 slurm-*
 phe-nowcasts/**
 Lombdardy*/**
-**out
-**err
+**.out
+**.err
 **.RData
 contact_mats/google**
+**.rds
