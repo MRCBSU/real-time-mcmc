@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -48,7 +48,7 @@ region.code <- "Eng"
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
 data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
-scenario.name <- "NoPrev_shortsero"
+scenario.name <- "Prev_relax_shortseroFIXED"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -56,7 +56,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
@@ -122,7 +122,7 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20200930")
+    date.prev <- ymd("20201014")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
     ## Default system for getting the days on which the likelihood will be calculated.

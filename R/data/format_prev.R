@@ -38,7 +38,7 @@ nA <- length(age.labs)
 
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
-    age = c("age", "age_rtm"),
+    age = c("age", "age_rtm", "ageg_rtm"),
     region = "nhsregion",
     sample_date = "date",
     day = "study_day",
@@ -108,7 +108,7 @@ if(!exists("prev.mean.files")){
 
 ## Which columns are we interested in?
 prev.col.args <- list()
-prev.col.args[[col.names[["sample_date"]]]] <- col_date(format = "%d/%m/%Y")
+prev.col.args[[col.names[["sample_date"]]]] <- col_date(format = "%Y-%m-%d")
 prev.col.args[[col.names[["age"]]]] <- col_factor(ordered = TRUE)
 prev.col.args[[col.names[["region"]]]] <- col_character()
 prev.col.args[[col.names[["lmean"]]]] <- col_double()
@@ -150,7 +150,7 @@ for(reg in regions){
     region.mean <- bind_rows(add.dates,
                              pivot_wider(prev.dat %>%
                                filter(region == reg),
-                               id_cols = 1,
+                               id_cols = sample_date,
                                names_from = age,
                                values_from = lmean) %>%
                              mutate(!!age.labs[1] := 0)
@@ -158,7 +158,7 @@ for(reg in regions){
     region.sd <- bind_rows(add.dates,
                            pivot_wider(prev.dat %>%
                                filter(region == reg),
-                               id_cols = 1,
+                               id_cols = sample_date,
                                names_from = age,
                                values_from = lsd) %>%
                              mutate(!!age.labs[1] := 0)
