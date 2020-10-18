@@ -303,7 +303,7 @@ beta.rw.sd <- 0.151057317190954
 ## sero.spec <- 777.5 / 787
 sero.sens <- 0.707875480848508
 sero.spec <- 0.965012479451016
-ssens.prior.dist <- 1 ## ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
+ssens.prior.dist <- 3 ## ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 ## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
 ## if (grepl("altSens", scenario.name)) {
