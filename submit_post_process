@@ -17,7 +17,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=2
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -28,14 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-3
+#! SBATCH --array=1-4
 
 #SBATCH -p skylake-himem
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201008_%a.out
-#SBATCH --error=process_model_runs_20201008_%a.err
+#SBATCH --output=process_model_runs_20201015_%a.out
+#SBATCH --error=process_model_runs_20201015_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -60,15 +61,13 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201008/Prev"
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]
-then
-    workdir="${workdir}EstR1relax"
-elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]
-then
-    workdir="${workdir}EstR1tight"
-fi
-workdir="${workdir}_ifr_60cutoff6day_matrices_20201002_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201017/"
+
+# if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then workdir="${workdir}NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201016_deaths"; fi
+# if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then workdir="${workdir}Prev_relax_shortsero_ifr_60cutoff6day_matrices_20201016_deaths"; fi
+# if [ $SLURM_ARRAY_TASK_ID -eq 3 ]; then workdir="${workdir}Prev_relax_shortseroFIXED_ifr_60cutoff6day_matrices_20201016_deaths"; fi
+# if [ $SLURM_ARRAY_TASK_ID -eq 4 ]; then
+workdir="${workdir}Prev_relax_shortsero_ifr_28cutoff6day_matrices_20201016_deaths_v0"
 
 echo -e $workdir
 

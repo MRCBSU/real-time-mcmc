@@ -554,7 +554,7 @@ deaths.growth.rates %>%
   	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
   select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
   knitr::kable(digits = 2, aligh = 'lccc')
-
+  stop()
 ```
 
 ## Infections and deaths {.tabset}

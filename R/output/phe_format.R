@@ -54,15 +54,19 @@ create.spim.table <- function(data, name) {
       ValueType = name
     )
 }
+prev.flag <- exists("prevalence")
+if(prev.flag) prev.flag <- !is.null(prevalence)
 
 tbl_inf <- create.spim.table(cum_infections, "infections_cum")
 tbl_inf_inc <- create.spim.table(infections, "infections_inc")
 tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
-
+if(prev.flag){
+    tbl_prev <- create.spim.table(prevalence, "prevalence")
+} else tbl_prev <- NULL
 dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 
-bind_rows(tbl_inf, tbl_deaths, tbl_inf_inc) %>%
+bind_rows(tbl_inf, tbl_deaths, tbl_inf_inc, tbl_prev) %>%
     mutate(
 		   `Creation Day` = day(CreationDate),
 		   `Creation Month` = month(CreationDate),
