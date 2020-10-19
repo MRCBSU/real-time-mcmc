@@ -287,7 +287,7 @@ population %>%
 
 
 ```{r ifr, eval=!is.null(dth.dat)}
-today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum)
+today_cum_inf_by_age <- apply(cum_infections[ymd(date.data)-start.date,,,,drop = FALSE], c("age", "iteration"), sum)
 merge.youngest.age.groups <- function(mat, num.to.group = 2) {
   if (num.ages <= 1) {return(mat)}
   add.function <- function(x) {

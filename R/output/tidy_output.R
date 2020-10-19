@@ -294,8 +294,9 @@ derived.quantity <- function(scaling.param, overdispersion.param, convolution, n
   noise.dimnames$iteration <- noise.iterations
   noisy.out <- mean %>%
     apply.param.to.output(overdispersion.param, neg.binom.noise,
-                          target.dimnames = noise.dimnames) %>%
-    merge.youngest.age.groups(3, "<25")
+                          target.dimnames = noise.dimnames)
+  noisy.out[is.na(noisy.out)] <- 0
+  noisy.out <- noisy.out %>% merge.youngest.age.groups(3, "<25")
   return(list(
     mean = mean,
     noisy.out = noisy.out,
