@@ -5,7 +5,6 @@ suppressMessages(library(gsubfn))
 #########################################################
 ## Inputs that should (or may) change on a daily basis
 #########################################################
-
 ## Where to find the data, if NULL use command line argument
 if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
@@ -26,7 +25,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
 ## What is the date of publication of these data? If not specified, try to extract from filename
 if(!exists("date.sero")){
     fl.name <- basename(input.loc)
-    date.sero <- lubridate::ymd(strapplyc(fl.name, "[0-9/]{8,}", simplify = TRUE))
+    date.sero.str <- strapplyc(fl.name, "[0-9]{8,}", simplify = TRUE)
 }
 
 ## Define an age-grouping
@@ -99,7 +98,7 @@ if(!exists("file.loc")){
 if(!exists("serosam.files")){
     serosam.files <- build.data.filepath("RTM_format/serology",
                                          "sero",
-                                         date.sero,
+                                         date.sero.str,
                                          "_",
                                          regions,
                                          "_",
@@ -107,7 +106,7 @@ if(!exists("serosam.files")){
                                          "ages_samples.txt")
     seropos.files <- build.data.filepath("RTM_format/serology",
                                          "sero",
-                                         date.sero,
+                                         date.sero.str,
                                          "_",
                                          regions,
                                          "_",
@@ -169,6 +168,8 @@ rtm.pos <- sero.dat %>%
     arrange(date)
 
 ## Write rtm data outputs to file
+serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
+seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
 names(serosam.files) <- names(seropos.files) <- regions
 for(reg in regions){
     region.sam <- pivot_wider(rtm.sam %>%
@@ -249,18 +250,18 @@ gp <- ggplot(rtm.plot, aes(x = date, y = X, size = N, colour = region, text = te
 
 pp <- ggplotly(gp, tooltip = "text")
 
-plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot", date.sero, ".jpg"))
+plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, ".jpg"))
 ggsave(plot.filename,
        gp,
        width = 9.15,
        height = 6)
-saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero, ".html")))
+saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, ".html")))
 
 pp.focus <- ggplotly(gp+ylim(c(0, 0.25)), tooltip = "text")
 
-plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero, ".jpg"))
+plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".jpg"))
 ggsave(plot.filename,
        gp,
        width = 9.15,
        height = 6)
-saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero, ".html")))
+saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".html")))
