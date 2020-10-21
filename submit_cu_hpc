@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-4
+#SBATCH --array=1-6
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -33,7 +33,14 @@ if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
 then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero_ifr_28cutoff6day_matrices_20201016_deaths"
+workdir="${workdir}Prev_relax_shortsero_ifr_"
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]
+then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff6day_matrices_20201016_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
@@ -41,4 +48,4 @@ echo $workdir
 
 cd $workdir
 
-../../../rtm_hpc
+# ../../../rtm_hpc

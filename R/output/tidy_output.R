@@ -281,7 +281,7 @@ if(dths.flag){
 if(prev.flag){
     prevalence <- nice.array(Prev)
     rm(Prev)
-}
+} else prev.dat <- NULL
 derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
                              overdispersion.param, convolution,
                              series = infections, dow = NULL,

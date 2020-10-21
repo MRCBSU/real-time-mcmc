@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#! SBATCH --array=1-4
+#SBATCH --array=1-2
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,13 +61,13 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201017/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201018/"
 
-# if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then workdir="${workdir}NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201016_deaths"; fi
-# if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then workdir="${workdir}Prev_relax_shortsero_ifr_60cutoff6day_matrices_20201016_deaths"; fi
-# if [ $SLURM_ARRAY_TASK_ID -eq 3 ]; then workdir="${workdir}Prev_relax_shortseroFIXED_ifr_60cutoff6day_matrices_20201016_deaths"; fi
-# if [ $SLURM_ARRAY_TASK_ID -eq 4 ]; then
-workdir="${workdir}Prev_relax_shortsero_ifr_28cutoff6day_matrices_20201016_deaths_v0"
+if [ $SLURM_ARRAY_TASK_ID -lt 2 ]
+then
+    workdir="${workdir}No"
+fi
+workdir="${workdir}Prev_relax_shortsero_ifr_28cutoff6day_matrices_20201016_deaths"
 
 echo -e $workdir
 

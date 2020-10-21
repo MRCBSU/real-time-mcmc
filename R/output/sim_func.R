@@ -12,8 +12,8 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
         file.copy(gsub("mod_pars", "sim_mod_pars", pars.template.loc),
                   fl.pars)
 
-    Deaths <- NNI <- Cases <- vector("list", nr)
-    Deaths.files <- NNI.files <- Cases.files <- vector("list", nr)
+    Deaths <- NNI <- Cases <- Prevs <- vector("list", nr)
+    Deaths.files <- Prev.files <- NNI.files <- Cases.files <- vector("list", nr)
     
     ## Set-up output objects
     ## Get the parameters into the right variable names.
@@ -48,11 +48,14 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
             Deaths.files[[intr]] <- file(paste0("Hosp_", regions[intr]), "rb")
         if(cases.flag)
             Cases.files[[intr]] <- file(paste0("GP_", regions[intr]), "rb")
+        if(prev.flag)
+            Prev.files[[intr]] <- file(paste0("Prev_", regions[intr]), "rb")
     }
     names(NNI.files) <- regions
     if(dths.flag) names(Deaths.files) <- regions
     if(cases.flag) names(Cases.files) <- regions
-
+    if(prev.flag) names(Prev.files) <- regions
+    
     for(intr in 1:r)
     {
         NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
@@ -68,11 +71,16 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
                       array(dim = c(nA, ndays, num.iterations))
             close(Cases.files[[intr]])
         }
+        if(prev.flag){
+            Prevs[[intr]] <- readBin(Prev.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
+                array(dim = c(nA, ndays, num.iterations))
+            close(Prev.files[[intr]])
+        }
     }
     ## if((100 * iter / niter) > (pct + 1)){
     ##     pct <- pct + 1
     ##     cat(pct, "% Complete\n")
     ## }
     setwd("..")
-    list(NNI = NNI, Deaths = Deaths, Cases = Cases)
+    list(NNI = NNI, Deaths = Deaths, Cases = Cases, Prevs = Prevs)
 }
