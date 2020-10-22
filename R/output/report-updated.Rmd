@@ -530,8 +530,6 @@ make.plots(cum_infections, by = "region")
 make.plots(cum_infections, by = "age")
 ```
 
-```{r eval=!is.null(dth.dat), child='deaths-report.Rmd'}
-```
 
 
 ```{r eval=!is.null(hosp.dat), child='hosp-report.Rmd'}
@@ -563,4 +561,9 @@ make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 
 # 
 
-Copyright © MRC Biostatistics Unit, University of Cambridge
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
+```
+
+#
+
+Gopyright © MRC Biostatistics Unit, University of Cambridge

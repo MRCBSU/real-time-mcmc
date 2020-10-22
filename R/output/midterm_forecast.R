@@ -13,10 +13,6 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 ## Forecast projection
 nforecast.weeks <- 8
 
-## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd(c("20200817", "20200831", "20200907"))
-google.data.date <- ymd("20200828")
-mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
 
@@ -46,16 +42,19 @@ if(!file.exists(file.path(out.dir, "projections")))
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
+if (!exists("gp.flag")) gp.flag <- 0
+if (!exists("dths.flag")) dths.flag <- hosp.flag
+if (!exists("cases.flag")) cases.flag <- gp.flag
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 start.hosp <- 1
 start.gp <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 
-## Get the new contract matrix modifiers to use
-cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
-              )
+cm.breaks <- append(cm.breaks, 249)
+cm.bases <- append(cm.bases, cm.bases[length(cm.bases)])
+cm.mults <- append(cm.mults, "/home/joshuab/real-time-mcmc/contact_mats/ag1_mult2.txt")
+
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
 
@@ -103,8 +102,6 @@ if(rw.flag)
     symlink.design("m.design.txt")
 if(beta.rw.flag)
     symlink.design("beta.design.txt")
-if(!single.ifr)
-    symlink.design("ifr.design.txt")
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP
@@ -129,6 +126,7 @@ for(iter in 1:niter){
     if(gp.flag) value.pgp  <- params$prop_case_to_GP_consultation[iter, , drop = FALSE]
     contact.reduction <- params$contact_parameters[iter, , drop = FALSE]
     beta.rw.vals <- params$log_beta_rw[iter, , drop = FALSE]
+	contact.reduction[3] <- log(0.6) - log(posterior.R0[iter, 1]) - sum(beta.rw.vals)
     log_beta_rw_sd <- params$log_beta_rw_sd[iter, -1, drop = FALSE]
     value.egr <- params$exponential_growth_rate[iter, , drop = FALSE]
     value.nu <- params$log_p_lambda_0[iter, , drop = FALSE]
@@ -142,7 +140,7 @@ for(iter in 1:niter){
            output_dir = file.path(out.dir, "projections"), output_format = plain_document, quiet = TRUE)
     
     ## Run the code
-    system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+    system(file.path(proj.dir, "rtm_optim_1ag"), intern = TRUE)
 
     ## Read the outputs in and append to output objects
     for(intr in 1:nr)
@@ -210,7 +208,7 @@ if(gp.flag){
     dimnames(cases)[-1] <- dim.list
     names(dimnames(cases)) <- c("region", names(dim.list))
 }
-save(list = save.list, file = "projections.RData")
+save(list = save.list, file = "../projections.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
