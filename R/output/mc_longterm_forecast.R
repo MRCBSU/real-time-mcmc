@@ -58,6 +58,9 @@ if(!file.exists(file.path(out.dir, "projections")))
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
+if (!exists("gp.flag")) gp.flag <- 0
+if (!exists("dths.flag")) dths.flag <- hosp.flag
+if (!exists("cases.flag")) cases.flag <- gp.flag
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 start.hosp <- 1
 start.gp <- 1
@@ -68,18 +71,18 @@ prev.flag <- 0
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
+              paste0("scotland_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 ## Use the next line to specify where the new matrices are stored
 matrix.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_rbc_scenarios"))
 ## Use the next line to specify the format with the filenames
 ## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_20.csv")
+cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_00.csv")
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 if(!all(file.exists(cm.bases))){
     idx.miss <- which(!file.exists(cm.bases))
-    adf <- as.data.frame(lst$England$all$m)
+    adf <- as.data.frame(lst$Scotland$all$m)
     for(idx in idx.miss){
         mat <- (read_csv(cm.lockdown[idx - 1]) * adf) %>%
             write_tsv(cm.bases[idx], col_names = FALSE)
@@ -161,9 +164,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] == "pjb51"){
-    exe <- "hpc"
-} else exe <- Sys.info()["nodename"]
+rtm <- "optim_8ag"
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
@@ -208,7 +209,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections20.RData")
+save(list = save.list, file = "projections00.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

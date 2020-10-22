@@ -562,4 +562,9 @@ make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 
 # 
 
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
+```
+
+#
+
 Copyright © MRC Biostatistics Unit, University of Cambridge

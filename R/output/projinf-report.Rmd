@@ -1,0 +1,26 @@
+## Mid-term projections {.tabset}
+
+### Infection incidence {.tabset}
+
+#### By region
+```{r reg-medterm-inf}
+load(file.path(out.dir, "projections.RData"))
+make.plots(infections, by = "region", project.forwards = TRUE)
+```
+
+#### By age
+```{r age-medterm-inf}
+make.plots(infections, by = "age", project.forwards = TRUE)
+```
+
+### Deaths {.tabset}
+
+#### By region
+```{r reg-medterm-death}
+make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = TRUE)
+```
+
+#### By age
+```{r age-medterm-death}
+make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE)
+```
