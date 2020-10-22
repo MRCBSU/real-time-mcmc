@@ -67,6 +67,7 @@ start.gp <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 prev.flag <- 0
+if (!exists("single.ifr")) single.ifr <- TRUE
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -164,7 +165,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-rtm <- "optim_8ag"
+exe <- "optim_8ag"
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
@@ -212,8 +213,7 @@ if(prev.flag){
 save(list = save.list, file = "projections00.RData")
 
 ## ## ## Housekeeping
-lapply(hosp.data, file.remove)
-lapply(cases.files, file.remove)
-lapply(denoms.files, file.remove)
-if(prev.flag)
-    lapply(prev.data, file.remove)
+if (exists("hosp.data")) lapply(hosp.data, file.remove)
+if (exists("cases.files")) lapply(cases.files, file.remove)
+if (exists("denoms.files")) lapply(denoms.files, file.remove)
+if (exists("prev.data")) lapply(prev.data, file.remove)
