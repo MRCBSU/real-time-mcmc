@@ -53,7 +53,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-last.break <- as.integer(ymd(google.data.date) - ymd(start.date), unit = "days") - 4
+last.break <- as.integer(ymd(google.data.date) - ymd(start.date), unit = "days")
 cm.breaks <- seq(from = 36, to = last.break, by = 7)
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
