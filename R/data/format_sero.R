@@ -22,6 +22,9 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
     }
 }
 
+earliest.date <- start.date
+latest.date <- sero.end.date
+
 ## What is the date of publication of these data? If not specified, try to extract from filename
 if(!exists("date.sero")){
     fl.name <- basename(input.loc)
@@ -48,7 +51,8 @@ possible.col.names <- list(
     Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome", "euroimmun_outcome"),
     Eresult = c("EuroImmun_units", "EuroImm_Units", "euroimmun_units"),
     Routcome = c("RBD_units", "RBD_outcome", "rbd_outcome"),
-    Rresult = c("RBD_units", "RBD_Units", "rbd_units")
+    Rresult = c("RBD_units", "RBD_Units", "rbd_units"),
+	ONS_region = "ONS_Region"
 )
 
 input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
@@ -63,7 +67,11 @@ if (any(invalid.col.names)) {
 
 
 ## Given a row in the sero data file, return its region, formatted with no spaces
-get.region <- function(x) str_replace_all(x$region, " ", "_")
+if (region.type == "NHS") {
+	get.region <- function(x) str_replace_all(x$region, " ", "_")
+} else {
+	get.region <- function(x) str_replace_all(x$ONS_region, " ", "_")
+}
     
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -123,6 +131,7 @@ sero.col.args[[col.names[["Eoutcome"]]]] <- col_character()
 sero.col.args[[col.names[["Eresult"]]]] <- col_double()
 sero.col.args[[col.names[["Routcome"]]]] <- col_character()
 sero.col.args[[col.names[["Rresult"]]]] <- col_double()
+sero.col.args[[col.names[["ONS_region"]]]] <- col_character()
 sero.cols <- do.call(cols_only, sero.col.args)
 
 ## Reading in the data ##
@@ -137,7 +146,7 @@ sero.dat <- read_csv(input.loc,
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
     filter(startsWith(surv, "NHSBT")) %>%
-    filter(!is.na(region)) %>%
+    filter(!is.na(region), SDate <= sero.end.date) %>%
     mutate(region = get.region(.),
            age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
            date = SDate - serology.delay)

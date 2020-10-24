@@ -4,17 +4,29 @@
 library(lubridate)
 library(tidyr)
 
+# Either ONS or NHS
+region.type <- "ONS"
+
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
 if (args[2] == "All")  {
-	regions <- c("East_of_England", "London", "Midlands",
+	if (region.type == "NHS") 
+		regions <- c("East_of_England", "London", "Midlands",
                      "North_East_and_Yorkshire", "North_West",
                      "South_East", "South_West"## ,
                      ## "Scotland", "Northern_Ireland", "Wales"
                      )
+	else if (region.type == "ONS") 
+		regions <- c("East_of_England", "East_Midlands",
+					 "London", 
+                     "North_East", "North_West",
+                     "South_East", "South_West",
+					 "West_Midlands", "Yorkshire_and_The_Humber"
+                     )
+	else stop("Unkown region type")
 	nr <- length(regions)
 } else {
 	nr <- as.integer(args[2])
@@ -23,6 +35,7 @@ if (args[2] == "All")  {
 }
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
+sero.end.date <- ymd(20200605)
 
 google.data.date <- format(ymd("20201016"), format = "%Y%m%d")
 
@@ -48,7 +61,7 @@ region.code <- "Eng"
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
 data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
-scenario.name <- "NoPrev_relax_shortsero"
+scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -91,7 +104,7 @@ out.dir <- file.path(proj.dir,
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", c("deaths","serology","cases","prevalence"))                       
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       
                        )
 names(data.dirs) <- c("deaths", "sero", "cases", "prev")
       
