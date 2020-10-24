@@ -43,12 +43,12 @@ if(!exists("regions")){
 possible.col.names <- list(
     surv = "surv",
     age = "age",
-    region = "Region",
-    sample_date = "SampleDate",
-    Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome"),
-    Eresult = c("EuroImmun_units", "EuroImm_Units"),
-    Routcome = c("RBD_units", "RBD_outcome"),
-    Rresult = c("RBD_units", "RBD_Units")
+    region = c("region", "Region"),
+    sample_date = c("sampledate", "SampleDate"),
+    Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome", "euroimmun_outcome"),
+    Eresult = c("EuroImmun_units", "EuroImm_Units", "euroimmun_units"),
+    Routcome = c("RBD_units", "RBD_outcome", "rbd_outcome"),
+    Rresult = c("RBD_units", "RBD_Units", "rbd_units")
 )
 
 input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
@@ -123,7 +123,7 @@ sero.col.args[[col.names[["Eoutcome"]]]] <- col_character()
 sero.col.args[[col.names[["Eresult"]]]] <- col_double()
 sero.col.args[[col.names[["Routcome"]]]] <- col_character()
 sero.col.args[[col.names[["Rresult"]]]] <- col_double()
-sero.cols <- do.call(cols, sero.col.args)
+sero.cols <- do.call(cols_only, sero.col.args)
 
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
