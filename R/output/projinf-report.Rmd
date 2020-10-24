@@ -4,7 +4,9 @@
 
 #### By region
 ```{r reg-medterm-inf}
-load(file.path(out.dir, "projections.RData"))
+if (!exists("projections_file")) projections_file <- "projections.RData"
+if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
+load(file.path(out.dir, projections_file))
 make.plots(infections, by = "region", project.forwards = TRUE)
 ```
 
