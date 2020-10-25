@@ -99,7 +99,7 @@ scenario.name <- paste0(scenario.name, reporting.delay, "day")
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date,
+                     paste0("updated_", scenario.name, "_matrices_", google.data.date,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
