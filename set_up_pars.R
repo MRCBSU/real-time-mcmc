@@ -278,6 +278,9 @@ beta.rw.vals <- c(
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 )
 beta.rw.vals <- c(beta.rw.vals, rep(0, nbetas*nr - length(beta.rw.vals)))[1:(nbetas*nr)]
+static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
+stopifnot(all(!is.na(beta.rw.vals)))
+stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
@@ -291,6 +294,9 @@ beta.rw.props <- c(
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )
 beta.rw.props <- c(beta.rw.props, rep(c(0, rep(0.02, nbetas)), nr))[1:(nbetas*nr)]
+stopifnot(all(!is.na(beta.rw.props)))
+stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
+stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
     for(j in (i+1):nbetas)
