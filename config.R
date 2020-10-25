@@ -24,7 +24,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20201016"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201024"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -48,7 +48,7 @@ region.code <- "Eng"
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
 data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
-scenario.name <- "NoPrev_relax_shortsero"
+scenario.name <- "Prev_relax_shortsero"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -56,7 +56,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
