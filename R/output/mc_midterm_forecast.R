@@ -3,6 +3,7 @@ require(lubridate)
 require(rmarkdown)
 require(abind)
 require(parallel)
+require(knitr)
 
 load("mcmc.RData")
 load("tmp.RData")
@@ -17,8 +18,8 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 nforecast.weeks <- 8
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd("20200907") + (1:6 * days(7))
-google.data.date <- ymd("20200925")
+mm.breaks <- ymd("20200928") + (1:8 * days(7))
+google.data.date <- ymd("20201016")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
@@ -61,6 +62,7 @@ start.hosp <- 1
 start.gp <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
+prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -95,6 +97,11 @@ if(gp.flag)
 if(hosp.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
+if(prev.flag)
+    for(reg in regions){
+        prev.data$lmeans[reg] <- repeat.last.row(prev.data$lmeans[reg], paste0("dummy_prev_lmeans_", reg))
+        prev.data$lsds[reg] <- repeat.last.row(prev.data$lsds[reg], paste0("dummy_prev_lsds_", reg))
+    }
 
 ## MCMC control
 num.iterations <- 1
@@ -105,7 +112,8 @@ burnin <- 0
 num.threads <- 1
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
-render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = plain_document)
+## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
+knit(input = inputs.template.loc, output = file.path(out.dir, "projections", "mod_inputs.txt"))
 
 ## ## ## ------------------------------------------------------------
 
@@ -140,6 +148,7 @@ if(!single.ifr)
 NNI <- NNI.files <- vector("list", nr)
 if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
 if(gp.flag) Cases <- Cases.files <- vector("list", nr)
+if(prev.flag) Prevs <- Prev.files <- vector("list", nr)
 
 ## ## Get number of iterations
 niter <- min(sapply(params, nrow))
@@ -157,6 +166,7 @@ xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)
+Prevs <- lapply(xtmp, function(x) x$Prevs)
 rm(xtmp)
 
 ## names(NNI) <- regions
@@ -189,9 +199,17 @@ if(gp.flag){
     save.list <- c(save.list, "cases")
     dimnames(cases) <- dim.list
 }
+if(prev.flag){
+    prevalence <- melt.list(Prevs);rm(Prevs)
+    save.list <- c(save.list, "prevalence")
+    dimnames(prevalence) <- dim.list
+}
 save(list = save.list, file = "projections.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
 lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
+if(prev.flag)
+    lapply(prev.data, file.remove)
+    

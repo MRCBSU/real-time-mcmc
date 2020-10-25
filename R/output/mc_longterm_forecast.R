@@ -18,8 +18,9 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 nforecast.weeks <- 16
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd("20200921") + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201009")
+## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
+mm.breaks <- ymd("20201026")
+google.data.date <- ymd("20201016")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
@@ -62,14 +63,18 @@ start.hosp <- 1
 start.gp <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
+prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
               paste0("england_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
-matrix.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_longterm"))
-cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
+## Use the next line to specify where the new matrices are stored
+matrix.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_rbc_scenarios"))
+## Use the next line to specify the format with the filenames
+## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
+cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_20.csv")
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 if(!all(file.exists(cm.bases))){
@@ -96,6 +101,11 @@ if(gp.flag)
 if(hosp.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
+if(prev.flag)
+    for(reg in regions){
+        prev.data$lmeans[reg] <- repeat.last.row(prev.data$lmeans[reg], paste0("dummy_prev_lmeans_", reg))
+        prev.data$lsds[reg] <- repeat.last.row(prev.data$lsds[reg], paste0("dummy_prev_lsds_", reg))
+    }
 
 if(!exists("study_region_str")) study_region_str <- ""
 
@@ -193,9 +203,16 @@ if(gp.flag){
     save.list <- c(save.list, "cases")
     dimnames(cases) <- dim.list
 }
-save(list = save.list, file = "projections.RData")
+if(prev.flag){
+    prevalence <- melt.list(Prevs);rm(Prevs)
+    save.list <- c(save.list, "prevalence")
+    dimnames(prevalence) <- dim.list
+}
+save(list = save.list, file = "projections20.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
 lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
+if(prev.flag)
+    lapply(prev.data, file.remove)

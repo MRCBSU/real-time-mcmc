@@ -17,11 +17,15 @@ with(setup.env, {
     for(vars in vbl.names)
         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
 })
+## Added exception for prev.data
+setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
+    gsub(in.root, out.root, x, fixed = TRUE))
+    
 
 ## Temporary line to be deleted
 if(exists("infections")) rm(infections)
 expit <- function(x) exp(x)/(1+exp(x))
-if(!exists("prev.dat")) setup.env$prev.dat <- NULL
 ## abreaks.icr <- 3:7
+
 
 save(list = ls(envir = setup.env), file = "tmp.RData", envir = setup.env)
