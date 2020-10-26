@@ -20,7 +20,7 @@ nforecast.weeks <- 16
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
 mm.breaks <- ymd("20201102")
-#google.data.date <- ymd("20201016")
+google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
@@ -75,7 +75,7 @@ cm.files <- c(cm.files,
               paste0("scotland_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 ## Use the next line to specify where the new matrices are stored
-matrix.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_rbc_scenarios"))
+matrix.dir <- dirname(matrix.dir)
 ## Use the next line to specify the format with the filenames
 ## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_00.csv")
