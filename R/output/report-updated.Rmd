@@ -530,6 +530,8 @@ make.plots(cum_infections, by = "region")
 make.plots(cum_infections, by = "age")
 ```
 
+```{r eval=!is.null(dth.dat), child='deaths-report.Rmd'}
+```
 
 
 ```{r eval=!is.null(hosp.dat), child='hosp-report.Rmd'}

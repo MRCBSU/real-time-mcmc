@@ -12,6 +12,7 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 
 ## Forecast projection
 nforecast.weeks <- 8
+mm.breaks <- c(ymd(20201102))
 
 
 ## ## ----------------------------------------------------------
@@ -51,7 +52,7 @@ start.gp <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 
-cm.breaks <- append(cm.breaks, 249)
+cm.breaks <- append(cm.breaks, mm.breaks - start.date + 1)
 cm.bases <- append(cm.bases, cm.bases[length(cm.bases)])
 cm.mults <- append(cm.mults, "/home/joshuab/real-time-mcmc/contact_mats/ag1_mult2.txt")
 
