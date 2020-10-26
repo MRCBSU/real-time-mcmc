@@ -30,6 +30,7 @@ if (external && exists("dth.dat")) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 	results_hash = NULL
 }
+if (!exists("prev.dat")) prev.dat <- NULL
 
 ```
 
