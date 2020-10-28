@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -59,7 +59,7 @@ region.code <- "Eng"
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
-data.desc <- "deaths"
+data.desc <- "adjusted"
 ## Give the run a name to identify the configuratio
 scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
 contact.model <- 3
@@ -91,7 +91,7 @@ if (data.desc == "all") {
 } else {
 	stop("Unknown data description")
 }
-scenario.name <- paste0(scenario.name, reporting.delay, "day")
+scenario.name <- paste0(scenario.name, reporting.delay, "day", "_", data.desc)
 
 
 ## ## Choose the name of the subdirectory in model_runs to use
@@ -99,7 +99,7 @@ scenario.name <- paste0(scenario.name, reporting.delay, "day")
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0("updated_", scenario.name, "_matrices_", google.data.date,
+                     paste0(scenario.name, "_matrices_", google.data.date,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
@@ -135,7 +135,7 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201014")
+    date.prev <- ymd("20201021")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
     ## Default system for getting the days on which the likelihood will be calculated.
