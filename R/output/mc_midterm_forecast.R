@@ -156,7 +156,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] == "pjb51"){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
