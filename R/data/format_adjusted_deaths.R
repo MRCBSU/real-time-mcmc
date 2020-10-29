@@ -100,7 +100,7 @@ dth.dat <- read_csv(
 				  )
 	) %>%
 	group_by(Date, Region, age_group) %>%
-	summarise(n = sum(n, na.rm = TRUE)) %>%
+	summarise(n = sum(n, na.rm = TRUE), .groups = "drop") %>%
 	mutate(
 		Age.Grp = factor(
 			age_group,
