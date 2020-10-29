@@ -84,7 +84,7 @@ if(prev.flag){
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
-  } else if (data.desc == "adjusted") {
+  } else if (grepl("adjusted", data.desc)) {
 	  source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
   } else if (running.England) {
 	  source(file.path(proj.dir, "R/data/format_deaths.R"))

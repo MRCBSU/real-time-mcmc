@@ -58,8 +58,9 @@ region.code <- "Eng"
 # deaths: confirmed deaths only, by date of death
 # reports: confirmed deaths only, by date of reporting
 # all: all deaths, by date of death
-# adjusted: reporting-delay adjusted deaths produced by Pantelis
-data.desc <- "adjusted"
+# adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
+# adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
+data.desc <- "adjusted_mean"
 ## Give the run a name to identify the configuratio
 scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
 contact.model <- 3
@@ -86,7 +87,7 @@ if (data.desc == "all") {
 	reporting.delay <- 0
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
-} else if (data.desc == "adjusted") {
+} else if (grepl("adjusted", data.desc)) {
 	reporting.delay <- 1
 } else {
 	stop("Unknown data description")

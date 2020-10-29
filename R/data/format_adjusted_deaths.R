@@ -34,6 +34,14 @@ if (is.null(deaths.loc)) {
 	stop(paste('No valid deaths data files, tried:', possible.deaths.locations))
 }
 
+if (data.desc == "adjusted_gedian") {
+  col.to.use <- "posterior_median"
+} else if (data.desc == "adjusted_mean") {
+  col.to.use <- "posterior_mean"
+} else {
+  stop("Unknown type of adjusted deaths")
+}
+
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -93,14 +101,14 @@ dth.dat <- read_csv(
 		observed = col_integer()
 	)
 ) %>%
-	rename(Date = onset_date, n = posterior_median, Region = region) %>%
+	rename(Date = onset_date, n = col.to.use, Region = region) %>%
 	mutate(age_group = recode(age_group,
 				  `45-54` = "45-64",
 				  `55-54` = "45-64"
 				  )
 	) %>%
 	group_by(Date, Region, age_group) %>%
-	summarise(n = sum(n, na.rm = TRUE), .groups = "drop") %>%
+	summarise(n = round(sum(n, na.rm = TRUE)), .groups = "drop") %>%
 	mutate(
 		Age.Grp = factor(
 			age_group,

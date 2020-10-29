@@ -413,7 +413,7 @@ load.data <- function(file.names, idx.age.to.combine = 1:4, label.age.to.combine
   }
   return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
 }
-if (hosp.flag == 0 || data.desc == "adjusted") {
+if (hosp.flag == 0 || grepl("adjusted", data.desc)) {
   dth.dat <- NULL
 } else  {
   dth.dat <- load.data(data.files)
