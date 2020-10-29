@@ -413,9 +413,9 @@ load.data <- function(file.names, idx.age.to.combine = 1:4, label.age.to.combine
   }
   return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
 }
-if (hosp.flag == 0) {
+if (hosp.flag == 0 || data.desc == "adjusted") {
   dth.dat <- NULL
-} else {
+} else  {
   dth.dat <- load.data(data.files)
 }
 if (gp.flag == 0) {

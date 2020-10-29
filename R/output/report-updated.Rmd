@@ -26,7 +26,7 @@ if(exists("Rfile.loc")) {
   source("results_api.R")
 }
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
-if (external && exists("dth.dat")) {
+if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 	results_hash = NULL
 }
@@ -320,7 +320,7 @@ population %>%
 ### IFR
 
 
-```{r ifr, eval=!is.null(dth.dat)}
+```{r ifr, eval=!is.null(deaths)}
 ifr.start <- ifr[, , 1]
 ifr.today <- ifr[, , ymd(date.data) - start.date]
 today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum)
@@ -591,7 +591,7 @@ make.plots(cum_infections, by = "region")
 make.plots(cum_infections, by = "age")
 ```
 
-```{r eval=!is.null(dth.dat), child='deaths-report.Rmd'}
+```{r eval=!is.null(deaths), child='deaths-report.Rmd'}
 ```
 
 
