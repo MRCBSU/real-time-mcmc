@@ -2,11 +2,11 @@ suppressMessages(library(lubridate))
 suppressMessages(library(tidyverse))
 
 source(file.path(proj.dir, "R/data/format_deaths.R"))
-age_groupings <- c("0-44", "45-54", "55-64", "65-74", ">=75")
+age_groupings <- c("0-44", "45-64", "65-74", ">=75")
 raw.deaths <- dth.dat %>%
     mutate(Age.Grp = cut(
 		age,
-		c(0, 45, 55, 65, 75, Inf),
+		c(0, 45, 65, 75, Inf),
 		age_groupings,
 		right = FALSE, ordered_result = T)) %>%
 	count(Date, Region, Age.Grp)
@@ -94,6 +94,13 @@ dth.dat <- read_csv(
 	)
 ) %>%
 	rename(Date = onset_date, n = posterior_median, Region = region) %>%
+	mutate(age_group = recode(age_group,
+				  `45-54` = "45-64",
+				  `55-54` = "45-64"
+				  )
+	) %>%
+	group_by(Date, Region, age_group) %>%
+	summarise(n = sum(n, na.rm = TRUE)) %>%
 	mutate(
 		Age.Grp = factor(
 			age_group,
