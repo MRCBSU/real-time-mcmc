@@ -28,15 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-2
+#SBATCH --array=1-4
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201015_%a.out
-#SBATCH --error=process_model_runs_20201015_%a.err
+#SBATCH --output=process_model_runs_20201025_%a.out
+#SBATCH --error=process_model_runs_20201025_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -61,13 +61,20 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201018/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201025/"
 
-if [ $SLURM_ARRAY_TASK_ID -lt 2 ]
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
 then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero_ifr_28cutoff6day_matrices_20201016_deaths"
+workdir="${workdir}Prev_relax_shortsero_ifr_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
+then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff6day_matrices_20201024_deaths"
 
 echo -e $workdir
 
@@ -133,7 +140,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-eval $CMD
+if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
+    eval $CMD
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
