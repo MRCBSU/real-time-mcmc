@@ -60,7 +60,7 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "adjusted_mean"
+data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
 scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
 contact.model <- 3
