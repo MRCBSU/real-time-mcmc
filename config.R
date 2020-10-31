@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201023"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201030"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -60,7 +60,7 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "adjusted_mean"
+data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
 scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
 contact.model <- 3
