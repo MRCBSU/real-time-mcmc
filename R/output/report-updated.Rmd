@@ -11,6 +11,7 @@ output:
 
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
+external.bak <- external
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -30,6 +31,8 @@ if (external && exists("dth.dat")) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 	results_hash = NULL
 }
+if (!exists("prev.dat")) prev.dat <- NULL
+external <- external.bak
 
 ```
 
@@ -159,7 +162,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       filter(by == subplot) %>%
       create.subplot(subplot, plot.data)
   }
-  return(subplot(plots, nrows = num.rows))
+  return(plotly::subplot(plots, nrows = num.rows))
 }
 ```
 
