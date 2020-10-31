@@ -45,7 +45,7 @@ if(!exists("regions")){
 possible.col.names <- list(
     death_date = "dod",
     finalid = "finalid",
-    onset_date = c("symptom_onset_date", "onsetdate"),
+    onset_date = c("symptom_onset_date", "symptom_onset_date_P2", "onsetdate"),
     nhs_region = c("NHSER_name", "nhser_name"),
     phe_region = c("PHEC_name", "phec_name"),
     utla_name = c("UTLA_name", "utla_name"),
