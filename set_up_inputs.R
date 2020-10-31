@@ -190,7 +190,7 @@ if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261,
 
 num.threads <- nr * threads.per.regions
 
-if (data.desc == "adjusted") {
+if (grepl("adjusted", data.desc)) {
 	study_region_str <- "regions_hosp_aggregation = 5, 6, 7;"
 } else {
 	study_region_str <- ""
