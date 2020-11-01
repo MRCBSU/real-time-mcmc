@@ -83,18 +83,18 @@ cm.files <- c(cm.files,
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 ## Use the next line to specify where the new matrices are stored
 matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_matrices_", format(google.data.date, "%Y%m%d")))
-intervention.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_rbc_scenarios"))
+intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
 ## Use the next line to specify the format with the filenames
 ## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.intervention.fl <- file.path(intervention.dir, "home_school_00.csv")
+cm.intervention.fl <- file.path(intervention.dir, intervention.matrix)
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 
 cm.breaks <- c(cm.breaks[1:(first(idx) - 1)], intervention.breaks, cm.breaks[(last(idx)+1):length(cm.breaks)])
 cm.lockdown <- c(cm.lockdown[1:(first(idx) - 1)], cm.intervention.fl, cm.lockdown[last(idx):length(cm.lockdown)])
 cm.bases <- c(cm.bases[1:first(idx)],
-            file.path(proj.dir, "contact_mats", intervention.matrix),
+	    file.path(proj.dir, "contact_mats", paste0("england_8ag_contact_intervention", "_", intervention.scenario, format(google.data.date, "%Y%m%d"), ".txt")),
             cm.bases[(last(idx) + 1):length(cm.bases)])
 
 if(!all(file.exists(cm.bases))){

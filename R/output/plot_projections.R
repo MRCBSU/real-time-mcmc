@@ -14,5 +14,6 @@ rmarkdown::render(
 	file.path(Rfile.loc, 'projinf-report.Rmd'),
 	html_document(pandoc_args = "--self-contained"),
 	output_dir = out.dir,
-	output_file = paste0(projections_file, ".html")
+	output_file = paste0(projections_file, ".html"),
+	intermediates_dir = file.path(out.dir, paste0(projections_file, "_tmp"))
 )
