@@ -18,6 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=32
+#SBATCH --mem=30000
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?
@@ -28,7 +29,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-1
+#SBATCH --array=1-8
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -38,7 +39,7 @@
 #SBATCH --output=simulate_model_runs_20200925_%a.out
 #SBATCH --error=simulate_model_runs_20200925_%a.err
 
-forecast_switch="mid"
+forecast_switch="intervention"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -73,7 +74,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-options="--vanilla ../../../R/output/mc_${forecast_switch}term_forecast.R"
+options="--vanilla ../../../R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
