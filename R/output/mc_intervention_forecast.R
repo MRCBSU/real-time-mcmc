@@ -23,11 +23,11 @@ if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention
 intervention.length.weeks <- ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
 intervention.start <- ymd(20201105)
 intervention.matrix <- paste0(intervention.scenario, "2020-11-05.csv")
-projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks")
+projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
 
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
-mm.breaks <- cm.breaks[length(cm.breaks)] + 1:8 * 7 + start.date - 1
+mm.breaks <- cm.breaks[length(cm.breaks)] + (1:nforecast.weeks) * 7 + start.date - 1
 google.data.date <- ymd("20201030")
 intervention.breaks <- c(intervention.start, intervention.start + intervention.length.weeks * 7)
 mult.order <- rep(1, length(mm.breaks))
@@ -242,4 +242,3 @@ lapply(denoms.files, file.remove)
 if(prev.flag)
     lapply(prev.data, file.remove)
 rm(list=ls())
-system(paste0("Rscript ../../../R/output/plot_projections.R ", projections.file))
