@@ -24,6 +24,7 @@ intervention.length.weeks <- ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
 intervention.start <- ymd(20201105)
 intervention.matrix <- paste0(intervention.scenario, "2020-11-05.csv")
 projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
+projections.basedir <- file.path(out.dir, paste0("projections", array.num))
 
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
@@ -42,7 +43,7 @@ bank.holiday.days.new <- NULL
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
     tmpdata <- read_tsv(real.fl, col_names = FALSE)
-    dummy.fl <- file.path(out.dir, "projections", paste0(dummy.fl, ".txt"))
+    dummy.fl <- file.path(projections.basedir, paste0(dummy.fl, ".txt"))
     tmpdata <- bind_rows(tmpdata,
                          tmpdata[rep(nrow(tmpdata), ndays - nrow(tmpdata)), ]) %>%
             mutate(Date = start.date - 1 + (1:ndays)) %>%
@@ -52,7 +53,7 @@ repeat.last.row <- function(real.fl, dummy.fl){
     return(dummy.fl)
 }
 symlink.design <- function(design)
-    file.symlink(file.path(out.dir, design), "projections")
+    file.symlink(file.path(out.dir, design), projections.basedir)
 ## ## Compile a forecast output
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
@@ -62,8 +63,8 @@ combine.rtm.output <- function(x, strFld){
 
 ## ## ## --------------------
 
-if(!file.exists(file.path(out.dir, "projections")))
-    dir.create(file.path(out.dir, "projections"))
+if(!file.exists(projections.basedir))
+    dir.create(projections.basedir)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
@@ -142,7 +143,7 @@ num.threads <- 1
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = plain_document())
-knit(input = inputs.template.loc, output = file.path(out.dir, "projections", "mod_inputs.txt"))
+knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
 
 ## ## ## ------------------------------------------------------------
 
@@ -157,7 +158,7 @@ if(gp.flag){
     DAYS[ll.days %in% bank.holiday.days] <- "Sun"
     lm.mat <- model.matrix(~DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
         as.data.frame() %>%
-        write_tsv(file.path(out.dir, "projections", "d_o_w_design_file.txt"), col_names = FALSE)
+        write_tsv(file.path(projections.basedir, "d_o_w_design_file.txt"), col_names = FALSE)
 }
 
 ## Copy to projection directory other design matrices
@@ -235,7 +236,7 @@ if(prev.flag){
 }
 save(list = save.list, file = projections.file)
 
-## ## ## Housekeeping
+## ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
 lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)

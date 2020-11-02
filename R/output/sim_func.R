@@ -1,10 +1,10 @@
 sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
 
     ## Fix output location
-    out.loc <- file.path(out.dir, paste0("projections", Sys.getpid()))
+    out.loc <- paste0(projections.basedir, "_", Sys.getpid())
     if(!file.exists(out.loc)){
         system(paste("cp -r",
-                     file.path(out.dir, "projections"),
+                     projections.basedir,
                      out.loc))
     }
     fl.pars <- file.path(out.loc, "sim_mod_pars.Rmd")
@@ -38,8 +38,9 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     
     ## Run the code
     setwd(out.loc)
-    system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = TRUE)
-
+    exit_code <- system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = FALSE)
+    if(exit_code != 0) stop(paste("Error running in", out.loc, "on iteration", iter))
+    
     ## Read the outputs in and append to output objects
     for(intr in 1:nr)
     {
