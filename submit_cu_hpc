@@ -18,10 +18,10 @@
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20201025prevjobs_%a.out
-#SBATCH --error=model_runs_20201025prevjobs_%a.err
+#SBATCH --output=model_runs_20201030prevjobs_%a.out
+#SBATCH --error=model_runs_20201030prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201025/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201030/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
 then
@@ -34,7 +34,7 @@ then
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff6day_matrices_20201024_deaths"
+workdir="${workdir}cutoff6day_matrices_20201030_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 

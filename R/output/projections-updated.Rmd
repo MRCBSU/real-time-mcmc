@@ -1,0 +1,225 @@
+---
+title: 'COVID-19: nowcast and forecast'
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
+date: "`r lubridate::today()`"
+output:
+  html_document:
+    self_contained: no
+---
+
+<base target="_parent">
+
+```{r preamble, include=FALSE}
+if (!exists("external")) external = T
+external.bak <- external
+knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+QUANTILES <- c(0.025, 0.5, 0.975)
+
+suppressMessages(library(knitr))
+suppressMessages(library(DT))
+suppressMessages(library(lubridate))
+suppressMessages(library(plotly))
+suppressMessages(library(tidyverse))
+if(exists("Rfile.loc")) {
+  source(file.path(Rfile.loc, "results_api.R"))
+} else {
+  proj.dir <- "~/RTM"
+  source("results_api.R")
+}
+results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
+if (external && exists("dth.dat")) {
+	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
+	results_hash = NULL
+}
+if (!exists("prev.dat")) prev.dat <- NULL
+external <- external.bak
+
+```
+
+
+```{r plot-function}
+title <- function(name) {
+  list(
+    text = str_replace_all(name, "_", " "),
+    xref = "paper",
+    yref = "paper",
+    yanchor = "top",
+    xanchor = "left",
+    x = 0.1,
+    y = 0.9,
+    font = list(size = 20),
+    showarrow = FALSE
+  )
+}
+
+create.base.subplot <- function(data, num.rows, subplot_title) {
+  lines <- list(
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(date.data), 
+        x1 = ymd(date.data), 
+        line = list(color = "red"),
+        hoverinfo = "Today"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20200323), 
+        x1 = ymd(20200323), 
+        line = list(color = "blue"),
+        hoverinfo = "Lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20200511), 
+        x1 = ymd(20200511), 
+        line = list(color = "blue"),
+        hoverinfo = "Lockdown"
+    )
+  )
+  lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
+  plot.height <- num.rows * 420 + 150
+  return(
+    plot_ly(data, x = ~date, width = 800, height = plot.height) %>%
+      layout(shapes = lines, annotations = title(subplot_title), showlegend = FALSE,
+             hovermode = "x unified")
+  )
+}
+
+make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
+                       y.format = ".3s", combine.to.England = sum.all,
+                       combine.data.to.England = sum.all.data,
+                       project.forwards = !is.null(data), x.label = "") {
+
+  if (is.null(combine.to.England)) {
+    Eng_projection <- Eng_data <- NULL
+  } else {
+    Eng_projection <- combine.to.England(projections) %>% add.quantiles(NULL, QUANTILES)
+    Eng_data <- combine.data.to.England(data)
+  }
+  projections <- get.aggregated.quantiles(projections, by, c(0.025, 0.5, 0.975)) %>%
+    rename(by = all_of(by))
+  if (!project.forwards) {
+    if (!is.null(Eng_projection)) {
+      Eng_projection <- filter(Eng_projection, date <= ymd(date.data))
+    }
+    projections <- filter(projections, date <= ymd(date.data))
+  }
+  plot.names <- unique(projections$by)
+  num.plots <- length(plot.names)
+  if (!is.null(Eng_projection)) num.plots <- num.plots + 1
+  num.rows <- ceiling(num.plots/2)
+  date <- ymd(date.data)
+  create.subplot <- function(projections, subplot_title, data) {
+    plot <- projections %>%
+      pivot_wider(names_from = quantile) %>%
+      create.base.subplot(num.rows, subplot_title) %>%
+      add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Upper 95% CrI</extra>")) %>%
+      add_lines(y = ~`0.025`, alpha = 0,   # An extra trace just for hover text
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Lower 95% CrI</extra>")) %>%
+      add_lines(y = ~`0.5`, color = I("black"),
+                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
+      layout(xaxis = list(title = x.label))
+    if (is.null(data)) {
+      return(plot)
+    } else {
+      if (external) {
+        data.hover <- "%{x} <extra>Observed deaths</extra>"
+      } else {
+        data.hover <- "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
+      }
+      plot %>%
+        add_markers(
+          data = data,
+          x = ~date,
+          y = ~True,
+          color = I("red"),
+          hovertemplate = data.hover
+        )
+    }
+  }
+  plots <- NULL
+  if (!is.null(Eng_projection)) plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
+  for(subplot in plot.names) {
+    if (is.null(data)) {
+      plot.data <- NULL
+    } else {
+      plot.data <- data %>%
+        filter(!!sym(by) == subplot) %>%
+        group_by(date) %>%
+        summarise(True = sum(value))
+    }
+    plots[[subplot]] <- projections %>%
+      filter(by == subplot) %>%
+      create.subplot(subplot, plot.data)
+  }
+  return(plotly::subplot(plots, nrows = num.rows))
+}
+```
+
+## {.tabset}
+
+```{r eval=external, child='updates.Rmd'}
+```
+
+### Summary
+
+Real-time tracking of an epidemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. A team of statistical modellers at the MRC Biostatistics Unit (BSU), University of Cambridge, are working to provide regular now-casts and forecasts of COVID-19 infections and deaths. This information feeds directly to the SAGE sub-group, Scientific Pandemic Influenza sub-group on Modelling (SPI-M), and to regional Public Health England (PHE) teams.
+
+### Methods
+
+We fit a transmission model ([Birrell et al. 2020](https://www.medrxiv.org/content/10.1101/2020.08.24.20180737v1)) to a number of data sources (see 'Data Sources'), to  reconstruct the number of  new COVID-19 infections over time in different age groups and NHS regions, estimate a measure of ongoing transmission and predict the number of new COVID-19 deaths.
+
+### Data sources
+
+We use:
+  
+1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing   This consists of a combination of deaths notified to:
+    * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnosed with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20th March, 2020).
+    * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
+    * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020)
+2. Data on antibody prevalence in blood samples from a PHE survey of NHS Blood Transfusion (NHSBT) donors.
+
+Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+, and the NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West).
+
+3. Published information on the the natural history of COVID-19 ([Verity et al., 2020](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099%2920%2930243-7/abstract); [Li et al, 2020](https://www.nejm.org/doi/10.1056/NEJMoa2001316)) 
+4. Information on contacts between different age groups from:
+    * A Survey that describes relative rates of contacts between different age groups ([Mossong et al. 2008](https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074)).
+    * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the March 23rd lockdown measures.
+    * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
+    * Data from the Department for Education describing the proportion of children currently attending school.
+
+
+```{r, include=FALSE}
+proj.file <- "projections2wk_lockdown.RData"
+```
+
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
+```
+
+```{r eval=(!external & as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
+```
+
+```{r, include=FALSE}
+proj.file <- "projections4wk_lockdown.RData"
+```
+
+```{r eval=(!external & file.exists(file.path(out.dir, proj.file))), child='projinf-report.Rmd'}
+```
+
+```{r eval=(!external & as.logical(gp.flag) & file.exists(file.path(out.dir, proj.file))), child='projinf-cases-report.Rmd'}
+```
+
+
+# 
+
+Copyright © MRC Biostatistics Unit, University of Cambridge
