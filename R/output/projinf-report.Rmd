@@ -1,12 +1,15 @@
 ## Mid-term projections {.tabset}
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+if (!exists("projections_file")) projections_file <- "projections.RData"
+if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
+load(file.path(out.dir, projections_file))
+```
 
 ### Infection incidence {.tabset}
 
 #### By region
 ```{r reg-medterm-inf}
-if (!exists("projections_file")) projections_file <- "projections.RData"
-if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
-load(file.path(out.dir, projections_file))
 make.plots(infections, by = "region", project.forwards = TRUE)
 ```
 
