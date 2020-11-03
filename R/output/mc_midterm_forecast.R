@@ -7,6 +7,7 @@ require(knitr)
 
 load("mcmc.RData")
 load("tmp.RData")
+cat("prev.flag", prev.flag, "\n")
 
 source(file.path(Rfile.loc, "sim_func.R"))
 
@@ -62,9 +63,11 @@ sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 start.hosp <- 1
 start.gp <- 1
+start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
-prev.flag <- 0
+end.prev <- ifelse(prev.flag, ndays, 1)
+## prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -116,6 +119,7 @@ num.threads <- 1
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
+cat("prev.flag", prev.flag, "\n")
 
 ## ## ## ------------------------------------------------------------
 
@@ -164,7 +168,6 @@ if(Sys.info()["user"] == "pjb51"){
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
-save(xtmp, file="xtmp.RData")
 NNI <- lapply(xtmp, function(x) x$NNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)
@@ -201,11 +204,13 @@ if(gp.flag){
     save.list <- c(save.list, "cases")
     dimnames(cases) <- dim.list
 }
+cat("prev.flag", prev.flag, "\n")
 if(prev.flag){
     prevalence <- melt.list(Prevs);rm(Prevs)
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
+cat("save.list", save.list, "\n")
 save(list = save.list, file = "projections.RData")
 
 ## ## ## Housekeeping
