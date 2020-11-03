@@ -60,12 +60,12 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
+module load R
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
 workdir="$SLURM_SUBMIT_DIR/model_runs/20201025/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201024_deaths"
 
-echo -e $workdir
 
 
 #! Full path to application executable: 
@@ -113,7 +113,6 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
-cd $workdir
 
 JOBID=$SLURM_JOB_ID
 

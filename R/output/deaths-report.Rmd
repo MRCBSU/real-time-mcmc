@@ -2,23 +2,23 @@
 
 #### By region
 ```{r reg-death, cache=TRUE, cache.extra=results_hash}
-dth.dat <- dth.dat %>% filter(date <= start.date + end.hosp - 1)
-make.plots(noisy_deaths, by = "region", data = dth.dat, x.label = "Date of death")
+if (!is.null(dth.dat)) dth.dat <- dth.dat %>% filter(date <= start.date + end.hosp - 1)
+make.plots(noisy_deaths, by = "region", data = dth.dat, project.forwards = TRUE, x.label = "Date of death")
 ```
 
 #### By age
 ```{r age-death, cache=TRUE, cache.extra=results_hash}
-make.plots(noisy_deaths, by = "age", data = dth.dat, x.label = "Date of death")
+make.plots(noisy_deaths, by = "age", data = dth.dat, project.forwards = TRUE, x.label = "Date of death")
 ```
 
 ### Cumulative deaths {.tabset}
 
 #### By region
 ```{r cum-reg-death, cache=TRUE, cache.extra=results_hash}
-make.plots(cum_deaths, by = "region", x.label = "Date of death")
+make.plots(cum_deaths, by = "region", project.forwards = TRUE, x.label = "Date of death")
 ```
 
 #### By age
 ```{r cum-age-death, cache=TRUE, cache.extra=results_hash}
-make.plots(cum_deaths, by = "age", x.label = "Date of death")
+make.plots(cum_deaths, by = "age", project.forwards = TRUE, x.label = "Date of death")
 ```
