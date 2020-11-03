@@ -38,7 +38,7 @@
 #SBATCH --output=simulate_model_runs_20201030_%a.out
 #SBATCH --error=simulate_model_runs_20201030_%a.err
 
-forecast_switch="intervention"
+forecast_switch="midterm"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
