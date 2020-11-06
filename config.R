@@ -30,6 +30,14 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 
 google.data.date <- format(ymd("20201030"), format = "%Y%m%d")
 include.google <- TRUE
+create.counterfactual <- TRUE
+if (!create.counterfactual) {
+  intervention.date <- NULL
+} else {
+  if (regions == "Wales") intervention.date <- ymd(20201030)
+  if (regions == "Northern_Ireland") intervention.date <- ymd(20201013)
+}
+
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -47,6 +55,7 @@ nA <- length(age.labs)
 data.desc <- "deaths" # Set to "reports" if running by reporting date
 scenario.name <- ifelse(nr == 1, paste0(regions, "_", ""))
 if (include.google) scenario.name <- paste0(scenario.name, "with_google_")
+if (create.counterfactual) scenario.name <- paste0(scenario.name, "with_intervention_end_date_", intervention.date)
 contact.model <- 1
 
 flg.confirmed <- (data.desc != "all")

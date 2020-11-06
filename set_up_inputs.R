@@ -1,5 +1,5 @@
-require(readr)
-require(lubridate)
+library(lubridate)
+library(tidyverse)
 
 #######################################################################
 ## INPUT SETTINGS
@@ -76,19 +76,31 @@ if (nA == 1 && !include.google) {
   cm.out.region <- str_replace_all(cm.region.name, " ", "_")
   cm.file.base <- paste0(cm.out.region, "_", nA, "ag_contact")
   cm.files <- paste0(cm.file.base, ".txt")
-  for(i in 1:length(cm.breaks))
-      cm.files <- c(cm.files, paste0(cm.file.base, "_ldwk", i, "_", google.data.date, ".txt"))
+  cm.run.stamp <- google.data.date
+  for(i in 1:length(cm.breaks)) {
+      cm.files <- c(cm.files, paste0(cm.file.base, "_ldwk", i, "_", cm.run.stamp, ".txt"))
+  }
   cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
   cm.lockdown.fl <- paste0(cm.region.name, mat.dates, "all.csv")
   cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
+  stopifnot(length(cm.bases) == length(cm.lockdown) + 1)
+  if (create.counterfactual) {
+    max.matrix.date <- intervention.date - 7
+    mats.to.use <- mat.dates <= max.matrix.date
+    mats.to.use <- c(TRUE, mats.to.use) # Always use first pre-lockdown matrix
+    last.mat.to.use <- max(which(mats.to.use))
+    cm.bases[!mats.to.use] <- cm.bases[last.mat.to.use]
+  }
   idx <- 1
   if(!all(file.exists(cm.bases))){
+	 # Pre-lockdown matrix (cm.bases[1])
      if (nA == 1) {
 		R <- max(abs(eigen(adf, only.values = TRUE)$value))
 		cat(R, file = cm.bases[idx])
 	  } else {
 		write_tsv(adf, cm.bases[idx], col_names = FALSE)
 	  }
+      # Post-lockdown matrices
       for(fl in cm.lockdown){
           idx <- idx + 1
           mat <- read_csv(fl) * adf 
@@ -195,6 +207,11 @@ if (hosp.flag == 1) {
         stop("Above hospitalisation data files does not exist")
 	}
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
+}
+if (create.counterfactual) {
+  max.hosp.date <- intervention.date + 7
+  max.hosp.time <- max.hosp.date - start.date
+  end.hosp <- min(end.hosp, max.hosp.time)
 }
 sero.data <- list(sample = "NULL",
                   positive = "NULL")
