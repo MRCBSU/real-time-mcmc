@@ -21,6 +21,10 @@ if (args[2] == "All")  {
 	regions <- args[3:(nr+2)]
 	stopifnot(length(regions) == nr)
 }
+English.regions <- c("East_of_England", "London", "Midlands",
+								  "North_East_and_Yorkshire", "North_West",
+								  "South_East", "South_West", "England")
+running.England <- any(regions %in% English.regions)
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
@@ -53,7 +57,12 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     flg.cutoff <- TRUE
     if(flg.cutoff) str.cutoff <- "60cod"
-    reporting.delay <- 14
+	if (running.England) {
+      reporting.delay <- 14
+	} else {
+      if (regions == "Wales") reporting.delay <- 7
+      if (regions == "Northern_Ireland") reporting.delay <- 2
+	}
 } else {
 	stop("Unknown data description")
 }
@@ -83,7 +92,3 @@ names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
-English.regions <- c("East_of_England", "London", "Midlands",
-								  "North_East_and_Yorkshire", "North_West",
-								  "South_East", "South_West", "England")
-running.England <- any(regions %in% English.regions)
