@@ -18,6 +18,7 @@ if(hosp.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+    if(data.desc == "adjusted") end.hosp <- end.hosp + date.adj.data - lubridate::as_date(date.data)
 } else {
     start.hosp <- 1
     end.hosp <- 1
@@ -59,7 +60,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-cm.breaks <- seq(from = 36, to = 239, by = 7) ## Day numbers where breaks happen
+cm.breaks <- seq(from = 36, to = as.integer(ndays), by = 7) ## Day numbers where breaks happen
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
 	cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
