@@ -18,9 +18,9 @@ array.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 ## Forecast projection
 nforecast.weeks <- 24
 
-intervention.scenario <- ifelse(array.num <= 4, "realistic", "optimistic")
-if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention.scenario)
-intervention.length.weeks <- ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
+intervention.scenario <-paste0("half_school_", ifelse(array.num < 2, "optimistic", "realistic"))
+## if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention.scenario)
+intervention.length.weeks <- 4 ## ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
 intervention.start <- ymd(20201105)
 intervention.matrix <- paste0(intervention.scenario, "2020-11-05.csv")
 projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
