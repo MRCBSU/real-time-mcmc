@@ -22,7 +22,9 @@ if(!exists("deaths.loc")) {
 	possible.deaths.locations <- c(
 		file.path(proj.dir, paste0("data/raw/deaths/Dataset Modelling " , date.data, ".csv")),
 		paste(date.data, "COVID19 Deaths.csv"),
-		deaths.loc <- paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv")
+		paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv"),
+		paste0("/data/covid-19/data-raw/manual-downloads/deaths/", ymd(date.data), ".csv")
+
 	)
 	deaths.loc <- first.where.true(possible.deaths.locations, file.exists)
 	if (is.null(deaths.loc)) {
@@ -48,6 +50,7 @@ possible.col.names <- list(
     onset_date = c("symptom_onset_date", "symptom_onset_date_P2", "onsetdate"),
     nhs_region = c("NHSER_name", "nhser_name"),
     phe_region = c("PHEC_name", "phec_name"),
+	ltla_code = c("ltla_code", "LTLA_code"),
     utla_name = c("UTLA_name", "utla_name"),
     death_type = "death_type",
     age = "age",
@@ -68,7 +71,8 @@ if (any(invalid.col.names)) {
 
 # Given a row in a deaths file, return its region.
 # Various useful functions for this are defined above.
-get.region <- nhs.region
+if (region.type == "NHS") get.region <- nhs.region
+if (region.type == "ONS") get.region <- ons.region
 
 
 ####################################################################
@@ -124,6 +128,7 @@ death.col.args[[col.names[["pillars"]]]] <- col_character()
 death.col.args[[col.names[["death28"]]]] <- col_character()
 death.col.args[[col.names[["death60cod"]]]] <- col_character()
 death.col.args[[col.names[["tt_death_cat"]]]] <- col_character()
+death.col.args[[col.names[["ltla_code"]]]] <- col_character()
 
 death.cols <- do.call(cols_only, death.col.args)	# Calling with a list so use do.call
 

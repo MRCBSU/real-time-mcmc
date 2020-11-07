@@ -19,8 +19,8 @@ nforecast.weeks <- 16
 
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
-mm.breaks <- ymd("20201026")
-google.data.date <- ymd("20201016")
+mm.breaks <- ymd("20201109")
+google.data.date <- ymd("20201024")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
@@ -74,7 +74,7 @@ cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 matrix.dir <- file.path(dirname(matrix.dir), paste0(format(google.data.date, "%Y%m%d"), "_rbc_scenarios"))
 ## Use the next line to specify the format with the filenames
 ## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_20.csv")
+cm.lockdown.fl <- c(cm.lockdown.fl, "home_school_00.csv")
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 if(!all(file.exists(cm.bases))){
@@ -154,6 +154,7 @@ if(!single.ifr)
 NNI <- NNI.files <- vector("list", nr)
 if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
 if(gp.flag) Cases <- Cases.files <- vector("list", nr)
+if(prev.flag) Prevs <- Prev.files <- vector("list", nr)
 
 ## ## Get number of iterations
 niter <- min(sapply(params, nrow))
@@ -171,6 +172,7 @@ xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)
+Prevs <- lapply(xtmp, function(x) x$Prevs)
 rm(xtmp)
 
 ## names(NNI) <- regions
@@ -208,7 +210,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections20.RData")
+save(list = save.list, file = paste0("projections00_", format(mm.breaks, format = "%Y%m%d"), ".RData"))
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

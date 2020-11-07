@@ -25,3 +25,4 @@ Lombdardy*/**
 **.err
 **.RData
 **.rds
+!base_matrices.rds

@@ -55,6 +55,23 @@ nhs.region <- function(x) {
 	str_replace_all(" ", "_")
 }
 
+ons.region <- function(x) {
+	tbl_rgn_lkup <- read_csv(
+		'data/population/lad_to_region.csv',
+		col_types = cols(
+		  FID = col_double(),
+		  LAD19CD = col_character(),
+		  LAD19NM = col_character(),
+		  RGN19CD = col_character(),
+		  RGN19NM = col_character()
+		)
+	 )
+	x %>%
+		left_join(tbl_rgn_lkup ,by=c("ltla_code"="LAD19CD")) %>%
+		`$`("RGN19NM") %>%
+		str_replace_all(" ", "_")
+}
+
 inverse.map <- function(r, l){
     assign.NAs <- any(sapply(l, function(x) any(is.na(x))))
     if(is.na(r) & !assign.NAs) return("NA")
