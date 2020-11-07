@@ -229,58 +229,61 @@ rtm.dat <- dth.dat %>%
 	replace_na(list(n = 0)) %>%		# 0 if just added
 	arrange(Date)
 
-## Write rtm.dat to data file
-names(data.files) <- regions
-for(reg in regions) {
-    region.dat <- pivot_wider(rtm.dat %>%
-                              filter(Region == reg),
-                              id_cols = 1,
-                              names_from = Age.Grp,
-                              values_from = n)
-    tmpFile <- data.files[reg]
+if(!exists("write.deaths")) write.deaths <- TRUE
+if(write.deaths){
+    ## Write rtm.dat to data file
+    names(data.files) <- regions
+    for(reg in regions) {
+        region.dat <- pivot_wider(rtm.dat %>%
+                                  filter(Region == reg),
+                                  id_cols = 1,
+                                  names_from = Age.Grp,
+                                  values_from = n)
+        tmpFile <- data.files[reg]
 	dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
-    
-    print(paste(
-        "Writing to",
-        tmpFile,
-        "(", sum(region.dat[, -1]), "total deaths,", nrow(region.dat), "rows.)"
-    ))
-    
-    region.dat %>%
-        write_tsv(
+        
+        print(paste(
+            "Writing to",
             tmpFile,
-            col_names = FALSE
-        )
+            "(", sum(region.dat[, -1]), "total deaths,", nrow(region.dat), "rows.)"
+        ))
+        
+        region.dat %>%
+            write_tsv(
+                tmpFile,
+                col_names = FALSE
+            )
+    }
+    
+    ## Save the data as processed
+    save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
+    
+    ## Save a quick plot of the data...
+    require(ggplot2)
+    rtm.dat %>%
+        group_by(Date, Region) %>%
+        summarise(count = sum(n)) %>%
+        mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
+    
+    gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
+        geom_line(aes(linetype = ignore)) +
+        geom_point() +
+        theme_minimal() +
+        ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
+        xlab("Date of death") +
+        ylab("#Deaths") +
+        theme(
+            legend.position = "top",
+            legend.justification = "left",
+            )
+    plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
+    if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
+    ggsave(plot.filename,
+           gp + guides(linetype=FALSE),
+           width = 1.5*8.5,
+           height = 1.5*6)
+    
+    ## rtm.dat.plot %>%
+    ##     group_by(Date, ignore) %>%
+    ##     summarise(count = sum(count)) -> rtm.dat.Eng.plot
 }
-
-## Save the data as processed
-save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
-
-## Save a quick plot of the data...
-require(ggplot2)
-rtm.dat %>%
-    group_by(Date, Region) %>%
-    summarise(count = sum(n)) %>%
-    mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
-
-gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
-    geom_line(aes(linetype = ignore)) +
-    geom_point() +
-    theme_minimal() +
-    ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
-    xlab("Date of death") +
-    ylab("#Deaths") +
-    theme(
-        legend.position = "top",
-        legend.justification = "left",
-        )
-plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
-if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
-ggsave(plot.filename,
-       gp + guides(linetype=FALSE),
-       width = 1.5*8.5,
-       height = 1.5*6)
-
-## rtm.dat.plot %>%
-##     group_by(Date, ignore) %>%
-##     summarise(count = sum(count)) -> rtm.dat.Eng.plot

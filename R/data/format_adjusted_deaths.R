@@ -1,6 +1,7 @@
 suppressMessages(library(lubridate))
 suppressMessages(library(tidyverse))
 
+write.deaths <- FALSE
 source(file.path(proj.dir, "R/data/format_deaths.R"))
 age_groupings <- c("0-44", "45-64", "65-74", ">=75")
 raw.deaths <- dth.dat %>%
@@ -23,18 +24,20 @@ first.where.true <- function(vec, predicate) {
 	return(vec[index.to.use])
 }	
 
-if(!exists("date.data"))
-    date.data <- (today() - days(1)) %>% format("%Y%m%d")
+if(!exists("date.adj.data"))
+    date.adj.data <- (today() - days(1)) %>% format("%Y%m%d")
 
 ## Where to find the data, if NULL use command line argument
 possible.deaths.locations <- c(
-	file.path(proj.dir, "data/raw/deaths/adjusted", paste0(ymd(date.data), ".csv")))
+    file.path(proj.dir, "data/raw/deaths/adjusted", paste0(ymd(date.adj.data), ".csv")),
+    file.path(proj.dir, "data/raw/deaths/adjusted", paste0(ymd(date.adj.data), "-", str.cutoff, "days.csv"))
+    )
 deaths.loc <- first.where.true(possible.deaths.locations, file.exists)
 if (is.null(deaths.loc)) {
 	stop(paste('No valid deaths data files, tried:', possible.deaths.locations))
 }
 
-if (data.desc == "adjusted_gedian") {
+if (data.desc == "adjusted_median") {
   col.to.use <- "posterior_median"
 } else if (data.desc == "adjusted_mean") {
   col.to.use <- "posterior_mean"
@@ -75,7 +78,7 @@ if(!exists("file.loc")){
 if(!exists("data.files"))
     data.files <- build.data.filepath("RTM_format/deaths",
                                       "deaths",
-                                      date.data,
+                                      date.adj.data,
                                       "_",
                                       regions,
                                       "_",
@@ -83,7 +86,7 @@ if(!exists("data.files"))
                                       "ages.txt")
 
 ## Read the file and rename columns
-latest.date <- ymd(date.data) ## - reporting.delay
+latest.date <- ymd(date.adj.data) ## - reporting.delay
 earliest.date <- ymd("2020-02-17")
 
 input.loc <- deaths.loc
@@ -187,14 +190,14 @@ gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
     geom_line(aes(linetype = ignore)) +
     geom_point() +
     theme_minimal() +
-    ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.data), ")")) +
+    ggtitle(paste("Daily number of deaths by day of death (on", lubridate::as_date(date.adj.data), ")")) +
     xlab("Date of death") +
     ylab("#Deaths") +
     theme(
         legend.position = "top",
         legend.justification = "left",
         )
-plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
+plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.adj.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
 if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
 ggsave(plot.filename,
        gp + guides(linetype=FALSE),

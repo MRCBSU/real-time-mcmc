@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201030"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -60,9 +60,10 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "adjusted_mean"
+
 ## Give the run a name to identify the configuratio
-scenario.name <- paste0("NoPrev_", region.type, "region_relax_shortsero")
+scenario.name <- "AdjNoPrev_relax_shortsero"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -78,7 +79,7 @@ if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {
@@ -88,7 +89,8 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-	reporting.delay <- 1
+    date.adj.data <- ymd(date.data) - 1
+    reporting.delay <- 1
 } else {
 	stop("Unknown data description")
 }
@@ -136,7 +138,7 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201021")
+    date.prev <- ymd("20201028")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
     ## Default system for getting the days on which the likelihood will be calculated.
