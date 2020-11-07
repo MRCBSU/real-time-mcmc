@@ -48,7 +48,7 @@ region.code <- "Eng"
 # adjusted: reporting-delay adjusted deaths produced by Pantelis
 data.desc <- "deaths"
 ## Give the run a name to identify the configuratio
-scenario.name <- "Prev_relax_shortsero"
+scenario.name <- "NoPrev_relax_shortseroFIXEDsens"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
