@@ -18,6 +18,8 @@ first.where.true <- function(vec, predicate) {
 if(!exists("date.data"))
     date.data <- (today() - days(1)) %>% format("%Y%m%d")
 
+reporting.delay <- 7
+
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
 ####################################################################
@@ -51,22 +53,22 @@ if(!exists("file.loc")){
 latest.date <- ymd(date.data) - reporting.delay
 earliest.date <- ymd("2020-02-17")
 
+tbl_raw <- read_csv(
+	"https://api.coronavirus.data.gov.uk/v1/data?filters=areaName=Wales&structure={%22areaName%22:%22areaName%22,%22date%22:%22date%22,%22newDeaths28DaysByDeathDate%22:%22newDeaths28DaysByDeathDate%22,%22newDeaths28DaysByPublishDate%22:%22newDeaths28DaysByPublishDate%22}&format=csv",
+	col_types = cols(
+		areaName = col_character(),
+		date = col_date(format = ""),
+		newDeaths28DaysByDeathDate = col_double(),
+		newDeaths28DaysByPublishDate = col_double()
+	)
+)
+file_date <- max(tbl_raw$date)
+stopifnot(file_date == ymd(date.data))
+stopifnot(all(tbl_raw$areaName == "Wales"))
 
-possible.files <- Sys.glob(glue::glue("/data/covid-19/data-raw/dstl/{ymd(date.data)}/{date.data}_All_SPIM_trust_*.xlsx"))
-file.name <- possible.files[length(possible.files)]
-rtm.dat <- read_excel(
-  file.name,
-  "Extracted Data",
-  col_types = c("text", rep("numeric", 3), rep("text", 4), rep("numeric", 224)),
-  na = c("", "*")
-) %>%
-  filter(Geography == "Wales") %>%
-  transmute(
-	Date = ymd(DateVal),
-	n = SitRep_death_inc_line,
-	Region = "Wales"
-  ) %>%
-  filter(Date <= latest.date, Date >= earliest.date) %>%
+rtm.dat <- tbl_raw %>%
+  filter(date <= latest.date, date >= earliest.date) %>%
+  select(Date = date, n = newDeaths28DaysByDeathDate) %>%
   replace_na(list(n = 0)) %>%
   arrange(Date)
 

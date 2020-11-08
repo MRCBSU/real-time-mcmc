@@ -105,7 +105,8 @@ startwd <- getwd()
 setwd(out.dir)
 save.image("tmp.RData")
 if(run.code){
-    system(file.path(proj.dir, "rtm_optim_8ag"), intern = TRUE)
+    exe.file <- paste0("../../../rtm_optim_", nA, "ag")
+    system(exe.file, intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
 }
 

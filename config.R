@@ -21,20 +21,34 @@ if (args[2] == "All")  {
 	regions <- args[3:(nr+2)]
 	stopifnot(length(regions) == nr)
 }
+English.regions <- c("East_of_England", "London", "Midlands",
+								  "North_East_and_Yorkshire", "North_West",
+								  "South_East", "South_West", "England")
+running.England <- any(regions %in% English.regions)
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
 google.data.date <- format(ymd("20201030"), format = "%Y%m%d")
+include.google <- TRUE
+create.counterfactual <- FALSE
+if (!create.counterfactual) {
+  intervention.date <- NULL
+} else {
+  if (regions == "Wales") intervention.date <- ymd(20201030)
+  if (regions == "Northern_Ireland") intervention.date <- ymd(20201013)
+}
+
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
-nforecast.weeks <- 10
+nforecast.weeks <- 9
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
 
 ## What age groupings are being used?
-age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
-age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "All ages"
+#age.labs <- c("All") ## "All ages"
+age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+")
 nA <- length(age.labs)
+if (nA == 8) age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
 
 # Possible values:
 # deaths: confirmed deaths only, by date of death
@@ -44,8 +58,10 @@ data.desc <- "deaths"
 # Possible values are NRS or PHS
 scotland.data.desc <- "PHS"
 
-scenario.name <- paste0("Scot_", scotland.data.desc)
-contact.model <- 3
+scenario.name <- ifelse(nr == 1, paste0(regions, "_", ""))
+if (include.google) scenario.name <- paste0(scenario.name, "with_google_")
+if (create.counterfactual) scenario.name <- paste0(scenario.name, "with_intervention_end_date_", intervention.date)
+contact.model <- ifelse(nA == 1, 1, 3)
 
 flg.confirmed <- (data.desc != "all")
 if (data.desc == "all") {
@@ -55,7 +71,13 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     flg.cutoff <- FALSE
     if(flg.cutoff) str.cutoff <- "60cod"
-    reporting.delay <- 4
+	if (running.England) {
+      reporting.delay <- 14
+	} else {
+      if (regions == "Wales") reporting.delay <- 7
+      if (regions == "Northern_Ireland") reporting.delay <- 2
+      if (regions == "Scotland") reporting.delay <- 3
+	}
 } else {
 	stop("Unknown data description")
 }
@@ -85,7 +107,3 @@ names(data.dirs) <- c("deaths", "sero", "cases")
       
 flg.confirmed = TRUE
 
-English.regions <- c("East_of_England", "London", "Midlands",
-								  "North_East_and_Yorkshire", "North_West",
-								  "South_East", "South_West", "England")
-running.England <- any(regions %in% English.regions)
