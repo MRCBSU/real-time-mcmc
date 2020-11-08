@@ -58,7 +58,8 @@ data.desc <- "deaths"
 # Possible values are NRS or PHS
 scotland.data.desc <- "PHS"
 
-scenario.name <- ifelse(nr == 1, paste0(regions, "_", ""))
+scenario.name <- ifelse(nr == 1, regions, "")
+scenario.name <- paste0(scenario.name, "_", nA, "ag", "_")
 if (include.google) scenario.name <- paste0(scenario.name, "with_google_")
 if (create.counterfactual) scenario.name <- paste0(scenario.name, "with_intervention_end_date_", intervention.date)
 contact.model <- ifelse(nA == 1, 1, 3)
@@ -81,7 +82,6 @@ if (data.desc == "all") {
 } else {
 	stop("Unknown data description")
 }
-scenario.name <- paste0(scenario.name, reporting.delay, "day")
 
 # The 'gp' stream in the code is linked to hospitalised cases
 gp.flag <- 0					# 0 = off, 1 = on
