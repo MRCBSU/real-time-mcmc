@@ -83,9 +83,19 @@ print(paste(
 	"(", sum(rtm.dat$n), "total deaths,", nrow(rtm.dat), "rows.)"
 ))
 
-rtm.dat %>%
-	select(Date, n) %>%
-	write_tsv(
-		data.files["Northern_Ireland"],
-		col_names = FALSE
-	)
+if (nA == 1) {
+  rtm.dat %>%
+    select(Date, n) %>%
+    write_tsv(
+      data.files["Northern_Ireland"],
+      col_names = FALSE
+    )
+} else {
+  rtm.dat %>%
+    mutate(n0 = 0) %>%
+    select(Date, n0, n) %>%
+    write_tsv(
+      data.files["Northern_Ireland"],
+      col_names = FALSE
+    )
+}
