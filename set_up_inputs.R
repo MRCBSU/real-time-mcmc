@@ -232,6 +232,8 @@ num.threads <- nr
 
 if (data.desc == "adjusted") {
 	study_region_str <- "regions_hosp_aggregation = 5, 6, 7;"
+} else if (nr == 1 && nA == 8 && regions %in% c("Wales", "Northern_Ireland")) {
+    study_region_str <- "regions_hosp_aggregation = 0;"
 } else {
 	study_region_str <- ""
 }
