@@ -60,10 +60,10 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "adjusted_mean"
+data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "AdjNoPrev_relax_shortsero"
+scenario.name <- "Prev_relax_shortsero_FIXEDsens"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -71,15 +71,16 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 
+if(!prev.flag) scenario.name <- paste0("No", scenario.name)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {
@@ -89,13 +90,12 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data) - 1
+    date.adj.data <- ymd(date.data) - 3
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
 }
-scenario.name <- paste0(scenario.name, reporting.delay, "day", "_", data.desc)
-
+scenario.name <- paste0(scenario.name, reporting.delay, "day") ## TO BE REMOVED ASAP
 
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")

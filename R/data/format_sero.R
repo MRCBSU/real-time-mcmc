@@ -51,9 +51,9 @@ possible.col.names <- list(
     Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome", "euroimmun_outcome"),
     Eresult = c("EuroImmun_units", "EuroImm_Units", "euroimmun_units"),
     Routcome = c("RBD_units", "RBD_outcome", "rbd_outcome"),
-    Rresult = c("RBD_units", "RBD_Units", "rbd_units"),
-	ONS_region = "ONS_Region"
+    Rresult = c("RBD_units", "RBD_Units", "rbd_units")
 )
+if(region.type == "ONS") possible.col.names$ONS_region = "ONS_Region"
 
 input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -131,7 +131,7 @@ sero.col.args[[col.names[["Eoutcome"]]]] <- col_character()
 sero.col.args[[col.names[["Eresult"]]]] <- col_double()
 sero.col.args[[col.names[["Routcome"]]]] <- col_character()
 sero.col.args[[col.names[["Rresult"]]]] <- col_double()
-sero.col.args[[col.names[["ONS_region"]]]] <- col_character()
+if(region.type == "ONS") sero.col.args[[col.names[["ONS_region"]]]] <- col_character()
 sero.cols <- do.call(cols_only, sero.col.args)
 
 ## Reading in the data ##
@@ -179,6 +179,8 @@ rtm.pos <- sero.dat %>%
 ## Write rtm data outputs to file
 #serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
 #seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
+serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
+seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
 names(serosam.files) <- names(seropos.files) <- regions
 for(reg in regions){
     region.sam <- pivot_wider(rtm.sam %>%
