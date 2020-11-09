@@ -104,14 +104,15 @@ dth.dat <- read_csv(
 		observed = col_integer()
 	)
 ) %>%
-	rename(Date = onset_date, n = col.to.use, Region = region) %>%
+	rename(Date = onset_date, n = all_of(col.to.use), Region = region) %>%
 	mutate(age_group = recode(age_group,
 				  `45-54` = "45-64",
-				  `55-54` = "45-64"
+				  `55-64` = "45-64"
 				  )
 	) %>%
 	group_by(Date, Region, age_group) %>%
-	summarise(n = round(sum(n, na.rm = TRUE)), .groups = "drop") %>%
+    summarise(n = round(sum(n, na.rm = TRUE))) %>%
+    ungroup() %>%
 	mutate(
 		Age.Grp = factor(
 			age_group,
