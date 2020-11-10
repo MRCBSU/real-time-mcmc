@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-5
+#SBATCH --array=1-10
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,14 +61,20 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201102/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/"
 
-if [ $SLURM_ARRAY_TASK_ID -gt 2 ]
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]
 then
     workdir="${workdir}No"
 fi
 workdir="${workdir}Prev_relax_shortsero"
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then workdir="${workdir}FIXEDsens"; fi
+if (( $SLURM_ARRAY_TASK_ID % 6 > 2 && $SLURM_ARRAY_TASK_ID % 6 < 5 ))
+then
+    workdir="${workdir}_singleM"
+elif (( $SLURM_ARRAY_TASK_ID > 4 && $SLURM_ARRAY_TASK_ID < 7 ))
+then
+    workdir="${workdir}_FIXEDsens"
+fi
 workdir="${workdir}_ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
 then
@@ -76,7 +82,7 @@ then
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff6day_matrices_20201030_deaths"
+workdir="${workdir}cutoff6day_matrices_20201106_deaths"
 
 echo -e $workdir
 
@@ -142,7 +148,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-eval $CMD
+if [ $SLURM_ARRAY_TASK_ID -eq 7 ]; then
+    eval $CMD
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
