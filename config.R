@@ -60,8 +60,8 @@ scotland.data.desc <- "PHS"
 
 scenario.name <- ifelse(nr == 1, regions, "")
 scenario.name <- paste0(scenario.name, "_", nA, "ag", "_")
-if (include.google) scenario.name <- paste0(scenario.name, "with_google_")
-if (create.counterfactual) scenario.name <- paste0(scenario.name, "with_intervention_end_date_", intervention.date)
+if (include.google) scenario.name <- paste0(scenario.name, "_with_google")
+if (create.counterfactual) scenario.name <- paste0(scenario.name, "_with_intervention_end_date", intervention.date)
 contact.model <- ifelse(nA == 1, 1, 3)
 
 flg.confirmed <- (data.desc != "all")
