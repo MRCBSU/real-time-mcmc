@@ -28,15 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-1
+#SBATCH --array=1-6
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_model_runs_20201030_%a.out
-#SBATCH --error=simulate_model_runs_20201030_%a.err
+#SBATCH --output=simulate_model_runs_20201108_%a.out
+#SBATCH --error=simulate_model_runs_20201108_%a.err
 
 forecast_switch="intervention"
 

@@ -18,18 +18,21 @@ array.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 ## Forecast projection
 nforecast.weeks <- 24
 
-intervention.scenario <-paste0("half_school_", ifelse(array.num < 2, "optimistic", "realistic"))
+flg.school <- array.num %% 3
+intervention.scenario <-paste0(ifelse(flg.school == 0, "half_", ""),
+                               ifelse(flg.school < 2, "school_", ""),
+                               ifelse(array.num %% 2, "optimistic", "realistic"))
 ## if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention.scenario)
 intervention.length.weeks <- 4 ## ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
 intervention.start <- ymd(20201105)
-intervention.matrix <- paste0(intervention.scenario, "2020-11-05.csv")
+intervention.matrix <- paste0(intervention.scenario, intervention.start, ".csv")
 projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
 projections.basedir <- file.path(out.dir, paste0("projections", array.num))
 
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
 mm.breaks <- cm.breaks[length(cm.breaks)] + (1:nforecast.weeks) * 7 + start.date - 1
-google.data.date <- ymd("20201030")
+google.data.date <- ymd("20201106")
 intervention.breaks <- c(intervention.start, intervention.start + intervention.length.weeks * 7)
 mult.order <- rep(1, length(mm.breaks))
 
@@ -93,10 +96,12 @@ cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 
 cm.breaks <- c(cm.breaks[1:(first(idx) - 1)], intervention.breaks, cm.breaks[(last(idx)+1):length(cm.breaks)])
-cm.lockdown <- c(cm.lockdown[1:(first(idx) - 1)], cm.intervention.fl, cm.lockdown[last(idx):length(cm.lockdown)])
+cm.breaks <- cm.breaks[cm.breaks < ndays]
+lmix <- length(cm.breaks)
+cm.lockdown <- c(cm.lockdown[1:(first(idx) - 1)], cm.intervention.fl, cm.lockdown[last(idx):length(cm.lockdown)])[1:lmix]
 cm.bases <- c(cm.bases[1:first(idx)],
 	    file.path(proj.dir, "contact_mats", paste0("england_8ag_contact_intervention", "_", intervention.scenario, format(google.data.date, "%Y%m%d"), ".txt")),
-            cm.bases[(last(idx) + 1):length(cm.bases)])
+            cm.bases[(last(idx) + 1):length(cm.bases)])[1:(lmix+1)]
 
 if(!all(file.exists(cm.bases))){
     idx.miss <- which(!file.exists(cm.bases))
