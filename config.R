@@ -37,13 +37,14 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
-
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
 nforecast.weeks <- 3
-ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
+ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
+
+google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
+cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
