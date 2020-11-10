@@ -148,7 +148,13 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-if [ $SLURM_ARRAY_TASK_ID -eq 7 ]; then
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+    eval $CMD
+fi
+if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
+    eval $CMD
+fi
+if [ $SLURM_ARRAY_TASK_ID -eq 8 ]; then
     eval $CMD
 fi
 
