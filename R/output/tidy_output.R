@@ -342,16 +342,21 @@ if (gp.flag == 0) {
 ## Parse data
 print('Loading true data')
 load.data <- function(file.names) {
-  col.names <- c('date', age.labs)
+  if (nr == 1 && regions %in% c("Wales", "Northern_Ireland")) {col.names <- c('date', 'n0', 'All')
+  } else {col.names <- c('date', age.labs)}
   names(file.names) <- regions
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
   dat.raw[[".id"]] <- "region"
   tbl_dat <- do.call(bind_rows, dat.raw)
   if (num.ages > 1) {
-    to.combine <- dimnames(infections)$age[1:4]
-    tbl_dat <- tbl_dat %>%
-      mutate(`<25` = rowSums(.[to.combine])) %>%
-      select(-all_of(to.combine))
+    if (nr == 1 && regions %in% c("Wales", "Northern_Ireland")) {
+      tbl_dat <- tbl_dat %>% select(-n0)
+    } else {
+      to.combine <- dimnames(infections)$age[1:4]
+      tbl_dat <- tbl_dat %>%
+        mutate(`<25` = rowSums(.[to.combine])) %>%
+        select(-all_of(to.combine))
+    }
   }
   return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
 }
