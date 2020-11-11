@@ -29,7 +29,7 @@ projections.basedir <- file.path(out.dir, paste0("projections", array.num))
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
 mm.breaks <- cm.breaks[length(cm.breaks)] + (1:nforecast.weeks) * 7 + start.date - 1
-google.data.date <- ymd("20201030")
+google.data.date <- ymd(google.data.date)
 intervention.breaks <- c(intervention.start, intervention.start + intervention.length.weeks * 7)
 mult.order <- rep(1, length(mm.breaks))
 
