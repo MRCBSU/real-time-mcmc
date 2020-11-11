@@ -1,5 +1,5 @@
 init.func <- function(vecS, matM){
-    if(length(dim(matM)) == 3 && dim(matM)[3] == 1) matM <- matM[,,1]
+    if(length(dim(matM)) == 3 && dim(matM)[3] == 1) matM <- as.matrix(matM[,,1])
     if(length(vecS) != nrow(matM)) stop("Dimension mismatch between vecS and matM")
     M.star <- sweep(matM, 1, vecS, `*`)
     eM <- eigen(M.star)$vectors[, 1]

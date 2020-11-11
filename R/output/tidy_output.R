@@ -342,7 +342,7 @@ if (gp.flag == 0) {
 ## Parse data
 print('Loading true data')
 load.data <- function(file.names) {
-  if (nr == 1 && regions %in% c("Wales", "Northern_Ireland")) {col.names <- c('date', 'n0', 'All')
+  if (nr == 1 && regions %in% c("Wales", "Northern_Ireland") && nA > 1) {col.names <- c('date', 'n0', 'All')
   } else {col.names <- c('date', age.labs)}
   names(file.names) <- regions
   dat.raw <- suppressMessages(sapply(file.names, read_tsv, col_names = col.names, simplify = FALSE))
