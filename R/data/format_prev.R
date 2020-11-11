@@ -10,6 +10,7 @@
 ## command-line argument.
 if(!exists("prev.loc")){ ## Set to default format for the filename
     input.loc <- "data/raw/prevalence"
+    if (region.type == "ONS") input.loc <- file.path(input.loc, "ONS_regions")
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc, list.files(path = input.loc, pattern=glob2rx("202*csv"))))
     ## Pick the most recently added
@@ -39,7 +40,7 @@ nA <- length(age.labs)
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
     age = c("age", "age_rtm", "ageg_rtm"),
-    region = "nhsregion",
+    region = c("nhsregion", "onsregion"),
     sample_date = "date",
     day = "study_day",
     lmean = "lmean",
@@ -57,9 +58,18 @@ if (any(invalid.col.names)) {
 
 ## Given a row in the sero data file, return its region, formatted with no spaces
 get.region <- function(x) {
+	if (region.type == "NHS") north.east.name <- "North_East_and_Yorkshire"
+	if (region.type == "ONS") north.east.name <- "North_East"
     x %>% mutate(region = str_replace_all(region, " ", "_"),
-                 region = ifelse(region == "North_East", "North_East_and_Yorkshire", region)
-                 )
+				 region = recode(region,
+					North_East = north.east.name,
+					East_England = "East_of_England",
+					North_East_England = north.east.name,
+					North_West_England = "North_West",
+					South_East_England = "South_East",
+					South_West_England = "South_West",
+					Yorkshire = "Yorkshire_and_The_Humber",
+				))
 }
 
 ####################################################################
@@ -177,5 +187,7 @@ for(reg in regions){
 
     region.sd %>%
         write_tsv(prev.sd.files[reg], col_names = FALSE)
+	stopifnot(max(region.mean[-1]) > 0)
+	stopifnot(max(region.sd[-1]) > 0)
     
 }
