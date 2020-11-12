@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1-2
+#SBATCH --array=1-6
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -70,7 +70,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections_half*"
+options="../../../R/output/plot_projections.R projections_*"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
