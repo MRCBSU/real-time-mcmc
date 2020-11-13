@@ -63,8 +63,7 @@ region.code <- "Eng"
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
 data.desc <- "deaths"
 
-## Give the run a name to identify the configuratio
-scenario.name <- "Prev_long_positive_shortsero_FIXEDsens"
+
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -76,8 +75,16 @@ prev.flag <- 1
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
+## Shall we fix the serological testing specificity and sensitivty?
+fix.sero.test.spec.sens <- FALSE
 
-if(!prev.flag) scenario.name <- paste0("No", scenario.name)
+## Give the run a name to identify the configuratio
+if (prev.flag) scenario.name <- "Prev_long_positive"
+if (!prev.flag) scenario.name <- "NoPrev"
+if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
+if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
+
+
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
