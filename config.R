@@ -98,15 +98,6 @@ if (data.desc == "all") {
 }
 scenario.name <- paste0(scenario.name, reporting.delay, "day") ## TO BE REMOVED ASAP
 
-## ## Choose the name of the subdirectory in model_runs to use
-## subdir.name <- paste0(date.data, "regions_alone")
-out.dir <- file.path(proj.dir,
-                     "model_runs",
-                     date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date,
-							"_", data.desc))	# Value actually used
-if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
-if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 data.dirs <- file.path(proj.dir,
                        paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       
                        )
@@ -131,7 +122,6 @@ if(gp.flag){
     symptoms <- FALSE
     if(symptoms){
         scenario.name <- paste0(scenario.name, "_symptoms")
-        out.dir <- paste0(out.dir, "_symptoms")
         asymptomatic.states <- "N"
     } else asymptomatic.states <- c("Y", "N", "U")
     pgp.prior.diffuse <- FALSE
@@ -139,11 +129,23 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201028")
+    date.prev <- ymd("20201113")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
+	last.prev.day <- (prev.end.day - 4)
+	last.prev.day <- ymd(20201028) - 4 - start.date + 1
     ## Default system for getting the days on which the likelihood will be calculated.
-    prev.lik.days <- as.integer((prev.end.day - 4) - (28 * (2:0)))
+    prev.lik.days <- as.integer(last.prev.day - (28 * (3:0)))
+	scenario.name <- paste0(scenario.name, "_prev", last.prev.day)
 }
+
+## ## Choose the name of the subdirectory in model_runs to use
+out.dir <- file.path(proj.dir,
+                     "model_runs",
+                     date.data,
+                     paste0(scenario.name, "_matrices_", google.data.date,
+							"_", data.desc))	# Value actually used
+if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
+if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 2

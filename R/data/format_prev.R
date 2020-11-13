@@ -145,6 +145,17 @@ prev.dat <- prev.dat %>%
     select(-include) %>%
     get.region()
 
+# Check correct number of days
+stopifnot(
+  (
+    prev.dat %>%
+      filter(lsd > 0) %>%
+      distinct(day) %>%
+	  nrow()
+  )
+  == length(prev.lik.days)
+)
+
 ## Pad data with some zeros to take it back to day 1.
 if(min(prev.dat$day) > 1){
     add.dates <- lubridate::as_date(start.date:(min(prev.dat$sample_date) - 1)) %>%
