@@ -72,9 +72,6 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
-## Does each age group have a single IFR or one that varies over time?
-single.ifr <- FALSE
-if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE
 
@@ -84,6 +81,9 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
 
+## Does each age group have a single IFR or one that varies over time?
+single.ifr <- FALSE
+if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
 
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
@@ -136,11 +136,11 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201106")
+    date.prev <- ymd("20201109")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
 	last.prev.day <- (prev.end.day - 4)
-	last.prev.day <- ymd(20201028) - 4 - start.date + 1
+	last.prev.day <- ymd(20201028) - 4 - start.date + 1 + 7
 	first.prev.day <- 168
     ## Default system for getting the days on which the likelihood will be calculated.
     prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -28))
