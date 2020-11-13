@@ -26,3 +26,4 @@ Lombdardy*/**
 **.RData
 **.rds
 !base_matrices.rds
+contact_mats/*.txt

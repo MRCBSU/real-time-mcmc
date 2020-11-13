@@ -43,7 +43,7 @@ start.date <- lubridate::as_date("20200217")
 nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
-google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201113"), format = "%Y%m%d")
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
 
 ## What age groupings are being used?
