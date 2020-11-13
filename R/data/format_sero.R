@@ -179,8 +179,6 @@ rtm.pos <- sero.dat %>%
 ## Write rtm data outputs to file
 #serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
 #seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
-serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
-seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
 names(serosam.files) <- names(seropos.files) <- regions
 for(reg in regions){
     region.sam <- pivot_wider(rtm.sam %>%
