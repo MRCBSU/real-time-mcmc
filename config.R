@@ -72,11 +72,12 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
+prev.prior <- "relax" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- "Prev_long_positive"
+if (prev.flag) scenario.name <- paste0("Prev_", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
