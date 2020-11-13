@@ -28,7 +28,7 @@ running.England <- any(regions %in% English.regions)
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201113"), format = "%Y%m%d")
 include.google <- TRUE
 create.counterfactual <- FALSE
 if (!create.counterfactual) {
@@ -42,7 +42,7 @@ if (!create.counterfactual) {
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
 nforecast.weeks <- 9
-ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
+ndays <- as.integer(lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 ## What age groupings are being used?
 #age.labs <- c("All") ## "All ages"

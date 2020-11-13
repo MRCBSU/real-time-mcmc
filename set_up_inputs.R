@@ -52,8 +52,7 @@ matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date)
 )
-last.break <- as.integer(ymd(google.data.date) - ymd(start.date), unit = "days") - 4
-cm.breaks <- seq(from = 36, to = last.break, by = 7)
+cm.breaks <- seq(from = 36, to = ndays, by = 7)
 lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
 if (running.England) {
   cm.region.name <- "England"
