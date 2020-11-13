@@ -134,8 +134,9 @@ if(prev.flag){
     prev.end.day <- date.prev - start.date + 1
 	last.prev.day <- (prev.end.day - 4)
 	last.prev.day <- ymd(20201028) - 4 - start.date + 1
+	first.prev.day <- 168
     ## Default system for getting the days on which the likelihood will be calculated.
-    prev.lik.days <- as.integer(last.prev.day - (28 * (3:0)))
+    prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -28))
 	scenario.name <- paste0(scenario.name, "_prev", last.prev.day)
 }
 
