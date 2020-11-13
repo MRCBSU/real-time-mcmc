@@ -64,7 +64,7 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "Prev_relax_shortsero_FIXEDsens"
+scenario.name <- "Prev_long_positive_shortsero_FIXEDsens"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -81,7 +81,7 @@ if(!prev.flag) scenario.name <- paste0("No", scenario.name)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {

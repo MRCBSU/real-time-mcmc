@@ -25,6 +25,7 @@ pars.dI <- c(1.43, 0.549)
 prior.r1 <- ifelse(prev.flag, 2, 1)
 if(grepl("tight", scenario.name)) pars.r1 <- c(550000,100000)
 if(grepl("relax", scenario.name)) pars.r1 <- c(5.5, 1)
+if(grepl("long_positive", scenario.name)) pars.r1 <- c(11.7, 0.903)
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
