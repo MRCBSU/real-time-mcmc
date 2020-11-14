@@ -28,15 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-10
+#SBATCH --array=1-8
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201102_%a.out
-#SBATCH --error=process_model_runs_20201102_%a.err
+#SBATCH --output=process_model_runs_20201111_%a.out
+#SBATCH --error=process_model_runs_20201111_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -61,28 +61,40 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201111/"
 
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]
-then
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     workdir="${workdir}No"
-fi
-workdir="${workdir}Prev_relax_shortsero"
-if (( $SLURM_ARRAY_TASK_ID % 6 > 2 && $SLURM_ARRAY_TASK_ID % 6 < 5 ))
+    if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+        workdir="${workdir}Adj"
+    else
+        workdir="${workdir}No"
+    fi
+elif [ $SLURM_ARRAY_TASK_ID -lt 7 ]
 then
-    workdir="${workdir}_singleM"
-elif (( $SLURM_ARRAY_TASK_ID > 4 && $SLURM_ARRAY_TASK_ID < 7 ))
-then
-    workdir="${workdir}_FIXEDsens"
+    workdir="${workdir}Adj"
 fi
-workdir="${workdir}_ifr_"
+workdir="${workdir}Prev_relax_shortsero_ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
 then
     workdir="${workdir}28"
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff6day_matrices_20201106_deaths"
+workdir="${workdir}cutoff"
+if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
+then
+    workdir="${workdir}1"
+else
+    workdir="${workdir}6"
+fi
+workdir="${workdir}day_matrices_20201106_"
+if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
+then
+    workdir="${workdir}adjusted_mean"
+else
+    workdir="${workdir}deaths"
+fi
 
 echo -e $workdir
 
@@ -148,13 +160,8 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    eval $CMD
-fi
-if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
-    eval $CMD
-fi
-if [ $SLURM_ARRAY_TASK_ID -eq 8 ]; then
+if [ $SLURM_ARRAY_TASK_ID -eq 5 ] || [ $SLURM_ARRAY_TASK_ID -eq 7 ]
+then
     eval $CMD
 fi
 
