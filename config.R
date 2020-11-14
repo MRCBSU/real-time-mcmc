@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201106"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201113"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -63,7 +63,7 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "Prev_relax_shortsero_FIXEDsens"
+scenario.name <- "AdjPrev_relax_shortsero"
 contact.model <- 3
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -71,7 +71,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
@@ -90,12 +90,11 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data) - 3
+    date.adj.data <- ymd(date.data) - 1
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
 }
-scenario.name <- paste0(scenario.name, reporting.delay, "day") ## TO BE REMOVED ASAP
 
 ## ## Choose the name of the subdirectory in model_runs to use
 ## subdir.name <- paste0(date.data, "regions_alone")
@@ -138,11 +137,14 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201028")
+    date.prev <- ymd("20201109")
+    date.old.prev <- ymd("20201028")
+    date.start.prev <- ymd("20200802")
     ## Convert that to an analysis day number
-    prev.end.day <- date.prev - start.date + 1
+    prev.end.day <- date.old.prev - start.date + 1 + 7
+    prev.start.day <- date.start.prev - start.date
     ## Default system for getting the days on which the likelihood will be calculated.
-    prev.lik.days <- as.integer((prev.end.day - 4) - (28 * (2:0)))
+    prev.lik.days <- rev(seq(as.integer(prev.end.day - 4), as.integer(prev.start.day), by = -28))
 }
 
 threads.per.regions <- 2
