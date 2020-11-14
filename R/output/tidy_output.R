@@ -430,7 +430,7 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   
 print('Saving results')
 save.objs <- c("infections", "cum_infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
-     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr")
+     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")
 save(list = save.objs[sapply(save.objs, exists)],
      file = file.path(out.dir, "output_matrices.RData"))
 save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))
