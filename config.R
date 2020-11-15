@@ -63,15 +63,15 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "AdjPrev_relax_shortsero"
-contact.model <- 3
+scenario.name <- "Prev_relax_shortsero_fix_cm5"
+contact.model <- 5
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
@@ -80,7 +80,7 @@ if(!prev.flag) scenario.name <- paste0("No", scenario.name)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {

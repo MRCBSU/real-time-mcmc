@@ -4,9 +4,6 @@ expit <- function(x) exp(x)/(1+exp(x))
 ## Incubation period - best working estimate - mean 5.2 (4.1-7.0)
 ## Use these as simulation parameters for the latent period
 
-int.effect <- c(0.00, 0.521, 0.24, 1.0)
-names(int.effect) <- c("total", "variable", "lshtm", "nothing")
-
 ## shape.dL <- 35.1
 ## rate.dL <- 6.76  ## These values give the desired mean with a variance of 0.768
 value.dl <- 1
@@ -225,25 +222,42 @@ if(grepl("reports", data.desc, fixed = T)){
 ldelay.mean <- 3
 ldelay.sd <- 3
 
-## Contact model
-int.effect <- 0.0521
+## ## Contact model ## ## ##
 nm <- max(unlist(mult.mat))
 sd <- sqrt(log(5) - 2*log(2))
 rw.flag <- FALSE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
-                   increments = c(0, 0.1 * sd)
+                   increments = c(0, 0.1 * sd),
+                   viner = c(-0.775, sqrt(-0.775 - log(0.44)))
                    )
 ## prior.list <- list(relax = c(4, 4))
 contact.dist <- rep(c(1, rep(4, nm)), nr)
 ## contact.pars <- rep(prior.list[[1]], nr)
 contact.pars <- array(0, dim = c(2, nm, nr))
-for(i in 1:nm)
-contact.pars[, i, ] <- prior.list$lock
+for(i in 1:nm){
+    contact.pars[, i, ] <- prior.list$lock
+    if((contact.model == 4) & (i %in% c(1, 4)))
+        contact.pars[, i, ] <- prior.list$viner
+    if((contact.model == 5) & (i %in% c(1, 5)))
+        contact.pars[, i, ] <- prior.list$viner
+    if((contact.model == 5) & (i %in% c(2, 6)))
+        contact.pars[, i, ] <- 0.5 * (prior.list$viner + prior.list$lock)
+}
 ## if(nm > 1){
 ##     for(j in 2:nm)
 ##         contact.pars[, j, ] <- prior.list$increments
 ## }
-contact.proposal <- c(0.0, 0.003462, 0.000018, 0.000463, 0.0, 0.000769, 0.000037, 0.001446, 0.0, 0.001795, 0.000009, 0.000360, 0.0, 0.005577, 0.000010, 0.000311, 0.0, 0.003568, 0.000015, 0.000486, 0.0, 0.002389, 0.000012, 0.000359, 0.0, 0.004945, 0.000047, 0.000871, 0.0008, 0.0008, 0.0008, 0.008,0.008,0.008,0.008,0.008)[1:length(contact.dist)]
+contact.proposal <- c(0.0, 0.003462, 0.000018, 0.000463,
+                      0.0, 0.000769, 0.000037, 0.001446,
+                      0.0, 0.001795, 0.000009, 0.000360,
+                      0.0, 0.005577, 0.000010, 0.000311,
+                      0.0, 0.003568, 0.000015, 0.000486,
+                      0.0, 0.002389, 0.000012, 0.000359,
+                      0.0, 0.004945, 0.000047, 0.000871)
+if(contact.model == 4)
+    contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 3, 4, 4)]))
+if(contact.model == 5)
+    contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 2, 3, 4, 4, 4)]))
 ## contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
 contact.reduction <- rep(-0.1, length(contact.proposal))
 contact.reduction[1 + ((nm+1)*(0:(nr-1)))] <- 0
@@ -264,6 +278,7 @@ if(rw.flag){
     m.design <- as.matrix(m.design)
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
+## ## End of contact model ##
 
 beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - 25)][-1]
 ## beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
@@ -312,7 +327,7 @@ beta.rw.sd <- 0.151057317190954
 ## sero.spec <- 777.5 / 787
 sero.sens <- 0.707875480848508
 sero.spec <- 0.965012479451016
-ssens.prior.dist <- 3 ## ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
+ssens.prior.dist <- 1 ## ifelse(grepl("altSens", scenario.name) | grepl("varSens", scenario.name), 3, 1)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 ## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
 ## if (grepl("altSens", scenario.name)) {

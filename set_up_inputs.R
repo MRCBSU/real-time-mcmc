@@ -111,7 +111,26 @@ if(contact.model == 1){
         matrix(c(rep(y[1], nA * (nA - 1)),
                  rep(y[2], nA)), nA, nA, byrow = TRUE)
     })
-}
+} else if(contact.model == 4){
+    cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod4levels", 0:9, ".txt"))
+    mult.order <- c(0, rep(1, length(cm.breaks)))
+    mult.mat <- lapply(unique(mult.order), function(x){
+        y <- (3*x)+(0:2)
+        matrix(c(rep(y[2], 3 * nA), ## kids
+                 rep(y[1], (nA - 4) * nA), ## adults except the very elderly
+                 rep(y[3], nA)), nA, nA, byrow = TRUE)
+        })
+} else if(contact.model == 5){
+    cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod5levels", 0:9, ".txt"))
+    mult.order <- c(0, rep(1, length(cm.breaks)))
+    mult.mat <- lapply(unique(mult.order), function(x){
+        y <- (4*x)+(0:3)
+        matrix(c(rep(y[2], 3 * nA), ## kids,
+                 rep(y[3], nA), ## university-aged
+                 rep(y[1], (nA - 5) * nA), ## adults except the very elderly
+                 rep(y[4], nA)), nA, nA, byrow = TRUE)
+        })
+    }
 if(!all(file.exists(cm.mults)))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
                                        cm.mults[i],
