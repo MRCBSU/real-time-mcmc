@@ -202,3 +202,4 @@ for(reg in regions){
 	stopifnot(max(region.sd[-1]) > 0)
     
 }
+write_csv(prev.dat, prev.dat.file)

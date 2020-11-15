@@ -77,6 +77,7 @@ if(gp.flag){
 if(prev.flag){
     prev.mean.files <- paste0(data.dirs["prev"], "/", date.prev, "_", last.prev.day, "_", regions, "_ons_meanlogprev.txt")
     prev.sd.files <- paste0(data.dirs["prev"], "/", date.prev, "_", last.prev.day, "_", regions, "_ons_sdlogprev.txt")
+    prev.dat.file <- paste0(data.dirs["prev"], "/", date.prev, "_", last.prev.day, "_ons_dat.csv")
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL

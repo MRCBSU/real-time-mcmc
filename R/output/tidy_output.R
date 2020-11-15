@@ -281,6 +281,10 @@ if(dths.flag){
 if(prev.flag){
     prevalence <- nice.array(Prev)
     rm(Prev)
+	if (!exists("prev.dat")) {
+	  if (!exists("prev.dat.file")) prev.dat.file <- paste0(data.dirs["prev"], "/", date.prev, "_", last.prev.day, "_ons_dat.csv")
+	  prev.dat <- read_csv(prev.dat.file)
+	}
 } else prev.dat <- NULL
 derived.quantity <- function(scaling.param, scaling.idxs = c("date", "age"),
                              overdispersion.param, convolution,
