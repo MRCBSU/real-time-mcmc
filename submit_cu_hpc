@@ -21,34 +21,19 @@
 #SBATCH --output=model_runs_20201108prevjobs_%a.out
 #SBATCH --error=model_runs_20201108prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201111/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201113/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     workdir="${workdir}No"
-    if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
-        workdir="${workdir}Adj"
-    else
-        workdir="${workdir}No"
-    fi
-elif [ $SLURM_ARRAY_TASK_ID -lt 7 ]
-then
-    workdir="${workdir}Adj"
 fi
-workdir="${workdir}Prev_relax_shortsero_ifr_"
+workdir="${workdir}AdjPrev_relax_shortsero_ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
 then
     workdir="${workdir}28"
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff"
-if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
-then
-    workdir="${workdir}1"
-else
-    workdir="${workdir}6"
-fi
-workdir="${workdir}day_matrices_20201106_"
+workdir="${workdir}cutoff_matrices_20201113_"
 if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
 then
     workdir="${workdir}adjusted_mean"
