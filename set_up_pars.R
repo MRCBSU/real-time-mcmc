@@ -125,7 +125,7 @@ if(rw.flag){
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
 
-beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
+beta.breaks <- cm.breaks[-c(1, (length(cm.breaks) - (0:(nforecast.weeks + 2))))]
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- rep(c(0, jitter(rep(0, nbetas - 1), amount = 0.2)), nr)
 beta.update <- TRUE
