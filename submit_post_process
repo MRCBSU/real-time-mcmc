@@ -61,25 +61,28 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201113/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201114/"
 
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}AdjPrev_relax_shortsero_ifr_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
-then
-    workdir="${workdir}28"
-else
-    workdir="${workdir}60"
+workdir="${workdir}Prev_relax_shortsero_"
+if [ $SLURM_ARRAY_TASK_ID -gt 2 ] && [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+    workdir="${workdir}fix_"
+    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+	ans=$(( SLURM_ARRAY_TASK_ID + 1))
+	days="60"
+	workdir="${workdir}cm${ans}_ifr_${days}"
+    fi
 fi
-workdir="${workdir}cutoff_matrices_20201113_"
-if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
-then
-    workdir="${workdir}adjusted_mean"
-else
-    workdir="${workdir}deaths"
+if [ -z ${days} ]; then
+    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	workdir="${workdir}ifr_28"
+    else
+	workdir="${workdir}ifr_60"
+    fi
 fi
+workdir="${workdir}cutoff_matrices_20201113_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
@@ -147,7 +150,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-eval $CMD
+if [ ! -f "report-updated.html" ]; then
+    eval $CMD
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

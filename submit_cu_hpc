@@ -21,25 +21,28 @@
 #SBATCH --output=model_runs_20201108prevjobs_%a.out
 #SBATCH --error=model_runs_20201108prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201113/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201114/"
 
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}AdjPrev_relax_shortsero_ifr_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
-then
-    workdir="${workdir}28"
-else
-    workdir="${workdir}60"
+workdir="${workdir}Prev_relax_shortsero_"
+if [ $SLURM_ARRAY_TASK_ID -gt 2 ] && [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+    workdir="${workdir}fix_"
+    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+	ans=$(( SLURM_ARRAY_TASK_ID + 1))
+	days="60"
+	workdir="${workdir}cm${ans}_ifr_${days}"
+    fi
 fi
-workdir="${workdir}cutoff_matrices_20201113_"
-if (( $SLURM_ARRAY_TASK_ID % 4 > 0 )) && (( $SLURM_ARRAY_TASK_ID % 4 < 3 ))
-then
-    workdir="${workdir}adjusted_mean"
-else
-    workdir="${workdir}deaths"
+if [ -z ${days} ]; then
+    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	workdir="${workdir}ifr_28"
+    else
+	workdir="${workdir}ifr_60"
+    fi
 fi
+workdir="${workdir}cutoff_matrices_20201113_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
