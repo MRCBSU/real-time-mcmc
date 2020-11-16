@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201113"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201115"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -63,8 +63,8 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "Prev_relax_shortsero_fix_cm5"
-contact.model <- 5
+scenario.name <- "Prev_relax_shortsero_fix_cm4_latestart_morefreq"
+contact.model <- 4
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
@@ -141,10 +141,10 @@ if(prev.flag){
     date.old.prev <- ymd("20201028")
     date.start.prev <- ymd("20200802")
     ## Convert that to an analysis day number
-    prev.end.day <- date.old.prev - start.date + 1 + 7
+    prev.end.day <- date.prev - start.date + 1
     prev.start.day <- date.start.prev - start.date
     ## Default system for getting the days on which the likelihood will be calculated.
-    prev.lik.days <- rev(seq(as.integer(prev.end.day - 4), as.integer(prev.start.day), by = -28))
+    prev.lik.days <- rev(seq(as.integer(prev.end.day - 4), as.integer(prev.start.day), by = -14))
 }
 
 threads.per.regions <- 2
