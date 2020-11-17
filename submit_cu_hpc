@@ -18,31 +18,32 @@
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20201108prevjobs_%a.out
-#SBATCH --error=model_runs_20201108prevjobs_%a.err
+#SBATCH --output=model_runs_20201115prevjobs_%a.out
+#SBATCH --error=model_runs_20201115prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201114/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201115/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     workdir="${workdir}No"
 fi
 workdir="${workdir}Prev_relax_shortsero_"
-if [ $SLURM_ARRAY_TASK_ID -gt 2 ] && [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+if [ $SLURM_ARRAY_TASK_ID -gt 2 ]; then
     workdir="${workdir}fix_"
-    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-	ans=$(( SLURM_ARRAY_TASK_ID + 1))
-	days="60"
-	workdir="${workdir}cm${ans}_ifr_${days}"
+fi
+workdir="${workdir}cm4_"
+if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
+    workdir="${workdir}latestart_"
+    if [ $SLURM_ARRAY_TASK_ID -gt 6 ]; then
+	workdir="${workdir}morefreq_"
     fi
 fi
-if [ -z ${days} ]; then
-    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	workdir="${workdir}ifr_28"
-    else
-	workdir="${workdir}ifr_60"
-    fi
+workdir="${workdir}ifr_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff_matrices_20201113_deaths"
+workdir="${workdir}cutoff_matrices_20201115_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
