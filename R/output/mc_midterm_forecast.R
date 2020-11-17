@@ -20,8 +20,8 @@ nforecast.weeks <- 24
 projections.basedir <- file.path(out.dir, "projections")
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- ymd("20201102") + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201106")
+mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
+google.data.date <- ymd("20201115")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## ----------------------------------------------------------
