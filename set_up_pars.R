@@ -22,6 +22,7 @@ value.dI <- 0.5033387
 pars.dI <- c(1.43, 0.549)
 
 ## Duration of test positivity
+value.dR <- 5.5
 prior.r1 <- ifelse(prev.flag, 2, 1)
 if(prev.prior == "tight") pars.r1 <- c(550000,100000)
 if(prev.prior == "relax") pars.r1 <- c(5.5, 1)
@@ -336,3 +337,4 @@ sspec.prop <- 0.077976
 if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
 if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
 
+if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))

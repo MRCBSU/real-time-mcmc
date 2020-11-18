@@ -34,6 +34,10 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
+use.previous.run.for.start <- TRUE
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201113/Prev_long_positive_fixedSero_ifr_60cutoff6day_prev263_matrices_20201113_deaths"
+iteration.number.to.start.from <- 5877
+
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
