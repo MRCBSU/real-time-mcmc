@@ -284,9 +284,6 @@ beta.rw.vals <- c(
 )[1:(nbetas*nr)]
 beta.rw.vals <- c(beta.rw.vals, rep(0, nbetas*nr - length(beta.rw.vals)))[1:(nbetas*nr)]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
-stopifnot(all(!is.na(beta.rw.vals)))
-stopifnot(length(beta.rw.vals) == nbetas*nr)
-stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
@@ -301,10 +298,6 @@ beta.rw.props <- c(
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )[1:(nbetas*nr)]
-stopifnot(all(!is.na(beta.rw.props)))
-stopifnot(length(beta.rw.props) == nbetas*nr)
-stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
-stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
     for(j in (i+1):nbetas)
@@ -338,3 +331,11 @@ if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.p
 if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
 
 if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))
+
+stopifnot(all(!is.na(beta.rw.vals)))
+stopifnot(length(beta.rw.vals) == nbetas*nr)
+stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
+stopifnot(all(!is.na(beta.rw.props)))
+stopifnot(length(beta.rw.props) == nbetas*nr)
+stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
+stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))

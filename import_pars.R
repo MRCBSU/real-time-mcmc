@@ -21,11 +21,4 @@ if (!fix.sero.test.spec.sens && !prev.env$fix.sero.test.spec.sens) {
   # TODO: fix this
   stop("Not implemented importing serology fields yet")
 }
-stopifnot(all(!is.na(beta.rw.vals)))
-stopifnot(length(beta.rw.vals) == nbetas*nr)
-stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
-stopifnot(all(!is.na(beta.rw.props)))
-stopifnot(length(beta.rw.props) == nbetas*nr)
-stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
-stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
 
