@@ -1,3 +1,11 @@
+add.extra.vals.per.region <- function(vec, val, num) {
+  mat <- matrix(vec, ncol = nr)
+  rows.to.add <- num.betas - length(vec) / nr 
+  mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
+  return(rbind(mat, mat.new))
+}
+  
+
 prev.env <- new.env()
 load.from <- file.path(previous.run.to.use, "tmp.RData")
 load(load.from, env = prev.env)
@@ -12,6 +20,7 @@ value.dR <- prev.params$r1_period[iteration.number.to.start.from,]
 #value.pgp GP stream not currently used
 contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
 beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
+beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, num.betas * nr)
 beta.rw.sd <- prev.params$log_beta_sd[iteration.number.to.start.from,]
 value.egr <- prev.params$exponential_growth_rate[iteration.number.to.start.from,]
 value.nu <- prev.params$log_p_lambda_0[iteration.number.to.start.from,]
