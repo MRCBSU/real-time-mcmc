@@ -93,7 +93,7 @@ if(!all(file.exists(cm.bases)) || overwrite.matrices){
 }
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
               )
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")

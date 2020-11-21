@@ -63,7 +63,7 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201114/NoPrev_relax_shortsero_ifr_60cutoff_matrices_20201113_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201115/NoPrev_relax_shortsero_cm4_ifr_28cutoff_matrices_20201115_deaths"
 
 echo -e $workdir
 
