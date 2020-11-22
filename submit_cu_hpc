@@ -13,29 +13,25 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-8
+#SBATCH --array=1-6
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20201115prevjobs_%a.out
-#SBATCH --error=model_runs_20201115prevjobs_%a.err
+#SBATCH --output=model_runs_20201120prevjobs_%a.out
+#SBATCH --error=model_runs_20201120prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201115/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201120/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero_"
-if [ $SLURM_ARRAY_TASK_ID -gt 2 ]; then
-    workdir="${workdir}fix_"
-fi
-workdir="${workdir}cm4_"
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
+workdir="${workdir}Prev_relax_shortsero_fix_cm4_"
+if [ $SLURM_ARRAY_TASK_ID -gt 4 ] && [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
     workdir="${workdir}latestart_"
-    if [ $SLURM_ARRAY_TASK_ID -gt 6 ]; then
-	workdir="${workdir}morefreq_"
-    fi
+fi
+if [ $SLURM_ARRAY_TASK_ID -gt 6 ]; then
+    workdir="${workdir}all_"
 fi
 workdir="${workdir}ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
@@ -43,7 +39,12 @@ if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff_matrices_20201115_deaths"
+workdir="${workdir}cutoff_matrices_20201120_"
+if [ $SLURM_ARRAY_TASK_ID -gt 6 ]; then
+    workdir="${workdir}deaths"
+else
+    workdir="${workdir}adjusted_mean"
+fi
 
 module load gcc/9 intel/compilers/2020.2
 
