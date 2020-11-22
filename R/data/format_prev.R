@@ -118,7 +118,7 @@ if(!exists("prev.mean.files")){
 
 ## Which columns are we interested in?
 prev.col.args <- list()
-prev.col.args[[col.names[["sample_date"]]]] <- col_date(format = "%Y-%m-%d")
+prev.col.args[[col.names[["sample_date"]]]] <- col_character()
 prev.col.args[[col.names[["age"]]]] <- col_factor(ordered = TRUE)
 prev.col.args[[col.names[["region"]]]] <- col_character()
 prev.col.args[[col.names[["lmean"]]]] <- col_double()
@@ -131,7 +131,8 @@ print(paste("Reading from", input.loc))
 ## strPos <- c("+", "Positive", "positive")
 prev.dat <- read_csv(input.loc,
                      col_types = prev.cols) %>%
-    rename(!!!col.names)
+    rename(!!!col.names) %>%
+	mutate(sample_date = fuzzy_date_parse(sample_date))
 levels(prev.dat$age) <- age.labs[-1]
 
 ## Filter to only those on or before the last day used in the likelihood.
