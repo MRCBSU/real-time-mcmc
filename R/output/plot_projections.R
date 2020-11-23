@@ -1,9 +1,9 @@
 load("tmp.RData")
 out.dir <- getwd()
+arg.index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+if (is.na(arg.index)) arg.index <- 1
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 1) {
-	projections_file <- args[1]
-}
+projections_file <- args[arg.index]
 
 require(rmarkdown)
 
@@ -13,5 +13,7 @@ external <- FALSE
 rmarkdown::render(
 	file.path(Rfile.loc, 'projinf-report.Rmd'),
 	html_document(pandoc_args = "--self-contained"),
-	output_dir = out.dir
+	output_dir = out.dir,
+	output_file = paste0(projections_file, ".html"),
+	intermediates_dir = file.path(out.dir, paste0(projections_file, "_tmp"))
 )

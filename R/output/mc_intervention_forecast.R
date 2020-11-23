@@ -202,11 +202,10 @@ niter <- min(sapply(params, nrow))
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
 if(Sys.info()["user"] %in% c("pjb51", "jbb50")){
-    exe <- "hpc"
+    exe <- "optim"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
-stop()
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 2, rtm.exe = exe)
 
 NNI <- lapply(xtmp, function(x) x$NNI)
