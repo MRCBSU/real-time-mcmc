@@ -196,12 +196,6 @@ proposal_variance = `r paste(var.ifr, collapse = ", ")`;
 
 `r ifelse(nA == 1, "", "age_breakpoints = 2, 3, 4, 5, 6, 7;")`
 
-`r ifelse(single.ifr, "", paste("time_breakpoints = ", paste(tbreaks.ifr, collapse = ", "), ";"))`
-
-`r ifelse(single.ifr, "", "regression_link = 2;")`
-
-`r ifelse(single.ifr, "", "regression_design = ifr.design.txt;")`
-
 }
 
 

@@ -1,10 +1,10 @@
 sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
 
     ## Fix output location
-    out.loc <- file.path(out.dir, paste0("projections", Sys.getpid()))
+    out.loc <- paste0(projections.basedir, "_", Sys.getpid())
     if(!file.exists(out.loc)){
         system(paste("cp -r",
-                     file.path(out.dir, "projections"),
+                     projections.basedir,
                      out.loc))
     }
     fl.pars <- file.path(out.loc, "sim_mod_pars.Rmd")
@@ -30,6 +30,7 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     if(gp.flag) pars.dow <- params$day_of_week_effects[iter, , drop = FALSE]
     sero.sens <- params$sero_test_sensitivity[iter, , drop = FALSE]
     sero.spec <- params$sero_test_specificity[iter, , drop = FALSE]
+	if (length(extra.beta.values) > 0) beta.rw.vals <- c(beta.rw.vals, extra.beta.values)
     
     ## ## Compile the mod_pars.txt file
     ## render(fl.pars, output_file = "mod_pars.txt",
@@ -38,14 +39,14 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     
     ## Run the code
     setwd(out.loc)
-    system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = TRUE)
-
+    exit_code <- system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = FALSE)
+    if(exit_code != 0) stop(paste("Error running in", out.loc, "on iteration", iter))
+    
     ## Read the outputs in and append to output objects
     for(intr in 1:nr)
     {
         NNI.files[[intr]] <- file(paste0("NNI_", regions[intr]), "rb")
-        if(dths.flag)
-            Deaths.files[[intr]] <- file(paste0("Hosp_", regions[intr]), "rb")
+		Deaths.files[[intr]] <- file(paste0("Hosp_", regions[intr]), "rb")
         if(cases.flag)
             Cases.files[[intr]] <- file(paste0("GP_", regions[intr]), "rb")
         if(prev.flag)
