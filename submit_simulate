@@ -1,0 +1,140 @@
+#!/bin/bash
+#!
+#! Example SLURM job script for Darwin (Sandy Bridge, ConnectX3)
+#!
+
+#!#############################################################
+#!#### Modify the options in this section as appropriate ######
+#!#############################################################
+
+#! sbatch directives begin here ###############################
+#! Name of the job:
+#SBATCH -J process_hpc_batch
+#! Which project should be charged:
+#SBATCH -A MRC-BSU-SL2-CPU
+#! How many whole nodes should be allocated?
+#SBATCH --nodes=1
+#! How many (MPI) tasks will there be in total? (<= nodes*16)
+#SBATCH --ntasks=1
+#! How many CPUs will each task require
+#SBATCH --cpus-per-task=32
+#! How much wallclock time will be required?
+#SBATCH --time=2:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+#SBATCH --array=1-4
+
+#SBATCH -p skylake
+#SBATCH --qos=covid0
+
+#! sbatch directives end here (put any additional directives above this line)
+
+#SBATCH --output=simulate_model_runs_%a.out
+#SBATCH --error=simulate_model_runs_%a.err
+
+forecast_switch="intervention"
+
+#! Notes:
+#! Charging is determined by node number*walltime. Allocation is in entire nodes.
+#! The --ntasks value refers to the number of tasks to be launched by SLURM only. This
+#! usually equates to the number of MPI tasks launched. Reduce this from nodes*1if
+#! demanded by memory requirements, or if OMP_NUM_THREADS>1.
+
+#! Number of nodes and tasks per node allocated by SLURM (do not change):
+numnodes=$SLURM_JOB_NUM_NODES
+numtasks=$SLURM_NTASKS
+mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).*$/\1/')
+
+#! ############################################################
+#! Modify the settings below to specify the application's environment, location 
+#! and launch method:
+
+#! Optionally modify the environment seen by the application
+#! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
+#! Insert additional module load commands after this line if needed:
+module load pandoc                         # Need this to generate the STAN model code
+module load R/3.6
+# PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
+
+
+#! Run options for the application:
+options="../../../R/output/mc_${forecast_switch}_forecast.R"
+
+# #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
+# #! safe value to no more than 16:
+# export OMP_NUM_THREADS=1
+# export R_PROFILE=$RMPI_RPROFILE
+
+#! Number of MPI tasks to be started by the application per node and in total (do not change):
+np=$[${numnodes}*${mpi_tasks_per_node}]
+
+# #! The following variables define a sensible pinning strategy for Intel MPI tasks
+
+# #! this should be suitable for both pure MPI and hybrid MPI/OpenMP jobs:
+# export I_MPI_PIN_DOMAIN=omp:compact # Domains are $OMP_NUM_THREADS cores in size
+# export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches/sockets
+# #! Notes:
+# #! 1. These variables influence Intel MPI only.
+# #! 2. Domains are non-overlapping sets of cores which map 1-1 to MPI tasks.
+# #! 3. I_MPI_PIN_PROCESSOR_LIST is ignored if I_MPI_PIN_DOMAIN is set.
+# #! 4. If MPI tasks perform better when sharing caches/sockets, try I_MPI_PIN_ORDER=compact.
+
+# # Get array ID
+# i=${SLURM_ARRAY_TASK_ID}
+
+#! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
+
+#! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
+
+# You can use any arbitrary set of Linux commands here
+
+CMD="$application $options"
+
+# Or for example:
+# CMD="Rscript myScript.R"
+
+
+###############################################################
+### You should not have to change anything below this line ####
+###############################################################
+
+
+JOBID=$SLURM_JOB_ID
+
+echo -e "JobID: $JOBID\n======"
+echo "Time: `date`"
+if [ $SLURM_JOB_NUM_NODES -gt 1 ]; then
+        echo "Running on nodes: $SLURM_JOB_NODELIST"
+else
+        echo "Running on node: `hostname`"
+fi
+
+echo "Current directory: `pwd`"
+echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
+echo -e "\nExecuting command:\n==================\n$CMD\n"
+
+eval $CMD
+
+# echo -e "JobID: $JOBID\n======"
+# echo "Time: `date`"
+# echo "Running on master node: `hostname`"
+# echo "Current directory: `pwd`"
+
+# if [ "$SLURM_JOB_NODELIST" ]; then
+#         #! Create a machine file:
+#         export NODEFILE=`generate_pbs_nodefile`
+#         cat $NODEFILE | uniq > machine.file.$JOBID
+#         echo -e "\nNodes allocated:\n================"
+#         echo `cat machine.file.$JOBID | sed -e 's/\..*$//g'`
+# fi
+
+# echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks_per_node (OMP_NUM_THREADS=$OMP_NUM_THREADS)"
+
+# eval $CMD
