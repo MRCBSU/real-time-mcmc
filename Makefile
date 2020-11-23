@@ -5,8 +5,8 @@ RTM_OBJS = $(SRC:src/%.cc=build/rtm/%.o)
 RTM_OPTIM_OBJS = $(SRC:src/%.cc=build/rtm_optim/%.o)
 RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
 
-LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp -lstdc++fs
-CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE
+LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp -L/usr/local/software/spack/spack-0.11.2/opt/spack/linux-rhel7-x86_64/gcc-5.4.0/gsl-2.4-z4fspadciir53pifcikqs3zbce67d7ru/lib -lm
+CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -I/usr/local/software/spack/spack-0.11.2/opt/spack/linux-rhel7-x86_64/gcc-5.4.0/gsl-2.4-z4fspadciir53pifcikqs3zbce67d7ru/include
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
