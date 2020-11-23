@@ -22,3 +22,4 @@ module load gcc/9 intel/compilers/2020.2
 cd $(ls */ -d | sed -n ${SLURM_ARRAY_TASK_ID}p)
 pwd
 ../../../rtm_hpc
+sbatch ../../../submit_post_process_correct_dir

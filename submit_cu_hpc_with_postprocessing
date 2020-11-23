@@ -20,6 +20,4 @@
 
 module load gcc/9 intel/compilers/2020.2
 ../../../rtm_hpc
-module load R
-module load pandoc
-Rscript ../../../rerun.R
+sbatch ../../../submit_post_process_correct_dir

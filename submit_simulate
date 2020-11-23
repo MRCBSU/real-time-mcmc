@@ -129,6 +129,7 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD
+sbatch ../../../submit_post_process_correct_dir
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
