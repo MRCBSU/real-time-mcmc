@@ -3,8 +3,8 @@ setup.env <- new.env()
 load("tmp.RData", envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
-in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
-out.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
+in.root <- "/home/joshuab"
+out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)
@@ -17,7 +17,6 @@ with(setup.env, {
 })
 
 ## Temporary line to be deleted
-if(exists("infections")) rm(infections)
 ## expit <- function(x) exp(x)/(1+exp(x))
 ## abreaks.icr <- 3:7
 

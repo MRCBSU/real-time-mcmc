@@ -8,15 +8,15 @@ require(knitr)
 load("mcmc.RData")
 load("tmp.RData")
 
-source(file.path(Rfile.loc, "sim_func.R"))
+source(file.path(proj.dir, "R/output/sim_func.R"))
 
 QUANTILES <- c(0.025, 0.5, 0.975)
 
 ## ## mod_inputs.Rmd items that will change in the projections.
-job.num <- 1
 
 ## Forecast projection
 nforecast.weeks <- 9
+job.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
 christmas <- ifelse(job.num %in% c(2, 4), "high", "low")
 december <- ifelse(job.num %in% c(1, 2), "high", "low")
@@ -206,6 +206,7 @@ if(Sys.info()["user"] %in% c("pjb51", "jbb50")){
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
+stop()
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 2, rtm.exe = exe)
 
 NNI <- lapply(xtmp, function(x) x$NNI)
