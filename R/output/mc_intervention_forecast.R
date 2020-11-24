@@ -29,9 +29,14 @@ if (christmas == "high") {
 	stop("Unknown Christmas")
 }
 extra.beta.values <- extra.beta <- NULL
+beta.changes <- list(
+	Scotland = 1.099,
+	Wales = 0.826,
+	Northern_Ireland = 0.917
+)
 if (december == "high") {
-	extra.beta <- ymd(20201202)
-	extra.beta.values <- log(1.099)
+	extra.beta <- ymd(20201202) - start.date + 1
+	extra.beta.values <- log(beta.changes[[regions]])
 }
 google.data.date <- ymd(google.data.date)
 
@@ -93,20 +98,26 @@ cases.flag <- gp.flag
 intervention.matrix <- paste0(cm.region.name, christmas, "Christmas.csv")
 cm.breaks <- c(cm.breaks, intervention.breaks - start.date + 1)
 intervention.breaks <- intervention.breaks - start.date + 1
+
+## Select breaks we want to keep
 idx <- which(cm.breaks <= (ymd(date.data) - start.date + 1))
+cm.breaks <- c(cm.breaks[idx], intervention.breaks)
+
+## Move index to matrices we want to keep
+idx <- c(1, idx+1)
+
 ## Use the next line to specify where the new matrices are stored
 intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
 ## Use the next line to specify the format with the filenames
-cm.lockdown.fl <- c(cm.lockdown.fl, paste0(cm.region.name, christmas, "Christmas.csv"))
+cm.lockdown.fl <- paste0(cm.region.name, christmas, "Christmas.csv")
 cm.intervention.fl <- file.path(intervention.dir, intervention.matrix)
 
-cm.breaks <- c(cm.breaks[idx], intervention.breaks)
-idx <- c(1, idx+1)
-cm.lockdown <- c(cm.lockdown[idx], cm.intervention.fl)
+cm.lockdown <- c(cm.lockdown[idx[-1]], cm.intervention.fl, cm.lockdown[last(idx)])
 cm.bases <- c(cm.bases[idx],
 	    file.path(proj.dir, "contact_mats", paste0(cm.file.base, "_", intervention.scenario, ".txt")),
 		cm.bases[last(idx)])
 
+stopifnot(length(cm.bases) - 1 == length(cm.lockdown))
 if(!all(file.exists(cm.bases))){
     idx.miss <- which(!file.exists(cm.bases))
     for(idx in idx.miss){
@@ -121,9 +132,6 @@ cm.mults <- c(cm.mults,
               )[1:length(cm.bases)]
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
-stopifnot(length(cm.bases) == length(cm.mults))
-stopifnot(all(!is.na(cm.mults)))
-stopifnot(length(cm.bases) == length(cm.breaks) + 1)
 
 ## Need some dummy data files padded to the right number of rows
 if(gp.flag)
@@ -149,6 +157,12 @@ thin.outputs <- 1
 adaptive.phase <- 0
 burnin <- 0
 num.threads <- 1
+
+## Checks
+stopifnot(length(cm.bases) == length(cm.mults))
+stopifnot(all(!is.na(cm.mults)))
+stopifnot(length(cm.bases) == length(cm.breaks) + 1)
+stop()
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
