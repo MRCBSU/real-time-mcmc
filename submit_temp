@@ -1,21 +1,9 @@
 #!/bin/bash
-#!
-
-#!#############################################################
-#!#### Modify the options in this section as appropriate ######
-#!#############################################################
-
-#! sbatch directives begin here ###############################
-#! Name of the job:
-#SBATCH -J 20200416_deaths_covid
-#! How many whole nodes should be allocated?
-#SBATCH --nodes=1
-#! How many (MPI) tasks will there be in total? (<= nodes*16)
+#SBATCH -J trial_hpc_batch
+#SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#! How many CPUs will each task require
-#SBATCH --cpus-per-task=4
-#! How much wallclock time will be required?
-#SBATCH --time=4:00:00
+#SBATCH --cpus-per-task=14
+#SBATCH --time=36:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -25,96 +13,31 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#! sbatch directives end here (put any additional directives above this line)
-
-#SBATCH --error=model_run_20200422_reports.err
-
-#! Notes:
-#! Charging is determined by node number*walltime. Allocation is in entire nodes.
-#! The --ntasks value refers to the number of tasks to be launched by SLURM only. This
-#! usually equates to the number of MPI tasks launched. Reduce this from nodes*1if
-#! demanded by memory requirements, or if OMP_NUM_THREADS>1.
-
-#! Number of nodes and tasks per node allocated by SLURM (do not change):
-numnodes=$SLURM_JOB_NUM_NODES
-numtasks=$SLURM_NTASKS
-mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).*$/\1/')
-
-#! ############################################################
-#! Modify the settings below to specify the application's environment, location 
-#! and launch method:
-
-#! Optionally modify the environment seen by the application
-#! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
-# . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
-module load openmpi/openmi-1.6.4
-#! module load rhe17/default-peta4            # REQUIRED - loads the basic environment
-#! Insert additional module load commands after this line if needed:
-#! module load pandoc                         # Need this to generate the STAN model code
-#! PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
-PATH=$PATH:$HOME/bin:$HOME/usr/bin:$HOME/usr/gsl/bin
-
-#! Full path to application executable: 
-application=""
+#SBATCH --array=1-2
+#SBATCH -p skylake
+#SBATCH --qos=covid0
 
 
-#! Run options for the application:
-options=""
+#SBATCH --output=model_runs_20201120prevjobs_%a.out
+#SBATCH --error=model_runs_20201120prevjobs_%a.err
 
-#! Work directory (i.e. where the job will run):
-workdir="$SLURM_SUBMIT_DIR/model_runs/20200422/1regions_Engreports_variable_relax_ifr_prior_delayAnne"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
-                             # in which sbatch is run.
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201120/NoPrev_relax_shortsero_fix_cm4_latestart_ifr_"
 
-#! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
-#! safe value to no more than 16:
-export OMP_NUM_THREADS=4
-export R_PROFILE=$RMPI_RPROFILE
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff_matrices_20201120_adjusted_mean"
 
-#! Number of MPI tasks to be started by the application per node and in total (do not change):
-np=$[${numnodes}*${mpi_tasks_per_node}]
+module load gcc/9 intel/compilers/2020.2
 
-#! The following variables define a sensible pinning strategy for Intel MPI tasks
-
-#! this should be suitable for both pure MPI and hybrid MPI/OpenMP jobs:
-export I_MPI_PIN_DOMAIN=omp:compact # Domains are $OMP_NUM_THREADS cores in size
-export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches/sockets
-#! Notes:
-#! 1. These variables influence Intel MPI only.
-#! 2. Domains are non-overlapping sets of cores which map 1-1 to MPI tasks.
-#! 3. I_MPI_PIN_PROCESSOR_LIST is ignored if I_MPI_PIN_DOMAIN is set.
-#! 4. If MPI tasks perform better when sharing caches/sockets, try I_MPI_PIN_ORDER=compact.
-
-# # Get array ID
-# i=${SLURM_ARRAY_TASK_ID}
-
-#! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
-
-#! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
-CMD="../../../rtm_optim"
-
-
-###############################################################
-### You should not have to change anything below this line ####
-###############################################################
+echo $workdir
 
 cd $workdir
-echo -e "Changed directory to `pwd`.\n"
 
-JOBID=$SLURM_JOB_ID
-
-echo -e "JobID: $JOBID\n======"
-echo "Time: `date`"
-echo "Running on master node: `hostname`"
-echo "Current directory: `pwd`"
-
-if [ "$SLURM_JOB_NODELIST" ]; then
-        #! Create a machine file:
-        echo -e "\nNodes allocated:\n================"
-        echo `cat machine.file.$JOBID | sed -e 's/\..*$//g'`
+if [ -f "posterior_report10" ]; then
+    echo "existing output found"
+else
+    ../../../rtm_hpc
 fi
-
-echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks_per_node (OMP_NUM_THREADS=$OMP_NUM_THREADS)"
-
-echo -e "\nExecuting command:\n==================\n$CMD\n"
-
-eval mpirun $CMD

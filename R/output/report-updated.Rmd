@@ -573,6 +573,7 @@ The blue lines is show when interventions have been introduced (lockdown on 23 M
 
 #### By region
 ```{r reg-inf, cache=TRUE, cache.extra=results_hash}
+inds.to.remove <- which(infections == 0, 
 make.plots(infections, by = "region")
 ```
 
