@@ -18,7 +18,7 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 nforecast.weeks <- 16
 
 ## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- cm.breaks[length(cm.breaks)] + 1:8 * 7 + start.date - 1
+mm.breaks <- cm.breaks[length(cm.breaks)] + 1:16 * 7 + start.date - 1
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 projections.basedir <- "projections_MTP"
