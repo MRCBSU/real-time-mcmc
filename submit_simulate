@@ -60,7 +60,7 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
-module load R
+module load R/3.6
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
@@ -129,7 +129,6 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD
-sbatch ../../../submit_post_process_correct_dir
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
