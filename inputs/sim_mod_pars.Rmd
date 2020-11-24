@@ -243,9 +243,9 @@ prior_distribution = 1;
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_sensitivity = { param_value = `r sero.sens`;
+sero_test_sensitivity = { param_value = 1;
 
-prior_distribution = `r paste(rep(1, length(sero.sens)), collapse = ", ")`;
+prior_distribution = 1;
 
 prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
 
@@ -254,9 +254,9 @@ proposal_variance = `r paste(ssens.prop, collapse = ", ")`;
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_specificity = { param_value = `r sero.spec`;
+sero_test_specificity = { param_value = 1;
 
-prior_distribution = `r paste(rep(1, length(sero.spec)), collapse = ", ")`;
+prior_distribution = 1;
 
 prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
 

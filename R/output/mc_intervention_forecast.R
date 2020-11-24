@@ -31,7 +31,7 @@ if (christmas == "high") {
 extra.beta.values <- extra.beta <- NULL
 if (december == "high") {
 	extra.beta <- ymd(20201202)
-	extra.beta.values <- 1.099
+	extra.beta.values <- log(1.099)
 }
 google.data.date <- ymd(google.data.date)
 

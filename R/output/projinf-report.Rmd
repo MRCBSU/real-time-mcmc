@@ -4,25 +4,28 @@
 
 #### By region
 ```{r reg-medterm-inf}
+trim.array <- function(arrIn){
+    R.utils::extract(arrIn, indices = list(end.hosp:length(dimnames(infections)$date)), dims = "date", drop = FALSE)
+}
 if (!exists("projections_file")) projections_file <- "projections.RData"
-if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
 load(file.path(out.dir, projections_file))
-make.plots(infections, by = "region", project.forwards = TRUE)
+if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
+make.plots(trim.array(infections), by = "region", project.forwards = TRUE)
 ```
 
 #### By age
 ```{r age-medterm-inf}
-make.plots(infections, by = "age", project.forwards = TRUE)
+make.plots(trim.array(infections), by = "age", project.forwards = TRUE)
 ```
 
 ### Deaths {.tabset}
 
 #### By region
 ```{r reg-medterm-death}
-make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = TRUE)
+make.plots(trim.array(deaths), by = "region", x.label = "Date of death", project.forwards = TRUE)
 ```
 
 #### By age
 ```{r age-medterm-death}
-make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE)
+make.plots(trim.array(deaths), by = "age", x.label = "Date of death", project.forwards = TRUE)
 ```

@@ -30,7 +30,10 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     if(gp.flag) pars.dow <- params$day_of_week_effects[iter, , drop = FALSE]
     sero.sens <- params$sero_test_sensitivity[iter, , drop = FALSE]
     sero.spec <- params$sero_test_specificity[iter, , drop = FALSE]
-	if (length(extra.beta.values) > 0) beta.rw.vals <- c(beta.rw.vals, extra.beta.values)
+	if (length(extra.beta.values) > 0) {
+		beta.rw.vals <- c(beta.rw.vals, extra.beta.values)
+		beta.breaks <- c(beta.breaks, extra.beta)
+	}
     
     ## ## Compile the mod_pars.txt file
     ## render(fl.pars, output_file = "mod_pars.txt",

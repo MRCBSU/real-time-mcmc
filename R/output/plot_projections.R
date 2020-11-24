@@ -7,8 +7,9 @@ projections_file <- args[arg.index]
 
 require(rmarkdown)
 
-Rfile.loc <- file.path(file.loc, "R/output")
+Rfile.loc <- file.path(proj.dir, "R/output")
 external <- FALSE
+print(projections_file)
 
 rmarkdown::render(
 	file.path(Rfile.loc, 'projinf-report.Rmd'),
