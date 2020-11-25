@@ -16,31 +16,42 @@ array.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 
 ## Forecast projection
-nforecast.weeks <- 24
+nweeks.ahead <- 8
 
-flg.school <- array.num %% 3
-intervention.scenario <-paste0(ifelse(flg.school == 0, "half_", ""),
-                               ifelse(flg.school < 2, "school_", ""),
-                               ifelse(array.num %% 2, "optimistic", "realistic"))
+intervention.scenario <- ifelse(array.num < 3, "LowDec", "HiDec")
+intervention.scenario <- paste0(intervention.scenario, ifelse(array.num %% 2, "LowXmas", "HiXmas"))
 ## if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention.scenario)
 intervention.length.weeks <- 4 ## ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
-intervention.start <- ymd(20201105)
-intervention.matrix <- paste0(intervention.scenario, intervention.start, ".csv")
+intervention.start <- ymd(20201202)
+christmas.start <- ymd(ifelse(array.num %% 2, 20201224, 20201221))
+christmas.end <- ymd(ifelse(array.num %% 2, 20210101, 20210104))
+intervention.matrix <- paste0("England", ifelse(array.num %% 2, "low", "high"), "Christmas.csv")
 projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
 projections.basedir <- file.path(out.dir, paste0("projections", array.num))
 
 ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
-mm.breaks <- cm.breaks[length(cm.breaks)] + (1:nforecast.weeks) * 7 + start.date - 1
-google.data.date <- ymd("20201106")
-intervention.breaks <- c(intervention.start, intervention.start + intervention.length.weeks * 7)
+nforecast.weeks <- nweeks.ahead - nforecast.weeks
+mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
+google.data.date <- ymd("20201120")
+intervention.breaks <- c(intervention.start, christmas.start, christmas.end)
 mult.order <- rep(1, length(mm.breaks))
 
+## ##
+R.target <- 1.0
+if(!is.null(R.target)){
+ R.target.date <- ymd("20201104")
+ load("output_matrices.RData")
+ R.target.idx <- which(lubridate::as_date(as.integer(dimnames(Rt)[["date"]])) == R.target.date)
+ R.intervention.scaling <- R.utils::extract(Rt, R.target.idx, dims = "date", drop = TRUE)
+ R.intervention.scaling <- apply(R.intervention.scaling, "region", median)
+}
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-
 bank.holiday.days.new <- NULL
+
+
 ## ## ---------------------------------------------------------------------------------------------
 
 ## ## ## FUNCTION DEFINITIONS
@@ -71,17 +82,19 @@ if(!file.exists(projections.basedir))
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
-ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
+ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
+start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
-prev.flag <- 0
+end.prev <- ifelse(prev.flag, ndays, 1)
+## prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 intervention.breaks <- intervention.breaks - start.date + 1
-idx <- which(cm.breaks %in% seq(intervention.breaks[1], intervention.breaks[2]))
+idx <- which(cm.breaks %in% seq(min(intervention.breaks), max(intervention.breaks)))
 cm.files <- c(cm.files,
               paste0("england_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
@@ -94,13 +107,15 @@ cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.intervention.fl <- file.path(intervention.dir, intervention.matrix)
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+cm.intervention.fl <- c(cm.lockdown[as.integer(cut(as.integer(R.target.date - start.date) + 1, cm.breaks))],
+                        cm.intervention.fl)
 
 cm.breaks <- c(cm.breaks[1:(first(idx) - 1)], intervention.breaks, cm.breaks[(last(idx)+1):length(cm.breaks)])
 cm.breaks <- cm.breaks[cm.breaks < ndays]
 lmix <- length(cm.breaks)
 cm.lockdown <- c(cm.lockdown[1:(first(idx) - 1)], cm.intervention.fl, cm.lockdown[last(idx):length(cm.lockdown)])[1:lmix]
 cm.bases <- c(cm.bases[1:first(idx)],
-	    file.path(proj.dir, "contact_mats", paste0("england_8ag_contact_intervention", "_", intervention.scenario, format(google.data.date, "%Y%m%d"), ".txt")),
+	    file.path(proj.dir, "contact_mats", paste0("england_8ag_contact_intervention", "_", intervention.scenario, 1:length(cm.intervention.fl), "_", format(google.data.date, "%Y%m%d"), ".txt")),
             cm.bases[(last(idx) + 1):length(cm.bases)])[1:(lmix+1)]
 
 if(!all(file.exists(cm.bases))){
@@ -114,7 +129,7 @@ if(!all(file.exists(cm.bases))){
 stopifnot(all(file.exists(cm.bases)))
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
               )[1:length(cm.bases)]
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")

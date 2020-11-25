@@ -23,11 +23,11 @@ projections.basedir <- file.path(out.dir, "projections")
 ## ## Forecast projection
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201115")
+google.data.date <- ymd("20201120")
 mult.order <- rep(1, length(mm.breaks))
 
 ## ## Do the contract matrices that will be used in the projection exist on file and are they correct?
-overwrite.matrices <- TRUE
+overwrite.matrices <- FALSE
 
 ## ## ----------------------------------------------------------
 
