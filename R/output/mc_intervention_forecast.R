@@ -162,7 +162,6 @@ num.threads <- 1
 stopifnot(length(cm.bases) == length(cm.mults))
 stopifnot(all(!is.na(cm.mults)))
 stopifnot(length(cm.bases) == length(cm.breaks) + 1)
-stop()
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
