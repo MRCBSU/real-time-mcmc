@@ -144,9 +144,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
-if [ -f "posterior_report10" ]; then
+# if [ -f "posterior_report10" ]; then
     eval $CMD
-fi
+# fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
