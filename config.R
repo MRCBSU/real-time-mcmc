@@ -141,7 +141,7 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201109")
+    date.prev <- ymd("20201119")
     ## Convert that to an analysis day number
     prev.end.day <- date.prev - start.date + 1
 	last.prev.day <- (prev.end.day - 4)
