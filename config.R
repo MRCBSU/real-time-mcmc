@@ -41,7 +41,7 @@ iteration.number.to.start.from <- 5877
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201120"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201127"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
