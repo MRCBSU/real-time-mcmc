@@ -98,7 +98,7 @@ dth.dat <- read_csv(
 		age_group = col_character(),
 		onset_date = col_date(),
 		posterior_mean = col_number(),
-		posterior_median = col_integer(),
+		posterior_median = col_number(),
 		posterior_low = col_number(),
 		posterior_upp = col_number(),
 		observed = col_integer()

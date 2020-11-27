@@ -41,6 +41,8 @@ iteration.number.to.start.from <- 5877
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
+google.data.date <- format(ymd("20201120"), format = "%Y%m%d")
+
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -68,8 +70,6 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 
-contact.model <- 3
-
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
@@ -78,7 +78,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "relax" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
-fix.sero.test.spec.sens <- FALSE
+fix.sero.test.spec.sens <- prev.flag == 1
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev_", prev.prior)
@@ -86,6 +86,9 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
 
+## Give the run a name to identify the configuratio
+contact.model <- 4
+scenario.name <- paste0(scenario.name, "_cm", contact.model) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
@@ -103,12 +106,11 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data) - 3
+    date.adj.data <- ymd(date.data) - 1
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
 }
-scenario.name <- paste0(scenario.name, reporting.delay, "day") ## TO BE REMOVED ASAP
 
 data.dirs <- file.path(proj.dir,
                        paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       

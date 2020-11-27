@@ -13,30 +13,30 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-6
+#SBATCH --array=1-8
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20201102prevjobs_%a.out
-#SBATCH --error=model_runs_20201102prevjobs_%a.err
+#SBATCH --output=model_runs_20201122prevjobs_%a.out
+#SBATCH --error=model_runs_20201122prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201102/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201122/"
 
-if [ $SLURM_ARRAY_TASK_ID -gt 2 ]
-then
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero"
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then workdir="${workdir}FIXEDsens"; fi
-workdir="${workdir}_ifr_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 ))
-then
+workdir="${workdir}Prev_relax_shortsero_"
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
+    workdir="${workdir}fix_"
+fi
+workdir="${workdir}cm4_latestart_ifr_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
     workdir="${workdir}28"
 else
     workdir="${workdir}60"
 fi
-workdir="${workdir}cutoff6day_matrices_20201030_deaths"
+workdir="${workdir}cutoff_matrices_20201120_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
@@ -44,8 +44,8 @@ echo $workdir
 
 cd $workdir
 
-if [ -f "posterior_report10" ]; then
-    echo "existing output found"
-else
+# if [ -f "posterior_report10" ]; then
+#     echo "existing output found"
+# else
     ../../../rtm_hpc
-fi
+# fi

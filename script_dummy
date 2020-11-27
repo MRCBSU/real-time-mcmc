@@ -1,0 +1,14 @@
+#!/bin/bash
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201106/"
+
+XX=4
+echo $XX
+
+if (( $XX % 4 < 2 ))
+then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+
+echo $workdir
