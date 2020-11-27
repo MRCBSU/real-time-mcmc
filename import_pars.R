@@ -30,4 +30,5 @@ if (!fix.sero.test.spec.sens && !prev.env$fix.sero.test.spec.sens) {
   sero.sens <- prev.params$sero_test_sensitivity[iteration.number.to.start.from,]
   sero.spec <- prev.params$sero_test_specificity[iteration.number.to.start.from,]
 }
-
+rm(prev.params)
+rm(prev.env)
