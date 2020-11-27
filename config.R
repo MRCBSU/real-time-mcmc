@@ -28,7 +28,7 @@ running.England <- any(regions %in% English.regions)
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 
-google.data.date <- format(ymd("20201120"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201127"), format = "%Y%m%d")
 include.google <- TRUE
 create.counterfactual <- FALSE
 if (!create.counterfactual) {
