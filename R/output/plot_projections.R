@@ -10,7 +10,7 @@ require(rmarkdown)
 Rfile.loc <- file.path(file.loc, "R/output")
 external <- FALSE
 
-output_filename <- gsub("projections_", "", gsub("RData", "html", projections_file))
+output_filename <- gsub("RData", "html", projections_file)
 rmarkdown::render(
 	file.path(Rfile.loc, 'projinf-report.Rmd'),
 	html_document(pandoc_args = "--self-contained"),

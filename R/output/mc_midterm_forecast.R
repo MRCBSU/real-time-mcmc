@@ -14,7 +14,7 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 24
+nweeks.ahead <- 4
 
 projections.basedir <- file.path(out.dir, "projections")
 
@@ -25,14 +25,22 @@ nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd("20201120")
 mult.order <- rep(1, length(mm.breaks))
-
+sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
+prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
+if(prev.flag & (prev.data$lmeans == "NULL")){
+    for(r in 1:nr){
+        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_meanlogprev_277every28.txt"))
+        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_sdlogprev_277every28.txt"))
+    }
+    names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
+}
 ## ## Do the contract matrices that will be used in the projection exist on file and are they correct?
 overwrite.matrices <- FALSE
 
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-
+value.r1 <- 10
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -63,7 +71,6 @@ if(!file.exists(projections.basedir))
     dir.create(projections.basedir)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
-sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
@@ -71,7 +78,6 @@ start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
-## prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -213,7 +219,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections.RData")
+save(list = save.list, file = "projections_10.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

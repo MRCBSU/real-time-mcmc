@@ -58,6 +58,11 @@ proposal_variance = 0.007562;
 
 }
 
+r1_period = { param_value = `r value.r1`;
+
+prior_distribution = `r paste(rep(1, length(value.r1)), collapse = ", ")`;
+
+}
 
 prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
 

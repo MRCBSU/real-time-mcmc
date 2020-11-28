@@ -1,0 +1,11 @@
+### Prevalence {.tabset}
+
+#### By region
+```{r reg-medterm-prev}
+make.plots(prevalence, by = "region", x.label = "Date", project.forwards = TRUE)
+```
+
+#### By age
+```{r age-medterm-prev}
+make.plots(prevalence, by = "age", x.label = "Date", project.forwards = TRUE)
+```

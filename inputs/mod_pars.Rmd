@@ -58,7 +58,7 @@ proposal_variance = 0.007562;
 
 }
 
-r1_period = { param_value = 5.5;
+r1_period = { param_value = `r value.r1`;
 
 prior_distribution = `r prior.r1`;
 
