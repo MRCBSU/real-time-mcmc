@@ -29,3 +29,7 @@ make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = 
 ```{r age-medterm-death}
 make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE)
 ```
+
+```{r eval=exists("prevalence"), child='prev-proj-report.Rmd'}
+save.image("temp2.RData")
+```

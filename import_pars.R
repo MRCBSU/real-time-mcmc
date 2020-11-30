@@ -16,7 +16,7 @@ prev.params <- prev.env$params
 value.eta.h <- prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
 #value.dl <- latent period value is fixed
 value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
-if (prev.flag && prev.env$prev.flag) value.dR <- prev.params$r1_period[iteration.number.to.start.from,]
+if (prev.flag && prev.env$prev.flag) value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
 #value.pgp GP stream not currently used
 contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
 beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]

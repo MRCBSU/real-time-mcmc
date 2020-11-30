@@ -19,7 +19,7 @@ value.dI <- 0.5033387
 pars.dI <- c(1.43, 0.549)
 
 ## Duration of test positivity
-value.dR <- 5.5
+value.r1 <- 5.5
 prior.r1 <- ifelse(prev.flag, 2, 1)
 if(prev.prior == "tight") pars.r1 <- c(550000,100000)
 if(prev.prior == "relax") pars.r1 <- c(5.5, 1)

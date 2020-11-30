@@ -31,7 +31,7 @@ if (!file.exists("mcmc.RData")) {
 }
 
 render(
-	file.path(Rfile.loc, 'report-updated.Rmd'),
+	file.path(Rfile.loc, 'projections-updated.Rmd'),
 	html_document(pandoc_args = "--self-contained"),
 	output_dir = out.dir
 )

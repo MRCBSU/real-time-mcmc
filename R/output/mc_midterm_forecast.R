@@ -13,27 +13,40 @@ source(file.path(Rfile.loc, "sim_func.R"))
 QUANTILES <- c(0.025, 0.5, 0.975)
 
 ## ## mod_inputs.Rmd items that will change in the projections.
+## Number of weeks to forecast ahead
+nweeks.ahead <- 4
 
-## Forecast projection
-nforecast.weeks <- 16
-
-## Enter dates at which it is anticipated that the contact model will change
-mm.breaks <- cm.breaks[length(cm.breaks)] + 1:16 * 7 + start.date - 1
+projections.basedir <- file.path(out.dir, "projections_MTP")
+## ## Enter dates at which it is anticipated that the contact model will change
+## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
+## ## Forecast projection
+nforecast.weeks <- nweeks.ahead - nforecast.weeks
+mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
-projections.basedir <- "projections_MTP"
+sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
+prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
+if(prev.flag & (prev.data$lmeans == "NULL")){
+    for(r in 1:nr){
+        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_meanlogprev_277every28.txt"))
+        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_sdlogprev_277every28.txt"))
+    }
+    names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
+}
+## ## Do the contract matrices that will be used in the projection exist on file and are they correct?
+overwrite.matrices <- FALSE
 
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-
+value.r1 <- 10
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
     tmpdata <- read_tsv(real.fl, col_names = FALSE)
-    dummy.fl <- file.path(out.dir,projections.basedir, paste0(dummy.fl, ".txt"))
+    dummy.fl <- file.path(projections.basedir, paste0(dummy.fl, ".txt"))
     tmpdata <- bind_rows(tmpdata,
                          tmpdata[rep(nrow(tmpdata), ndays - nrow(tmpdata)), ]) %>%
             mutate(Date = start.date - 1 + (1:ndays)) %>%
@@ -43,7 +56,7 @@ repeat.last.row <- function(real.fl, dummy.fl){
     return(dummy.fl)
 }
 symlink.design <- function(design)
-    file.symlink(file.path(out.dir, design),projections.basedir)
+    file.symlink(file.path(out.dir, design), projections.basedir)
 ## ## Compile a forecast output
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
@@ -53,17 +66,17 @@ combine.rtm.output <- function(x, strFld){
 
 ## ## ## --------------------
 
-if(!file.exists(file.path(out.dir,projections.basedir)))
-    dir.create(file.path(out.dir,projections.basedir))
+if(!file.exists(projections.basedir))
+    dir.create(projections.basedir)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
-sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
-ndays <- lubridate::as_date(date.data) - start.date + (7 * nforecast.weeks) + 1
+ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
+start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
-prev.flag <- 0
+end.prev <- ifelse(prev.flag, ndays, 1)
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -74,8 +87,9 @@ matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_ma
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
-if(!all(file.exists(cm.bases))){
+if(!all(file.exists(cm.bases)) || overwrite.matrices){
     idx.miss <- which(!file.exists(cm.bases))
+    if(overwrite.matrices) idx.miss <- 2:length(cm.bases)
     adf <- as.data.frame(lst$England$all$m)
     for(idx in idx.miss){
         mat <- (read_csv(cm.lockdown[idx - 1]) * adf) %>%
@@ -84,7 +98,7 @@ if(!all(file.exists(cm.bases))){
 }
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
               )
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
@@ -114,7 +128,7 @@ num.threads <- 1
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
-knit(input = inputs.template.loc, output = file.path(out.dir,projections.basedir, "mod_inputs.txt"))
+knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
 
 ## ## ## ------------------------------------------------------------
 
@@ -129,7 +143,7 @@ if(gp.flag){
     DAYS[ll.days %in% bank.holiday.days] <- "Sun"
     lm.mat <- model.matrix(~DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
         as.data.frame() %>%
-        write_tsv(file.path(out.dir,projections.basedir, "d_o_w_design_file.txt"), col_names = FALSE)
+        write_tsv(file.path(projections.basedir, "d_o_w_design_file.txt"), col_names = FALSE)
 }
 
 ## Copy to projection directory other design matrices
@@ -163,7 +177,6 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
-
 NNI <- lapply(xtmp, function(x) x$NNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)

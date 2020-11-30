@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1
+#SBATCH --array=1-1
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -58,7 +58,7 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
-module load R/3.6
+if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
