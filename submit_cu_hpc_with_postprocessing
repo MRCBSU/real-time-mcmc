@@ -15,8 +15,8 @@
 #SBATCH -p skylake
 
 
-#SBATCH --output=model_runs_20200918.out
-#SBATCH --error=model_runs_20200918.err
+#SBATCH --output=model_runs.out
+#SBATCH --error=model_runs.err
 
 module load gcc/9 intel/compilers/2020.2
 ../../../rtm_hpc
