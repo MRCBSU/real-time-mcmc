@@ -12,6 +12,7 @@ if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
+stopifnot(!is.na(ymd(date.data)))
 if (args[2] == "All")  {
 	if (region.type == "NHS") 
 		regions <- c("East_of_England", "London", "Midlands",
