@@ -39,7 +39,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-value.r1 <- 10
+value.r1 <- 7
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
