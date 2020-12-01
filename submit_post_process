@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-8
+#SBATCH --array=1-1
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,22 +61,7 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201129/"
-
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-    workdir="${workdir}No"
-fi
-workdir="${workdir}Prev_Cevik_"
-if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
-    workdir="${workdir}fix_"
-fi
-workdir="${workdir}ifr_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}28"
-else
-    workdir="${workdir}60"
-fi
-workdir="${workdir}cutoff_matrices_20201127_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201127/NoPrev_Cevik_ifr_28cutoff_matrices_20201127_adjusted_mean"
 
 module load gcc/9 intel/compilers/2020.2
 
