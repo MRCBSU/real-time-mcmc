@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-1
+#SBATCH --array=3,4,8
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -63,7 +63,22 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201127/NoPrev__ifr_28cutoff_matrices_20201127_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201129/"
+
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+    workdir="${workdir}No"
+fi
+workdir="${workdir}Prev_Cevik_"
+if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
+    workdir="${workdir}fix_"
+fi
+workdir="${workdir}ifr_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff_matrices_20201127_deaths"
 
 echo -e $workdir
 
@@ -71,7 +86,7 @@ echo -e $workdir
 application="Rscript"
 
 #! Run options for the application:
-options="--vanilla ../../../R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla R/output/mc_${forecast_switch}_forecast.R ${workdir}"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -111,7 +126,7 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
-cd $workdir
+# cd $workdir
 
 JOBID=$SLURM_JOB_ID
 
