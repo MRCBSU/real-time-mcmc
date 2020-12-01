@@ -141,18 +141,16 @@ if(gp.flag){
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
 
-if(prev.flag){
-    ## Get the date of the prevalence data
-    date.prev <- ymd("20201119")
-    ## Convert that to an analysis day number
-    prev.end.day <- date.prev - start.date + 1
-	last.prev.day <- (prev.end.day - 4)
-	first.prev.day <- 168
-	days.between.prev <- 28
-    ## Default system for getting the days on which the likelihood will be calculated.
-    prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
-	scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
-}
+## Get the date of the prevalence data
+date.prev <- ymd("20201119")
+## Convert that to an analysis day number
+prev.end.day <- date.prev - start.date + 1
+last.prev.day <- (prev.end.day - 4)
+first.prev.day <- 168
+days.between.prev <- 28
+## Default system for getting the days on which the likelihood will be calculated.
+prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,

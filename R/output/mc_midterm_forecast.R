@@ -27,9 +27,21 @@ mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
 if(prev.flag & (prev.data$lmeans == "NULL")){
+    if (!exists("date.prev")) {
+		## Get the date of the prevalence data
+		date.prev <- ymd("20201119")
+		## Convert that to an analysis day number
+		prev.end.day <- date.prev - start.date + 1
+		last.prev.day <- (prev.end.day - 4)
+		first.prev.day <- 168
+		days.between.prev <- 28
+		## Default system for getting the days on which the likelihood will be calculated.
+		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+	}
     for(r in 1:nr){
-        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_meanlogprev_277every28.txt"))
-        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_sdlogprev_277every28.txt"))
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
+      prev.data$lmeans <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
+      prev.data$lsds <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
