@@ -17,45 +17,97 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 ## Forecast projection
 nforecast.weeks <- 9
 job.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+scenario.name <- "christmas"
 
-christmas <- ifelse(job.num %in% c(2, 4), "high", "low")
-december <- ifelse(job.num %in% c(1, 2), "high", "low")
-
-if (christmas == "high") {
-	intervention.breaks <- c(ymd(20201221), ymd(20210104))
-} else if (christmas == "low") {
-	intervention.breaks <- c(ymd(20201224), ymd(20210101))
-} else {
-	stop("Unknown Christmas")
-}
-extra.beta.values <- extra.beta <- NULL
-beta.changes <- list(
-	Scotland = 1.099,
-	Wales = 0.826,
-	Northern_Ireland = 0.917
-)
-if (december == "high") {
-	extra.beta <- ymd(20201202) - start.date + 1
-	extra.beta.values <- log(beta.changes[[regions]])
-}
 google.data.date <- ymd(google.data.date)
 
+intervention.matrix <- function(name) {
+  ## Use the next line to specify where the new matrices are stored
+  intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
+  return(file.path(intervention.dir, name))
+}
 
-intervention.scenario <- christmas
-scenario.name <- paste0(christmas, "_christmas_", december, "_december")
+intervention.matrix.out <- function(name) {
+  file.path(proj.dir, "contact_mats", paste0(cm.file.base, "_", name, ".txt"))
+}
+
+use.previous.matrix <- function(new.date, old.date) {
+  stopifnot(old.date %in% names(matrix.sources))
+  matrix.sources[[new.date]] <<- matrix.sources[[old.date]]
+  matrix.used[[new.date]] <<- matrix.used[[old.date]]
+}
+
+remove.matrices.after <- function(date) {
+  matrix.sources <<- matrix.sources[ymd(names(matrix.sources)) <= date]
+  matrix.used <<- matrix.used[ymd(names(matrix.used)) <= date]
+ }
+
+
+matrix.sources <- as.list(cm.lockdown)
+names(matrix.sources) <- c(cm.breaks) + start.date - 1
+matrix.used <- as.list(cm.bases)
+names(matrix.used) <- c(1, cm.breaks) + start.date - 1
+
+if (regions == "Northern_Ireland") {
+  holiday.matrix.source <- matrix.sources[["2020-12-21"]]
+  holiday.matrix.used <- matrix.used[["2020-12-21"]]
+  remove.matrices.after(ymd("2020-11-25"))
+  use.previous.matrix("2020-11-28", "2020-11-02")
+  use.previous.matrix("2020-12-11", "2020-10-12")
+  matrix.sources[["2020-12-21"]] <- holiday.matrix.source
+  matrix.used[["2020-12-21"]] <- holiday.matrix.used
+  use.previous.matrix("2020-12-28", "2020-12-21")
+  use.previous.matrix("2021-01-04", "2020-12-11")
+} else if (regions == "Wales") {
+  holiday.matrix.source <- matrix.sources[["2020-12-21"]]
+  holiday.matrix.used <- matrix.used[["2020-12-21"]]
+  remove.matrices.after(ymd("2020-12-05"))
+  matrix.sources[["2020-12-21"]] <- holiday.matrix.source
+  matrix.used[["2020-12-21"]] <- holiday.matrix.used
+  use.previous.matrix("2020-12-28", "2020-12-21")
+  use.previous.matrix("2021-01-04", "2020-11-30")
+}
+  
+
+# Include Xmas period
+matrix.sources[["2020-12-23"]] <- intervention.matrix("social2020-12-21.csv")
+matrix.used["2020-12-23"] <- intervention.matrix.out("xmas")
+
+
+## Move from list back to model spec
+stopifnot(length(matrix.sources) == length(matrix.used) - 1)
+### Order correctly
+matrix.sources <- matrix.sources[order(ymd(names(matrix.sources)))]
+matrix.used <- matrix.used[order(ymd(names(matrix.used)))]
+### Parse back into variables
+stopifnot(all(names(matrix.used)[-1] == names(matrix.sources)))
+cm.breaks <- as.integer(ymd(names(matrix.sources)) - start.date + 1)
+cm.lockdown <- as.character(matrix.sources)
+cm.bases <- as.character(matrix.used)
+
+
+# Where to put tmp files and outputs
 projections.file <- paste0("projections_", scenario.name, ".RData")
 projections.basedir <- file.path(out.dir, paste0("projections", scenario.name))
 
-google.data.date <- ymd(google.data.date)
-mult.order <- rep(1, length(intervention.breaks))
-
+## Use the below to add extra beta values if required
+#extra.beta <- ymd(20201202) - start.date + 1
+#extra.beta.values <- log(beta.changes[[regions]])
+extra.beta.values <- extra.beta <- NULL
 stopifnot(length(extra.beta) == length(extra.beta.values))
 ## ## ----------------------------------------------------------
 
-## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
 
-bank.holiday.days.new <- NULL
-## ## ---------------------------------------------------------------------------------------------
+# Create matrix files if required
+stopifnot(length(cm.bases) - 1 == length(cm.lockdown))
+if(!all(file.exists(cm.bases))){
+    idx.miss <- which(!file.exists(cm.bases))
+    for(idx in idx.miss){
+        mat <- (read_csv(cm.lockdown[idx - 1]) * adf) %>%
+            write_tsv(cm.bases[idx], col_names = FALSE)
+    }
+}
+stopifnot(all(file.exists(cm.bases)))
 
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
@@ -93,40 +145,8 @@ end.gp <- ifelse(gp.flag, ndays, 1)
 prev.flag <- 0
 dths.flag <- hosp.flag
 cases.flag <- gp.flag
-
-## Get the new contact matrices to use
-intervention.matrix <- paste0(cm.region.name, christmas, "Christmas.csv")
-cm.breaks <- c(cm.breaks, intervention.breaks - start.date + 1)
-intervention.breaks <- intervention.breaks - start.date + 1
-
-## Select breaks we want to keep
-idx <- which(cm.breaks <= (ymd(date.data) - start.date + 1))
-cm.breaks <- c(cm.breaks[idx], intervention.breaks)
-
-## Move index to matrices we want to keep
-idx <- c(1, idx+1)
-
-## Use the next line to specify where the new matrices are stored
-intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
-## Use the next line to specify the format with the filenames
-cm.lockdown.fl <- paste0(cm.region.name, christmas, "Christmas.csv")
-cm.intervention.fl <- file.path(intervention.dir, intervention.matrix)
-
-cm.lockdown <- c(cm.lockdown[idx[-1]], cm.intervention.fl, cm.lockdown[last(idx)])
-cm.bases <- c(cm.bases[idx],
-	    file.path(proj.dir, "contact_mats", paste0(cm.file.base, "_", intervention.scenario, ".txt")),
-		cm.bases[last(idx)])
-
-stopifnot(length(cm.bases) - 1 == length(cm.lockdown))
-if(!all(file.exists(cm.bases))){
-    idx.miss <- which(!file.exists(cm.bases))
-    for(idx in idx.miss){
-        mat <- (read_csv(cm.lockdown[idx - 1]) * adf) %>%
-            write_tsv(cm.bases[idx], col_names = FALSE)
-    }
-}
-stopifnot(all(file.exists(cm.bases)))
 ## Get the new contract matrix modifiers to use
+mult.order <- rep(1, length(cm.bases))
 cm.mults <- c(cm.mults,
               file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
               )[1:length(cm.bases)]
