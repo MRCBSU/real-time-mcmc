@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-4
+#SBATCH --array=1-1
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -61,6 +61,7 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
 module load R/3.6
+module load gsl-2.4-gcc-5.4.0-z4fspad
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 
