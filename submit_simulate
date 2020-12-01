@@ -35,8 +35,8 @@
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_model_runs_20201120_%a.out
-#SBATCH --error=simulate_model_runs_20201120_%a.err
+#SBATCH --output=simulate_model_runs_20201127_%a.out
+#SBATCH --error=simulate_model_runs_20201127_%a.err
 
 forecast_switch="midterm"
 
@@ -63,7 +63,7 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201122/NoPrev_relax_shortsero_cm4_latestart_ifr_60cutoff_matrices_20201120_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201127/NoPrev__ifr_28cutoff_matrices_20201127_deaths"
 
 echo -e $workdir
 

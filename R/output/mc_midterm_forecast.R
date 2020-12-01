@@ -14,7 +14,7 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 4
+nweeks.ahead <- 8
 
 projections.basedir <- file.path(out.dir, "projections")
 
@@ -40,7 +40,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-value.r1 <- 10
+value.r1 <- 7
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
