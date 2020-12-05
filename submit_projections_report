@@ -70,7 +70,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections.RData"
+options="../../../R/output/plot_projections.R projections_current.RData"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:

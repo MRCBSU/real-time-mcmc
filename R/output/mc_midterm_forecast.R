@@ -5,17 +5,13 @@ require(abind)
 require(parallel)
 require(knitr)
 
-
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 setwd(out.dir)
-cat("GOT HERE", getwd(), "\n")
 load("mcmc.RData")
 load("tmp.RData")
-cat("GOT HERE2", "\n")
 source(file.path(Rfile.loc, "sim_func.R"))
-cat("Got here 3\n")
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
 nweeks.ahead <- 24
@@ -47,7 +43,7 @@ overwrite.matrices <- FALSE
 if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
-cat("Got here 4\n")
+
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
     tmpdata <- read_tsv(real.fl, col_names = FALSE)
@@ -130,7 +126,7 @@ thin.outputs <- 1
 adaptive.phase <- 0
 burnin <- 0
 num.threads <- 1
-cat("Got here 5\n")
+
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))

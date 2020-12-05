@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=3,4,8
+#SBATCH --array=4
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -38,7 +38,7 @@
 #SBATCH --output=simulate_model_runs_20201127_%a.out
 #SBATCH --error=simulate_model_runs_20201127_%a.err
 
-forecast_switch="midterm"
+forecast_switch="intervention"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
