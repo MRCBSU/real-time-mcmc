@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201127"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201204"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -63,7 +63,7 @@ region.code <- "Eng"
 data.desc <- "deaths"
 
 ## Give the run a name to identify the configuratio
-scenario.name <- "Prev_Cevik" ## _morefreq"
+scenario.name <- "Prev_Cevik_alt" ## _morefreq"
 contact.model <- 4
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -137,11 +137,11 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201119")
-    date.old.prev <- ymd("20201109")
+    date.prev <- ymd("20201202")
+    date.old.prev <- ymd("20201123")
     date.start.prev <- ymd("20200802")
     ## Convert that to an analysis day number
-    prev.end.day <- date.prev - start.date + 1
+    prev.end.day <- date.prev - start.date - 3
     prev.start.day <- date.start.prev - start.date
     ## With what frequency should we include the prevalence data
     prev.freq <- 14

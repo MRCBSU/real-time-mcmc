@@ -56,9 +56,10 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
+google.data.date.str <- paste0(google.data.date, "_alt")
 matrix.dir <- file.path(
 	proj.dir, "contact_mats",
-	paste0("google_mobility_relative_matrices_", google.data.date)
+	paste0("google_mobility_relative_matrices_", google.data.date.str)
 )
 
 cm.breaks <- seq(from = 36, to = as.integer(ndays), by = 7) ## Day numbers where breaks happen
@@ -72,7 +73,7 @@ if (nA == 1) {
   lst$England$all$m <- lst$England$all$m * 1e7
   cm.files <- "england_8ag_contact.txt"
   for(i in 1:length(cm.breaks))
-      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date, ".txt"))
+      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date.str, ".txt"))
   cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
   cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
   cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
