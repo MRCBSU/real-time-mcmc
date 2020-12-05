@@ -13,7 +13,7 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc, list.files(path = input.loc, pattern=glob2rx("202*csv"))))
     ## Pick the most recently added
-    input.loc <- rownames(prev.loc)[which.max(prev.loc$mtime)]
+    input.loc <- rownames(prev.loc)[which.max(prev.loc$ctime)]
 } else {
     if(is.null(prev.loc)){
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
