@@ -17,13 +17,22 @@ QUANTILES <- c(0.025, 0.5, 0.975)
 ## Forecast projection
 nforecast.weeks <- 9
 job.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-scenario.name <- "christmas"
+stopifnot(job.num >= 1 && job.num <= 6)
+christmas <- ifelse(job.num %in% c(1, 3, 5), "low", "high")
+if (job.num <= 2) {
+	december <- "high"
+} else if (job.num <= 4) {
+	december <- "medium"
+} else {
+	deceber <- "low"
+}
+scenario.name <- paste0(december, "_december_", christmas, "_christmas_")
 
 google.data.date <- ymd(google.data.date)
 
 intervention.matrix <- function(name) {
   ## Use the next line to specify where the new matrices are stored
-  intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
+  intervention.dir <- file.path(dirname(matrix.dir), "scenarios_20201127")
   return(file.path(intervention.dir, name))
 }
 
@@ -51,27 +60,50 @@ names(matrix.used) <- c(1, cm.breaks) + start.date - 1
 if (regions == "Northern_Ireland") {
   holiday.matrix.source <- matrix.sources[["2020-12-21"]]
   holiday.matrix.used <- matrix.used[["2020-12-21"]]
+  current.matrix.source <- matrix.sources[["2020-12-07"]]
+  current.matrix.used <- matrix.used[["2020-12-07"]]
   remove.matrices.after(ymd("2020-11-25"))
-  use.previous.matrix("2020-11-28", "2020-11-02")
-  use.previous.matrix("2020-12-11", "2020-10-12")
+  if (december == "high") {
+    use.previous.matrix("2020-11-28", "2020-11-02")
+    use.previous.matrix("2020-12-11", "2020-10-12")
+    use.previous.matrix("2021-01-04", "2020-12-11")
+  }
+  if (december == "medium") {
+    use.previous.matrix("2020-11-28", "2020-11-02")
+    matrix.sources[["2020-12-11"]] <- current.matrix.source
+    matrix.used[["2020-12-11"]] <- current.matrix.used
+    use.previous.matrix("2021-01-04", "2020-12-11")
+  }
+  if (december == "low") {
+    use.previous.matrix("2020-11-28", "2020-11-02")
+  }
   matrix.sources[["2020-12-21"]] <- holiday.matrix.source
   matrix.used[["2020-12-21"]] <- holiday.matrix.used
-  use.previous.matrix("2020-12-28", "2020-12-21")
-  use.previous.matrix("2021-01-04", "2020-12-11")
 } else if (regions == "Wales") {
   holiday.matrix.source <- matrix.sources[["2020-12-21"]]
   holiday.matrix.used <- matrix.used[["2020-12-21"]]
-  remove.matrices.after(ymd("2020-12-05"))
+  remove.matrices.after(ymd("2020-12-03"))
   matrix.sources[["2020-12-21"]] <- holiday.matrix.source
   matrix.used[["2020-12-21"]] <- holiday.matrix.used
-  use.previous.matrix("2020-12-28", "2020-12-21")
   use.previous.matrix("2021-01-04", "2020-11-30")
+  beta.dates <- c(ymd(20201204, 20201223, 20201228))
+  if (december == "medium") {
+    extra.beta <- beta.dates - start.date + 1
+    extra.beta.values <- log(c(1.05, 0.95, 1.05))
+  }
+  if (december == "low") {
+    extra.beta <- beta.dates - start.date + 1
+    extra.beta.values <- log(c(1.1, 0.9, 1.1))
+  }
 }
   
 
 # Include Xmas period
-matrix.sources[["2020-12-23"]] <- intervention.matrix("social2020-12-21.csv")
-matrix.used["2020-12-23"] <- intervention.matrix.out("xmas")
+if (christmas == "high") {
+	matrix.sources[["2020-12-23"]] <- intervention.matrix("social2020-12-21.csv")
+	matrix.used["2020-12-23"] <- intervention.matrix.out(paste0("xmas_", christmas))
+	use.previous.matrix("2020-12-28", "2020-12-21")
+} # else no change
 
 
 ## Move from list back to model spec
@@ -93,7 +125,7 @@ projections.basedir <- file.path(out.dir, paste0("projections", scenario.name))
 ## Use the below to add extra beta values if required
 #extra.beta <- ymd(20201202) - start.date + 1
 #extra.beta.values <- log(beta.changes[[regions]])
-extra.beta.values <- extra.beta <- NULL
+if (!exists("extra.beta")) extra.beta.values <- extra.beta <- NULL
 stopifnot(length(extra.beta) == length(extra.beta.values))
 ## ## ----------------------------------------------------------
 
@@ -210,12 +242,12 @@ if(rw.flag)
 if(beta.rw.flag) {
 	if (is.null(extra.beta)) {
 		symlink.design("beta.design.txt")
-	} else if (length(extra.beta) == 1) {
-		beta.design <- cbind(beta.design, rep(0, dim(beta.design)[1]))
-		beta.design <- rbind(beta.design, rep(1, dim(beta.design)[2]))
-		write_tsv(as.data.frame(beta.design), file.path(projections.basedir, "beta.design.txt"), col_names = FALSE)
 	} else {
-		stop("Only implemented one extra beta")
+		for (i in 1:length(extra.beta)) {
+		  beta.design <- cbind(beta.design, rep(0, dim(beta.design)[1]))
+		  beta.design <- rbind(beta.design, rep(1, dim(beta.design)[2]))
+		}
+		write_tsv(as.data.frame(beta.design), file.path(projections.basedir, "beta.design.txt"), col_names = FALSE)
 	}
 }
 ## ## ## --------------------------------------------------------------
