@@ -23,12 +23,12 @@ proj.dir <- dirname(dirname(file.loc))
 if(!exists("out.dir")) out.dir <- getwd()
 source(file.path(proj.dir, "R/output/results_api.R"))
 
-create.spim.table <- function(data, name) {
+create.spim.table <- function(data, name, by = NULL) {
   qprobs <- c(0.01, 0.05, 0.25, 0.75, 0.95, 0.99, 0.5)
   region.data <- data %>%
-    get.aggregated.quantiles("region", qprobs) %>%
+    get.aggregated.quantiles(c("region", by), qprobs) %>%
     bind_rows(data %>%
-      get.aggregated.quantiles(NULL, qprobs) %>%
+      get.aggregated.quantiles(by, qprobs) %>%
       mutate(region = "England")
     ) %>%
     pivot_wider(
@@ -54,19 +54,20 @@ create.spim.table <- function(data, name) {
       ValueType = name
     )
 }
-prev.flag <- exists("prevalence")
-if(prev.flag) prev.flag <- !is.null(prevalence)
 
+
+fl.proj <- file.path(out.dir, "projections_midterm.RData")
+load(fl.proj)
 tbl_inf <- create.spim.table(cum_infections, "infections_cum")
 tbl_inf_inc <- create.spim.table(infections, "infections_inc")
 tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
-if(prev.flag){
-    tbl_prev <- create.spim.table(prevalence, "prevalence")
-} else tbl_prev <- NULL
+tbl_deaths_age <- create.spim.table(deaths, "death_inc_line", by = "age")
+tbl_inf_inc_age <- create.spim.table(infections, "infections_inc", by = "age")
+tbl_prev <- create.spim.table(prevalence, "prevalence")
 dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 
-bind_rows(tbl_inf, tbl_deaths, tbl_inf_inc, tbl_prev) %>%
+bind_rows(tbl_inf, tbl_inf_inc, tbl_inf_inc_age, tbl_deaths, tbl_deaths_age, tbl_prev) %>%
     mutate(
 		   `Creation Day` = day(CreationDate),
 		   `Creation Month` = month(CreationDate),
