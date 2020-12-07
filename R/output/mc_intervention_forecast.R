@@ -24,7 +24,7 @@ if (job.num <= 2) {
 } else if (job.num <= 4) {
 	december <- "medium"
 } else {
-	deceber <- "low"
+	december <- "low"
 }
 scenario.name <- paste0(december, "_december_", christmas, "_christmas_")
 
