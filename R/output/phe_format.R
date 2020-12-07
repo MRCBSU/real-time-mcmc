@@ -64,6 +64,7 @@ tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
 tbl_deaths_age <- create.spim.table(deaths, "death_inc_line", by = "age")
 tbl_inf_inc_age <- create.spim.table(infections, "infections_inc", by = "age")
 tbl_prev <- create.spim.table(prevalence, "prevalence")
+tbl_prev <- create.spim.table(prevalence, "prevalence", by = "age")
 dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 
