@@ -23,7 +23,7 @@ projections.basedir <- file.path(out.dir, "projections")
 ## ## Forecast projection
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201127")
+google.data.date <- ymd("20201204")
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
