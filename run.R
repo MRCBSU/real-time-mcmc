@@ -76,6 +76,7 @@ if(gp.flag){
 }
 if(prev.flag){
 	prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
+	if (exclude.eldest.prev) prev.file.path <- paste0(prev.file.path, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat.csv")

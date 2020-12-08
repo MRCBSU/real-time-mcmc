@@ -135,12 +135,20 @@ prev.dat <- read_csv(input.loc,
 	mutate(sample_date = fuzzy_date_parse(sample_date))
 levels(prev.dat$age) <- age.labs[-1]
 
+should.include.rows(x) {
+	include.days.mask <- x$day %in% prev.lik.days
+	excluded.ages <- c("1-4")
+	if (exclude.eldest.prev) excluded.ages <- c(excluded.ages, "65-74", "75+")
+	include.ages.mask <- !(age %in% excluded.ages)
+	return(include.days.mask & include.ages.mask)
+}
+
 ## Filter to only those on or before the last day used in the likelihood.
 prev.dat <- prev.dat %>%
     filter(sample_date <= (start.date + max(prev.lik.days) - 1)) %>%
     mutate(day = sample_date - start.date + 1) %>%
     ## Set equal to zero all those entries that are not going to be used in the likelihood.
-    mutate(include = (day %in% prev.lik.days) & !(age == "1-4"),
+    mutate(include = should.include.rows(.),
            lmean = ifelse(include, lmean, 0),
            lsd = ifelse(include, lsd, 0)) %>%
     select(-include) %>%
