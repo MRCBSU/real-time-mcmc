@@ -78,7 +78,8 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
-fix.sero.test.spec.sens <- prev.flag == 1
+fix.sero.test.spec.sens <- FALSE #prev.flag == 1
+exclude.eldest.prev <- TRUE
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev_", prev.prior)
