@@ -178,7 +178,7 @@ for(reg in regions) {
 }
 
 ## Save the data as processed
-save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
+save(dth.dat %>% rename(date = Date), rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
 
 ## Save a quick plot of the data...
 require(ggplot2)

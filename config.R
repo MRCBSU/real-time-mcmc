@@ -76,7 +76,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 0
-prev.prior <- "relax" # "relax" or "long_positive" or "tight
+prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- prev.flag == 1
 
@@ -106,7 +106,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data) - 1
+    date.adj.data <- ymd(date.data)-1
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
@@ -144,7 +144,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 date.prev <- ymd("20201119")
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date + 1
+prev.end.day <- date.prev - start.date - 3
 last.prev.day <- (prev.end.day - 4)
 first.prev.day <- 168
 days.between.prev <- 28
