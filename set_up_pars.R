@@ -286,7 +286,7 @@ if(rw.flag){
 }
 ## ## End of contact model ##
 
-beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - 25)][-1]
+beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - 25)][-1]
 ## beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- c(
