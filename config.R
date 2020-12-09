@@ -82,10 +82,11 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- TRUE
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("Prev_", prev.prior)
+if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
+if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
 ## Give the run a name to identify the configuratio
 contact.model <- 4
