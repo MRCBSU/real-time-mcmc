@@ -135,11 +135,11 @@ prev.dat <- read_csv(input.loc,
 	mutate(sample_date = fuzzy_date_parse(sample_date))
 levels(prev.dat$age) <- age.labs[-1]
 
-should.include.rows(x) {
+should.include.rows <- function(x) {
 	include.days.mask <- x$day %in% prev.lik.days
 	excluded.ages <- c("1-4")
 	if (exclude.eldest.prev) excluded.ages <- c(excluded.ages, "65-74", "75+")
-	include.ages.mask <- !(age %in% excluded.ages)
+	include.ages.mask <- !(x$age %in% excluded.ages)
 	return(include.days.mask & include.ages.mask)
 }
 
@@ -159,10 +159,10 @@ stopifnot(
   (
     prev.dat %>%
       filter(lsd > 0) %>%
-      distinct(day) %>%
+      distinct(day, region) %>%
 	  nrow()
   )
-  == length(prev.lik.days)
+  == length(prev.lik.days) * nr
 )
 
 ## Pad data with some zeros to take it back to day 1.
