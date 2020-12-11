@@ -42,7 +42,8 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201204"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201211"), format = "%Y%m%d")
+matrix.suffix <- "_altHH"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -157,7 +158,9 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date,
+                     paste0(
+							scenario.name,
+							"_matrices_", google.data.date, matrix.suffix,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
