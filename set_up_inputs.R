@@ -56,7 +56,7 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
-google.data.date.str <- paste0(google.data.date, "_alt")
+google.data.date.str <- paste0(google.data.date, matrix.suffix)
 matrix.dir <- file.path(
 	proj.dir, "contact_mats",
 	paste0("google_mobility_relative_matrices_", google.data.date.str)

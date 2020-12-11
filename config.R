@@ -42,7 +42,8 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201204"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201211"), format = "%Y%m%d")
+matrix.suffix <- "_altHH"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -75,11 +76,11 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
-exclude.eldest.prev <- TRUE
+exclude.eldest.prev <- FALSE
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
@@ -144,21 +145,23 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20201129")
+date.prev <- ymd("20201204")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3
 last.prev.day <- (prev.end.day - 4)
-first.prev.day <- 168
-days.between.prev <- 28
+first.prev.day <- (ymd(20200921) - start.date) + 1
+days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
-prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
-                     paste0(scenario.name, "_matrices_", google.data.date,
+                     paste0(
+							scenario.name,
+							"_matrices_", google.data.date, matrix.suffix,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
