@@ -18,25 +18,25 @@
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20201122prevjobs_%a.out
-#SBATCH --error=model_runs_20201122prevjobs_%a.err
+#SBATCH --output=model_runs_20201206prevjobs_%a.out
+#SBATCH --error=model_runs_20201206prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201122/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201206/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero_"
-if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
-    workdir="${workdir}fix_"
+workdir="${workdir}Prev_Cevik_"
+if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
+    workdir="${workdir}alt_"
 fi
-workdir="${workdir}cm4_latestart_ifr_"
+workdir="${workdir}ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}28"
-else
     workdir="${workdir}60"
+else
+    workdir="${workdir}28"
 fi
-workdir="${workdir}cutoff_matrices_20201120_deaths"
+workdir="${workdir}cutoff_matrices_20201204_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
@@ -44,8 +44,8 @@ echo $workdir
 
 cd $workdir
 
-# if [ -f "posterior_report10" ]; then
-#     echo "existing output found"
-# else
-    ../../../rtm_hpc
-# fi
+if [ -f "posterior_report10" ]; then
+    echo "existing output found"
+else
+  ../../../rtm_hpc
+fi

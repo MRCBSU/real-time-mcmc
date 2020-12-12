@@ -35,8 +35,8 @@
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201120_%a.out
-#SBATCH --error=process_model_runs_20201120_%a.err
+#SBATCH --output=process_model_runs_20201206_%a.out
+#SBATCH --error=process_model_runs_20201206_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -61,22 +61,22 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201122/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201206/"
 
 if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     workdir="${workdir}No"
 fi
-workdir="${workdir}Prev_relax_shortsero_"
-if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
-    workdir="${workdir}fix_"
+workdir="${workdir}Prev_Cevik_"
+if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
+    workdir="${workdir}alt_"
 fi
-workdir="${workdir}cm4_latestart_ifr_"
+workdir="${workdir}ifr_"
 if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}28"
-else
     workdir="${workdir}60"
+else
+    workdir="${workdir}28"
 fi
-workdir="${workdir}cutoff_matrices_20201120_deaths"
+workdir="${workdir}cutoff_matrices_20201204_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
