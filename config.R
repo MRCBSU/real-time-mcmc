@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -37,7 +37,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201204"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201211"), format = "%Y%m%d")
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -62,8 +62,8 @@ region.code <- "Eng"
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
 data.desc <- "deaths"
 
-## Give the run a name to identify the configuratio
-scenario.name <- "Prev_Cevik_alt" ## _morefreq"
+## Give the run a name to identify the configuration
+scenario.name <- "Prev_Cevik" ## _morefreq"
 contact.model <- 4
 
 ## The 'gp' stream in the code is linked to the pillar testing data
@@ -80,7 +80,7 @@ if(!prev.flag) scenario.name <- paste0("No", scenario.name)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {
@@ -90,7 +90,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data)-1
+    date.adj.data <- ymd(date.data)-2
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
@@ -137,7 +137,7 @@ if(gp.flag){
 
 if(prev.flag){
     ## Get the date of the prevalence data
-    date.prev <- ymd("20201202")
+    date.prev <- ymd("20201207")
     date.old.prev <- ymd("20201123")
     date.start.prev <- ymd("20200802")
     ## Convert that to an analysis day number
