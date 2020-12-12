@@ -16,6 +16,8 @@ source(file.path(Rfile.loc, "sim_func.R"))
 ## Number of weeks to forecast ahead
 nweeks.ahead <- 24
 
+counterfactual <- TRUE
+
 projections.basedir <- file.path(out.dir, "projections")
 
 ## ## Enter dates at which it is anticipated that the contact model will change
@@ -23,14 +25,14 @@ projections.basedir <- file.path(out.dir, "projections")
 ## ## Forecast projection
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201204")
+google.data.date <- ymd("20201106")
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
 if(prev.flag & (prev.data$lmeans == "NULL")){
     for(r in 1:nr){
-        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_meanlogprev_277every28.txt"))
-        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-11-19_", regions[r], "_ons_sdlogprev_277every28.txt"))
+        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-12-02_", regions[r], "_ons_meanlogprev_286every14.txt"))
+        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-12-02_", regions[r], "_ons_sdlogprev_286every14.txt"))
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
@@ -88,6 +90,18 @@ matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_ma
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+## Get the new contract matrix modifiers to use
+cm.mults <- c(cm.mults,
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              )
+if(counterfactual){
+    cm.dates <- start.date + cm.breaks - 1
+    future.mats <- cm.dates > google.data.date
+    cm.breaks <- cm.breaks[!future.mats]
+    cm.bases <- cm.bases[c(TRUE, !future.mats)]
+    cm.mults <- cm.mults[c(TRUE, !future.mats)]
+}
+## Write to file any contact matrix that doesn't already exist.
 if(!all(file.exists(cm.bases)) || overwrite.matrices){
     idx.miss <- which(!file.exists(cm.bases))
     if(overwrite.matrices) idx.miss <- 2:length(cm.bases)
@@ -97,10 +111,6 @@ if(!all(file.exists(cm.bases)) || overwrite.matrices){
             write_tsv(cm.bases[idx], col_names = FALSE)
     }
 }
-## Get the new contract matrix modifiers to use
-cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
-              )
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
 
@@ -219,7 +229,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections.RData")
+save(list = save.list, file = "projections_counter.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

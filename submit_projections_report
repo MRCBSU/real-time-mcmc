@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1-1
+#SBATCH --array=1
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -62,15 +62,17 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="."
+# Navigate to the correct working directory
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201106_deaths"
 
+echo -e $workdir
 
 #! Full path to application executable: 
 application="Rscript"
 
 
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections_current.RData"
+options="../../../R/output/plot_projections.R projections_counter.RData"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
