@@ -2,26 +2,22 @@
 
 #### By region
 ```{r reg-prevalence, cache=TRUE, cache.extra=results_hash}
-cat("Got here 1\n")
 dim.id <- which(names(dimnames(prevalence)) == "date")
-cat("Got here 2\n")
 ndate.data <- lubridate::as_date(date.data) - start.date + 1
-cat("Got here 3\n")
-cat("Prevalence exists is ", exists("prevalence"), " it is an array of dimension", dim(prevalence), "\n")
 prev_plot <- R.utils::extract(prevalence, indices = list(start.prev:ndate.data), dims = dim.id)
-cat("Got here 4\n")
-make.plots(prev_plot, by = "region")
+prev.dat.plot <- prev.dat %>%
+    filter(lsd > 0) %>%
+    mutate(value = exp(lmean), date = sample_date)
+make.plots(prev_plot, by = "region", data = prev.dat.plot)
 ```
 
 #### By age
 ```{r age-prevalence}}
-cat("Got here 5\n")
-make.plots(prev_plot, by = "age")
+make.plots(prev_plot, by = "age", data = prev.dat.plot)
 ```
 
 #### Goodness-of-fit
 ```{r reg-prevalence-gof}
-cat("Got here 6\n")
 prev.dat <- prev.dat %>%
 	 filter(sample_date >= start.date - 1 + start.prev,
 	 	sample_date <= start.date - 1 + end.prev,
