@@ -1,10 +1,10 @@
 sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
 
     ## Fix output location
-    out.loc <- file.path(out.dir, paste0("projections", Sys.getpid()))
+    out.loc <- paste0(projections.basedir, "_", Sys.getpid())
     if(!file.exists(out.loc)){
         system(paste("cp -r",
-                     file.path(out.dir, "projections"),
+                     projections.basedir,
                      out.loc))
     }
     fl.pars <- file.path(out.loc, "sim_mod_pars.Rmd")
@@ -28,9 +28,10 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     value.nu <- params$log_p_lambda_0[iter, , drop = FALSE]
     if(hosp.flag) value.ifr <- params$prop_case_to_hosp[iter, , drop = FALSE]
     if(gp.flag) pars.dow <- params$day_of_week_effects[iter, , drop = FALSE]
-    sero.sens <- params$sero_test_sensitivity[iter, , drop = FALSE]
-    sero.spec <- params$sero_test_specificity[iter, , drop = FALSE]
-    
+    if(any(ssens.prior.dist > 1)) sero.sens <- params$sero_test_sensitivity[iter, , drop = FALSE]
+    if(any(sspec.prior.dist > 1)) sero.spec <- params$sero_test_specificity[iter, , drop = FALSE]
+    if(any(prior.r1 > 1)) value.r1 <- params$r1_period[iter, , drop = FALSE]
+
     ## ## Compile the mod_pars.txt file
     ## render(fl.pars, output_file = "mod_pars.txt",
     ##        output_dir = out.loc, output_format = plain_document, quiet = TRUE)
@@ -38,8 +39,9 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     
     ## Run the code
     setwd(out.loc)
-    system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = TRUE)
-
+    exit_code <- system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = FALSE)
+    if(exit_code != 0) stop(paste("Error running in", out.loc, "on iteration", iter))
+    
     ## Read the outputs in and append to output objects
     for(intr in 1:nr)
     {

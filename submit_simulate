@@ -35,10 +35,10 @@
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_model_runs_20200925_%a.out
-#SBATCH --error=simulate_model_runs_20200925_%a.err
+#SBATCH --output=simulate_model_runs_20201127_%a.out
+#SBATCH --error=simulate_model_runs_20201127_%a.err
 
-forecast_switch="mid"
+forecast_switch="midterm"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -64,16 +64,14 @@ module load R
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201025/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201024_deaths"
-
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201106_deaths"
 
 
 #! Full path to application executable: 
 application="Rscript"
 
-
 #! Run options for the application:
-options="--vanilla ../../../R/output/mc_${forecast_switch}term_forecast.R"
+options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -103,7 +101,7 @@ np=$[${numnodes}*${mpi_tasks_per_node}]
 
 # You can use any arbitrary set of Linux commands here
 
-CMD="$application $options"
+CMD="$application $options ${workdir}"
 
 # Or for example:
 # CMD="Rscript myScript.R"
@@ -113,6 +111,10 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
+<<<<<<< HEAD
+=======
+# cd $workdir
+>>>>>>> origin/simulation_fixes
 
 JOBID=$SLURM_JOB_ID
 
