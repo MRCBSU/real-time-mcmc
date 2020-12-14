@@ -5,54 +5,150 @@ require(abind)
 require(parallel)
 require(knitr)
 
+out.dir <- commandArgs(trailingOnly = TRUE)[1]
+## out.dir <- getwd()
+QUANTILES <- c(0.025, 0.5, 0.975)
+
+setwd(out.dir)
 load("mcmc.RData")
 load("tmp.RData")
-
 source(file.path(Rfile.loc, "sim_func.R"))
-
-QUANTILES <- c(0.025, 0.5, 0.975)
 array.num <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-
 ## ## mod_inputs.Rmd items that will change in the projections.
-
 ## Forecast projection
-nweeks.ahead <- 8
-
-intervention.scenario <- ifelse(array.num < 3, "LowDec", "HiDec")
-intervention.scenario <- paste0(intervention.scenario, ifelse(array.num %% 2, "LowXmas", "HiXmas"))
-## if (array.num %% 2 == 0) intervention.scenario <- paste0("school_", intervention.scenario)
-intervention.length.weeks <- 4 ## ifelse(array.num %in% c(1, 2, 5, 6), 2, 4)
-intervention.start <- ymd(20201202)
-christmas.start <- ymd(ifelse(array.num %% 2, 20201224, 20201221))
-christmas.end <- ymd(ifelse(array.num %% 2, 20210101, 20210104))
-intervention.matrix <- paste0("England", ifelse(array.num %% 2, "low", "high"), "Christmas.csv")
-projections.file <- paste0("projections_", intervention.scenario, "_", intervention.length.weeks, "weeks.RData")
-projections.basedir <- file.path(out.dir, paste0("projections", array.num))
-
-## Enter dates at which it is anticipated that the contact model will change
-## mm.breaks <- ymd("20200928") + (1:nforecast.weeks * days(7))
+nweeks.ahead <- 9
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
-mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201120")
-intervention.breaks <- c(intervention.start, christmas.start, christmas.end)
-mult.order <- rep(1, length(mm.breaks))
+ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 
-## ##
-R.target <- 1.0
-if(!is.null(R.target)){
- R.target.date <- ymd("20201104")
- load("output_matrices.RData")
- R.target.idx <- which(lubridate::as_date(as.integer(dimnames(Rt)[["date"]])) == R.target.date)
- R.intervention.scaling <- R.utils::extract(Rt, R.target.idx, dims = "date", drop = TRUE)
- R.intervention.scaling <- apply(R.intervention.scaling, "region", median)
+## save.image("tempproj.RData")
+## stop()
+
+google.data.date <- ymd(google.data.date)
+cm.file.base <- "england_8ag_contact"
+scenario.names <- c("low-low", "medium-low", "high-low", "low-high", "medium-high", "high-high")
+scenario.name <- scenario.names[array.num]## paste0(scenario.transmission, "-", scenario.christmas)
+scenario.num <- array.num## which(scenario.names == scenario.name)
+scenario.transmission <- unlist(str_split(scenario.name, "-"))[1]
+scenario.christmas <- unlist(str_split(scenario.name, "-"))[2]
+prev.flag <- 0
+if(prev.flag & (prev.data$lmeans == "NULL")){
+    for(r in 1:nr){
+        prev.data$lmeans[r] <- file.path(data.dirs["prev"], paste0("2020-12-02_", regions[r], "_ons_meanlogprev_286every14.txt"))
+        prev.data$lsds[r] <- file.path(data.dirs["prev"], paste0("2020-12-02_", regions[r], "_ons_sdlogprev_286every14.txt"))
+    }
+    names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
+
+intervention.matrix <- function(name) {
+  ## Use the next line to specify where the new matrices are stored
+  intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, format = "%Y%m%d")))
+  return(file.path(intervention.dir, name))
+}
+
+intervention.matrix.out <- function(name) {
+  file.path(proj.dir, "contact_mats", paste0(cm.file.base, "_", name, "_", format(google.data.date, format = "%Y%m%d"), ".txt"))
+}
+
+use.previous.matrix <- function(new.date, old.date) {
+  stopifnot(old.date %in% names(matrix.sources))
+  matrix.sources[[new.date]] <<- matrix.sources[[old.date]]
+  matrix.used[[new.date]] <<- matrix.used[[old.date]]
+}
+
+remove.matrices.after <- function(date) {
+  matrix.sources <<- matrix.sources[ymd(names(matrix.sources)) <= date]
+  matrix.used <<- matrix.used[ymd(names(matrix.used)) <= date]
+ }
+
+matrix.series <- function(last.date.used, after.which.date, last.date, start.week){
+    dates <- seq(last.date.used, by = 7, to = last.date)
+    weeks <- 0:(length(dates) - 1)
+    inds <- dates >= after.which.date
+    dates <- dates[inds]
+    weeks <- weeks[inds]
+    for(dt in dates){
+        dta <- lubridate::as_date(dt)
+        wka <- weeks[dates == dt]
+        matrix.sources[[as.character(dta)]] <<- gsub(last.date.used, dta, matrix.sources[[as.character(last.date.used)]], fixed = TRUE)
+        matrix.used[[as.character(dta)]] <<- gsub(paste0("ldwk", start.week), paste0("projwk", wka), matrix.used[[as.character(last.date.used)]], fixed = TRUE)
+    }
+}
+
+matrix.sources <- as.list(cm.lockdown)
+names(matrix.sources) <- c(cm.breaks) + start.date - 1
+matrix.used <- as.list(cm.bases)
+names(matrix.used) <- c(1, cm.breaks) + start.date - 1
+last.forecast.date <- as.Date(last(names(matrix.used)), format = "%Y-%m-%d")
+last.forecast.week <- as.integer(sub(".*?ldwk.*?(\\d+).*", "\\1", last(matrix.used)))
+
+if(scenario.transmission != "low") lockdown.end <- ymd(20201202) else lockdown.end <- NULL; str.lockdown.end <- as.character(lockdown.end)
+if(scenario.transmission != "low") holidays.end <- ymd(20210104) else holidays.end <- NULL; str.holidays.end <- as.character(holidays.end)
+
+holidays.start <- ymd(20201221); str.holidays.start <- as.character(holidays.start)
+tiers.end <- ymd(20201222); str.tiers.end <- as.character(tiers.end)
+tiers.begin <- ymd(20201227); str.tiers.begin <- as.character(tiers.begin)
+## periodic.breaks <- rev(seq(holidays.start, lockdown.end, by = -14)); str.periodic.breaks <- as.character(periodic.breaks)
+intervention.breaks <- c(tiers.end, tiers.begin)
+if(!is.null(lockdown.end)) intervention.breaks <- c(lockdown.end, intervention.breaks)
+if(!is.null(holidays.end)) intervention.breaks <- c(intervention.breaks, holidays.end)
+
+## Remove projection matrices to be over-written by the new period
+remove.matrices.after(min(intervention.breaks))
+
+## Add in the new matrix inputs
+if(!is.null(lockdown.end)){
+    desc.str <- ifelse(scenario.transmission == "medium", "medtrans", "hightrans")
+    matrix.sources[[str.lockdown.end]] <- intervention.matrix(paste0(desc.str, intervention.breaks[1], ".csv"))
+    ## Add in the new matrix outputs
+    matrix.used[[str.lockdown.end]] <- intervention.matrix.out(paste0(desc.str, "_mat1"))
+    which.mat <- which(grepl("2020-12-21", cm.lockdown))
+    matrix.sources[[str.holidays.start]] <- cm.lockdown[which.mat]
+    matrix.used[[str.holidays.start]] <- cm.bases[which.mat + 1]
+}
+## for(strDate in str.periodic.breaks){
+##     matrix.sources[[strDate]] <- intervention.matrix(paste0("current", strDate, ".csv"))
+##     matrix.used[[strDate]] <- intervention.matrix.out(paste0("current_mat", which(str.periodic.breaks %in% strDate)))
+## }
+if(scenario.christmas == "low"){
+    matrix.sources[[str.tiers.end]] <- intervention.matrix(paste0("current", last.forecast.date, ".csv"))
+    matrix.used[[str.tiers.end]] <- intervention.matrix.out("current_mat")
+} else if(scenario.christmas == "high"){
+    matrix.sources[[str.tiers.end]] <- intervention.matrix(paste0("social", last.forecast.date, ".csv"))
+    matrix.used[[str.tiers.end]] <- intervention.matrix.out("social_mat")
+}
+if(!is.null(lockdown.end)){
+    use.previous.matrix(str.tiers.begin, str.holidays.start)
+    matrix.series(last.forecast.date, str.tiers.begin, holidays.end - 1, last.forecast.week)
+} else {
+    matrix.series(last.forecast.date, str.tiers.begin, start.date + ndays - 1, last.forecast.week)
+}
+if(!is.null(holidays.end)){
+    ## matrix.sources[[str.holidays.end]] <- intervention.matrix(paste0("current", str.holidays.end, ".csv"))
+    ## matrix.used[[str.holidays.end]] <- intervention.matrix.out(paste0("current_mat", length(str.periodic.breaks) + 2))
+    use.previous.matrix(str.holidays.end, str.lockdown.end)
+}
+
+## Move from list back to model spec
+stopifnot(length(matrix.sources) == length(matrix.used) - 1)
+### Order correctly
+matrix.sources <- matrix.sources[order(ymd(names(matrix.sources)))]
+matrix.used <- matrix.used[order(ymd(names(matrix.used)))]
+### Parse back into variables
+stopifnot(all(names(matrix.used)[-1] == names(matrix.sources)))
+cm.breaks <- as.integer(ymd(names(matrix.sources)) - start.date + 1)
+cm.lockdown <- as.character(matrix.sources)
+cm.bases <- as.character(matrix.used)
+
+## Where to put tmp files and outputs
+projections.basedir <- file.path(out.dir, paste0("projections", scenario.num))
+projections.file <- paste0("projections_", scenario.name, ".RData")
+
+## Use the below to add extra beta values if required
+#extra.beta <- ymd(20201202) - start.date + 1
+#extra.beta.values <- log(beta.changes[[regions]])
+extra.beta.values <- extra.beta <- NULL
+stopifnot(length(extra.beta) == length(extra.beta.values))
 ## ## ----------------------------------------------------------
-
-## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-bank.holiday.days.new <- NULL
-
-
-## ## ---------------------------------------------------------------------------------------------
 
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
@@ -77,47 +173,31 @@ combine.rtm.output <- function(x, strFld){
 
 ## ## ## --------------------
 
+
+## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
+## if(prev.flag & all(prior.r1 == 1))
+    value.r1 <- 7
+bank.holiday.days.new <- NULL
+## ## ---------------------------------------------------------------------------------------------
+
+
 if(!file.exists(projections.basedir))
     dir.create(projections.basedir)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
+prev.flag <- 0
 sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
-ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
 start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
-## prev.flag <- 0
+dths.flag <- hosp.flag
+cases.flag <- gp.flag
 
-## Get the new contact matrices to use
-cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
-intervention.breaks <- intervention.breaks - start.date + 1
-idx <- which(cm.breaks %in% seq(min(intervention.breaks), max(intervention.breaks)))
-cm.files <- c(cm.files,
-              paste0("england_8ag_contact_ltprojwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
-cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
-## Use the next line to specify where the new matrices are stored
-matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_matrices_", format(google.data.date, "%Y%m%d")))
-intervention.dir <- file.path(dirname(matrix.dir), paste0("scenarios_", format(google.data.date, "%Y%m%d")))
-## Use the next line to specify the format with the filenames
-## cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.intervention.fl <- file.path(intervention.dir, intervention.matrix)
-cm.lockdown <- c(cm.lockdown,
-                 file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
-cm.intervention.fl <- c(cm.lockdown[as.integer(cut(as.integer(R.target.date - start.date) + 1, cm.breaks))],
-                        cm.intervention.fl)
-
-cm.breaks <- c(cm.breaks[1:(first(idx) - 1)], intervention.breaks, cm.breaks[(last(idx)+1):length(cm.breaks)])
-cm.breaks <- cm.breaks[cm.breaks < ndays]
-lmix <- length(cm.breaks)
-cm.lockdown <- c(cm.lockdown[1:(first(idx) - 1)], cm.intervention.fl, cm.lockdown[last(idx):length(cm.lockdown)])[1:lmix]
-cm.bases <- c(cm.bases[1:first(idx)],
-	    file.path(proj.dir, "contact_mats", paste0("england_8ag_contact_intervention", "_", intervention.scenario, 1:length(cm.intervention.fl), "_", format(google.data.date, "%Y%m%d"), ".txt")),
-            cm.bases[(last(idx) + 1):length(cm.bases)])[1:(lmix+1)]
-
+## Create matrix files if required
+stopifnot(length(cm.bases) - 1 == length(cm.lockdown))
 if(!all(file.exists(cm.bases))){
     idx.miss <- which(!file.exists(cm.bases))
     adf <- as.data.frame(lst$England$all$m)
@@ -127,7 +207,9 @@ if(!all(file.exists(cm.bases))){
     }
 }
 stopifnot(all(file.exists(cm.bases)))
+
 ## Get the new contract matrix modifiers to use
+mult.order <- rep(1, length(cm.bases))
 cm.mults <- c(cm.mults,
               file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
               )[1:length(cm.bases)]
@@ -161,8 +243,12 @@ adaptive.phase <- 0
 burnin <- 0
 num.threads <- 1
 
+## Checks
+stopifnot(length(cm.bases) == length(cm.mults))
+stopifnot(all(!is.na(cm.mults)))
+stopifnot(length(cm.bases) == length(cm.breaks) + 1)
+
 ## The mod_inputs.txt file wont change with each projections so can render it now
-## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = plain_document())
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
 
 ## ## ## ------------------------------------------------------------
@@ -186,8 +272,17 @@ if(gp.flag)
     symlink.design("icr.design.txt")
 if(rw.flag)
     symlink.design("m.design.txt")
-if(beta.rw.flag)
-    symlink.design("beta.design.txt")
+if(beta.rw.flag) {
+	if (is.null(extra.beta)) {
+		symlink.design("beta.design.txt")
+	} else if (length(extra.beta) == 1) {
+		beta.design <- cbind(beta.design, rep(0, dim(beta.design)[1]))
+		beta.design <- rbind(beta.design, rep(1, dim(beta.design)[2]))
+		write_tsv(as.data.frame(beta.design), file.path(projections.basedir, "beta.design.txt"), col_names = FALSE)
+	} else {
+		stop("Only implemented one extra beta")
+	}
+}
 if(!single.ifr)
     symlink.design("ifr.design.txt")
 ## ## ## --------------------------------------------------------------
