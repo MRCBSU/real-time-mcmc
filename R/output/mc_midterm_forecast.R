@@ -5,16 +5,18 @@ require(abind)
 require(parallel)
 require(knitr)
 
+out.dir <- commandArgs(trailingOnly = TRUE)[1]
+QUANTILES <- c(0.025, 0.5, 0.975)
+## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+setwd(out.dir)
 load("mcmc.RData")
 load("tmp.RData")
-
 source(file.path(Rfile.loc, "sim_func.R"))
-
-QUANTILES <- c(0.025, 0.5, 0.975)
-
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 4
+nweeks.ahead <- 24
+
+counterfactual <- TRUE
 
 projections.basedir <- file.path(out.dir, "projections_MTP")
 ## ## Enter dates at which it is anticipated that the contact model will change
@@ -40,8 +42,8 @@ if(prev.flag & (prev.data$lmeans == "NULL")){
 	}
     for(r in 1:nr){
 	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
-      prev.data$lmeans <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
-      prev.data$lsds <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
+      prev.data$lmeans[r] <- paste0(prev.file.prefix, regions[r], "ons_meanlogprev.txt")
+      prev.data$lsds[r] <- paste0(prev.file.prefix, regions[r], "ons_sdlogprev.txt")
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
@@ -51,7 +53,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-value.r1 <- 7
+if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -99,6 +101,18 @@ matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_ma
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+## Get the new contract matrix modifiers to use
+cm.mults <- c(cm.mults,
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              )
+if(counterfactual){
+    cm.dates <- start.date + cm.breaks - 1
+    future.mats <- cm.dates > google.data.date
+    cm.breaks <- cm.breaks[!future.mats]
+    cm.bases <- cm.bases[c(TRUE, !future.mats)]
+    cm.mults <- cm.mults[c(TRUE, !future.mats)]
+}
+## Write to file any contact matrix that doesn't already exist.
 if(!all(file.exists(cm.bases)) || overwrite.matrices){
     idx.miss <- which(!file.exists(cm.bases))
     if(overwrite.matrices) idx.miss <- 2:length(cm.bases)
@@ -108,10 +122,6 @@ if(!all(file.exists(cm.bases)) || overwrite.matrices){
             write_tsv(cm.bases[idx], col_names = FALSE)
     }
 }
-## Get the new contract matrix modifiers to use
-cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
-              )
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
 

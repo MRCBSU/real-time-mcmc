@@ -1,0 +1,41 @@
+#!/bin/bash
+#!
+#! Example SLURM job script for Darwin (Sandy Bridge, ConnectX3)
+#!
+
+#!#############################################################
+#!#### Modify the options in this section as appropriate ######
+#!#############################################################
+
+#! sbatch directives begin here ###############################
+#! Name of the job:
+#SBATCH -J set-up-debug-session
+#! Which project should be charged:
+#SBATCH -A MRC-BSU-SL2-CPU
+#! How many (MPI) tasks will there be in total? (<= nodes*16)
+#SBATCH --ntasks=1
+#! How many CPUs will each task require
+#SBATCH --cpus-per-task=15
+#SBATCH --mem=20000
+#SBATCH --array=1-1
+#! How much wallclock time will be required?
+#SBATCH --time=36:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH -p skylake
+#SBATCH --qos=covid0
+
+application="Rscript"
+
+options="R/output/debug.R"
+
+CMD="$application $options"
+
+eval $CMD

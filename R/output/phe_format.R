@@ -58,18 +58,17 @@ create.spim.table <- function(data, name, by = NULL) {
 
 fl.proj <- file.path(out.dir, "projections_midterm.RData")
 load(fl.proj)
-#tbl_inf <- create.spim.table(cum_infections, "infections_cum")
-#tbl_inf_inc <- create.spim.table(infections, "infections_inc")
-#tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
-#tbl_deaths_age <- create.spim.table(deaths, "death_inc_line", by = "age")
-#tbl_inf_inc_age <- create.spim.table(infections, "infections_inc", by = "age")
+tbl_inf <- create.spim.table(cum_infections, "infections_cum")
+tbl_inf_inc <- create.spim.table(infections, "infections_inc")
+tbl_deaths <- create.spim.table(noisy_deaths, "death_inc_line")
+tbl_deaths_age <- create.spim.table(deaths, "death_inc_line", by = "age")
+tbl_inf_inc_age <- create.spim.table(infections, "infections_inc", by = "age")
 tbl_prev <- create.spim.table(prevalence, "prevalence")
 tbl_prev_age <- create.spim.table(prevalence, "prevalence", by = "age")
 dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 
-#bind_rows(tbl_inf, tbl_inf_inc, tbl_inf_inc_age, tbl_deaths, tbl_deaths_age, tbl_prev, tbl_prev_age) %>%
-bind_rows(tbl_prev, tbl_prev_age) %>%
+bind_rows(tbl_inf, tbl_inf_inc, tbl_inf_inc_age, tbl_deaths, tbl_deaths_age, tbl_prev, tbl_prev_age) %>%
     mutate(
 		   `Creation Day` = day(CreationDate),
 		   `Creation Month` = month(CreationDate),

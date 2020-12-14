@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -70,7 +70,6 @@ region.code <- "Eng"
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
 data.desc <- "deaths"
 
-
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
@@ -109,7 +108,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data)-1
+    date.adj.data <- ymd(date.data)-2
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
