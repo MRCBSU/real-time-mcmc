@@ -4,6 +4,7 @@ knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 if (!exists("projections_file")) projections_file <- "projections.RData"
 if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
 load(file.path(out.dir, projections_file))
+dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 ```
 
 ### Infection incidence {.tabset}
@@ -22,14 +23,14 @@ make.plots(infections, by = "age", project.forwards = TRUE)
 
 #### By region
 ```{r reg-medterm-death}
-make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = TRUE)
+make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = TRUE, data = dth.dat)
 ```
 
 #### By age
 ```{r age-medterm-death}
-make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE)
+make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE, data = dth.dat)
 ```
 
 ```{r eval=exists("prevalence"), child='prev-proj-report.Rmd'}
-save.image("temp2.RData")
 ```
+
