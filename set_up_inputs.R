@@ -68,7 +68,7 @@ if (nA == 1) {
   mat.dates <- start.date + cm.breaks - 1
   lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
   lst$England$all$m <- lst$England$all$m * 1e7
-  cm.files <- paste0("england_8ag_contact", google.data.date.str, ".txt"
+  cm.files <- paste0("england_8ag_contact", google.data.date.str, ".txt")
   for(i in 1:length(cm.breaks))
       cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date.str, ".txt"))
   cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
