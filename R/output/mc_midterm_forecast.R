@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-setwd(out.dir)
+if (!is.na(out.dir)) setwd(out.dir)
 load("mcmc.RData")
 load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
@@ -16,7 +16,7 @@ source(file.path(Rfile.loc, "sim_func.R"))
 ## Number of weeks to forecast ahead
 nweeks.ahead <- 24
 
-counterfactual <- TRUE
+counterfactual <- FALSE
 
 projections.basedir <- file.path(out.dir, "projections_MTP")
 ## ## Enter dates at which it is anticipated that the contact model will change
@@ -95,9 +95,8 @@ end.prev <- ifelse(prev.flag, ndays, 1)
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
-matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_matrices_", format(google.data.date, "%Y%m%d")))
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
