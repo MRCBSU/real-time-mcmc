@@ -69,7 +69,7 @@ module load R/3.6
 application="Rscript"
 
 #! Run options for the application:
-options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla ../../../R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -125,6 +125,7 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD
+Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
