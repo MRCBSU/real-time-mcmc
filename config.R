@@ -42,8 +42,8 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201211"), format = "%Y%m%d")
-matrix.suffix <- "_altHH"
+google.data.date <- format(ymd("20201218"), format = "%Y%m%d")
+matrix.suffix <- "_timeuse_default_old_base"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -75,7 +75,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -85,15 +85,14 @@ exclude.eldest.prev <- FALSE
 if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
-if (!fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_varySero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
 ## Give the run a name to identify the configuratio
 contact.model <- 4
-scenario.name <- paste0(scenario.name, "_cm", contact.model) ## _latestart" ## _morefreq"
+if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.model) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
-if(!single.ifr) scenario.name <- paste0(scenario.name, "_ifr")
+if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE

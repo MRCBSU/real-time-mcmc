@@ -23,7 +23,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- T
+format.inputs <- F
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
