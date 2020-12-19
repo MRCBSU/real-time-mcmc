@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -36,14 +36,14 @@ if (args[2] == "All")  {
 }
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201127/NoPrev_varySero_cm4_ifr_60cutoff_matrices_20201127_deaths/"
+previous.run.to.use <- file.path(proj.dir, "model_runs", "20201212", "NoPrev_Cevik_ifr_28cutoff_matrices_20201211_deaths")
 iteration.number.to.start.from <- 6400
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
 google.data.date <- format(ymd("20201218"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_default_old_base"
+matrix.suffix <- "_timeuse_household_old_base"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -97,7 +97,7 @@ if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 if (data.desc == "all") {
