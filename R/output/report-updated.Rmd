@@ -12,6 +12,7 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
+Rfile.loc.bak <- Rfile.loc
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 
 suppressMessages(library(knitr))
@@ -19,15 +20,10 @@ suppressMessages(library(DT))
 suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
-suppressMessages(extract <- R.utils::extract)
-if(exists("Rfile.loc")) {
-  source(file.path(Rfile.loc, "results_api.R"))
-  source(file.path(Rfile.loc, "plot_funcs.R"))
-} else {
-  proj.dir <- "~/RTM"
-  source("results_api.R")
-  source("plot_funcs.R")
-}
+source(file.path(Rfile.loc, "results_api.R"))
+Rfile.loc <- Rfile.loc.bak
+source(file.path(Rfile.loc, "plot_funcs.R"))
+Rfile.loc <- Rfile.loc.bak
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
