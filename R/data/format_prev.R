@@ -152,7 +152,8 @@ prev.dat <- prev.dat %>%
            lmean = ifelse(include, lmean, 0),
            lsd = ifelse(include, lsd, 0)) %>%
     select(-include) %>%
-    get.region()
+    get.region() %>%
+    filter(region %in% regions)
 
 # Check correct number of days
 stopifnot(
