@@ -143,11 +143,11 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20201204")
+date.prev <- ymd("20201214")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3
 last.prev.day <- (prev.end.day - 4)
-first.prev.day <- (ymd(20200921) - start.date) + 1
+first.prev.day <- date.prev - 74 - start.date + 1
 days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
