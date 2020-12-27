@@ -28,15 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1
+#SBATCH --array=1-2
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_model_runs_20201127_%a.out
-#SBATCH --error=simulate_model_runs_20201127_%a.err
+#SBATCH --output=simulate_model_runs_20201218_%a.out
+#SBATCH --error=simulate_model_runs_20201218_%a.err
 
 forecast_switch="midterm"
 
@@ -60,16 +60,25 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
-module load R/3.6
+
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
-
+# Navigate to the correct working directory
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201218/NoPrev_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff_matrices_20201218_timeuse_household_new_base_deaths"
+ 
+echo -e $workdir
 
 #! Full path to application executable: 
 application="Rscript"
 
 #! Run options for the application:
-options="--vanilla ../../../R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -125,7 +134,7 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD
-Rscript ../../../R/output/plot_projections.R projections_midterm.RData
+# Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
