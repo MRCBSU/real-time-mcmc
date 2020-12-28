@@ -28,7 +28,7 @@ google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
-if(prev.flag & (prev.data$lmeans == "NULL")){
+if(prev.flag && any(prev.data$lmeans == "NULL")){
     if (!exists("date.prev")) {
 		## Get the date of the prevalence data
 		date.prev <- ymd("20201119")
@@ -134,6 +134,10 @@ if(hosp.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag)
+	if (is.null(names(prev.data$lmeans))) {
+		names(prev.data$lmeans) <- regions
+		names(prev.data$lsds) <- regions
+	}
     for(reg in regions){
         prev.data$lmeans[reg] <- repeat.last.row(prev.data$lmeans[reg], paste0("dummy_prev_lmeans_", reg))
         prev.data$lsds[reg] <- repeat.last.row(prev.data$lsds[reg], paste0("dummy_prev_lsds_", reg))
