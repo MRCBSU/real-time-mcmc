@@ -43,7 +43,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200605)
 
 google.data.date <- format(ymd("20201218"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_default_old_base"
+matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
