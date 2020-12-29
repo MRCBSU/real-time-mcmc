@@ -286,7 +286,7 @@ if(rw.flag){
 }
 ## ## End of contact model ##
 
-# Using 31 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
+# Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - 24)][-1]
 ## beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
 nbetas <- length(beta.breaks) + 1
