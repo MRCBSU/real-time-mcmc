@@ -24,4 +24,3 @@ cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
 ../../../rtm_hpc
 sbatch ../../../submit_post_process_correct_dir
-sbatch ../../../submit_simulate
