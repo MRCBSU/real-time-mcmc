@@ -36,13 +36,13 @@ if (args[2] == "All")  {
 }
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201127/NoPrev_varySero_cm4_ifr_60cutoff_matrices_20201127_deaths/"
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201224/NoPrev_60cutoff_matrices_20201218_timeuse_household_new_base_deaths"
 iteration.number.to.start.from <- 6400
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201229"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201218"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -75,7 +75,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1

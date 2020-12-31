@@ -11,7 +11,7 @@
 #SBATCH --verbose
 #SBATCH --qos=covid0
 
-#SBATCH --array=1-7
+#SBATCH --array=0-1
 #SBATCH -p skylake-himem
 
 
@@ -20,6 +20,6 @@
 
 module load pandoc
 module load R/3.6
-cd $(ls */ -d | sed -n ${SLURM_ARRAY_TASK_ID}p)
+cd $(ls *29*/ -d | sed -n ${SLURM_ARRAY_TASK_ID}p)
 pwd
 Rscript ../../../rerun.R
