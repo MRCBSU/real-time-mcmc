@@ -146,11 +146,10 @@ if(gp.flag){
 date.prev <- ymd("20201227")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3
-last.prev.day <- (prev.end.day - 4)
 first.prev.day <- date.prev - 74 - start.date + 1
 days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
-prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
+prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 ## ## Choose the name of the subdirectory in model_runs to use
