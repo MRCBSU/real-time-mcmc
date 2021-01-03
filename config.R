@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -42,7 +42,7 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201218"), format = "%Y%m%d")
+google.data.date <- format(ymd("20201229"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -143,11 +143,11 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20201216")
+date.prev <- ymd("20201227")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3 ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
-first.prev.day <- (ymd(20200921) - start.date) + 1
+first.prev.day <- prev.end.day - 73
 days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
