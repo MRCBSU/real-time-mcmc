@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1
+#SBATCH --array=1-2
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -62,8 +62,13 @@ if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-# Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201106_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20201218/NoPrev_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff_matrices_20201218_timeuse_household_new_base_deaths"
 
 echo -e $workdir
 
@@ -72,11 +77,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-<<<<<<< HEAD
 options="../../../R/output/plot_projections.R projections_*.RData"
-=======
-options="../../../R/output/plot_projections.R projections_counter.RData"
->>>>>>> COVID
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:

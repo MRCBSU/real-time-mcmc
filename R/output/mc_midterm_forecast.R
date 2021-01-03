@@ -41,9 +41,10 @@ if(prev.flag & (prev.data$lmeans == "NULL")){
 		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
 	}
     for(r in 1:nr){
-	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
-      prev.data$lmeans[r] <- paste0(prev.file.prefix, regions[r], "ons_meanlogprev.txt")
-      prev.data$lsds[r] <- paste0(prev.file.prefix, regions[r], "ons_sdlogprev.txt")
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", regions[r], "_ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
+          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt") 
+      prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
+      prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
