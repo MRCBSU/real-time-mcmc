@@ -146,6 +146,9 @@ double inverse_rw_transformation(const double& in_y, const char& trunc_flag,
     return b - gsl_sf_exp(-in_y);
   case cTRUNC :
     return ((b * gsl_sf_exp(in_y)) + a) / (1 + gsl_sf_exp(in_y));
+  default:
+      std::cout << "Error: inverse_rw_transformation: invalid trunc_flag\n";
+      exit(1);
   }
 }
   // IMPORTANT FUNCTION FOR GENERATING CANDIDATE PROPOSALS FROM A POSSIBLY TRUNCATED RANDOM WALK

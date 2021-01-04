@@ -4,6 +4,9 @@
 #include "gsl_vec_ext.h"
 #include "string_fns.h"
 
+#include "params.h"
+#include "RTM_BlockUpdate.h"
+
 using namespace std;
 using std::string;
 
@@ -293,6 +296,24 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
 
+      if (int_iter % 100 == 0)
+	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
+
+      // Block Updates
+
+      // Global params
+      updateGlobalParams(globalParamValues, globalParams);
+      
+      // Regional/local params
+
+      // #pragma omp parallel for
+      for (int region = 0; region < localParamValues.size(); region++) {
+	updateRegionParams(region, localParamValues[region], localParams);
+      }
+
+      // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+      // Previous update of individual params one by one
+      
       // LOOP THROUGH EACH OF THE UPDATEABLE PARAMETERS
       for(int_param = 0; int_param < theta.size_param_list; int_param++)
 	{

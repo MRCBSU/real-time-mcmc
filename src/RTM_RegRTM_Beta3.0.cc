@@ -3,8 +3,26 @@
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
 
+#include "params.h"
+
 using namespace std;
 using std::string;
+
+// TODO: Remove global vars at later date
+gslVector globalParamValues;
+std::vector<gslVector> localParamValues;
+
+std::vector<updateableParam> globalParams;
+std::vector<updateableParam> localParams;
+
+void gsl_vector_print(const gsl_vector* vec, int size) {
+    if (size < 0)
+	size = vec->size;
+    for (int i = 0; i < size; i++)
+	std::cout << gsl_vector_get(vec, i) << " ";
+    std::cout << std::endl;
+}
+
 
 int main(void){
 
@@ -71,6 +89,35 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
+  // CCS
+
+  int size = 0;
+  for (auto &param : globalParams)
+      size += param.param_value.size();
+  globalParamValues.create(size);
+  int i = 0;
+  for (auto &param : globalParams) {
+      param.param_index = i;
+      for (int j = 0; j < param.param_value.size(); j++)
+	  globalParamValues[i++] = param.param_value[j];
+  }
+
+  localParamValues.resize(global_fixedpars.l_num_regions);
+
+  size = 0;
+  for (auto &param : localParams)
+      size += param.param_value.size();
+  localParamValues[0].create(size);
+  i = 0;
+  for (auto &param : localParams) {
+      param.param_index = i;
+      for (int j = 0; j < param.param_value.size(); j++)
+	  localParamValues[0][i++] = param.param_value[j];
+  }
+  // Assume all regions have same init param values
+  for (int i = 1; i < localParamValues.size(); i++)
+      localParamValues[i] = localParamValues[0];
+  
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
   Region* country = new Region[global_fixedpars.l_num_regions];
 

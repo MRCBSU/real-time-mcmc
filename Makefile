@@ -9,7 +9,7 @@ RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc/%.o)
 
 LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp
-CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE
+CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -std=c++11
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug

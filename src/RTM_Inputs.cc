@@ -3,6 +3,8 @@
 #include "gsl_vec_ext.h"
 #include "gsl_mat_ext.h"
 
+#include "params.h"
+
 using namespace std;
 using std::string;
 
@@ -386,7 +388,7 @@ void read_param_regression(regression_def& reg_def,
   int reg_pos = str_source.find("region_breakpoints");
   int time_pos = str_source.find("time_breakpoints");
   int age_pos = str_source.find("age_breakpoints");
-
+  
   reg_def.region_breakpoints = reg_def.time_breakpoints = reg_def.age_breakpoints = 0;
   reg_def.design_matrix = 0;
 
@@ -446,7 +448,8 @@ void read_modpar(updateable_model_parameter& modpar,
 		 const string likelihood_flags,
 		 const int num_regions,
 		 const int num_days,
-		 const int num_ages)
+		 const int num_ages,
+		 const int num_instances)   // CCS
 {
 
   string var_string, var_var_string;
@@ -550,6 +553,7 @@ void read_modpar(updateable_model_parameter& modpar,
 
 	modpar.number_accepted_moves = gsl_vector_int_alloc(var_dimension);
 	modpar.number_proposed_moves = gsl_vector_int_alloc(var_dimension);
+	
 	gsl_vector_int_set_zero(modpar.number_accepted_moves);
 	gsl_vector_int_set_zero(modpar.number_proposed_moves);
 
@@ -566,7 +570,7 @@ void read_modpar(updateable_model_parameter& modpar,
 
   
   } else { // THE STRING IS NOT FOUND
-
+    
     /// SET EQUAL TO THE DEFAULT (TIME AND AGE INVARIANT VALUE)
     modpar.param_value = gsl_vector_alloc(1);
     modpar.prior_distribution = gsl_vector_int_alloc(1);
@@ -579,6 +583,17 @@ void read_modpar(updateable_model_parameter& modpar,
   // ESTABLISH THE MAPS FROM THE PARAMETER VALUES TO THE VALUES PASSED TO THE REGIONAL STRUCTURES
   read_param_regression(modpar.map_to_regional, param_name, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
 
+
+  // CCS
+  // We need to pass num_instances to this function to enable the copy of
+  // flag_child_nodes. Remove if/when this creation is refactored.
+  bool regional = ( var_string.find("regional_param") != string::npos );
+
+  if (regional) {
+    localParams.push_back(updateableParam(modpar, num_instances));
+  } else {
+    globalParams.push_back(updateableParam(modpar, num_instances));
+  }
 }
 
 
@@ -807,7 +822,7 @@ void read_global_model_parameters(globalModelParams& in_pars,
     string str_param_flags = read_from_delim_string<string>(str_var_likflags, ":", int_delim_flag_position);
 
     // POPULATE THE STRUCTURE
-    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages);
+    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, num_instances);
 
   }
 

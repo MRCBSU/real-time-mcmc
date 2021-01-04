@@ -18,6 +18,10 @@ public:
   mvnorm();
   mvnorm(const gsl_vector*, const gsl_matrix*);
   ~mvnorm();
+
+  mvnorm(const mvnorm& in);
+  mvnorm& operator=(const mvnorm& in);
+  
   double ld_mvnorm(const gsl_vector*);
   double ld_mvnorm_nonnorm(const gsl_vector*);
   double ld_mvnorm_ratio(const gsl_vector*, const gsl_vector*);
