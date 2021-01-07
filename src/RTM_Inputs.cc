@@ -3,7 +3,7 @@
 #include "gsl_vec_ext.h"
 #include "gsl_mat_ext.h"
 
-#include "params.h"
+#include "RTM_updParams.h"
 
 using namespace std;
 using std::string;
@@ -59,10 +59,10 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
   // ITERATE THROUGH THESE INSTANCES
   string str_replace;
-  register int i_var_start = 0, i_var_end = 0, i_var_mark;
-  register int i_val_start = 0, i_val_end, i_val_mark;
-  register double dbl_var;
-  register string str_var;
+  int i_var_start = 0, i_var_end = 0, i_var_mark;
+  int i_val_start = 0, i_val_end, i_val_mark;
+  double dbl_var;
+  string str_var;
 
   for(;
       i_var_end != string::npos;
@@ -114,7 +114,7 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
 
 
-void read_mcmc_parameters(register mcmcPars &mcmc_pars,
+void read_mcmc_parameters(mcmcPars &mcmc_pars,
 			  char* source_file,
 			  const string str_varnames,
 			  string& str_vardefaults)
@@ -146,7 +146,7 @@ void read_mcmc_parameters(register mcmcPars &mcmc_pars,
 
 }
 
-void read_global_fixed_parameters(register global_model_instance_parameters& fixed_pars,
+void read_global_fixed_parameters(global_model_instance_parameters& fixed_pars,
 				  char* source_file,
 				  const string str_varnames,
 				  string& str_vardefaults)
@@ -587,13 +587,13 @@ void read_modpar(updateable_model_parameter& modpar,
   // CCS
   // We need to pass num_instances to this function to enable the copy of
   // flag_child_nodes. Remove if/when this creation is refactored.
+  // num_instances is the number of params defined in the input file
+  // (TODO: Is there a bug where this is less than the total number of params?)
+  // True = local param, false = global
   bool regional = ( var_string.find("regional_param") != string::npos );
 
-  if (regional) {
-    localParams.push_back(updateableParam(modpar, num_instances));
-  } else {
-    globalParams.push_back(updateableParam(modpar, num_instances));
-  }
+  updParamSet::insertAndRegister(modpar, num_instances, regional);
+
 }
 
 
@@ -655,7 +655,7 @@ void node_links(globalModelParams& in_pars,
 		const string str_param_input)
 {
 
-  register int inti, intj;
+  int inti, intj;
   int int_delim_position = 0;
   string temp_param, temp_prior_param;
 
@@ -948,7 +948,7 @@ void data_matrices_fscanf(const string& infilestring,
 			  const int col_skip,
 			  const int row_skip)
 { //NEEDS SOME ERROR HANDLING IN HERE.
-  register int inti, intj;
+  int inti, intj;
   char str_row_date[25];
   double dbl_dummy;
 
@@ -979,7 +979,7 @@ void data_int_matrices_fscanf(string infilestring,
 			  const int col_skip = 0,
 			  const int row_skip = 0)
 { //NEEDS SOME ERROR HANDLING IN HERE.
-  register int inti, intj;
+  int inti, intj;
   char str_row_date[25];
   double dbl_dummy;
 

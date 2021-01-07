@@ -12,7 +12,7 @@ using std::string;
 // FUNCTIONS IN RTM_Inputs.cc
 void input_filenames(char *,
 		     char *, const int);
-void read_global_fixed_parameters(register global_model_instance_parameters&,
+void read_global_fixed_parameters(global_model_instance_parameters&,
 				  char*, const string, string&);
 void read_global_model_parameters(globalModelParams&, const char*, const string,
 				  const string&, const string&,	const string&, const string&,
@@ -22,7 +22,7 @@ int param_list_index(const globalModelParams, string);
 void read_string_from_instruct(string&, const string&, const string&);
 void read_data_inputs(Region*, const string, const int&);
 void read_mixmod_structure_inputs(mixing_model&, const string, const global_model_instance_parameters);
-void read_mcmc_parameters(register mcmcPars&, char*, const string, string&);
+void read_mcmc_parameters(mcmcPars&, char*, const string, string&);
 void data_matrices_fscanf(const string&, gsl_matrix*, const int col_skip = 0, const int row_skip = 0);
 
 // FUNCTIONS IN RTM_WithinRegion.cc

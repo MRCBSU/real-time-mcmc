@@ -19,11 +19,11 @@ void output_per_selected_period(
 {// WE NEED TO KNOW ITS DIMENSIONS BEFORE WE PUT IN! THE 1-DIMENSION IS [maxiter/(time_steps_per_day*output_days)]
   gsl_matrix_set_zero(matrix_observed); // INITIALIZATION
 
-  for (register int i = 0; i < (matrix_observed->size1); ++i)
+  for (int i = 0; i < (matrix_observed->size1); ++i)
     {
-      for (register int j = 0; j < matrix_observed->size2; ++j)
+      for (int j = 0; j < matrix_observed->size2; ++j)
 	{
-	  for (register int k = 0; k <= (time_steps_per_day - 1); ++k) // MAKE SURE THAT YOU ARE PASSING A ZERO MATRIX INSIDE HERE
+	  for (int k = 0; k <= (time_steps_per_day - 1); ++k) // MAKE SURE THAT YOU ARE PASSING A ZERO MATRIX INSIDE HERE
 	    {
 	      gsl_matrix_set(matrix_observed, i, j, gsl_matrix_get(matrix_observed, i, j) + gsl_matrix_get(matrix_uncontracted, (time_steps_per_day * i) + k, j)); // YOU NEED TO GO UP TO -1
 	    }// FOR
@@ -35,7 +35,7 @@ void output_per_selected_period(
 
 // SEASONAL R0_FUNCTION GIVES THE VECTOR OF THE SEASONAL R0 FOR THE LENGTH OF THE RUN OF THE MODEL BASED ON THE R0 AT THE START OF THE SIMULATION (R0INIT) AND THE AMPLITUDE OF OSCILLATION OF R0
 void Seasonal_R0_function(
-			  register gsl_vector* Seasonal_R0, // memory is assumed to have already been allocated for this vector
+			  gsl_vector* Seasonal_R0, // memory is assumed to have already been allocated for this vector
 			  const double R0init,
 			  const double amplitude,
 			  const gsl_vector* phase_shift)
@@ -67,9 +67,9 @@ void initialising_Deterministic_SE1E2I1I2R_AG_RF_CIN2(regional_model_params in_d
   double alpha = gsl_sf_exp(in_dmp.l_EGR/timestepsperday)-1; // ALWAYS GREATER THAN 1
 
   // SPECIFY I0 & IMPORTATION RATE AS IN THE OBJECTIVE FUNCTION
-  register gsl_vector* I0_vec = gsl_vector_alloc(NUM_AGE_GROUPS);
+  gsl_vector* I0_vec = gsl_vector_alloc(NUM_AGE_GROUPS);
  
-  for (register int i = 0; i < NUM_AGE_GROUPS; ++i)
+  for (int i = 0; i < NUM_AGE_GROUPS; ++i)
     {
       gsl_vector_set(I0_vec, i, gsl_vector_get(evector_MIXMAT_normalised, i) * in_dmp.l_I0);
       gsl_vector_set(l_I1_0, i, gsl_vector_get(I0_vec, i) / (1 + ((gsl_matrix_get(in_dmp.l_relative_infectiousness_I2_wrt_I1, 0, i) * gsl_vector_get(rho, i)) / (alpha + gsl_vector_get(rho, i)))));
@@ -128,15 +128,15 @@ void prob_infection_RF_MA(
 }
 
 void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PARAMETERS THAT ARE PASSED BY REFERENCE AND ARE NOT CONSTANT
-					 register gsl_matrix* l_S, 
-					 register gsl_matrix* l_E_1, 
-					 register gsl_matrix* l_E_2, 
-					 register gsl_matrix* l_I_1, 
-					 register gsl_matrix* l_I_2, 
-					 register gsl_matrix* l_R, 
-					 register gsl_matrix* l_NNI,
-					 register gsl_matrix* l_Seropositivity,
-					 register gsl_matrix* l_Prevalence,
+					 gsl_matrix* l_S, 
+					 gsl_matrix* l_E_1, 
+					 gsl_matrix* l_E_2, 
+					 gsl_matrix* l_I_1, 
+					 gsl_matrix* l_I_2, 
+					 gsl_matrix* l_R, 
+					 gsl_matrix* l_NNI,
+					 gsl_matrix* l_Seropositivity,
+					 gsl_matrix* l_Prevalence,
 					 model_state* l_end_state,
 					 const regional_model_params& in_dmp,
 					 const gsl_vector* l_R0_t,
@@ -151,11 +151,11 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   // FUNCTION DEFINITION 
   int timestepsperday = gmip.l_transmission_time_steps_per_day;
   int time_points = l_S->size1; 
-  register gsl_matrix* Number_New_Infected = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS); 
-  register gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
-  register gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
-  register gsl_vector* I = gsl_vector_alloc(NUM_AGE_GROUPS);
-  register int mix_interval;
+  gsl_matrix* Number_New_Infected = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS); 
+  gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
+  gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
+  gsl_vector* I = gsl_vector_alloc(NUM_AGE_GROUPS);
+  int mix_interval;
 
   // INITIALISING: SEIR view variables
   gsl_vector_view S_view = gsl_matrix_row(l_S, 0);
@@ -175,7 +175,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
   // SELECT THE CORRECT MIXING MATRIX
   gsl_matrix_memcpy(P, l_MIXMOD_ADJUSTED2.MIXMAT_scaled[0]);
-  for (register int a = 0; a < NUM_AGE_GROUPS; ++a)
+  for (int a = 0; a < NUM_AGE_GROUPS; ++a)
     {
       gsl_matrix_set(l_S, 0, a, gsl_vector_get(regional_population_by_age, a) * gsl_vector_get(in_dmp.l_init_prop_sus, a));
       gsl_matrix_set(l_R, 0, a, 0);
@@ -209,14 +209,14 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   // NEED TO AVOID THIS LOOP IF S(t) has any negative values
 
   // UPDATING THE MODEL:
-  for (register int t = 0; t < time_points - 1; ++t)// YOU PUT -1 BECAUSE YOUR VECTORS HAVE LENGTHS UP TO TIME_POINTS AND WE ARE WORKING WITH t+1
+  for (int t = 0; t < time_points - 1; ++t)// YOU PUT -1 BECAUSE YOUR VECTORS HAVE LENGTHS UP TO TIME_POINTS AND WE ARE WORKING WITH t+1
     { 
 
       // PICK OUT MIXING MATRIX FOR THIS TIME-STEP
       mix_interval = (l_MIXMOD_ADJUSTED2.num_breakpoints == 0) ? 0 : mix_timecat(t + 1, l_MIXMOD_ADJUSTED2.breakpoints, timestepsperday);
       gsl_matrix_memcpy(P, l_MIXMOD_ADJUSTED2.MIXMAT_scaled[mix_interval]);
     
-      for (register int a = 0; a < NUM_AGE_GROUPS; ++a)
+      for (int a = 0; a < NUM_AGE_GROUPS; ++a)
 	{
 	  gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)));
 	  gsl_matrix_set(l_E_1, t + 1, a, gsl_matrix_get(l_E_1, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + gsl_matrix_get(p_lambda, t, a) * gsl_matrix_get(l_S, t, a));
@@ -306,12 +306,12 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 
   const mixing_model l_MIXMOD_ADJUSTED2 = in_dmp.l_MIXMOD;
 
-  register gsl_matrix* S = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  register gsl_matrix* E_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  register gsl_matrix* E_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  register gsl_matrix* I_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  register gsl_matrix* I_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  register gsl_matrix* R = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS);
+  gsl_matrix* S = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* E_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* E_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* I_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* I_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* R = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS);
 
   Deterministic_S_E1_E2_I1_I2_R_AG_RF( // OUTPUTS THE NUMBER OF NEW INFECTEDS, THE INPUT TO THE REPORTING MODEL
 				      S, 

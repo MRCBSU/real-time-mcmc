@@ -4,7 +4,7 @@
 #include "gsl_vec_ext.h"
 #include "string_fns.h"
 
-#include "params.h"
+#include "RTM_updParams.h"
 #include "RTM_BlockUpdate.h"
 
 using namespace std;
@@ -201,8 +201,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 gsl_rng* r)
 {
 
-  register int int_iter = 0;
-  register int int_param = 0;
+  int int_iter = 0;
+  int int_param = 0;
   gsl_vector_int* num_component_updates = gsl_vector_int_alloc(theta.size_param_list);
   gsl_vector_int* block_size = gsl_vector_int_alloc(theta.size_param_list);
   gsl_vector_int **a = new gsl_vector_int*[theta.size_param_list];
@@ -299,16 +299,17 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter % 100 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
-      // Block Updates
+      
+      // CCS: Block Updates
 
       // Global params
-      updateGlobalParams(globalParamValues, globalParams);
+      updateGlobalParams(upd::globalParamValues, upd::globalParams);
       
       // Regional/local params
 
       // #pragma omp parallel for
-      for (int region = 0; region < localParamValues.size(); region++) {
-	updateRegionParams(region, localParamValues[region], localParams);
+      for (int region = 0; region < upd::localParamValues.size(); region++) {
+	updateRegionParams(region, upd::localParamValues[region], upd::localParams);
       }
 
       // * * * * * * * * * * * * * * * * * * * * * * * * * * * *

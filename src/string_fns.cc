@@ -74,7 +74,7 @@ int nth_instance_in_string(const string in_string, const char *sep_string, const
 
     // ELSE RETURN A VALUE
     int num_instance = 0;
-    register int i = 0, i_start, i_end;
+    int i = 0, i_start, i_end;
     for(; num_instance < n_instance; ++i)
       {
 	i = in_string.find(sep_string, i);

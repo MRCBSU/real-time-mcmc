@@ -3,17 +3,17 @@
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
 
-#include "params.h"
+#include "RTM_updParams.h"
 
 using namespace std;
 using std::string;
 
 // TODO: Remove global vars at later date
-gslVector globalParamValues;
-std::vector<gslVector> localParamValues;
+//gslVector globalParamValues;
+//std::vector<gslVector> localParamValues;
 
-std::vector<updateableParam> globalParams;
-std::vector<updateableParam> localParams;
+//std::vector<updParam> globalParams;
+//std::vector<updParam> localParams;
 
 void gsl_vector_print(const gsl_vector* vec, int size) {
     if (size < 0)
@@ -73,6 +73,9 @@ int main(void){
   string str_global_model_delay_sds(GLOBAL_MODEL_PARAMETERS_DELAY_SDS);
   string str_global_model_delay_flags(GLOBAL_MODEL_PARAMETERS_DELAY_FLAGS);
 
+  // CCS
+  updParamSet::init(global_fixedpars.l_num_regions);
+  
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
   read_global_model_parameters(global_modpars,
   			       str_filename_modpars,
@@ -89,8 +92,9 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
-  // CCS
-
+  updParamSet::populateVectors(global_fixedpars.l_num_regions);
+  
+/*
   int size = 0;
   for (auto &param : globalParams)
       size += param.param_value.size();
@@ -117,7 +121,8 @@ int main(void){
   // Assume all regions have same init param values
   for (int i = 1; i < localParamValues.size(); i++)
       localParamValues[i] = localParamValues[0];
-  
+*/  
+
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
   Region* country = new Region[global_fixedpars.l_num_regions];
 

@@ -371,31 +371,30 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
 				  flagclass& update_flags)
 {
 
-    // CCS:
-    // Modify to use new param object
-    // 
-    // Regional params use hardcoded magic numbers to access the specific model
-    // params. Unlikely to be any fast alternative.
-    //
-    // BUT: getFlag() also very inefficient text lookup.
-    // Enum updateable_parameter_index defined in RTM_StructAssign.h
-    // 
-    // TODO: Rewrite regional_model_parameters to either have named flags, or
-    // at the very least a vector using the same hardcoded enum.
-    
-    // Idea: A templated parameter class with flag, data and function ptr or
-    // similar to define how each param is updated. Then just iterate over
-    // vector of region_param<T>. UMP lookup can be managed by doing string
-    // search at load time and storing a vector index inside region_param.
-    // Will also need to store flag indicating local or global UMP.
+  // CCS:
+  // Modify to use new param object
+  // 
+  // Regional params use hardcoded magic numbers to access the specific model
+  // params. Unlikely to be any fast alternative.
+  //
+  // BUT: getFlag() also very inefficient text lookup.
+  // Enum updateable_parameter_index defined in RTM_StructAssign.h
+  // 
+  // TODO: Rewrite regional_model_parameters to either have named flags, or
+  // at the very least a vector using the same hardcoded enum.
+  
+  // Idea: A templated parameter class with flag, data and function ptr or
+  // similar to define how each param is updated. Then just iterate over
+  // vector of region_param<T>. UMP lookup can be managed by doing string
+  // search at load time and storing a vector index inside region_param.
+  // Will also need to store flag indicating local or global UMP.
+  
+  // The only things used are the param_value and map_to_regional.
+  // (Why is map_to_regional a UMP member, when UMP may exist that doesn't
+  // update a regional param? Shouldn't this be regional param member?)
+  
 
-    // The only things used are the param_value and map_to_regional.
-    // (Why is map_to_regional a UMP member, when UMP may exist that doesn't
-    // update a regional param? Shouldn't this be regional param member?)
-    
-
-
-    // This function should also be parallelisable over regions
+  // This function should also be parallelisable over regions
     
   if(update_flags.getFlag("l_gp_negbin_overdispersion")){
     regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, in_umps[GP_OVERDISP_INDEX].param_value, in_umps[GP_OVERDISP_INDEX].map_to_regional, region_index, 1); // Only want this per day rather per delta t

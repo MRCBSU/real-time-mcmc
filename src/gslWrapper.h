@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
 
 
 class gslVector {
@@ -249,8 +250,117 @@ public:
     gsl_vector_int *base;
 };
 
-
 void gsl_vector_print(const gsl_vector* vec, int size = -1);
+
+
+class gslMatrix {
+ public:
+    gslMatrix() 
+	: base(NULL) {}       
+
+    gslMatrix(int rows, int cols) {
+	base = gsl_matrix_alloc(rows, cols);
+    } 
+
+    ~gslMatrix() {
+	if (base != NULL)
+	    gsl_matrix_free(base);
+    }
+
+    void create(int rows, int cols) {
+	if (base != NULL)
+	    std::cerr << "gslMatrix error: create() called on a non-null matrix\n";
+	base = gsl_matrix_alloc(rows, cols);
+    }
+
+    gslMatrix(const gslMatrix &obj) {
+	if (base != NULL)
+	    std::cerr << "copy constructor called on non-null base\n";
+	base = gsl_matrix_alloc(obj.nrows(), obj.ncols());
+	gsl_matrix_memcpy(base, obj.gsl());
+    }
+
+    gslMatrix &operator= (const gslMatrix &obj) {
+	if (base != NULL)
+	    gsl_matrix_free(base);
+	base = gsl_matrix_alloc(obj.nrows(), obj.ncols());
+	gsl_matrix_memcpy(base, obj.gsl());
+	return *this;
+    }
+
+    int nrows() const {
+	return base->size1;
+    }
+    int ncols() const {
+	return base->size2;
+    }
+    gsl_matrix *gsl() const {
+	return base;
+    }
+
+    void print() {
+	std::cout << "{\n";
+	for (unsigned i = 0; i < nrows(); i++) {
+	    for (unsigned j = 0; j < ncols(); j++)
+		std::cout << (*this)[i][j] << " ";
+	    std::cout << std::endl;
+	}
+	std::cout << "}\n";
+    }
+    friend std::ostream& operator<<(std::ostream &stream, gslMatrix mat) {
+	stream << "{\n";
+	for (unsigned i = 0; i < mat.nrows(); i++) {
+	    for (unsigned j = 0; j < mat.ncols(); j++)
+		stream << mat[i][j] << " ";
+	    stream << std::endl;
+	}
+	stream << "}\n";
+	return stream;
+    }
+
+    // TODO: This is potentially dangerous, as the view is in scope only as long as the matrix it 
+    // came from is in scope. In theory, a user could create an object of class gslMatrixRow, and
+    // keep it in scope. Figure out how to stop this.
+
+    class gslMatrixRow {
+	friend class gslMatrix;
+    public:
+	const double operator[](int idx) const {
+	    return gsl_vector_get(&(rowBase.vector), idx);
+	}
+
+	// TODO: Decide whether to keep bounds checking here (no gsl check because of direct access to data)
+	double& operator[](int idx) {
+	    if (idx >= rowBase.vector.size)
+	      std::cerr << "Invalid col access: " << idx << " " << rowBase.vector.size << std::endl;
+	    return rowBase.vector.data[idx * rowBase.vector.stride];
+	}
+	
+	// WARNING: Potentially very unsafe
+	gsl_vector_view *asView() {
+	    return &rowBase;
+	}
+
+    private:
+	
+        gslMatrixRow(gsl_vector_view row) 
+	    : rowBase(row) {}
+
+	gsl_vector_view rowBase;
+    };
+
+    // These cannot be references, as it would return a reference
+    // to the gslMatrixRow object. But as long as we have the view, it should be OK, I think.
+    const gslMatrixRow operator[](int idx) const {
+	return gslMatrixRow(gsl_matrix_row(base, idx));
+    }
+    gslMatrixRow operator[](int idx) {
+	return gslMatrixRow(gsl_matrix_row(base, idx));
+    }
+
+ private:
+    gsl_matrix *base;
+};
 
 
 #endif // gslWrapper_h_
