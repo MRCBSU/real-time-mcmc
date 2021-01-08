@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=3
+#SBATCH --array=1-4
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,24 +61,22 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201218/NoPrev_"
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210102/"
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+    workdir="${workdir}NoPrev_"
+else
+    workdir="${workdir}PrevCevik_"
+fi
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
     workdir="${workdir}60"
 else
     workdir="${workdir}28"
 fi
-workdir="${workdir}cutoff_matrices_20201218_timeuse_"
-if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
-    workdir="${workdir}default_"
-else
-    workdir="${workdir}household_"
+workdir="${workdir}cutoff_"
+if [ $SLURM_ARRAY_TASK_ID -gt 2 ]; then
+    workdir="${workdir}prev14_"
 fi
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}new"
-else
-    workdir="${workdir}old"
-fi
-workdir="${workdir}_base_deaths"
+workdir="${workdir}matrices_20201229_timeuse_household_new_base_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
