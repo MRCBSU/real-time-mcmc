@@ -143,7 +143,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20201227")
+date.prev <- ymd("2021-01-04")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3
 first.prev.day <- date.prev - 74 - start.date + 1
