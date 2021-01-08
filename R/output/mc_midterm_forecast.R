@@ -18,7 +18,40 @@ nweeks.ahead <- 24
 
 counterfactual <- FALSE
 
-projections.basedir <- file.path(out.dir, "projections_MTP")
+use.previous.matrix <- function(new.date, old.date) {
+  stopifnot(old.date %in% names(matrix.sources))
+  matrix.sources[[new.date]] <<- matrix.sources[[old.date]]
+  matrix.used[[new.date]] <<- matrix.used[[old.date]]
+}
+
+remove.matrices.after <- function(date) {
+  matrix.sources <<- matrix.sources[ymd(names(matrix.sources)) <= date]
+  matrix.used <<- matrix.used[ymd(names(matrix.used)) <= date]
+ }
+
+
+matrix.sources <- as.list(cm.lockdown)
+names(matrix.sources) <- c(cm.breaks) + start.date - 1
+matrix.used <- as.list(cm.bases)
+names(matrix.used) <- c(1, cm.breaks) + start.date - 1
+
+remove.matrices.after(ymd(20210101))
+use.previous.matrix("2021-01-04", "2020-12-14")
+
+## Move from list back to model spec
+stopifnot(length(matrix.sources) == length(matrix.used) - 1)
+### Order correctly
+matrix.sources <- matrix.sources[order(ymd(names(matrix.sources)))]
+matrix.used <- matrix.used[order(ymd(names(matrix.used)))]
+### Parse back into variables
+stopifnot(all(names(matrix.used)[-1] == names(matrix.sources)))
+cm.breaks <- as.integer(ymd(names(matrix.sources)) - start.date + 1)
+cm.lockdown <- as.character(matrix.sources)
+cm.bases <- as.character(matrix.used)
+
+
+
+projections.basedir <- file.path(out.dir, "projections_MTP2")
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -92,18 +125,6 @@ end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
 
-## Get the new contact matrices to use
-cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
-cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
-cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
-cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
-cm.lockdown <- c(cm.lockdown,
-                 file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
-## Get the new contract matrix modifiers to use
-cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
-              )
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1
     future.mats <- cm.dates > google.data.date
@@ -243,7 +264,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections_midterm.RData")
+save(list = save.list, file = "projections_midterm2.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

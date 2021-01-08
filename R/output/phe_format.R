@@ -56,7 +56,7 @@ create.spim.table <- function(data, name, by = NULL) {
 }
 
 
-fl.proj <- file.path(out.dir, "projections_midterm.RData")
+fl.proj <- file.path(out.dir, "projections_midterm2.RData")
 load(fl.proj)
 tbl_inf <- create.spim.table(cum_infections, "infections_cum")
 tbl_inf_inc <- create.spim.table(infections, "infections_inc")
