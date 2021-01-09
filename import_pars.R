@@ -1,11 +1,3 @@
-add.extra.vals.per.region <- function(vec, val, num) {
-  mat <- matrix(vec, ncol = nr)
-  rows.to.add <- nbetas - length(vec) / nr 
-  mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
-  return(rbind(mat, mat.new))
-}
-  
-
 prev.env <- new.env()
 load.from <- file.path(previous.run.to.use, "tmp.RData")
 load(load.from, env = prev.env)
