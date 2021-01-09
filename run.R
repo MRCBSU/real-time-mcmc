@@ -75,8 +75,11 @@ if(gp.flag){
     denoms.files <- NULL
 }
 if(prev.flag){
-	prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
-	if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
+    prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
+                            paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
+                            paste0(prev.lik.days, collapse = "_"))
+    prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+    if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat.csv")

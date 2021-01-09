@@ -288,7 +288,7 @@ if(rw.flag){
 
 # Using 31 here means that each Friday an extra break will be added 4.5 weeks before the Friday in question
 ## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - 25)][-1] ## Josh's version
-beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - 25)][-1] ## Paul's version
+beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- c(
     0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
