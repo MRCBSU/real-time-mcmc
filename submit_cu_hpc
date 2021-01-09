@@ -21,7 +21,7 @@
 #SBATCH --output=model_runs_20210102prevjobs_%a.out
 #SBATCH --error=model_runs_20210102prevjobs_%a.err
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210102/"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210107/"
 if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     workdir="${workdir}NoPrev_"
 else
@@ -36,7 +36,7 @@ workdir="${workdir}cutoff_"
 if [ $SLURM_ARRAY_TASK_ID -gt 2 ]; then
     workdir="${workdir}prev14_"
 fi
-workdir="${workdir}matrices_20201229_timeuse_household_new_base_deaths"
+workdir="${workdir}matrices_20210104_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
