@@ -20,6 +20,7 @@
 
 module load pandoc
 module load R/3.6
-cd $(ls */ -d | sed -n ${SLURM_ARRAY_TASK_ID}p)
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
 Rscript ../../../rerun.R
