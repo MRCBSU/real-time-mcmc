@@ -152,6 +152,10 @@ days.between.prev <- 14
 prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
+# Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
+lag.last.beta <- 24 - 7
+if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
+
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
