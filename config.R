@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -42,7 +42,7 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20210108"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210110"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -98,7 +98,7 @@ if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
@@ -150,7 +150,7 @@ date.prev <- ymd("20210104")
 prev.end.day <- date.prev - start.date - 3 ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - 73
-days.between.prev <- 14
+days.between.prev <- 7
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
