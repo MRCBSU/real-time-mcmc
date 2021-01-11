@@ -11,7 +11,7 @@
 #SBATCH --verbose
 #SBATCH --qos=covid0
 
-#SBATCH --array=0-7
+#SBATCH --array=0-1
 #SBATCH -p skylake-himem
 
 
