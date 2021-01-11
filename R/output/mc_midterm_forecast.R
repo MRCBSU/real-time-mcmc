@@ -93,6 +93,10 @@ end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
 
 ## Get the new contact matrices to use
+matrix.dir <- str_replace_all(matrix.dir, "20210108", "20210110")
+cm.bases <- str_replace_all(cm.bases, "20210108", "20210110")
+cm.files <- str_replace_all(cm.files, "20210108", "20210110")
+cm.lockdown <- str_replace_all(cm.lockdown, "20210108", "20210110")
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
               paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
