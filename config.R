@@ -156,13 +156,15 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 lag.last.beta <- 24 - 7
 if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
+if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
                      paste0(
 							scenario.name,
-							"_matrices_", google.data.date, matrix.suffix,
+							"_matrices_", google.data.date,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
