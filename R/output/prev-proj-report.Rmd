@@ -27,10 +27,18 @@ if (exists("prev.dat")) {
 
 #### By region
 ```{r reg-medterm-prev}
-make.plots(prevalence, by = "region", x.label = "Date", project.forwards = TRUE, data = prev.dat.plot)
+region_pop <- population %>%
+  group_by(name = region) %>%
+  summarise(denom = sum(value), .groups = "drop")
+make.plots(prevalence, by = "region", x.label = "Date", project.forwards = TRUE,
+           denoms = region_pop, data = prev.dat.plot)
 ```
 
 #### By age
 ```{r age-medterm-prev}
-make.plots(prevalence, by = "age", x.label = "Date", project.forwards = TRUE, data = prev.dat.plot)
+age_pop <- population %>%
+  group_by(name = age) %>%
+  summarise(denom = sum(value), .groups = "drop")
+make.plots(prevalence, by = "age", x.label = "Date", project.forwards = TRUE, denoms = age_pop,
+		   data = prev.dat.plot)
 ```
