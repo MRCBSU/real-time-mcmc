@@ -51,11 +51,10 @@ We fit a transmission model ([Birrell et al. 2020](https://www.medrxiv.org/conte
 
 We use:
   
-1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing. This consists of a combination of deaths notified to:
+1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing. The definition of a COVID-19 confirmed death is any death that occurs in an individual who had a lab-confirmed infection, within 60 days from the date of their most recent positive test. This definition reflects more realistically the burden of COVID-19. This consists of a combination of deaths notified to:
     * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnosed with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20th March, 2020).
     * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
     * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020).
-    The definition of a COVID-19 confirmed death is any death that occurs in an individual who had a lab-confirmed infection, within 60 days from the date of their most recent positive test. This definition reflects more realistically the burden of COVID-19.
 2. Data on antibody prevalence in blood samples from a PHE survey of NHS Blood Transfusion (NHSBT) donors. From early June, the NHSBT began giving a constantly declining prevalence of antibodies, making them no longer an accurate measure of cumulative infection. Consequently, these data have been curtailed at this time.
 3. Age- and region-specific estimates of community prevalence of PCR positive COVID-19 infection as derived from the COVID-19 Infection Survey of the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases/methodologies/covid19infectionsurveypilotmethodsandfurtherinformation) (ONS) using the methodology of [Pouwels et al., 2020](https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(20)30282-6/fulltext).
 
