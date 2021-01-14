@@ -1,7 +1,7 @@
 ### Deaths incidence {.tabset}
 
 #### By region
-```{r reg-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE, results='hide'}
+```{r reg-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
 dth.file <- file.path(out.dir, "deaths_data.RData")
 if (is.null(dth.dat) && file.exists(dth.file))
    load(dth.file)
@@ -11,18 +11,18 @@ make.plots(noisy_deaths, by = "region", data = dth.dat, project.forwards = TRUE,
 ```
 
 #### By age
-```{r age-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE, results='hide'}
+```{r age-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
 make.plots(noisy_deaths, by = "age", data = dth.dat, project.forwards = TRUE, x.label = "Date of death")
 ```
 
 ### Cumulative deaths {.tabset}
 
 #### By region
-```{r cum-reg-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE, results='hide'}
+```{r cum-reg-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
 make.plots(cum_deaths, by = "region", project.forwards = TRUE, x.label = "Date of death")
 ```
 
 #### By age
-```{r cum-age-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE, results='hide'}
+```{r cum-age-death, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
 make.plots(cum_deaths, by = "age", project.forwards = TRUE, x.label = "Date of death")
 ```

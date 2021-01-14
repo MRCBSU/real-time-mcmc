@@ -197,7 +197,7 @@ population %>%
 ### IFR
 
 
-```{r ifr, eval=!is.null(deaths)}
+```{r ifr, eval=!is.null(deaths), message=FALSE, warning=FALSE}
 ifr.start <- ifr[, , 1]
 ifr.today <- ifr[, , ymd(date.data) - start.date]
 today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum)
@@ -295,7 +295,7 @@ if(!single.ifr){
 
 #### Growth rates
 
-```{r growth-rate-func}
+```{r growth-rate-func, message=FALSE}
 signed_inf <- function(num) {
   ifelse(
     num == 0, 0,
@@ -478,7 +478,7 @@ make.plots(cum_infections, by = "age")
 The figure below shows the probability that $R_t$ is greater than 1 (ie: the number of infections is growing) in each region over time.
 Clicking the regions in the legend allows lines to be added or removed from the figure.
 
-```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE, results='hide'}
+```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
 (Rt > 1) %>%
   apply(c("date", "region"), sum) %>%
   `/`(length(dimnames(Rt)$iteration)) %>%
