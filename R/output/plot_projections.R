@@ -6,6 +6,12 @@ if (is.na(arg.index))
 args <- commandArgs(trailingOnly = TRUE)
 projections_file <- args[arg.index]
 
+regions.total.population <- t(matrix(pop.input, nA, num.regions))
+colnames(regions.total.population) <- age.labs
+rownames(regions.total.population) <- regions
+population <- as_tibble(regions.total.population, rownames = "region") %>%
+  pivot_longer(-region, names_to = "age")
+
 require(rmarkdown)
 
 Rfile.loc <- file.path(file.loc, "R/output")

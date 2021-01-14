@@ -36,13 +36,13 @@ if (args[2] == "All")  {
 }
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201127/NoPrev_varySero_cm4_ifr_60cutoff_matrices_20201127_deaths/"
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201231/Prev_laterCevik_60cutoff_prev14_matrices_20201229_timeuse_household_new_base_deaths"
 iteration.number.to.start.from <- 6400
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200605)
 
-google.data.date <- format(ymd("20201229"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210110"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -143,7 +143,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20201227")
+date.prev <- ymd("2021-01-04")
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - 3
 first.prev.day <- date.prev - 74 - start.date + 1
@@ -151,6 +151,10 @@ days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
+
+# Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
+lag.last.beta <- 24 - 7
+if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,

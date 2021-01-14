@@ -61,9 +61,10 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 }
 
 make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
-                       y.format = ".3s", combine.to.England = sum.all,
+                       y.format = ".3s}", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data,
-                       project.forwards = !(is.null(data) && external), x.label = "") {
+                       project.forwards = !(is.null(data) && external), x.label = "",
+                       denoms = NULL) {
 
   if (is.null(combine.to.England)) {
     Eng_projection <- Eng_data <- NULL
@@ -84,16 +85,26 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
   if (!is.null(Eng_projection)) num.plots <- num.plots + 1
   num.rows <- ceiling(num.plots/2)
   date <- ymd(date.data)
-  create.subplot <- function(projections, subplot_title, data) {
-    plot <- projections %>%
-      pivot_wider(names_from = quantile) %>%
+  create.subplot <- function(projections, subplot_title, data, denom) {
+    plot_dat <- projections %>%
+      pivot_wider(names_from = quantile)
+    if (!is.null(denom)) {
+      plot_dat <- plot_dat %>%
+        mutate_at(vars(starts_with("0")), list(prop = ~./denom))
+      y.format <- paste0(y.format, " (%{text:.2%})")
+    } else {
+      plot_dat <- plot_dat %>%
+        mutate_at(vars(starts_with("0")), list(prop = ~1))
+    }
+
+    plot <- plot_dat %>%
       create.base.subplot(num.rows, subplot_title) %>%
-      add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, color = I("lightblue2"), alpha = 0.25,
-                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Upper 95% CrI</extra>")) %>%
-      add_lines(y = ~`0.025`, alpha = 0,   # An extra trace just for hover text
-                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Lower 95% CrI</extra>")) %>%
-      add_lines(y = ~`0.5`, color = I("black"),
-                hovertemplate = paste0("%{x}: %{y:", y.format, "}<extra>Median</extra>")) %>%
+      add_ribbons(ymin = ~`0.025`, ymax = ~`0.975`, text = ~`0.975_prop`, color = I("lightblue2"), alpha = 0.25,
+                hovertemplate = paste0("%{x}: %{y:", y.format, "<extra>Upper 95% CrI</extra>")) %>%
+      add_lines(y = ~`0.025`, alpha = 0, text = ~`0.025_prop`,   # An extra trace just for hover text
+                hovertemplate = paste0("%{x}: %{y:", y.format, "<extra>Lower 95% CrI</extra>")) %>%
+      add_lines(y = ~`0.5`, color = I("black"), text = ~`0.5_prop`,
+                hovertemplate = paste0("%{x}: %{y:", y.format, "<extra>Median</extra>")) %>%
       layout(xaxis = list(title = x.label))
     if (is.null(data)) {
       return(plot)
@@ -114,8 +125,22 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     }
   }
   plots <- NULL
-  if (!is.null(Eng_projection)) plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data))
+  if (!is.null(Eng_projection)) {
+    if (is.null(denoms)) {
+      Eng_denom <- NULL
+    } else {
+      Eng_denom <- sum(denoms$denom)
+    }
+    plots <- list("England" = create.subplot(Eng_projection, "England", Eng_data, Eng_denom))
+  }
   for(subplot in plot.names) {
+    if (is.null(denoms)) {
+      denom <- NULL
+    } else {
+      denom <- denoms %>%
+        filter(name == subplot) %>%
+        `$`(denom)
+    }
     if (is.null(data)) {
       plot.data <- NULL
     } else {
@@ -126,7 +151,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     }
     plots[[subplot]] <- projections %>%
       filter(by == subplot) %>%
-      create.subplot(subplot, plot.data)
+      create.subplot(subplot, plot.data, denom)
   }
   return(plotly::subplot(plots, nrows = num.rows))
 }
