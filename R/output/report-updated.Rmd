@@ -493,7 +493,7 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
-make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
+make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
 ```
 
 ```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
