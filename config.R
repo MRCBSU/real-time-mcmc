@@ -36,7 +36,7 @@ if (args[2] == "All")  {
 }
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201231/Prev_laterCevik_60cutoff_prev14_matrices_20201229_timeuse_household_new_base_deaths"
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210111/PrevCevik_60cutoff_prev7_last_break_10_days_matrices_20210110_deaths"
 iteration.number.to.start.from <- 6400
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
