@@ -12,14 +12,14 @@ LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp
 CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -std=c++11
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
-	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
+	$(CXX) $(RTM_DEBUG_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
 
 
 rtm: $(RTM_OBJS) $(HEADERS)
-	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm
+	$(CXX) $(RTM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm
 
 rtm_optim: $(RTM_OPTIM_OBJS) $(HEADERS)
-	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_optim
+	$(CXX) $(RTM_OPTIM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_optim
 
 rtm_hanson: $(RTM_HANSON_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hanson
@@ -48,7 +48,7 @@ build/rtm/%.o: src/%.cc
 
 build/rtm_optim/%.o: src/%.cc
 	@mkdir -p build/rtm_optim
-	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native -DNDEBUG
 
 build/rtm_hanson/%.o: src/%.cc
 	@mkdir -p build/rtm_hanson
@@ -60,4 +60,4 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc
-	icpc -g -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -c -o $@ $<
+	icpc -g -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

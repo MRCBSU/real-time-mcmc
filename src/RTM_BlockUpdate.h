@@ -3,16 +3,7 @@
 
 #include "RTM_updParams.h"
 
-class paramBlock {
-  gslVector paramValues;
-  gslVector beta;
-  gslMatrix sigma;
-  double logPosterior;
-  int proposedMoves; // Do we need this? One proposal per time step?
-  int acceptedMoves;
 
-  //void mh_update(const 
-};
 
 //extern paramBlock globalParams;
 //extern std::vector<paramBlock> localParams;

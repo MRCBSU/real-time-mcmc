@@ -6,68 +6,42 @@
 #include <string>
 #include <vector>
 
+#include <gsl/gsl_rng.h>
+
 #include "gslWrapper.h"
 #include "RTM_StructDefs.h"
 
-// Class contains a single model parameter
-// updParam = Updateable model parameter
 
-class updParam {
+// Forward declaration so that updParam can use upd::paramIndex
+class updParam;
+class updParamSet;
 
+class updParamBlock {
 public:
-  
-  // Constructor for specifying default values
-  // Flag is a binary 7-bit value consisting of the following 7 flags:
-  // transmission, reporting, gp, hosp, sero, viro, prev data likelihood
-  updParam(string name, double value, int flags);
+  gslVector vals;
+  gslVector proposal;
+  gslVector mu;
+  double beta;
+  gslMatrix sigma;
+  //double logPosterior;
+  double laccept;
+  int acceptLastMove;  // Int for use in adaptive update
+  int numAccept;
 
-  // Constructor for current init by copying from an existing param
-  // TODO: Remove this when input code improved
-  updParam(updateable_model_parameter &in, const int num_instances);
-
-
-  std::string param_name;
-  // CCS: TODO REMOVE
-  // This is used to allow easy construction of the main param vectors
-  // Will be set to null once input is complete, and not used throughout M-H
-  gslVector param_value;
-  unsigned int valuePtr;
-  unsigned int param_index;
-  gslVector proposal_value;
-  gslVectorInt prior_distribution; // THE DISTRIBUTION OF THE INDIVIDUAL COMPONENTS
-  bool flag_hyperprior;
-  double log_prior_dens;
-  double proposal_log_prior_dens;
-  bool flag_update; // TRUE: IF PRIOR_DISTRIBUTION[i] != cDETERM FOR ALL i
-  std::vector<gslVector> prior_params;
-//  gsl_vector **prior_params; // WHAT THESE PARAMETERS REPRESENT DEPENDS ON THE prior_distribution MEMEMBER OF THE STRUCTURE. EACH ROW CORRESPONDS TO EACH OF THE DISTRIBUTIONS IN THE prior_distribution VECTOR
-  gslVector proposal_variances;
-  mvnorm *prior_multivariate_norm;
-  regression_def map_to_regional;
-  gslVector posterior_mean;
-  gslVector posterior_sumsq;
-  bool flag_transmission_model; // DOES THE NUMBER OF NEW INFECTEDS NEED TO RECALCULATED WHEN UPDATING THE PARAMETER THIS PARAMETER
-  bool flag_reporting_model; // DO THE REPORTING DELAYS NEED TO BE RECALCULATED WHEN UPDATING WHEN UPDATING THIS PARAMETER
-  bool flag_GP_likelihood; // DOES THE LIKELIHOOD FOR G.P. CONSULTATION NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
-  bool flag_Hosp_likelihood; // DOES THE LIKELIHOOD FOR THE HOSPITALISATIONS NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
-  bool flag_Sero_likelihood; // DOES THE LIKELIHOOD FOR THE SEROEPIDEMIOLOGY DATA NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
-  bool flag_Viro_likelihood; // DOES THE LIKELIHOOD FOR THE VIROLOGY (POSITIVITY) DATA NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
-  bool flag_Prev_likelihood; // DOES THE LIKELIHOOD FOR THE PREVALENCE DATA/ESTIMATES NEED TO BE RECALCULATED WHEN UPDATING THIS PARAMETER
-  bool flag_any_child_nodes; // TRUE IF ANY FLAG_CHILD_NODES ARE TRUE. FALSE OTHERWISE
-  std::vector<bool> flag_child_nodes; // FLAG FOR EACH OF THE OTHER PARAMETERS OF THE MODEL INDICATING WHETHER THEY ARE CHILD NODES OF THE CURRENT NODE
+  void calcProposal(gsl_rng *rng);
+  void calcAccept(updParamSet &paramSet, bool global);
+  void doAccept(gsl_rng *rng);
+  void adaptiveUpdate(int iter);
 };
 
-
-
 // Class for managing the set of params
-// This is a 'static' class, i.e. we don't need an instance object
 class updParamSet {
-
 public:
-  
-  // Define parameter names as used by code, particularly the region params update
-  // Need to be specified by eg. "ump::PROP_SUS_HYPER"
+
+  // List of updateable parameter names
+  // Need to be specified by class name, eg "ump::PROP_SUS_HYPER"
   enum paramIndex {
+    INVALID=-1, // For parent vector when there are no parents
     EGR_HYPER, LPL0_HYPER, PROP_SUS_HYPER,
     LBETA_RW_SD, GP_OVERDISP, HOSP_OVERDISP,
     ALP, AIP, AR1,
@@ -78,67 +52,88 @@ public:
     PROP_DEATH, IMPORTATION, BGR,
     SENS, SPEC, DOW_EFFECTS,
     SSENS, SSPEC,
-    // This value must always be last. It gives the total number of params.
+    // This must always be last. It gives total number of params.
     UMP_FINAL_NUM_PARAMS
   };
+  
+  updParamSet() :
+    params(UMP_FINAL_NUM_PARAMS) { }
 
-  static const std::map<std::string, int> nameMap;
+  // Mapping of strings to names above
+  // Needed for copying param from existing input code; remove when tidied up
+  static const std::map<std::string, paramIndex> nameMap;
 
+  // Is this necessary? So far nameMap only used inside this class
+  paramIndex getID(std::string name) {
+    // TODO: Throw error if string not there
+    return nameMap.at(name);
+  }
+    
   // Lookup vector. For i = one of the paramIndices, lookup[i] = index:
   // - if (i > 0) param is globalParams[index - 1]
-  // - if (i < 0) param is localParams[-(index - 1)
+  // - if (i <std 0) param is localParams[-(index - 1)
   // - if (i == 0) error (param doesn't exist or hasn't been created yet)
-  
-  static std::vector<int> lookupVec;
-  
-  static std::vector<updParam> globalParams;
-  static std::vector<updParam> localParams;
+  //std::vector<int> lookupVec;
 
-  static gslVector globalParamValues;
-  static std::vector<gslVector> localParamValues;
+  // Vectors containing the parameters
+  //std::vector<updParam> globalParams;
+  //std::vector<updParam> localParams;
 
-  // 'Constructor'
-  static void init(int numRegions) {
-    lookupVec.resize(UMP_FINAL_NUM_PARAMS);
-    localParamValues.resize(numRegions);
+  std::vector<updParam> params;
+  
+  // TODO: For speed, return const?
+  int numPars() const {
+    return params.size(); //globalParams.size() + localParams.size();
   }
 
-  // regional: true = local param, false = global
-  static void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool regional);
-
-
-  static void populateVectors(int regions);
-  
-
-  // Return a reference to the given parameter
-  static updParam& lookup(paramIndex index) {
-    int i = lookupVec[index];
-    if (i > 0)
-      return globalParams[i-1];
-    else if (i < 0)
-      return localParams[-1 * (i-1)];
-    else // i == 0
-      throw std::invalid_argument("lookup index is not a valid parameter index");
+  updParam& operator[](paramIndex index) {
+    return params[index];
   }
+  const updParam& operator[](paramIndex index) const {
+    return params[index];
+  }
+  updParam& operator[](int index) {
+    // TODO BOUNDS CHECK
+    return params[(paramIndex) index];
+  }
+  const updParam& operator[](int index) const {
+    return params[(paramIndex) index];
+  }
+  
+  // Contain the parameter values for each block
+  updParamBlock globalParBlock;
+  std::vector<updParamBlock> localParBlock;
 
+  // Initialise: Called once to set up blocks
+  void init(int regions);
 
-  // Return a gsl_vector_view for the given parameter, i.e. a sub-vector
+  // Insert a new parameter (copy from old-style parameter)
+  // regional: true = local par, false = global
+  void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool regional, int numRegions);
+
+  // Lookup parameter by param name from enum
+  //const updParam& lookup(paramIndex index) const;
+
+  // Perform M-H step
+  void updateParams(gsl_rng *rng);
+
+  // Return a gsl_vector for the given parameter, i.e. a sub-vector
   // containing only this parameter's values
-  static gsl_vector_const_view value(paramIndex index, int region = 0) {
-
-    int i = lookupVec[index];
-    updParam &par = lookup(index);
-
-    // TODO: Better way of getting length of subvector
-    if (i > 0)
-      return gsl_vector_const_subvector(*globalParamValues, par.valuePtr, par.param_value.size());
-    else if (i < 0) {
-      return gsl_vector_const_subvector(*(localParamValues[region]), par.valuePtr, par.param_value.size());
-    }
-    else {
-      throw std::invalid_argument("invalid index");
-    }
+  // WARNING: This is a pointer to a gsl_vector_const_view, so the pointer
+  // does not own the data and should not modify it in any way; it should not
+  // be passed 'upwards' to calling functions as the view may be stored on the stack
+  const gsl_vector_const_view lookupValue(paramIndex index, int region = 0) const;
+  const gsl_vector_const_view lookupValue(int index, int region = 0) const {
+    return lookupValue((paramIndex) index, region);
   }
+
+  // Return 1st element of value
+  const double lookupValue0(paramIndex index, int region = 0) const;
+  
+
+  infection_to_data_delay gp_delay;
+  infection_to_data_delay hosp_delay;
+  infection_to_data_delay death_delay;
   
   // - - - - - - - - - - - - - - - - -
   
@@ -146,21 +141,19 @@ public:
   // input code is difficult to read and edit. But it works, so leave it for now.
   // At present, these two methods are unused.
   // Current defaults in RTM_StructAssign
-  updParam defaultParam(std::string &name) {
-    if (name == "exponential_growth_rate_hyper")
-      return updParam(name, 0.15, 0b0000000);
-    else if (name == "l_p_lambda_0_hyper")
-      return updParam(name, -15.0, 0b0000000);
-    // else if (...)
-    else
-      throw std::invalid_argument("");
-    }
+  updParam defaultParam(std::string &name);
   
   // Takes a parameter name and returns a parameter containing the relevant 
   // defaults. Setting defaults like this makes them easier to read and modify.
   void readInputFile();
 
-  
+  void calcProposals(gsl_rng *rng);
+
+  void calcAccept();
+  void doAccept(gsl_rng *rng);
+  void adaptiveUpdate(int iter);
+
+
 };
 
 
@@ -169,58 +162,63 @@ public:
 using upd = updParamSet;
 
 
+// Class contains a single model parameter (upd = updateable)
+class updParam {
+public:
 
-
-
-
-
-
-/*
-
-class updateParamSet {
+  std::string param_name;
+  upd::paramIndex index;	// Index of param in names enum
+  unsigned int size;    // Number of components in param
+  int regionSize;    // For local params only, size of each region (= size/numRegions)
   
-  std::map<std::string, int> nameMap = {
-    { "exponential_growth_rate_hyper", 0 },
-    { "l_p_lambda_0_hyper" 1 },
-    { "prop_susceptible_hyper", 2 },
-    { "log_beta_rw_sd", 3 },
-    { "gp_negbin_overdispersion", 4 },
-    { "hosp_negbin_overdispersion", 5 },
-    { "latent_period", 6 },
-    { "infectious_period", 7 },
-    { "r1_period", 8 },
-    { "relative_infectiousness", 9 },
-    { "prop_symptomatic", 10 },
-    { "contact_parameters", 11 },
-    { "log_beta_rw", 12 },
-    { "R0_amplitude_kA", 13 },
-    { "R0_seasonal_peakday", 14 },
-    { "exponential_growth_rate", 15 },
-    { "log_p_lambda_0", 16 },
-    { "prop_susceptible", 17 },
-    { "prop_HI_32_to_HI_8", 18 },
-    { "prop_case_to_GP_consultation", 19 },
-    { "prop_case_to_hosp", 20 },
-    { "prop_case_to_death", 21 },
-    { "importation_rates", 22 },
-    { "background_GP", 23 },
-    { "test_sensitivity", 24 },
-    { "test_specificity", 25 },
-    { "day_of_week_effects", 26 },
-    { "sero_test_sensitivity", 27 },
-    { "sero_test_specificity", 28 }
-  };
+  gslVector init_value;   // Initial value of parameter. Used only in setup.
+  unsigned int value_index;  // Starting index in either global or local value vector
+  bool local;    // True if local param (differs over region); false if global
+
+  // Prior params: Vector of length number of components.
+  // Each element is the vector containing the prior for that component, or
+  // if size 0, the prior is the parameters of the parameter in parents[i].
+  std::vector<int> parents;
+  std::vector<gslVector> prior_params;
+  gslVectorInt prior_distribution; // Flag giving distribution of individual components
+  bool flag_hyperprior;
+  double log_prior_dens;
+  double proposal_log_prior_dens;
+  bool flag_update; // True if prior_distribution[i] != cDETERM for all i
+
+  // gslVector proposal_variances;
+  mvnorm *prior_multivariate_norm;
+  regression_def map_to_regional;
+  gslVector posterior_mean;
+  gslVector posterior_sumsq;
+  bool flag_transmission_model; // True if number of new infected needs to be recalculated
+  bool flag_reporting_model; // If reporting delays need to be recalculated
+  bool flag_GP_likelihood; // GP consultation likelihood needs to be recalculated
+  bool flag_Hosp_likelihood; // Hospitalisation likelihood
+  bool flag_Sero_likelihood; // Seroepidemiology data likelihood
+  bool flag_Viro_likelihood; // Virology (positivity) data recalculated
+  bool flag_Prev_likelihood; // Likelihood for prevalence data need to be recalculated
+  bool flag_any_child_nodes; // True if any flag child nodes are true
+  std::vector<bool> flag_child_nodes; // Flag for each of the other parameters of the mode, indicating whether they are child nodes of the current node
+
+  // Constructor for specifying default values
+  // Flag is a binary 7-bit value consisting of the following 7 flags:
+  // transmission, reporting, gp, hosp, sero, viro, prev data likelihood
+  // Not currently used.
+  updParam(string name, double value, int flags);
+  
+  // Constructor for current init by copying from an existing param
+  // TODO: Remove this when input code improved
+  updParam(updateable_model_parameter &in, const int num_instances, bool regional);
+
+  // Need default constructor for constructing params vec in updParamSet
+  updParam() { }
 
   
-  
-  updateParam &operator[](const std::string &name) {
-    
-  }
+};
 
-  updateParam &operator[](const int &id) {
 
-  }
-}
 
-*/
+
+
 #endif // HEADER_updParams_

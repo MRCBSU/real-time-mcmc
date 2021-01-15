@@ -442,6 +442,7 @@ void read_param_regression(regression_def& reg_def,
 
 /////////// READ IN A PARAMETER STRUCTURE
 void read_modpar(updateable_model_parameter& modpar,
+		 updParamSet &paramSet,
 		 const char* param_name,
 		 const string in_string,
 		 const double default_value,
@@ -591,10 +592,91 @@ void read_modpar(updateable_model_parameter& modpar,
   // (TODO: Is there a bug where this is less than the total number of params?)
   // True = local param, false = global
   bool regional = ( var_string.find("regional_param") != string::npos );
+  
+  paramSet.insertAndRegister(modpar, num_instances, regional, num_regions);
+  
+}
 
-  updParamSet::insertAndRegister(modpar, num_instances, regional);
+
+// WARNING: Uses param_value of param, which is not (currently) updated
+// Safe as this runs at input time only
+
+/////// INITIALISE PRIOR DENSITIES
+void initialise_prior_density(updParamSet &paramSet,
+			      updParam& modpar,
+			      double (*prior_density_fn)(const double&, const distribution_type&, const gsl_vector*))
+{
+
+  gslVectorInt prior_distributions(modpar.size);
+
+  if(modpar.flag_hyperprior)
+    prior_distributions.setAll(modpar.prior_distribution[0]);
+  else
+    prior_distributions = modpar.prior_distribution;
+
+  modpar.log_prior_dens = 0;
+
+  // CHECK THE PRIOR IS NOT MULTIVARIATE
+  if(prior_distributions[0] != (int) cMVNORMAL)
+    {
+      for(int int_marker = 0; int_marker < modpar.size; int_marker++)
+	// Test for existance of prior
+	if (modpar.prior_params[int_marker].size() > 0) {
+	  modpar.log_prior_dens +=
+	    prior_density_fn(modpar.init_value[int_marker],
+			     (distribution_type) prior_distributions[int_marker],
+			     *modpar.prior_params[int_marker]);
+	} else if( modpar.parents[int_marker] >= 0) {
+	  // Get prior params from parent parameter instead
+	  // TODO: Confirm we don't need to split over regions
+	  gsl_vector_const_view view = paramSet.lookupValue(modpar.parents[int_marker]);
+	  modpar.log_prior_dens +=
+	    prior_density_fn(modpar.init_value[int_marker],
+			     (distribution_type) prior_distributions[int_marker],
+			     &view.vector);
+	}
+    }
+  else
+    {
+      // SET UP THE MULTIVARIATE NORMAL MEAN AND COVARIANCE STRUCTURES
+      gsl_vector* mv_mean = gsl_vector_alloc(modpar.size);
+      gsl_matrix* mv_covar = gsl_matrix_alloc(modpar.size, modpar.size);
+      
+      // TODO: Do we need to test for no prior?
+      for(int int_marker = 0; int_marker < modpar.size; int_marker++)
+      {
+	if (modpar.prior_params.size() > 0) {
+	  gsl_vector_set(mv_mean, int_marker, modpar.prior_params[int_marker][0]);
+	  gsl_vector_view mv_covar_subrow = gsl_vector_subvector(*modpar.prior_params[int_marker], 1, modpar.prior_params[int_marker].size() - 1);
+	  gsl_matrix_set_row(mv_covar, int_marker, &mv_covar_subrow.vector);
+	} else if (modpar.parents[int_marker] >= 0) {
+	  gsl_vector_const_view view = paramSet.lookupValue(modpar.parents[int_marker]);
+	  const gsl_vector *parentVals = &view.vector;
+	  gsl_vector_set(mv_mean, int_marker, gsl_vector_get(parentVals, 0));
+	  gsl_vector_const_view subrow = gsl_vector_const_subvector(parentVals, 1, parentVals->size - 1);
+	  gsl_matrix_set_row(mv_covar, int_marker, &subrow.vector);
+	}
+	// TODO: ELSE
+      }
+      
+
+      // TRANSFER THIS DATA INTO THE MVNORM CLASS HELD IN THE UPDATEABLE_MODEL_PARAMETERS STRUCTURE
+      modpar.prior_multivariate_norm = new mvnorm(mv_mean, mv_covar);
+
+      // EVALUATE THE LOG-DENSITY
+      if(modpar.flag_hyperprior)
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm(*modpar.init_value);
+      else
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm_nonnorm(*modpar.init_value);
+
+      // FREE ANY MEMORY ALLOCATED
+      gsl_vector_free(mv_mean);
+      gsl_matrix_free(mv_covar);
+    }
+  
 
 }
+
 
 
 /////// INITIALISE PRIOR DENSITIES
@@ -651,6 +733,70 @@ void initialise_prior_density(updateable_model_parameter& modpar,
 }
 
 
+// Node links for new block structure
+void node_links(updParamSet& paramSet,
+		const string& str_param_input)
+{
+
+  int inti, intj;
+  int int_delim_position = 0;
+  string temp_param, temp_prior_param;
+
+  // FOR EACH PARAMETER, i
+  for(inti = 0; inti < paramSet.numPars(); inti++) {
+    
+    auto &par = paramSet[inti];
+    
+    par.flag_any_child_nodes = false;
+    
+    for(intj = 0; intj < par.size; intj++) {
+      
+      //FOR ALL OTHER PARAMETERS, j
+      if(inti != intj){
+
+	auto &child = paramSet[intj];
+	
+	// NO PARAMETERS ARE HYPERPARAMETERS BY DEFAULT, SO NEEDS TO BE SPECIFIED IN FILE.
+	// CHECK THE VARIABLE APPEARS IN THE FILE
+	// STORE THE VARIABLE STRING
+	int num_strings = cut_out_parameter(temp_param, str_param_input, par.param_name.c_str());
+	
+	if(num_strings > 0)
+	{
+	  
+	  // FIND THE PRIOR_PARAMS VALUE
+	  read_string_from_instruct(temp_prior_param, "prior_parameters", temp_param);
+	  
+	  // IS THE TRIMMED STRING EQUAL TO THE NAME OF PARAMETER i
+	  // TRIM FIRST AND LAST CHARACTERS (i.e. QUOTATION MARKS)
+	  temp_prior_param.erase(0, 1);
+	  temp_prior_param.erase(FN_MAX(temp_prior_param.length(), 1) - 1, 1);
+
+	  if(temp_prior_param.compare(par.param_name) == 0){
+	    // PARAMETER j IS A CHILD NODE OF PARAMETER i
+	    // SET PRIOR_PARAMS OF j TO BE A POINTER TO PARAM_VALUES OF i
+	    for(int intk = 0; intk < par.size; intk++){
+	      if(child.prior_distribution[1] != (int) cCONSTANT)
+		//par.prior_params[intk] = par.init_value;
+
+		// We can't save a pointer here, as the param_value vector
+		// is no longer used. Instead, we save the parent indexes to
+		// be checked later
+		child.prior_params[intk].eraseAndResize(0);
+		child.parents[intk] = inti;
+	    }
+	    par.flag_child_nodes[intj] = true;
+	    par.flag_any_child_nodes = true;
+	  }
+	}
+      }
+    }
+  }
+}
+
+
+
+
 void node_links(globalModelParams& in_pars,
 		const string str_param_input)
 {
@@ -697,6 +843,7 @@ void node_links(globalModelParams& in_pars,
 		  }
 		  in_pars.param_list[inti].flag_child_nodes[intj] = true;
 		  in_pars.param_list[inti].flag_any_child_nodes = true;
+		  //cout << "setting child for param " << in_pars.param_list[inti].param_name << endl;
 		}
 	      }
 	  }
@@ -733,15 +880,15 @@ void calculate_fixed_distribution_function(infection_to_data_delay& itdd, double
   for(int int_i = 0; int_i < (int_k0 - 1); int_i++)
     {
 
-      gsl_vector_set(itdd.distribution_function,
+      gsl_vector_set(*itdd.distribution_function,
 		     int_i,
 		     gsl_cdf_gamma_P(((double) int_i + 1) * delta_t, itdd.overall_delay.gamma_shape, itdd.overall_delay.gamma_scale) - cumulative_probability);
 
-      cumulative_probability += gsl_vector_get(itdd.distribution_function, int_i);
+      cumulative_probability += gsl_vector_get(*itdd.distribution_function, int_i);
 
     }
 
-  gsl_vector_set(itdd.distribution_function,
+  gsl_vector_set(*itdd.distribution_function,
 		 int_k0 - 1,
 		 1.0 - cumulative_probability); // TRUNCATE THE DISTRIBUTION AT GREATER THAN (int_k0 - 1) DAYS
 
@@ -775,6 +922,7 @@ void load_delays(st_delay& out_delay, const string str_name, const double mean, 
   /////////// ASSIGNS INITIAL VALUES
 
 void read_global_model_parameters(globalModelParams& in_pars,
+				  updParamSet &paramSet,
 				  const char* source_file,
 				  const string str_var_names,
 				  const string& str_var_initvals,
@@ -822,14 +970,18 @@ void read_global_model_parameters(globalModelParams& in_pars,
     string str_param_flags = read_from_delim_string<string>(str_var_likflags, ":", int_delim_flag_position);
 
     // POPULATE THE STRUCTURE
-    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, num_instances);
+    read_modpar(in_pars.param_list[inti], paramSet, str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, num_instances);
 
   }
 
   // LINK PARENT AND CHILD NODES
   node_links(in_pars, str_source);
 
-  for(inti = 0; inti < num_instances; inti++)
+  // TODO TODO UNCOMMENT
+  //node_links(paramSet, str_source);
+
+  
+   for(inti = 0; inti < num_instances; inti++)
     // CALCULATE INITIAL PRIOR DENSITY - BUT FIRST CHECK THAT THE NODE IS STOCHASTIC
     if(in_pars.param_list[inti].flag_update)
       {
@@ -839,7 +991,14 @@ void read_global_model_parameters(globalModelParams& in_pars,
 	  initialise_prior_density(in_pars.param_list[inti], R_univariate_prior_log_density_nonnorm);
       }
 
-
+   for (auto &par : paramSet.params)
+     if (par.flag_update)
+       if (par.flag_hyperprior)
+	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density);
+       else
+	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density_nonnorm);
+   
+	 
   // NOW TO READ IN THE PARAMETERS OF THE DELAY DISTRIBUTIONS
   // ALLOCATE THE STRUCTURE... NEED TO KNOW HOW MANY VARIABLES IT CONTAINS
   num_instances = count_instances_in_string(str_delay_names, ":");
@@ -888,9 +1047,18 @@ void read_global_model_parameters(globalModelParams& in_pars,
     }
 
   // ALLOCATE THE NECESSARY MEMORY TO THE AGGREGATED DELAY STRUCTURE
-  infection_to_data_delay_alloc(in_pars.gp_delay, gp_delay_counter, 0);
-  infection_to_data_delay_alloc(in_pars.hosp_delay, hosp_delay_counter, 0);
-  infection_to_data_delay_alloc(in_pars.death_delay, death_delay_counter, 0);
+  in_pars.gp_delay.setSize(gp_delay_counter, 0);
+  in_pars.hosp_delay.setSize(hosp_delay_counter, 0);
+  in_pars.death_delay.setSize(death_delay_counter, 0);
+
+  // CCS
+  paramSet.gp_delay.setSize(gp_delay_counter, 0);
+  paramSet.hosp_delay.setSize(hosp_delay_counter, 0);
+  paramSet.death_delay.setSize(death_delay_counter, 0);
+  
+  //infection_to_data_delay_alloc(in_pars.gp_delay, gp_delay_counter, 0);
+  //infection_to_data_delay_alloc(in_pars.hosp_delay, hosp_delay_counter, 0);
+  //infection_to_data_delay_alloc(in_pars.death_delay, death_delay_counter, 0);
 
   // COPY THE ELEMENTS OF temp_delay INTO THE AGGREGATED DELAY STRUCTUES
   for(inti = gp_delay_counter = hosp_delay_counter = death_delay_counter = 0;
@@ -898,15 +1066,21 @@ void read_global_model_parameters(globalModelParams& in_pars,
       inti++)
     {
       if((bool) atoi((str_param_flags[inti].substr(0, 1)).c_str())){
-	st_delay_memcpy(in_pars.gp_delay.component_delays[gp_delay_counter], temp_delay[inti]);
+	//st_delay_memcpy(in_pars.gp_delay.component_delays[gp_delay_counter], temp_delay[inti]);
+	in_pars.gp_delay.component_delays[gp_delay_counter] = temp_delay[inti];
+	paramSet.gp_delay.component_delays[gp_delay_counter] = temp_delay[inti];
 	gp_delay_counter++;
       }
       if((bool) atoi((str_param_flags[inti].substr(1, 1)).c_str())){
-	st_delay_memcpy(in_pars.hosp_delay.component_delays[hosp_delay_counter], temp_delay[inti]);
+	// st_delay_memcpy(in_pars.hosp_delay.component_delays[hosp_delay_counter], temp_delay[inti]);
+	in_pars.hosp_delay.component_delays[hosp_delay_counter] = temp_delay[inti];
+	paramSet.hosp_delay.component_delays[hosp_delay_counter] = temp_delay[inti];
 	hosp_delay_counter++;
       }
       if((bool) atoi((str_param_flags[inti].substr(2, 1)).c_str())){
-	st_delay_memcpy(in_pars.death_delay.component_delays[death_delay_counter], temp_delay[inti]);
+	//st_delay_memcpy(in_pars.death_delay.component_delays[death_delay_counter], temp_delay[inti]);
+	in_pars.death_delay.component_delays[death_delay_counter] = temp_delay[inti];
+	paramSet.death_delay.component_delays[death_delay_counter] = temp_delay[inti];
 	death_delay_counter++;
       }
 
@@ -921,11 +1095,20 @@ void read_global_model_parameters(globalModelParams& in_pars,
   aggregate_delays(in_pars.hosp_delay);
   aggregate_delays(in_pars.death_delay);
 
+  aggregate_delays(paramSet.gp_delay);
+  aggregate_delays(paramSet.hosp_delay);
+  aggregate_delays(paramSet.death_delay);
+
   // CALCULATE THE DISTRIBUTION FUNCTION FOR THE AGGREGATED DELAYS
   calculate_fixed_distribution_function(in_pars.gp_delay, 1.0 / reporting_time_steps_per_day);
   calculate_fixed_distribution_function(in_pars.hosp_delay, 1.0 / reporting_time_steps_per_day);
   calculate_fixed_distribution_function(in_pars.death_delay, 1.0 / reporting_time_steps_per_day);
 
+  calculate_fixed_distribution_function(paramSet.gp_delay, 1.0 / reporting_time_steps_per_day);
+  calculate_fixed_distribution_function(paramSet.hosp_delay, 1.0 / reporting_time_steps_per_day);
+  calculate_fixed_distribution_function(paramSet.death_delay, 1.0 / reporting_time_steps_per_day);
+
+  
 }
 
 int param_list_index(const globalModelParams src_gmp, string target_name)

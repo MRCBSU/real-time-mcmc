@@ -1,5 +1,6 @@
 #include "RTM_StructDefs.h"
 #include "RTM_FunctDefs.h"
+#include "RTM_updParams.h"
 #include "gsl_vec_ext.h"
 #include <cfloat>
 
@@ -612,6 +613,309 @@ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix* mat_data,
   return lfx;
 }
 
+
+// Copy of fn_log_likelihood using new block params
+void block_log_likelihood(likelihood& llhood,
+			  Region* meta_region,
+			  int region,
+			  bool flag_update_transmission_model,
+			  bool flag_update_reporting_model,
+			  bool flag_update_GP_likelihood,
+			  bool flag_update_Hosp_likelihood,
+			  bool flag_update_Viro_likelihood,
+			  bool flag_update_Sero_likelihood,
+			  bool flag_update_Prev_likelihood,
+			  const global_model_instance_parameters &gmip,
+			  updParamSet &pars,
+			  bool inBlock) {
+
+  // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
+  // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
+  int low_region = (region == 0) ? 0 : region;
+  int hi_region = (region == 0) ? gmip.l_num_regions : region + 1;
+  double temp_log_likelihood;
+  double lfx_increment = 0.0;
+
+#ifdef USE_THREADS
+  // CCS
+  // If within a block, we don't want to use all threads.
+  // For now, disable parallelism entirely
+  if (parallel) {
+    int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
+    int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
+  }
+#else
+  int num_subthread_teams = 1;
+#endif
+
+
+#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
+  for(int int_region = low_region; int_region < hi_region; int_region++)
+    {
+    
+      // Does the transmission model need to be re-evaluated?
+      // (Not necessary when updating parameters of the reporting model)
+      if(flag_update_transmission_model)
+	fn_transmission_model(meta_region[int_region].det_model_params,
+			      gmip,
+			      meta_region[int_region].population,
+			      meta_region[int_region].region_modstats);
+      
+      // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
+      if(gmip.l_Sero_data_flag &&
+	 (flag_update_transmission_model || flag_update_Sero_likelihood)
+	 ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
+	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
+	    // This proportion is age, but not time dependent.
+	gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_seropositivity->size1, meta_region[int_region].region_modstats.d_seropositivity->size2);
+	gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_seropositivity);
+	gsl_vector* prop_immune_baseline_nonseropositive = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
+	gsl_vector* temp_vec = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
+	gsl_vector_memcpy(prop_immune_baseline_nonseropositive, meta_region[int_region].det_model_params.l_init_prop_sus);
+	gsl_vector_memcpy(temp_vec, meta_region[int_region].det_model_params.l_init_prop_sus_HI_geq_32);
+	gsl_vector_add_constant(prop_immune_baseline_nonseropositive, -1.0);
+	gsl_vector_add_constant(temp_vec, -1.0);
+	gsl_vector_mul(prop_immune_baseline_nonseropositive, temp_vec);
+	gsl_vector_free(temp_vec);
+
+	for(int int_t = 0; int_t < test_positivity->size1; int_t++)
+	  {
+	    gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
+	    gsl_vector_sub(&seropos_row.vector, prop_immune_baseline_nonseropositive);
+	  }
+	gsl_vector_free(prop_immune_baseline_nonseropositive);
+
+	// ** Some account for test sensitivity and specificity. Will have to move from here
+	// ** if these two quantities are ever to be allowed to vary by time, region or age.
+	gsl_matrix_scale(test_positivity, meta_region[int_region].det_model_params.l_sero_sensitivity + meta_region[int_region].det_model_params.l_sero_specificity - 1);
+	gsl_matrix_add_constant(test_positivity, 1 - meta_region[int_region].det_model_params.l_sero_specificity);
+	    
+	// ** Is there any missing data - if dataset is of dimension less than the number of strata
+	if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
+	  // ** Yes: Aggregate seropositivities using a weighted mean
+	  gsl_matrix* weighted_positivity = gsl_matrix_calloc(meta_region[int_region].Serology_data->getDim1(),
+							      meta_region[int_region].Serology_data->getDim2());
+	  for(int int_t = 0; int_t < test_positivity->size1; int_t++)
+	    {
+	      gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
+	      gsl_vector_mul(&seropos_row.vector, meta_region[int_region].Serology_data->access_weights());
+	      gsl_vector_view seropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
+	      R_by_sum_gsl_vector_mono_idx(&seropos_out_row.vector,
+					   NULL,
+					   &seropos_row.vector,
+					   meta_region[int_region].Serology_data->access_groups());
+	    }
+	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(weighted_positivity, NULL);
+	  gsl_matrix_free(weighted_positivity);  
+	} else // ** Just calculate the likelihood based on the already computed positivities
+	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
+	lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Sero_lfx, int_region));
+	gsl_vector_set(*llhood.Sero_lfx, int_region, temp_log_likelihood);
+	gsl_matrix_free(test_positivity);
+      }
+
+      if(gmip.l_Prev_data_flag && (flag_update_transmission_model || flag_update_Prev_likelihood))
+	{
+	  gsl_matrix* summed_prevalence = gsl_matrix_calloc(meta_region[int_region].region_modstats.d_prevalence->size1,
+							    meta_region[int_region].Prevalence_data->getDim2());
+	  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_prevalence) > DBL_EPSILON)
+	    {
+	      // ** Is there any missing data - if dataset is of dimension less than the number of strata
+	      if(meta_region[int_region].region_modstats.d_prevalence->size2 != meta_region[int_region].Prevalence_data->getDim2()){
+		// ** Aggregate total prevalence (we work with numbers prevalent, not a proportion)
+		for(int int_k = 0; int_k < summed_prevalence->size1; int_k++)
+		  {
+		    gsl_vector_view full_strata_prev = gsl_matrix_row(meta_region[int_region].region_modstats.d_prevalence, int_k);
+		    gsl_vector_view agg_strata_prev = gsl_matrix_row(summed_prevalence, int_k);
+		    R_by_sum_gsl_vector_mono_idx(&agg_strata_prev.vector,
+						 NULL,
+						 &full_strata_prev.vector,
+						 meta_region[int_region].Prevalence_data->access_groups());
+		  }
+	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
+	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
+	      lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Prev_lfx, int_region));
+	      gsl_vector_set(*llhood.Prev_lfx, int_region, temp_log_likelihood);
+	    }
+	  gsl_matrix_free(summed_prevalence);
+	}
+      
+      double lfx_sub_increment = 0.0;
+      // #pragma omp parallel default(shared) num_threads(2) reduction(+:lfx_sub_increment)
+      //       {
+
+      //        	// Have assigned two processors to this scope - first processor deals with GP related data
+      //        	if(omp_get_thread_num() == 0)
+      //        	  {
+      if((flag_update_GP_likelihood || flag_update_Viro_likelihood) && (((bool) gmip.l_GP_consultation_flag) || ((bool) gmip.l_Viro_data_flag)))
+	{
+	  if(flag_update_reporting_model)
+	    {
+	      fn_reporting_model(meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
+				 meta_region[int_region].region_modstats.d_NNI,
+				 meta_region[int_region].det_model_params.l_pr_symp,
+				 meta_region[int_region].det_model_params.l_pr_onset_to_GP,
+				 gmip,
+				 gmip.l_GP_likelihood.upper,
+				 meta_region[int_region].population,
+				 *pars.gp_delay.distribution_function,
+				 num_subthread_teams);
+	    }
+	
+	  // ADD THE BACKGROUND AND CALCULATE THE UPDATED POSITIVITY
+	  fn_background_model(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
+			      meta_region[int_region].region_modstats.d_viropositivity,
+			      meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
+			      meta_region[int_region].det_model_params.l_background_gps_counts,
+			      gmip,
+			      true,
+			      meta_region[int_region].det_model_params.l_sensitivity,
+			      meta_region[int_region].det_model_params.l_specificity);
+	  
+	  // Q-SURVEILLANCE DATA DOESN'T HAVE 100% COVERAGE OF THE POPULATION.
+	  // SCALE THE EXPECTED COUNTS BY THE DAILY % COVERAGE BY AGE (the latter is done inside likelihood functions
+	  if(gmip.l_GP_consultation_flag || flag_update_GP_likelihood)
+	    {
+
+	      gsl_matrix_mul_elements(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
+				      meta_region[int_region].det_model_params.l_day_of_week_effect);
+
+	      if(gmip.l_GP_consultation_flag && flag_update_GP_likelihood)
+		{
+		  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_GP_Consultations) >= 0)
+		    {
+		      gsl_matrix* mu_gp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size1,
+								  meta_region[int_region].GP_data->getDim2());
+		      if(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size2 != meta_region[int_region].GP_data->getDim2()){
+			// Yes: we have missing data
+			for(int int_t = 0; int_t < mu_gp_counts->size1; int_t++)
+			  {
+			    gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
+			    gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_gp_counts, int_t);
+			    R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
+							 NULL,
+							 &full_strata_counts.vector,
+							 meta_region[int_region].GP_data->access_groups());
+			  }
+		      } else gsl_matrix_memcpy(mu_gp_counts, meta_region[int_region].region_modstats.d_Reported_GP_Consultations);
+		      data_type dlfx = meta_region[int_region].GP_data->get_likelihood_type();
+		      if(dlfx == cPOISSON_LIK)
+			temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts, NULL);
+		      else if(dlfx == cNEGBIN_LIK)
+			temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts,
+										   meta_region[int_region].det_model_params.l_gp_negbin_overdispersion);
+		      else {
+			perror("Unrecognised likelihood selected\n");
+			exit(2);
+		      }
+		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.GP_lfx, int_region));
+		      gsl_vector_set(*llhood.GP_lfx, int_region, temp_log_likelihood);
+		      gsl_matrix_free(mu_gp_counts);
+		    }
+		  else {
+		    lfx_sub_increment += GSL_NEGINF;
+		    gsl_vector_set(*llhood.GP_lfx, int_region, GSL_NEGINF);
+		  }
+		}
+	    }
+	  if(gmip.l_Viro_data_flag && flag_update_Viro_likelihood)
+	    {
+	      // Viropositivity already calculated by each modelled strata.. if there is missing data we need to take a weighted average of the positivities.
+	      // Where the weights are proportional to the number of consultations in each strata.
+
+	      // If missing data...
+	      if(meta_region[int_region].region_modstats.d_viropositivity->size2 != meta_region[int_region].Virology_data->getDim2()){
+
+		// Aggregate viropositivities using a weighted mean
+		gsl_matrix* weighted_positivity = gsl_matrix_alloc(meta_region[int_region].Virology_data->getDim1(),
+								   meta_region[int_region].Virology_data->getDim2());
+
+		for(int int_t = 0; int_t < meta_region[int_region].Virology_data->getDim1(); int_t++)
+		  {
+		    gsl_vector_view viropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
+		    gsl_vector_view viropos_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_viropositivity, int_t);
+		    gsl_vector_view gp_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
+		    meta_region[int_region].Virology_data->data_population_sizes(&gp_row.vector);
+		    gsl_vector_mul(&viropos_row.vector, meta_region[int_region].Virology_data->access_weights());
+		    R_by_sum_gsl_vector_mono_idx(&viropos_out_row.vector,
+						 NULL,
+						 &viropos_row.vector,
+						 meta_region[int_region].Virology_data->access_groups());
+		  }
+		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(weighted_positivity, NULL);
+		gsl_matrix_free(weighted_positivity);
+	      } else
+		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
+
+	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Viro_lfx, int_region));
+	      gsl_vector_set(*llhood.Viro_lfx, int_region, temp_log_likelihood);
+	      
+	    }
+	  
+	}
+      // 	  }
+      
+      
+      // Have second processor assigned to hospitalisations
+      //        	if(omp_get_thread_num() == 1)
+      //        	  {
+      if(flag_update_Hosp_likelihood && ((bool) gmip.l_Hospitalisation_flag))
+	{
+	  fn_reporting_model(meta_region[int_region].region_modstats.d_Reported_Hospitalisations,
+			     meta_region[int_region].region_modstats.d_NNI,
+			     meta_region[int_region].det_model_params.l_pr_symp,
+			     meta_region[int_region].det_model_params.l_pr_onset_to_Hosp,
+			     gmip,
+			     gmip.l_Hosp_likelihood.upper,
+			     meta_region[int_region].population,
+			     *pars.hosp_delay.distribution_function);
+	  
+	  gsl_matrix* mu_hosp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size1,
+							meta_region[int_region].Hospitalisation_data->getDim2());
+
+	  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_Hospitalisations) >= 0)
+	    {
+
+	      if(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size2 != meta_region[int_region].Hospitalisation_data->getDim2()){
+		// Yes: again we have missing data
+		for(int int_t = 0; int_t < mu_hosp_counts->size1; int_t++)
+		  {
+		    gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_Hospitalisations, int_t);
+		    gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_hosp_counts, int_t);
+		    R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
+						 NULL,
+						 &full_strata_counts.vector,
+						 meta_region[int_region].Hospitalisation_data->access_groups());
+		  }
+	      } else gsl_matrix_memcpy(mu_hosp_counts, meta_region[int_region].region_modstats.d_Reported_Hospitalisations);
+	      data_type dlfx = meta_region[int_region].Hospitalisation_data->get_likelihood_type();
+	      if(dlfx == cPOISSON_LIK)
+		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+											NULL);
+	      else if(dlfx == cNEGBIN_LIK)
+		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+											meta_region[int_region].det_model_params.l_hosp_negbin_overdispersion);
+	      else {
+		perror("Unrecognised likelihood selected\n");
+		exit(2);
+	      }
+	    } else temp_log_likelihood = GSL_NEGINF;
+	  
+	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Hosp_lfx, int_region));
+	  gsl_vector_set(*llhood.Hosp_lfx, int_region, temp_log_likelihood);
+	  gsl_matrix_free(mu_hosp_counts);	  
+	}
+      
+      lfx_increment += lfx_sub_increment;
+      
+    }
+  
+  llhood.total_lfx += lfx_increment;
+  
+}
+
+
+
 void fn_log_likelihood(likelihood& llhood,
 		       Region* meta_region,
 		       int region,
@@ -622,8 +926,8 @@ void fn_log_likelihood(likelihood& llhood,
 		       bool flag_update_Viro_likelihood,
 		       bool flag_update_Sero_likelihood,
 		       bool flag_update_Prev_likelihood,
-		       global_model_instance_parameters gmip,
-		       globalModelParams gmp_delays)
+		       const global_model_instance_parameters &gmip,
+		       globalModelParams &gmp_delays)
 {
   // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
   // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
@@ -699,8 +1003,8 @@ void fn_log_likelihood(likelihood& llhood,
 	  gsl_matrix_free(weighted_positivity);  
 	} else // ** Just calculate the likelihood based on the already computed positivities
 	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
-	lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Sero_lfx, int_region));
-	gsl_vector_set(llhood.Sero_lfx, int_region, temp_log_likelihood);
+	lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Sero_lfx, int_region));
+	gsl_vector_set(*llhood.Sero_lfx, int_region, temp_log_likelihood);
 	gsl_matrix_free(test_positivity);
       }
 
@@ -724,8 +1028,8 @@ void fn_log_likelihood(likelihood& llhood,
 		  }
 	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
 	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
-	      lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Prev_lfx, int_region));
-	      gsl_vector_set(llhood.Prev_lfx, int_region, temp_log_likelihood);
+	      lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Prev_lfx, int_region));
+	      gsl_vector_set(*llhood.Prev_lfx, int_region, temp_log_likelihood);
 	    }
 	  gsl_matrix_free(summed_prevalence);
 	}
@@ -748,7 +1052,7 @@ void fn_log_likelihood(likelihood& llhood,
 				 gmip,
 				 gmip.l_GP_likelihood.upper,
 				 meta_region[int_region].population,
-				 gmp_delays.gp_delay.distribution_function,
+				 *gmp_delays.gp_delay.distribution_function,
 				 num_subthread_teams);
 	    }
 	
@@ -798,13 +1102,13 @@ void fn_log_likelihood(likelihood& llhood,
 			perror("Unrecognised likelihood selected\n");
 			exit(2);
 		      }
-		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.GP_lfx, int_region));
-		      gsl_vector_set(llhood.GP_lfx, int_region, temp_log_likelihood);
+		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.GP_lfx, int_region));
+		      gsl_vector_set(*llhood.GP_lfx, int_region, temp_log_likelihood);
 		      gsl_matrix_free(mu_gp_counts);
 		    }
 		  else {
 		    lfx_sub_increment += GSL_NEGINF;
-		    gsl_vector_set(llhood.GP_lfx, int_region, GSL_NEGINF);
+		    gsl_vector_set(*llhood.GP_lfx, int_region, GSL_NEGINF);
 		  }
 		}
 	    }
@@ -837,8 +1141,8 @@ void fn_log_likelihood(likelihood& llhood,
 	      } else
 		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
 
-	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.Viro_lfx, int_region));
-	      gsl_vector_set(llhood.Viro_lfx, int_region, temp_log_likelihood);
+	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Viro_lfx, int_region));
+	      gsl_vector_set(*llhood.Viro_lfx, int_region, temp_log_likelihood);
 	      
 	    }
 	  
@@ -858,7 +1162,7 @@ void fn_log_likelihood(likelihood& llhood,
 			     gmip,
 			     gmip.l_Hosp_likelihood.upper,
 			     meta_region[int_region].population,
-			     gmp_delays.hosp_delay.distribution_function);
+			     *gmp_delays.hosp_delay.distribution_function);
 	  
 	  gsl_matrix* mu_hosp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size1,
 							meta_region[int_region].Hospitalisation_data->getDim2());
@@ -891,8 +1195,8 @@ void fn_log_likelihood(likelihood& llhood,
 	      }
 	    } else temp_log_likelihood = GSL_NEGINF;
 	  
-	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.Hosp_lfx, int_region));
-	  gsl_vector_set(llhood.Hosp_lfx, int_region, temp_log_likelihood);
+	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Hosp_lfx, int_region));
+	  gsl_vector_set(*llhood.Hosp_lfx, int_region, temp_log_likelihood);
 	  gsl_matrix_free(mu_hosp_counts);	  
 	}
       

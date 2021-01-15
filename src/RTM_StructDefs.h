@@ -1,11 +1,14 @@
 #ifndef HEADER_StructDefs_
 #define HEADER_StructDefs_
 
+#include <vector>
+
 #include "R_like_fns.h"
 #include "RTM_flagclass.h"
 #include "rtm_data_class.h"
 #include "RTM_MvNorm.h"
 #include "RTM_modelstate.h"
+#include "gslWrapper.h"
 
 using namespace std;
 using std::string;
@@ -52,7 +55,7 @@ struct regression_def{
   gsl_vector_int* region_breakpoints;
   gsl_vector_int* age_breakpoints;
   gsl_vector_int* time_breakpoints;
-  link_function regression_link;
+  link_function regression_link; // enum
   gsl_matrix* design_matrix;
 };
 
@@ -102,7 +105,8 @@ void mixing_model_free(mixing_model&);
 void mixing_model_memcpy(mixing_model&, const mixing_model&);
 
 // PARAMETERS DEFINING THE GAMMA DISTRIBUTION GOVERNING DELAY TIMES IN THE DISEASE MODEL
-struct st_delay{
+class st_delay{
+public:
   string delay_name;
   double gamma_mean;
   double gamma_sd;
@@ -110,21 +114,31 @@ struct st_delay{
   double gamma_rate;
   double gamma_scale;
 };
-void st_delay_memcpy(st_delay&, const st_delay);
+//void st_delay_memcpy(st_delay&, const st_delay);
 
-struct infection_to_data_delay{
+class infection_to_data_delay{
+public:
   size_t num_components;
-  st_delay* component_delays;
+  std::vector<st_delay> component_delays;
   st_delay overall_delay;
-  gsl_vector* distribution_function; // CURRENTLY DISTRIBUTIONS ARE FIXED OVER AGES AND REGIONS, SO ONLY NEED THE TIME DIMENSION HERE
+  gslVector distribution_function; // CURRENTLY DISTRIBUTIONS ARE FIXED OVER AGES AND REGIONS, SO ONLY NEED THE TIME DIMENSION HERE
+
+  // I don't think we can implement this as a constructor, as num_delays
+  // needs to be read from input file
+  void setSize(size_t num_delays, size_t num_times) {
+    num_components = num_delays;
+    component_delays.resize(num_delays);
+    distribution_function.alloc(num_times);
+  }
 };
 
-void infection_to_data_delay_alloc(infection_to_data_delay&, size_t, size_t);
-void infection_to_data_delay_free(infection_to_data_delay&);
+//void infection_to_data_delay_alloc(infection_to_data_delay&, size_t, size_t);
+//void infection_to_data_delay_free(infection_to_data_delay&);
 
 
 // GLOBAL PARAMETER STRUCTURE, FOR INPUT TO THE TRANSMISSION (AND DISEASE?) MODEL
-struct globalModelParams{
+class globalModelParams{
+public:
   size_t size_param_list;
   updateable_model_parameter* param_list;
   infection_to_data_delay gp_delay;
@@ -234,20 +248,39 @@ void mcmcPars_alloc(mcmcPars&);
 void mcmcPars_free(mcmcPars&);
 
 // LIKELIHOOD STRUCTURE
-struct likelihood{
+
+// CCS: Rewritten as a class to remove need for manual memory management
+class likelihood {
+public:
   double total_lfx;
   double bar_lfx;
   double sumsq_lfx;
-  gsl_vector* GP_lfx;
-  gsl_vector* Hosp_lfx;
-  gsl_vector* Deaths_lfx;
-  gsl_vector* Sero_lfx;
-  gsl_vector* Viro_lfx;
-  gsl_vector* Prev_lfx;
+  gslVector GP_lfx;
+  gslVector Hosp_lfx;
+  gslVector Deaths_lfx;
+  gslVector Sero_lfx;
+  gslVector Viro_lfx;
+  gslVector Prev_lfx;
+
+  likelihood(const global_model_instance_parameters &gmip) {
+    int num_regions = gmip.l_num_regions;
+    if (gmip.l_GP_consultation_flag)
+      GP_lfx.allocZero(num_regions);
+    if (gmip.l_Hospitalisation_flag)
+      Hosp_lfx.allocZero(num_regions);
+    if (gmip.l_Deaths_flag)
+      Deaths_lfx.allocZero(num_regions);
+    if (gmip.l_Sero_data_flag)
+      Sero_lfx.allocZero(num_regions);
+    if (gmip.l_Viro_data_flag)
+      Viro_lfx.allocZero(num_regions);
+    if (gmip.l_Prev_data_flag)
+      Prev_lfx.allocZero(num_regions);
+  }
 };
 
-void likelihood_alloc(likelihood&, const global_model_instance_parameters);
-void likelihood_free(likelihood&);
-void likelihood_memcpy(likelihood&, const likelihood&);
+//void likelihood_alloc(likelihood&, const global_model_instance_parameters);
+//void likelihood_free(likelihood&);
+//void likelihood_memcpy(likelihood&, const likelihood&);
 
 #endif

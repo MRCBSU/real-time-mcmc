@@ -52,6 +52,25 @@ double univariate_prior_ratio(const updateable_model_parameter& theta,
 					      theta.prior_params[component]);
 
 }
+
+// For new param blocks
+/*
+double univariate_prior_ratio(const updParam& theta,
+		   const int& component)
+{
+
+  int dist_component = (theta.flag_hyperprior) ? 1 : component;
+
+  
+  
+  return R_univariate_prior_log_density_ratio(gsl_vector_get(theta.proposal_value, component),
+					      gsl_vector_get(theta.param_value, component),
+					      (distribution_type) gsl_vector_int_get(theta.prior_distribution, dist_component),
+					      theta.prior_params[component]);
+
+}
+*/
+
 // //
 
 
@@ -194,6 +213,7 @@ void write_progress_report(const string& report_type, const int& int_report_no, 
 // FUNCTION TO BE CALLED FROM THE MAIN ROUTINE //
 void metrop_hast(const mcmcPars& simulation_parameters,
 		 globalModelParams& theta,
+		 updParamSet &paramSet,
 		 Region* state_country,
 		 likelihood& lfx,
 		 const global_model_instance_parameters& gmip,
@@ -225,9 +245,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
     }
 
   // Likelihood
-  likelihood prop_lfx;
-  likelihood_alloc(prop_lfx, gmip);
-  likelihood_memcpy(prop_lfx, lfx);
+  likelihood prop_lfx(gmip);
+  // CCS: Alloc no longer required
+  //likelihood_alloc(prop_lfx, gmip);
+  //likelihood_memcpy(prop_lfx, lfx);
   // //
 
   int maximum_block_size = simulation_parameters.maximum_block_size;
@@ -301,16 +322,62 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       
       // CCS: Block Updates
+      // For now, this is NOT done in parallel to avoid parallel RNG issues
+      paramSet.calcProposals(r);
 
-      // Global params
-      updateGlobalParams(upd::globalParamValues, upd::globalParams);
+      // Calculate acceptance ratio
+      paramSet.calcAccept();
+
+      // Accept/reject
+      paramSet.doAccept(r);
       
-      // Regional/local params
+      /* * * * * * * * * * * * *
 
-      // #pragma omp parallel for
-      for (int region = 0; region < upd::localParamValues.size(); region++) {
-	updateRegionParams(region, upd::localParamValues[region], upd::localParams);
-      }
+Acceptance step:
+
+	 - Iterate over parameters {
+	     Q: All params or global/local subset?
+	   - If prior_distribution is not cMNVORMAL
+	     - Iterate over components of parameter
+	         proposal_log_prior_dens += univariate_prior_ratio
+	   - else prior distribut is multivar normal
+	       proposal_log_prior_dens = param.prior_multivariate_norm.ld_mvnorm_ratio()
+
+           log_accep += proposal_prior_log_dens
+
+           - Iterate over all child parameters of param, using flag_child_nodes array
+	     - For each component of child parameter
+	         child.proposal_log_prior_dens = R_univariate_prior_log_density
+	     - log_accep += child.proposal_log_prior_dens - child.log_prior_dens;
+	   Else if no child parameters:
+	     - Make copy of regional_model_params structure
+	     - Call evaluate_regional_parameters with new proposal
+	     - Call fn_log_likelihood
+	     - log_accep += proposed likelihood - current likelihood
+
+	  }
+
+	Now that each block has tested its proposal, do the accept/reject:
+
+	if (log_accep > 0) log_accep = 0 (why is this truncated?)
+	if (log_accep > log(uniform random in range [0, 1))
+	  - accept
+	  - Save propsal, and log_prior_dens of params and child params
+	else
+	  - reject
+	  - Restore old region structure, likelihood, ?model_statistics
+	 
+	if (iter >= 200) adaptive step
+
+	At end of process:
+	  - iterate posterior_mean and posterior_sumsq
+	  - Do a lot if output
+
+       */
+
+
+      
+      
 
       // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
       // Previous update of individual params one by one
@@ -465,7 +532,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			}
 		      else {
 			// MEMCPY THE LIKELIHOOD STRUCTURE
-			likelihood_memcpy(lfx, prop_lfx);
+			//likelihood_memcpy(lfx, prop_lfx);
+			lfx = prop_lfx;
 
 			for(int int_reg = 0; int_reg < nregions; int_reg++){
 			  // COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
@@ -513,7 +581,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 		    // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
 		    if(!theta_i->flag_any_child_nodes)
-		      likelihood_memcpy(prop_lfx, lfx);
+		      prop_lfx = lfx;
+		      //likelihood_memcpy(prop_lfx, lfx);
 
 		  }
 
@@ -588,24 +657,30 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // UPDATE LIKELIHOOD POSTERIOR STATISTICS..
       if(int_iter >= simulation_parameters.burn_in)
-	{
-	  lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
+      {
+	lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
 	  lfx.sumsq_lfx += gsl_pow_2(lfx.total_lfx) / ((double) CHAIN_LENGTH);
 	  prop_lfx.bar_lfx = lfx.bar_lfx;
 	  prop_lfx.sumsq_lfx = lfx.sumsq_lfx;
 	}
 
       // OUTPUT MCMC SAMPLER PROGRESS REPORTS...
-	  if (int_progress_report < simulation_parameters.num_progress_reports) {
-		  if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-		write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
-					  theta, lfx, false, true, true);
-		  else if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
-		write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
-					  theta, lfx, true, true, false);
-	  }
-	  if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
+      if (int_progress_report < simulation_parameters.num_progress_reports) {
+	if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
+	  write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
+				theta, lfx, false, true, true);
+	else if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
+	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+				theta, lfx, true, true, false);
+      }
+      if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
+      
+      // Block adaptive
+      if (int_iter > 199) {
+	paramSet.adaptiveUpdate(int_iter);
+      }
 
+	  
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase
       // or the end of the burn-in
       if(((!((int_iter + 1) % simulation_parameters.adapt_every)) && (int_iter < simulation_parameters.adaptive_phase)) || ((int_iter + 1) == simulation_parameters.burn_in))
@@ -613,8 +688,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       
     } // END FOR(int_iter < num_iterations)
 
-
-  likelihood_free(prop_lfx);
+  
+  //likelihood_free(prop_lfx);
   for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES

@@ -5,7 +5,7 @@
 using namespace std;
 using std::string;
 
-
+/*
 void likelihood_alloc(likelihood& new_llhood, const global_model_instance_parameters gmip)
 {
   int num_regions = gmip.l_num_regions;
@@ -58,6 +58,8 @@ void likelihood_memcpy(likelihood& dest_lfx, const likelihood& src_lfx)
   if(src_lfx.Prev_lfx != 0)
     gsl_vector_memcpy(dest_lfx.Prev_lfx, src_lfx.Prev_lfx);
 }
+*/
+
 
 void mcmcPars_alloc(mcmcPars& in_mP)
 {
@@ -121,6 +123,7 @@ void updateable_model_parameter_free(updateable_model_parameter& old_ump)
   gsl_vector_int_free(old_ump.prior_distribution);
 }
 
+/*
  void infection_to_data_delay_alloc(infection_to_data_delay& new_itdd, size_t num_delays, size_t num_times)
 {
   new_itdd.num_components = num_delays;
@@ -136,7 +139,9 @@ void infection_to_data_delay_free(infection_to_data_delay& old_itdd)
   if(old_itdd.distribution_function != 0)
     gsl_vector_free(old_itdd.distribution_function);
 }
+*/
 
+/*
 void st_delay_memcpy(st_delay& new_st_d, const st_delay old_st_d)
 {
 
@@ -147,7 +152,7 @@ void st_delay_memcpy(st_delay& new_st_d, const st_delay old_st_d)
   new_st_d.gamma_rate = old_st_d.gamma_rate;
 
 }
-
+*/
 
 void globalModelParams_alloc(globalModelParams& new_gmp, size_t num_params)
 {
@@ -181,9 +186,9 @@ void globalModelParams_free(globalModelParams& old_gmp)
       updateable_model_parameter_free(old_gmp.param_list[int_i]);
     }
   delete [] old_gmp.param_list;
-  infection_to_data_delay_free(old_gmp.gp_delay);
-  infection_to_data_delay_free(old_gmp.hosp_delay);
-  infection_to_data_delay_free(old_gmp.death_delay);
+  //infection_to_data_delay_free(old_gmp.gp_delay);
+  //infection_to_data_delay_free(old_gmp.hosp_delay);
+  //infection_to_data_delay_free(old_gmp.death_delay);
 
 }
 // ---- overloaded regional_model_params_alloc function; allocation of memory for regional_model_params_alloc objects.

@@ -29,9 +29,10 @@ int main(void){
   global_model_instance_parameters global_fixedpars;
   globalModelParams global_modpars;
   mcmcPars sim_pars;
-  likelihood llhood;  
   struct tm *now;
   time_t tval;
+
+  updParamSet paramSet;
 
   // SET :"TIMER" RUNNING
   tval = time(NULL);
@@ -73,11 +74,9 @@ int main(void){
   string str_global_model_delay_sds(GLOBAL_MODEL_PARAMETERS_DELAY_SDS);
   string str_global_model_delay_flags(GLOBAL_MODEL_PARAMETERS_DELAY_FLAGS);
 
-  // CCS
-  updParamSet::init(global_fixedpars.l_num_regions);
-  
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
   read_global_model_parameters(global_modpars,
+			       paramSet,
   			       str_filename_modpars,
   			       str_global_model_parameters_members,
   			       str_global_model_parameters_initvals,
@@ -92,36 +91,11 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
-  updParamSet::populateVectors(global_fixedpars.l_num_regions);
-  
-/*
-  int size = 0;
-  for (auto &param : globalParams)
-      size += param.param_value.size();
-  globalParamValues.create(size);
-  int i = 0;
-  for (auto &param : globalParams) {
-      param.param_index = i;
-      for (int j = 0; j < param.param_value.size(); j++)
-	  globalParamValues[i++] = param.param_value[j];
-  }
+  // CCS
+  // Params are copied from old-style params in read_global_model_parameters
+  // (Need to copy there as need to read "regional_param" line of input file.
+  paramSet.init(global_fixedpars.l_num_regions);
 
-  localParamValues.resize(global_fixedpars.l_num_regions);
-
-  size = 0;
-  for (auto &param : localParams)
-      size += param.param_value.size();
-  localParamValues[0].create(size);
-  i = 0;
-  for (auto &param : localParams) {
-      param.param_index = i;
-      for (int j = 0; j < param.param_value.size(); j++)
-	  localParamValues[0][i++] = param.param_value[j];
-  }
-  // Assume all regions have same init param values
-  for (int i = 1; i < localParamValues.size(); i++)
-      localParamValues[i] = localParamValues[0];
-*/  
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
   Region* country = new Region[global_fixedpars.l_num_regions];
@@ -150,24 +124,32 @@ int main(void){
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, all_true);
 
+  flagclass block_all_true;
+  for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
+    block_regional_parameters(country[int_i].det_model_params, paramSet, 
+  				 global_fixedpars, int_i, country[int_i].population,
+  				 country[int_i].total_population, mixmod_struct, block_all_true);
+  
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
   string str_mcmc_parameter_names(MCMC_PARAMETER_NAMES);
   string str_mcmc_parameter_defaults(MCMC_PARAMETER_DEFAULT_VALUES);
-
+  
   read_mcmc_parameters(sim_pars,
   		       str_filename_inputs,
   		       str_mcmc_parameter_names,
   		       str_mcmc_parameter_defaults);
-
+  
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
   #ifdef USE_THREADS
   omp_set_num_threads(sim_pars.max_num_threads);
   #endif
 
   // INITIALISE THE LIKELIHOOD STRUCTURE
-  likelihood_alloc(llhood, global_fixedpars);
+  // likelihood_alloc(llhood, global_fixedpars);
+  likelihood llhood(global_fixedpars);
 
+  
   // MAKE AN INITIAL EVALUATION OF THE LIKELIHOOD
   fn_log_likelihood(llhood, country, 0, true, true,
   		    global_fixedpars.l_GP_consultation_flag,
@@ -178,9 +160,19 @@ int main(void){
   		    global_fixedpars,
   		    global_modpars);
 
+  likelihood block_llhood(global_fixedpars);
+  block_log_likelihood(block_llhood, country, 0, true, true, 
+		       global_fixedpars.l_GP_consultation_flag,
+		       global_fixedpars.l_Hospitalisation_flag,
+		       global_fixedpars.l_Viro_data_flag,
+		       global_fixedpars.l_Sero_data_flag,
+		       global_fixedpars.l_Prev_data_flag,
+		       global_fixedpars, paramSet);
+  
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES
   metrop_hast(sim_pars,
   	      global_modpars,
+	      paramSet,
   	      country,
   	      llhood,
   	      global_fixedpars,
@@ -190,7 +182,7 @@ int main(void){
   ////////////////////////////////////////////////////////////////////////////////////////
 
   // FREE THE STRUCTURE CONTAINING THE LIKELIHOOD DETAILS
-  likelihood_free(llhood);
+  //likelihood_free(llhood);
 
   // FREE THE STRUCTURE CONTAINING THE MCMC SIMULATION PARAMETERS
   mcmcPars_free(sim_pars);
