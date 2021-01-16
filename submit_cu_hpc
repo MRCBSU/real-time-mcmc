@@ -40,7 +40,7 @@ else
     workdir="${workdir}11_"
 fi
 if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
-    xspan="prev7_"
+    workdir="${workdir}prev7_"
 fi
 workdir="${workdir}matrices_20210110_timeuse_household_deaths"
 

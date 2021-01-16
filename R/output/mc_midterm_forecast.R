@@ -14,7 +14,7 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 12
+nweeks.ahead <- 8
 
 counterfactual <- FALSE
 

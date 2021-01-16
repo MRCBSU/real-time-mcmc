@@ -6,12 +6,14 @@ library(cubelyr)
 
 load("mcmc.RData")
 
-Rs <- readRDS("dominant_eigenvalues.rds") %>%
-    dplyr::filter(Region == "England",
-                  Date >= ymd("20200323"),
-                  Date < today(),
-                  type == "all") %>%
-    mutate(lvalue = log(value))
+fl.eval <- "dominant_eigenvalues.rds"
+if(file.exists(fl.eval))
+    Rs <- readRDS("dominant_eigenvalues.rds") %>%
+        dplyr::filter(Region == "England",
+                      Date >= ymd("20200323"),
+                      Date < today(),
+                      type == "all") %>%
+        mutate(lvalue = log(value))
 
 nw <- nrow(beta.design) / nr
 niter <- nrow(params$log_beta_rw)
@@ -42,22 +44,35 @@ qbeta <- beta %>%
 df_areaStep <- bind_rows(old = qbeta,
                          new = qbeta %>%
                              group_by(Region) %>%
-                             mutate(`q50%` = dplyr::lag(`q50%`), `q2.5%` = dplyr::lag(`q2.5%`), `q97.5%` = dplyr::lag(`q97.5%`)),
+                             mutate(`q50%` = dplyr::lag(`q50%`, default = 1), `q2.5%` = dplyr::lag(`q2.5%`, default = 1), `q97.5%` = dplyr::lag(`q97.5%`, default = 1),
+                                   Date = Date - 0.001),
                          current = qbeta %>%
                              filter(Date == max(qbeta$Date)) %>%
-                             mutate(Date = max(Rs$Date)),
+                             mutate(Date = ymd(date.data)),
                          .id = "source") %>%
     arrange(Date, source)
+
+require(plotly)
+require(htmlwidgets)
 
 gqb <- ggplot(df_areaStep, aes(x = Date, y = `q50%`, colour = Region)) +
     geom_step() +
     geom_ribbon(aes(ymin = `q2.5%`, ymax = `q97.5%`, fill = Region), alpha = 0.4) +
     xlab("Date") +
-    ylab("normalised beta") +
-    ylim(c(0, 4)) +
-    geom_step(data = Rs %>% mutate(scaled_value = 3 + (value - min(value)) / (max(value) - min(value))), aes(x = Date, y = scaled_value), linetype = 1, lwd = 2, col = "black")
+    ylab("normalised beta")##  +
+    ## ylim(c(0, 4))
 
-ggsave("beta_and_Rstar.pdf", gqb, width = 12.5, height = 8.25)
+if(exists("Rs")) gqb <- gqb +
+    geom_step(data = Rs %>% mutate(scaled_value = 3 + (value - min(value)) / (max(value) - min(value))), aes(x = Date, y = scaled_value), linetype = 1, lwd = 2, col = "black")
+if(!exists("Rs")) gqb <- gqb + facet_wrap(~Region, ncol = 1, scales="free_y") +
+                      theme_minimal() +
+                      theme(legend.position="none")
+
+ggsave("beta_and_Rstar.pdf", gqb, width = 9, height = 12.5)
+
+pp <- ggplotly(gqb, tooltip = "text")
+
+saveWidget(pp, file="beta_and_Rstar.html")
 
 gscat <- ggplot(qbeta %>% left_join(Rs %>% select(-Region)), aes(x = `q50%`, y = value, label = Date, group = Region)) +
     ## geom_path() +

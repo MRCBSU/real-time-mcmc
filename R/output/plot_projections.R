@@ -1,8 +1,8 @@
 load("tmp.RData")
 out.dir <- getwd()
-arg.index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+## arg.index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 ## if (is.na(arg.index))
-    ## arg.index <- 1
+    arg.index <- 1
 args <- commandArgs(trailingOnly = TRUE)
 projections_file <- args[arg.index]
 
