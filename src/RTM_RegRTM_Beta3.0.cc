@@ -8,22 +8,6 @@
 using namespace std;
 using std::string;
 
-// TODO: Remove global vars at later date
-//gslVector globalParamValues;
-//std::vector<gslVector> localParamValues;
-
-//std::vector<updParam> globalParams;
-//std::vector<updParam> localParams;
-
-void gsl_vector_print(const gsl_vector* vec, int size) {
-    if (size < 0)
-	size = vec->size;
-    for (int i = 0; i < size; i++)
-	std::cout << gsl_vector_get(vec, i) << " ";
-    std::cout << std::endl;
-}
-
-
 int main(void){
 
   global_model_instance_parameters global_fixedpars;
@@ -76,7 +60,7 @@ int main(void){
 
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
   read_global_model_parameters(global_modpars,
-			       paramSet,
+			       paramSet,  // Also read into new param objects
   			       str_filename_modpars,
   			       str_global_model_parameters_members,
   			       str_global_model_parameters_initvals,
@@ -91,9 +75,7 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
-  // CCS
-  // Params are copied from old-style params in read_global_model_parameters
-  // (Need to copy there as need to read "regional_param" line of input file.
+  // Block pars: Having read the parameters, initialise the rest of the block structure
   paramSet.init(global_fixedpars.l_num_regions);
 
 
@@ -124,12 +106,19 @@ int main(void){
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, all_true);
 
+  // Initialise region again for new code
+  // For now, easiest to re-read from file rather than work out how to deep copy
+  Region* country2 = new Region[global_fixedpars.l_num_regions];
+  for (int i = 0; i < global_fixedpars.l_num_regions; i++)
+    Region_alloc(country2[i], global_fixedpars, mixmod_struct);
+  read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);
+  
   flagclass block_all_true;
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
-    block_regional_parameters(country[int_i].det_model_params, paramSet, 
+    block_regional_parameters(country2[int_i].det_model_params, paramSet, 
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, block_all_true);
-  
+
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
   string str_mcmc_parameter_names(MCMC_PARAMETER_NAMES);
@@ -168,12 +157,16 @@ int main(void){
 		       global_fixedpars.l_Sero_data_flag,
 		       global_fixedpars.l_Prev_data_flag,
 		       global_fixedpars, paramSet);
+
+  for (auto& block : paramSet.blocks)
+    block.setLlhood(block_llhood);
   
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES
   metrop_hast(sim_pars,
   	      global_modpars,
 	      paramSet,
   	      country,
+	      country2,
   	      llhood,
   	      global_fixedpars,
   	      mixmod_struct,

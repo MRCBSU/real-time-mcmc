@@ -51,12 +51,13 @@ void alloc_global_model_instance(global_model_instance_parameters&);
 // FREE FUNCTION FOR MEMORY ASSIGNED TO THE ABOVE TYPE OF STRUCTURE
 void free_global_model_instance(global_model_instance_parameters&);
 
-struct regression_def{
-  gsl_vector_int* region_breakpoints;
-  gsl_vector_int* age_breakpoints;
-  gsl_vector_int* time_breakpoints;
+class regression_def{
+public:
+  gslVectorInt region_breakpoints;
+  gslVectorInt age_breakpoints;
+  gslVectorInt time_breakpoints;
   link_function regression_link; // enum
-  gsl_matrix* design_matrix;
+  gslMatrix design_matrix;
 };
 
 // GENERAL MODEL (POSSIBLY VECTOR VALUED) PARAMETER
@@ -262,6 +263,9 @@ public:
   gslVector Viro_lfx;
   gslVector Prev_lfx;
 
+  // Empty constructor necessary for updParamBlock
+  likelihood() { }
+  
   likelihood(const global_model_instance_parameters &gmip) {
     int num_regions = gmip.l_num_regions;
     if (gmip.l_GP_consultation_flag)

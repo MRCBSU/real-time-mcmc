@@ -1,6 +1,7 @@
 #include "gp_param_patch.h"
 #include "gsl_mat_ext.h"
 #include "RTM_FunctDefs.h"
+#include "gslWrapper.h"
 
 void gp_param_fn(gsl_vector* dest, const gsl_vector* src)
 {
@@ -48,7 +49,7 @@ void regional_matrix_parameter_GP_PATCH(gsl_matrix* out_mat, const gsl_vector* p
 
 
   // if there's any temporal, regional or age variation then the design matrix should be non-zero
-  if(map_to_regional.design_matrix == 0)
+  if(map_to_regional.design_matrix.nrows() == 0)
     {
       // no variation, only first component of parameter value will be used.
       gsl_matrix_set_all(out_mat,
@@ -58,34 +59,35 @@ void regional_matrix_parameter_GP_PATCH(gsl_matrix* out_mat, const gsl_vector* p
     {
       // the design matrix should be set.
       // get the number of intervals over time (and age) for each region
-      int dim_r = (map_to_regional.region_breakpoints == 0) ? 1 : map_to_regional.region_breakpoints->size + 1;
-      int dim_a = (map_to_regional.age_breakpoints == 0) ? 1 : map_to_regional.age_breakpoints->size + 1;
-      int dim_t = (map_to_regional.time_breakpoints == 0) ? 1 : map_to_regional.time_breakpoints->size + 1;
+      int dim_r = (map_to_regional.region_breakpoints.size() == 0) ? 1 : map_to_regional.region_breakpoints.size() + 1;
+      int dim_a = (map_to_regional.age_breakpoints.size() == 0) ? 1 : map_to_regional.age_breakpoints.size() + 1;
+      int dim_t = (map_to_regional.time_breakpoints.size() == 0) ? 1 : map_to_regional.time_breakpoints.size() + 1;
 
-      gsl_matrix* subdesign = gsl_matrix_alloc(dim_t * dim_a, map_to_regional.design_matrix->size2);
-      gsl_vector* intermediate_vec = gsl_vector_alloc(subdesign->size1);
+      gslMatrix subdesign(dim_t * dim_a, map_to_regional.design_matrix.ncols());
+      gsl_vector* intermediate_vec = gsl_vector_alloc(subdesign.nrows());
 
       select_design_matrix(subdesign, map_to_regional.design_matrix, dim_r == 1,
 			   region_index * dim_t * dim_a, dim_t * dim_a);
 
-      R_generalised_linear_regression_GP_PATCH(intermediate_vec, subdesign,
+      R_generalised_linear_regression_GP_PATCH(intermediate_vec, *subdesign,
 				      param_value, map_to_regional.regression_link);
 
       // now fill out the out_mat according to the breakpoints - first need to multiply up the breakpoints to the correct time scale
-      gsl_vector_int* rescaled_temporal_breakpoints = 0;      
+      gslVectorInt rescaled_temporal_breakpoints;
       if(dim_t > 1){
-	rescaled_temporal_breakpoints = gsl_vector_int_alloc(map_to_regional.time_breakpoints->size);
-	gsl_vector_int_memcpy(rescaled_temporal_breakpoints, map_to_regional.time_breakpoints);
-	gsl_vector_int_scale(rescaled_temporal_breakpoints, time_steps_per_day);
+	//rescaled_temporal_breakpoints = gsl_vector_int_alloc(map_to_regional.time_breakpoints.size());
+	//gsl_vector_int_memcpy(rescaled_temporal_breakpoints, map_to_regional.time_breakpoints);
+	//gsl_vector_int_scale(rescaled_temporal_breakpoints, time_steps_per_day);
+	rescaled_temporal_breakpoints = map_to_regional.time_breakpoints * time_steps_per_day;
       }
-      mat_breakpoint_cut(out_mat, rescaled_temporal_breakpoints, map_to_regional.age_breakpoints, intermediate_vec);
+      mat_breakpoint_cut(out_mat, *rescaled_temporal_breakpoints, *map_to_regional.age_breakpoints, intermediate_vec);
   
 
       // free any memory allocated within this scope
-      if(rescaled_temporal_breakpoints != 0)
-	gsl_vector_int_free(rescaled_temporal_breakpoints);
+      //if(rescaled_temporal_breakpoints != 0)
+      //gsl_vector_int_free(rescaled_temporal_breakpoints);
       gsl_vector_free(intermediate_vec);
-      gsl_matrix_free(subdesign);
+      //gsl_matrix_free(subdesign);
 
     }
 

@@ -27,7 +27,7 @@ void read_mcmc_parameters(mcmcPars&, char*, const string, string&);
 void data_matrices_fscanf(const string&, gsl_matrix*, const int col_skip = 0, const int row_skip = 0);
 
 // FUNCTIONS IN RTM_WithinRegion.cc
-void select_design_matrix(gsl_matrix*, gsl_matrix*, bool, int, int);
+void select_design_matrix(gslMatrix&, const gslMatrix&, bool, int, int);
 void mat_breakpoint_cut(gsl_matrix*, const gsl_vector_int*, const gsl_vector_int*, const gsl_vector*);
 
 void block_regional_parameters(regional_model_params&, const updParamSet &, const global_model_instance_parameters&, const int&, const gsl_vector*, const double&, const mixing_model&, flagclass&);
@@ -53,6 +53,6 @@ double fn_log_lik_negbindata(const gsl_matrix*, const gsl_matrix*, const gsl_mat
 double fn_log_lik_loggaussian_fixedsd(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 
 // FUNCTIONS IN RTM_MetropHast.cc
-void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
+void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
 
 #endif

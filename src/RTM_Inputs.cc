@@ -331,8 +331,8 @@ int cut_out_parameter(string& out_substring, const string file_content, const ch
   return num_strings;
 }
 
-void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
-				     int& parameter_dimension,
+// parameter_dimension is output variable is modified
+gsl_vector_int* alloc_and_set_breakpoint_vector(int& parameter_dimension,
 				     const string str_source,
 				     const string str_property_name,
 				     const int pos_in_source,
@@ -343,6 +343,8 @@ void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
   // set to default value
   string temp_string("false");
 
+  gsl_vector_int *breakpoints;
+    
   // read in the variable set value if one exists
   if(pos_in_source != string::npos)
       read_string_from_instruct(temp_string, str_property_name, str_source);
@@ -352,23 +354,24 @@ void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
       // if there are breakpoints, then we should have a true value or a numeric vector
       if(temp_string.compare("true") == 0){
 	// FULL VARIATION IN THE PARAMETER
-	vector_of_breakpoints = gsl_vector_int_alloc(default_size - 1);
-	gsl_vector_int_set_seq(vector_of_breakpoints);
+	breakpoints = gsl_vector_int_alloc(default_size - 1);
+	gsl_vector_int_set_seq(breakpoints);
       } else if(flag_alternate_variation) {
 	// THERE SHOULD BE A VECTOR OF VALUES TO READ IN
 	// FIRST, GET THE NUMBER OF DISTINCT TIME INTERVALS
 	// AND ALLOCATE MEMORY TO THE VECTOR
-	vector_of_breakpoints = gsl_vector_int_alloc(count_delims_in_string(temp_string, ",") + 1);
+	breakpoints = gsl_vector_int_alloc(count_delims_in_string(temp_string, ",") + 1);
 	// ASSIGN THE READ VALUES INTO THE VECTOR
-	gsl_vector_int_sscanf(temp_string, vector_of_breakpoints);
+	gsl_vector_int_sscanf(temp_string, breakpoints);
       }
-      parameter_dimension = vector_of_breakpoints->size + 1;
+      parameter_dimension = breakpoints->size + 1;
     }
   else 
     {
-      vector_of_breakpoints = 0;
+      breakpoints = 0;
       parameter_dimension = 1;
     }
+  return breakpoints;
 }
 
 
@@ -389,9 +392,6 @@ void read_param_regression(regression_def& reg_def,
   int time_pos = str_source.find("time_breakpoints");
   int age_pos = str_source.find("age_breakpoints");
   
-  reg_def.region_breakpoints = reg_def.time_breakpoints = reg_def.age_breakpoints = 0;
-  reg_def.design_matrix = 0;
-
   if(((age_pos != string::npos) || (time_pos != string::npos)) || (reg_pos != string::npos))
     {
       // WE HAVE SOME FORM OF VARIATION
@@ -400,11 +400,11 @@ void read_param_regression(regression_def& reg_def,
 	reg_def.regression_link = (link_function) read_int("regression_link", str_source);
       else reg_def.regression_link = cIDENTITY;
 
-      alloc_and_set_breakpoint_vector(reg_def.region_breakpoints, dim_r, str_source, "region_breakpoints", reg_pos, num_regions, false);
+      reg_def.region_breakpoints = alloc_and_set_breakpoint_vector(dim_r, str_source, "region_breakpoints", reg_pos, num_regions, false);
 
-      alloc_and_set_breakpoint_vector(reg_def.time_breakpoints, dim_t, str_source, "time_breakpoints", time_pos, num_days, true);
+      reg_def.time_breakpoints = alloc_and_set_breakpoint_vector(dim_t, str_source, "time_breakpoints", time_pos, num_days, true);
 
-      alloc_and_set_breakpoint_vector(reg_def.age_breakpoints, dim_a, str_source, "age_breakpoints", age_pos, num_ages, true);
+      reg_def.age_breakpoints = alloc_and_set_breakpoint_vector(dim_a, str_source, "age_breakpoints", age_pos, num_ages, true);
 
 
       // THE DESIGN MATRIX...
@@ -423,15 +423,15 @@ void read_param_regression(regression_def& reg_def,
 	read_string_from_instruct(str_filename, "regression_design", str_source);
 	FILE* design_file = fopen(str_filename.c_str(), "r");
 
-	gsl_matrix_fscanf(design_file, reg_def.design_matrix);
+	gsl_matrix_fscanf(design_file, *reg_def.design_matrix);
 
 	fclose(design_file);
 
       } else if(str_source.find("regression_design") != string::npos) // READ IN THE MATRIX AS A VECTOR
-	read_gsl_matrix(reg_def.design_matrix, "regression_design", str_source);
+	read_gsl_matrix(*reg_def.design_matrix, "regression_design", str_source);
 
       else // DEFAULT, SET THE MATRIX TO THE IDENTITY (EVEN IF A RECTANGULAR MATRIX)
-	gsl_matrix_set_identity(reg_def.design_matrix);
+	gsl_matrix_set_identity(*reg_def.design_matrix);
 
     }
 
@@ -607,10 +607,10 @@ void initialise_prior_density(updParamSet &paramSet,
 			      double (*prior_density_fn)(const double&, const distribution_type&, const gsl_vector*))
 {
 
-  gslVectorInt prior_distributions(modpar.size);
+  std::vector<distribution_type> prior_distributions;
 
   if(modpar.flag_hyperprior)
-    prior_distributions.setAll(modpar.prior_distribution[0]);
+    prior_distributions.assign(modpar.size, modpar.prior_distribution[0]);
   else
     prior_distributions = modpar.prior_distribution;
 
@@ -782,7 +782,7 @@ void node_links(updParamSet& paramSet,
 		// We can't save a pointer here, as the param_value vector
 		// is no longer used. Instead, we save the parent indexes to
 		// be checked later
-		child.prior_params[intk].eraseAndResize(0);
+		child.prior_params[intk].eraseRealloc(0);
 		child.parents[intk] = inti;
 	    }
 	    par.flag_child_nodes[intj] = true;
@@ -1420,7 +1420,7 @@ void read_mixmod_structure_inputs(mixing_model& base_mm, const string str_input_
     }
 
   // FIRSTLY NEED TO KNOW HOW MANY TEMPORAL BREAKPOINTS THERE ARE - THIS SHOULD ALLOCATE THE MEMORY TO THE BREAKPOINT COMPONENT.
-  alloc_and_set_breakpoint_vector(base_mm.breakpoints,
+  base_mm.breakpoints = alloc_and_set_breakpoint_vector(
 				  base_mm.num_breakpoints,
 				  str_var,
 				  "time_breakpoints",

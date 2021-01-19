@@ -1,136 +1,137 @@
 #ifndef HEADER_gslWrapper_
 #define HEADER_gslWrapper_
 
+#include <cassert>
 #include <vector>
 #include <iostream>
+#include <gsl/gsl_errno.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
-
 
 class gslVector {
 public:
     
-    gslVector() 
-	: base(nullptr) {}
+  gslVector()
+    : base(nullptr) {}
     
-    gslVector(int len) {
-	base = gsl_vector_alloc(len);
-    }
+  gslVector(size_t len) {
+    base = gsl_vector_alloc(len);
+  }
 
-    ~gslVector() {
-	if (base != nullptr)
-	    gsl_vector_free(base);
-    }
+  ~gslVector() {
+    if (base != nullptr)
+      gsl_vector_free(base);
+  }
 
-    // Copy constructor
-    gslVector(const gslVector& obj)
-	: base(nullptr) {
-	// Default GSL error handler aborts program if out of memory
-	if (obj.gsl() != nullptr) {
-	    base = gsl_vector_alloc(obj.size());
-	    gsl_vector_memcpy(base, obj.gsl());
-	}
+  // Copy constructor
+  gslVector(const gslVector& obj)
+    : base(nullptr) {
+    // Default GSL error handler aborts program if out of memory
+    if (obj.gsl() != nullptr) {
+      base = gsl_vector_alloc(obj.size());
+      gsl_vector_memcpy(base, obj.gsl());
     }
+  }
 
-    // Copy from base gsl_vector
-    gslVector(const gsl_vector* obj)
-	: base(nullptr) {
-	if (obj != nullptr) {
-	    base = gsl_vector_alloc(obj->size);
-	    gsl_vector_memcpy(base, obj);
-	}
+  // Copy from base gsl_vector
+  gslVector(const gsl_vector* obj)
+    : base(nullptr) {
+    if (obj != nullptr) {
+      base = gsl_vector_alloc(obj->size);
+      gsl_vector_memcpy(base, obj);
     }
+  }
     
-    // Copy assignment
-    gslVector& operator=(const gslVector& obj) {
-	if (this != &obj) {
-	    if (base != nullptr)
-		gsl_vector_free(base);
-	    if (obj.gsl() != nullptr) {
-		base = gsl_vector_alloc(obj.size());
-		gsl_vector_memcpy(base, obj.gsl());
-	    } else {
-		base = nullptr;
-	    }
-	}
-	return *this;
+  // Copy assignment
+  gslVector& operator=(const gslVector& obj) {
+    if (this != &obj) {
+      if (base != nullptr)
+	gsl_vector_free(base);
+      if (obj.gsl() != nullptr) {
+	base = gsl_vector_alloc(obj.size());
+	gsl_vector_memcpy(base, obj.gsl());
+      } else {
+	base = nullptr;
+      }
     }
+    return *this;
+  }
 
-    // Assign from base gsl_vector
-    gslVector& operator=(const gsl_vector* obj) {
-	if (base != nullptr)
-	    gsl_vector_free(base);
-	if (obj != nullptr) {
-	    base = gsl_vector_alloc(obj->size);
-	    gsl_vector_memcpy(base, obj);
-	} else {
-	    base = nullptr;
-	}
-	return *this;
+  // Assign from base gsl_vector
+  gslVector& operator=(const gsl_vector* obj) {
+    if (base != nullptr)
+      gsl_vector_free(base);
+    if (obj != nullptr) {
+      base = gsl_vector_alloc(obj->size);
+      gsl_vector_memcpy(base, obj);
+    } else {
+      base = nullptr;
     }
+    return *this;
+  }
 
-    // Move constructor
-    gslVector(gslVector&& obj) {
-	base = obj.base;
-	obj.base = nullptr;
-    }
+  // Move constructor
+  gslVector(gslVector&& obj) {
+    base = obj.base;
+    obj.base = nullptr;
+  }
 
-    // Move assignment
-    gslVector& operator=(gslVector&& obj) {
-	if (this != &obj) {
-	    if (base != nullptr)
-		gsl_vector_free(base);
-	    base = obj.base;
-	    obj.base = nullptr;
-	}
-	return *this;
+  // Move assignment
+  gslVector& operator=(gslVector&& obj) {
+    if (this != &obj) {
+      if (base != nullptr)
+	gsl_vector_free(base);
+      base = obj.base;
+      obj.base = nullptr;
     }
+    return *this;
+  }
     
-    void alloc(int len) {
-	if (base != nullptr)
-	    std::cerr << "gslVector error: alloc() called on a non-null vector\n";
-	base = gsl_vector_alloc(len);
-    }
+  void alloc(size_t len) {
+    assert(base == nullptr);
+    base = gsl_vector_alloc(len);
+  }
     
-    void alloc(std::vector<double> in) {
-	if (base != NULL)
-	    std::cerr << "gslVector error: alloc() called on non-null vector\n";
-	base = gsl_vector_alloc(in.size());
-	for (unsigned i = 0; i < in.size(); i++) 
-	    gsl_vector_set(base, i, in[i]);
-    }
+  void alloc(std::vector<double> in) {
+    assert(base == nullptr);
+    base = gsl_vector_alloc(in.size());
+    for (unsigned i = 0; i < in.size(); i++) 
+      gsl_vector_set(base, i, in[i]);
+  }
 
-  void allocZero(int len) {
-  	if (base != nullptr)
-	    std::cerr << "gslVector error: allocZero() called on a non-null vector\n";
-	base = gsl_vector_calloc(len);
+  void allocZero(size_t len) {
+    assert(base == nullptr);
+    base = gsl_vector_calloc(len);
   }
   
-    void eraseAndResize(int len) {
-	if (base != nullptr)
-	    gsl_vector_free(base);
-	base = gsl_vector_alloc(len);
-    }	
+  void eraseRealloc(size_t len) {
+    if (base != nullptr)
+      gsl_vector_free(base);
+    base = gsl_vector_alloc(len);
+  }	
 
-    // Dereference operator
-    gsl_vector* operator*() const {
-	return base;
-    }
-    
-    gsl_vector* gsl() const {
-	return base;
-    }
-    
-    const double operator[](int idx) const {
-	return gsl_vector_get(base, idx);
-    }
-    
-    double& operator[](int idx) {
-	// To correctly serve as lvalue, have to point to the data directly
-	// Skips gsl range checking
-	return base->data[idx * base->stride];
-    }
+  // Dereference operator
+  gsl_vector* operator*() const {
+    return base;
+  }
+  gsl_vector* gsl() const {
+    return base;
+  }
 
+  const double operator[](size_t idx) const {
+    return gsl_vector_get(base, idx);
+  }
+  double& operator[](size_t idx) {
+    // To correctly serve as lvalue, have to point to the data directly
+#ifndef GSL_RANGE_CHECK_OFF
+    if (idx >= base->size) {
+      gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+      throw std::invalid_argument("gslVector: Index out of range");
+    }
+#endif
+    return base->data[idx * base->stride];
+  }
+  
   // Vector addition
   gslVector& operator+=(const gslVector& rhs) {
     gsl_vector_add(this->gsl(), rhs.gsl());
@@ -147,7 +148,6 @@ public:
     gsl_vector_sub(this->gsl(), rhs.gsl());
     return *this;
   }
-  // lhs passed by value makes copy, so we don't modify original object
   friend gslVector operator-(gslVector lhs, const gslVector& rhs) {
     lhs -= rhs;
     return lhs;
@@ -166,149 +166,211 @@ public:
     return vec * scalar;
   }
 
-  int size() const {
+  size_t size() const {
     if (base == nullptr)
       return 0;
     return base->size;
   }
 
-    friend std::ostream& operator<< (std::ostream& stream, const gslVector& vec) {
-	for (int i = 0; i < vec.size(); i++)
-	    stream << vec[i] << " ";
-	return stream;
-    }
-	    
- private:
-    gsl_vector *base;
-};
+  friend std::ostream& operator<< (std::ostream& stream, const gslVector& vec) {
+    for (size_t i = 0; i < vec.size(); i++)
+      stream << vec[i] << " ";
+    return stream;
+  }
 
+  void print(std::ostream& stream = std::cout) const {
+    print(0, size(), stream);
+  }
+  void print(size_t num, std::ostream& stream = std::cout) const {
+    print(0, num, stream);
+  }
+  void print(size_t start, size_t num, std::ostream& stream = std::cout) const {
+    size_t end = std::min(start+num, size());
+    for (size_t i = start; i < end; i++)
+      stream << gsl_vector_get(base, i) << " ";
+    stream << std::endl;
+  }
+  
+private:
+  gsl_vector *base;
+};
 
 
 class gslVectorInt {
 public:
 
-    gslVectorInt()
-	: base(nullptr) {}
+  gslVectorInt()
+    : base(nullptr) {}
 
-    gslVectorInt(int len) {
-	base = gsl_vector_int_alloc(len);
+  gslVectorInt(size_t len) {
+    base = gsl_vector_int_alloc(len);
+  }
+
+  ~gslVectorInt() {
+    if (base != nullptr)
+      gsl_vector_int_free(base);
+  }
+
+  gslVectorInt(const gslVectorInt& obj)
+    : base(nullptr) {
+    if (obj.gsl() != nullptr) {
+      base = gsl_vector_int_alloc(obj.size());
+      gsl_vector_int_memcpy(base, obj.gsl());
     }
+  }
 
-    ~gslVectorInt() {
-	if (base != nullptr)
-	    gsl_vector_int_free(base);
+  gslVectorInt(const gsl_vector_int* obj)
+    : base(nullptr) {
+    if (obj != nullptr) {
+      base = gsl_vector_int_alloc(obj->size);
+      gsl_vector_int_memcpy(base, obj);
     }
+  }
 
-    gslVectorInt(const gslVectorInt& obj) {
+  // Copy assignment
+  gslVectorInt& operator=(const gslVectorInt& obj) {
+    if (this != &obj) {
+      if (base != nullptr)
+	gsl_vector_int_free(base);
+      if (obj.gsl() != nullptr) {
 	base = gsl_vector_int_alloc(obj.size());
 	gsl_vector_int_memcpy(base, obj.gsl());
+      } else {
+	base = nullptr;
+      }
     }
+    return *this;
+  }
 
-    gslVectorInt(const gsl_vector_int* obj) {
-	base = gsl_vector_int_alloc(obj->size);
-	gsl_vector_int_memcpy(base, obj);
+  // Assign from base gsl_vector_int
+  gslVectorInt& operator=(const gsl_vector_int* obj) {
+    if (base != nullptr)
+      gsl_vector_int_free(base);
+    if (obj != nullptr) {
+      base = gsl_vector_int_alloc(obj->size);
+      gsl_vector_int_memcpy(base, obj);
+    } else {
+      base = nullptr;
     }
-
-    // Copy assignment
-    gslVectorInt& operator=(const gslVectorInt& obj) {
-	if (this != &obj) {
-	    if (base != nullptr)
-		gsl_vector_int_free(base);
-	    base = gsl_vector_int_alloc(obj.size());
-	    gsl_vector_int_memcpy(base, obj.gsl());
-	}
-	return *this;
-    }
-
-    // Assign from base gsl_vector_int
-    gslVectorInt& operator=(const gsl_vector_int* obj) {
-	if (base != nullptr)
-	    gsl_vector_int_free(base);
-	base = gsl_vector_int_alloc(obj->size);
-	gsl_vector_int_memcpy(base, obj);
-	return *this;
-    }
+    return *this;
+  }
     
-    // Move constructor
-    gslVectorInt(gslVectorInt&& obj) {
-	base = obj.base;
-	obj.base = nullptr;
-    }
+  // Move constructor
+  gslVectorInt(gslVectorInt&& obj) {
+    base = obj.base;
+    obj.base = nullptr;
+  }
 
-    // Move assignment
-    gslVectorInt& operator=(gslVectorInt&& obj) {
-	if (this != &obj) {
-	    if (base != nullptr)
-		gsl_vector_int_free(base);
-	    base = obj.base;
-	    obj.base = nullptr;
-	}
-	return *this;
+  // Move assignment
+  gslVectorInt& operator=(gslVectorInt&& obj) {
+    if (this != &obj) {
+      if (base != nullptr)
+	gsl_vector_int_free(base);
+      base = obj.base;
+      obj.base = nullptr;
     }
+    return *this;
+  }
     
-    void alloc(int len) {
-	if (base != NULL)
-	    std::cerr << "gslVector error: alloc() called on a non-null vector\n";
-	base = gsl_vector_int_alloc(len);
-    }
+  void alloc(size_t len) {
+    assert(base == nullptr);
+    base = gsl_vector_int_alloc(len);
+  }
     
-    void alloc(std::vector<int> in) {
-	if (base != nullptr)
-	    std::cerr << "gslVector error: alloc() called on non-null vector\n";
-	base = gsl_vector_int_alloc(in.size());
-	for (unsigned i = 0; i < in.size(); i++) 
-	    gsl_vector_int_set(base, i, in[i]);
-    }
+  void alloc(std::vector<int> in) {
+    assert(base == nullptr);
+    base = gsl_vector_int_alloc(in.size());
+    for (unsigned i = 0; i < in.size(); i++) 
+      gsl_vector_int_set(base, i, in[i]);
+  }
 
-    void eraseAndResize(int len) {
-	if (base != nullptr)
-	    gsl_vector_int_free(base);
-	base = gsl_vector_int_alloc(len);
-    }
+  void allocZero(size_t len) {
+    assert(base == nullptr);
+    base = gsl_vector_int_calloc(len);
+  }
+  
+  void eraseRealloc(size_t len) {
+    if (base != nullptr)
+      gsl_vector_int_free(base);
+    base = gsl_vector_int_alloc(len);
+  }
 
   void setAll(int in) {
+    assert(base != nullptr);
     gsl_vector_int_set_all(base, in);
   }
 
-    // Dereference operator
-    gsl_vector_int* operator*() const {
-	return base;
+  // Dereference operator
+  gsl_vector_int* operator*() const {
+    return base;
+  }
+  gsl_vector_int* gsl() const {
+    return base;
+  }
+  
+  const int operator[](size_t idx) const {
+    return gsl_vector_int_get(base, idx);
+  }
+  int& operator[](size_t idx) {
+    // To correctly serve as lvalue, have to point to the data directly
+#ifndef GSL_RANGE_CHECK_OFF
+    if (idx >= base->size) {
+      gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+      throw std::invalid_argument("gslVectorInt: Index out of range");
     }
+#endif
+    return base->data[idx * base->stride];
+  }
 
-    gsl_vector_int* gsl() const {
-	return base;
-    }
+  // Scalar multiplication
+  gslVectorInt& operator*=(const int scalar) {
+    gsl_vector_int_scale(this->gsl(), scalar);
+    return *this;
+  }
+  friend gslVectorInt operator*(gslVectorInt vec, const int scalar) {
+    vec *= scalar;
+    return vec;
+  }
+  friend gslVectorInt operator*(const int scalar, gslVectorInt vec) {
+    return vec * scalar;
+  }
     
-    const int operator[](int idx) const {
-	return gsl_vector_int_get(base, idx);
-    }
-    
-    int& operator[](int idx) {
-	// To correctly serve as lvalue, have to point to the data directly
-	// Skips gsl range checking
-	return base->data[idx * base->stride];
-    }
-    
-  int size() const {
+  size_t size() const {
     if (base == nullptr)
       return 0;
     return base->size;
   }
-	    
- private:
-    gsl_vector_int *base;
-};
 
-void gsl_vector_print(const gsl_vector* vec, int size = -1);
+  friend std::ostream& operator<< (std::ostream& stream, const gslVectorInt& vec) {
+    for (size_t i = 0; i < vec.size(); i++)
+      stream << vec[i] << " ";
+    return stream;
+  }
+  void print(std::ostream& stream = std::cout) const {
+    print(0, size(), stream);
+  }
+  void print(size_t num, std::ostream& stream = std::cout) const {
+    print(0, num, stream);
+  }
+  void print(size_t start, size_t num, std::ostream& stream = std::cout) const {
+    size_t end = std::min(start+num, size());
+    for (size_t i = start; i < end; i++)
+      stream << gsl_vector_int_get(base, i) << " ";
+    stream << std::endl;
+  }
+  
+private:
+  gsl_vector_int *base;
+};
 
 
 class gslMatrix {
 public:
 
   gslMatrix() 
-    : base(NULL) {}       
+    : base(nullptr) {}       
   
-  gslMatrix(int rows, int cols) {
+  gslMatrix(size_t rows, size_t cols) {
     base = gsl_matrix_alloc(rows, cols);
   } 
   
@@ -325,7 +387,7 @@ public:
     }
   }
   
-  gslMatrix &operator= (const gslMatrix &obj) {
+  gslMatrix& operator=(const gslMatrix &obj) {
     if (this != &obj) {
       if (base != nullptr)
 	gsl_matrix_free(base);
@@ -335,6 +397,17 @@ public:
       } else {
 	base = nullptr;
       }
+    }
+    return *this;
+  }
+  gslMatrix& operator=(const gsl_matrix* obj) {
+    if (base != nullptr)
+      gsl_matrix_free(base);
+    if (obj != nullptr) {
+      base = gsl_matrix_alloc(obj->size1, obj->size2);
+      gsl_matrix_memcpy(base, obj);
+    } else {
+      base = nullptr;
     }
     return *this;
   }
@@ -355,27 +428,51 @@ public:
     return *this;
   }
   
-  void alloc(int rows, int cols) {
-    if (base != NULL)
-      std::cerr << "gslMatrix error: alloc() called on a non-null matrix\n";
-      base = gsl_matrix_alloc(rows, cols);
+  void alloc(size_t rows, size_t cols) {
+    assert(base == nullptr);
+    base = gsl_matrix_alloc(rows, cols);
+  }
+
+  void allocZero(size_t rows, size_t cols) {
+    assert(base == nullptr);
+    base = gsl_matrix_calloc(rows, cols);
   }
   
+  void eraseRealloc(size_t rows, size_t cols) {
+    if (base != nullptr)
+      gsl_matrix_free(base);
+    base = gsl_matrix_alloc(rows, cols);
+  }
   
-  int nrows() const {
+  size_t nrows() const {
+    if (base == nullptr)
+      return 0;
     return base->size1;
   }
-  int ncols() const {
+  size_t ncols() const {
+    if (base == nullptr)
+      return 0;
     return base->size2;
   }
+  
   gsl_matrix* gsl() const {
     return base;
   }
   gsl_matrix* operator*() const {
     return base;
   }
+
+  // Matrix addition
+  gslMatrix& operator+=(const gslMatrix& rhs) {
+    gsl_matrix_add(this->gsl(), rhs.gsl());
+    return *this;
+  }
+  friend gslMatrix operator+(gslMatrix lhs, const gslMatrix& rhs) {
+    lhs += rhs;
+    return lhs;
+  }
   
-  // Two overloads for mat * scalar and scalar * mat
+  // Scalar multiplication. Overload for mat * scalar and scalar * mat
   gslMatrix& operator*=(const double mult) {
     gsl_matrix_scale(this->gsl(), mult);
     return *this;
@@ -388,19 +485,64 @@ public:
     return mat * mult;
   }
 
-  gslMatrix& operator+=(const gslMatrix& rhs) {
-    gsl_matrix_add(this->gsl(), rhs.gsl());
-    return *this;
+  // Proxy class to enable matrix[i][j] syntax
+  class gslMatrixRow {
+  private:
+    friend class gslMatrix;
+    gslMatrixRow(gsl_matrix* mat_, size_t row_)
+      : mat(mat_), row(row_) { }
+    
+  public:
+    const double operator[](size_t col) const {
+      return gsl_matrix_get(mat, row, col);
+    }
+    double& operator[](size_t col) {
+#ifndef GSL_RANGE_CHECK_OFF
+      if (col >= mat->size2) {
+	gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+	throw std::invalid_argument("gslMatrix: Column index out of range");
+      }
+#endif
+      return mat->data[row * mat->tda + col];
+    }
+    
+  private:
+    gsl_matrix* mat;
+    size_t row;
+  };
+
+  gslMatrixRow operator[](size_t row) {
+#ifndef GSL_RANGE_CHECK_OFF
+    if (row >= base->size1) {
+      gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+      throw std::invalid_argument("gslMatrix: Row index out of range");
+    }
+#endif
+    return gslMatrixRow(base, row);
   }
-  friend gslMatrix operator+(gslMatrix lhs, const gslMatrix& rhs) {
-    lhs += rhs;
-    return lhs;
+
+  const gslMatrixRow operator[](size_t row) const {
+#ifndef GSL_RANGE_CHECK_OFF
+    if (row >= base->size1) {
+      gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+      throw std::invalid_argument("gslMatrix: Row index out of range");
+    }
+#endif
+    return gslMatrixRow(base, row);
   }
   
-  void print() const {
+  void print(std::ostream& stream = std::cout)  {
+    print(0, 0, nrows(), ncols(), stream);
+  }
+  void print(size_t numRows, size_t numCols, std::ostream& stream = std::cout)  {
+    print(0, 0, numRows, numCols, stream);
+  }
+  void print(size_t rowStart, size_t numRows, size_t colStart, size_t numCols, std::ostream& stream = std::cout)  {
+    size_t rowEnd = std::min(rowStart + numRows, nrows());
+    size_t colEnd = std::min(colStart + numCols, ncols());
     std::cout << "{\n";
-    for (unsigned i = 0; i < nrows(); i++) {
-      for (unsigned j = 0; j < ncols(); j++)
+    for (size_t i = rowStart; i < rowEnd; i++) {
+      for (size_t j = colStart; j < colEnd; j++)
 	std::cout << (*this)[i][j] << " ";
       std::cout << std::endl;
     }
@@ -408,55 +550,15 @@ public:
   }
   friend std::ostream& operator<<(std::ostream &stream, gslMatrix mat) {
     stream << "{\n";
-    for (unsigned i = 0; i < mat.nrows(); i++) {
-      for (unsigned j = 0; j < mat.ncols(); j++)
+    for (size_t i = 0; i < mat.nrows(); i++) {
+      for (size_t j = 0; j < mat.ncols(); j++)
 	stream << mat[i][j] << " ";
       stream << std::endl;
     }
     stream << "}\n";
     return stream;
   }
-  
-  // TODO: This is potentially dangerous, as the view is in scope only as long as the matrix it 
-  // came from is in scope. In theory, a user could create an object of class gslMatrixRow, and
-  // keep it in scope. Figure out how to stop this.
-  
-  class gslMatrixRow {
-    friend class gslMatrix;
-  public:
-    const double operator[](int idx) const {
-      return gsl_vector_get(&(rowBase.vector), idx);
-    }
-    
-    // TODO: Decide whether to keep bounds checking here (no gsl check because of direct access to data)
-    double& operator[](int idx) {
-      if (idx >= rowBase.vector.size)
-	std::cerr << "Invalid col access: " << idx << " " << rowBase.vector.size << std::endl;
-      return rowBase.vector.data[idx * rowBase.vector.stride];
-    }
-    
-    // WARNING: Potentially very unsafe
-    gsl_vector_view *asView() {
-      return &rowBase;
-    }
-    
-  private:
-    
-    gslMatrixRow(gsl_vector_view row) 
-      : rowBase(row) {}
-    
-    gsl_vector_view rowBase;
-  };
-  
-  // These cannot be references, as it would return a reference
-  // to the gslMatrixRow object. But as long as we have the view, it should be OK, I think.
-  const gslMatrixRow operator[](int idx) const {
-    return gslMatrixRow(gsl_matrix_row(base, idx));
-  }
-  gslMatrixRow operator[](int idx) {
-    return gslMatrixRow(gsl_matrix_row(base, idx));
-  }
-  
+
 private:
   gsl_matrix *base;
 };

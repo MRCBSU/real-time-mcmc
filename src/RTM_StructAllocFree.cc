@@ -85,6 +85,7 @@ void free_global_model_instance(global_model_instance_parameters& in_globalModel
   gsl_vector_int_free(in_globalModelInstanceParameters.d_week_numbers_by_day);
 }
 
+/*
 void free_regression_def(regression_def& old_regdef)
 {
 
@@ -97,6 +98,7 @@ void free_regression_def(regression_def& old_regdef)
   if(old_regdef.design_matrix != 0)
     gsl_matrix_free(old_regdef.design_matrix);
 }
+*/
 
 void updateable_model_parameter_free(updateable_model_parameter& old_ump)
 {
@@ -118,7 +120,7 @@ void updateable_model_parameter_free(updateable_model_parameter& old_ump)
       free(old_ump.prior_params);
     }
   delete [] old_ump.flag_child_nodes;
-  free_regression_def(old_ump.map_to_regional);
+  //free_regression_def(old_ump.map_to_regional);
   gsl_vector_free(old_ump.param_value);
   gsl_vector_int_free(old_ump.prior_distribution);
 }

@@ -53,25 +53,6 @@ double univariate_prior_ratio(const updateable_model_parameter& theta,
 
 }
 
-// For new param blocks
-/*
-double univariate_prior_ratio(const updParam& theta,
-		   const int& component)
-{
-
-  int dist_component = (theta.flag_hyperprior) ? 1 : component;
-
-  
-  
-  return R_univariate_prior_log_density_ratio(gsl_vector_get(theta.proposal_value, component),
-					      gsl_vector_get(theta.param_value, component),
-					      (distribution_type) gsl_vector_int_get(theta.prior_distribution, dist_component),
-					      theta.prior_params[component]);
-
-}
-*/
-
-// //
 
 
 // ADAPT PROPOSAL VARIANCES //
@@ -215,6 +196,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 globalModelParams& theta,
 		 updParamSet &paramSet,
 		 Region* state_country,
+		 Region* country2,
 		 likelihood& lfx,
 		 const global_model_instance_parameters& gmip,
 		 const mixing_model& base_mix,
@@ -244,6 +226,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       Region_memcpy(prop_country[int_reg], state_country[int_reg], all_pos);
     }
 
+  // Block copy
+  for (auto &block : paramSet.blocks) {
+    block.copyCountry(prop_country, nregions);
+  }
+  
   // Likelihood
   likelihood prop_lfx(gmip);
   // CCS: Alloc no longer required
@@ -317,19 +304,21 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
 
-      if (int_iter % 100 == 0)
+      if (int_iter % 10 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       
       // CCS: Block Updates
       // For now, this is NOT done in parallel to avoid parallel RNG issues
       paramSet.calcProposals(r);
-
+      
       // Calculate acceptance ratio
-      paramSet.calcAccept();
+      paramSet.calcAccept(country2, gmip, base_mix);
 
       // Accept/reject
-      paramSet.doAccept(r);
+      paramSet.doAccept(r, country2);
+
+      paramSet.outputPars();
       
       /* * * * * * * * * * * * *
 
