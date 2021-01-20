@@ -292,14 +292,17 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       gsl_vector_int_set_1ton(b[int_param]);
       if(theta_i_size <= maximum_block_size)
 	gsl_vector_int_set_1ton(a[int_param]);
-
-      // OPEN PARAMETER OUTPUT FILES...
-      string filename("coda_");
-      filename += theta.param_list[int_param].param_name;
-      if(theta.param_list[int_param].flag_update)
-	{output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);}
     }
 
+  for (int i = 0; i < paramSet.params.size(); i++) {
+    // OPEN PARAMETER OUTPUT FILES...
+    string filename("coda_");
+    filename += paramSet[i].param_name;
+    if(paramSet[i].flag_update) {
+      output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
+    }
+  }
+  
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
@@ -316,9 +319,30 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       paramSet.calcAccept(country2, gmip, base_mix);
 
       // Accept/reject
-      paramSet.doAccept(r, country2);
+      paramSet.doAccept(r, country2, gmip);
 
       paramSet.outputPars();
+
+      // Posterior mean and sumsq on a per-parameter basis
+      /*
+      for (auto& par : paramSet.params) {
+	if (int_iter >= simulation_parameters.burn_in) {
+	  for (int i = 0; i < par.size; i++) {
+	    double value;
+	    if (par.global) {
+	      value = paramSet.blocks[0].vals[par.value_index + i];
+	    } else {
+	      int region = i / par.regionSize; // Integer division
+	      int offset = i % par.regionSize;
+	      value = paramSet.blocks[region+1].vals[offset];
+	    }
+	    par.posterior_mean[i] += value / CHAIN_LENGTH;
+
+	    par.posterior_sumsq[i] += gsl_pow_2(value) / CHAIN_LENGTH;
+	  }
+	}
+      }
+      */
       
       /* * * * * * * * * * * * *
 
@@ -489,7 +513,9 @@ Acceptance step:
 					    theta_i->flag_Sero_likelihood,
 					    theta_i->flag_Prev_likelihood,
 					    gmip,
-					    theta);
+					    theta.gp_delay.distribution_function,
+					    theta.hosp_delay.distribution_function
+			    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 

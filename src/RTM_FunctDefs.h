@@ -42,10 +42,10 @@ int mix_timecat(const int, const gsl_vector_int*, const double);
 void mixing_matrix_parameterise(mixing_model&);
 
 // FUNCTIONS IN RTM_Likelihoods.cc
-void block_log_likelihood(likelihood& llhood, Region* meta_region, int region, bool flag_update_transmission_model, bool flag_update_reporting_model, bool flag_update_GP_likelihood, bool flag_update_Hosp_likelihood, bool flag_update_Viro_likelihood, bool flag_update_Sero_likelihood, bool flag_update_Prev_likelihood, const global_model_instance_parameters &gmip, updParamSet &pars, bool inBlock = false);
+//void block_log_likelihood(likelihood& llhood, Region* meta_region, int region, bool flag_update_transmission_model, bool flag_update_reporting_model, bool flag_update_GP_likelihood, bool flag_update_Hosp_likelihood, bool flag_update_Viro_likelihood, bool flag_update_Sero_likelihood, bool flag_update_Prev_likelihood, const global_model_instance_parameters &gmip, updParamSet &pars, bool inBlock = false);
 
 void fn_log_likelihood(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
-		       const global_model_instance_parameters &, globalModelParams &);
+		       const global_model_instance_parameters &, gslVector&, gslVector&);
 void output_per_selected_period(const int&, const gsl_matrix*, gsl_matrix*);
 double fn_log_lik_positivity(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 double fn_log_lik_countdata(const gsl_matrix*, const gsl_matrix*);

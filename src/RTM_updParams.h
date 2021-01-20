@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <exception>
+#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -62,7 +63,7 @@ public:
   }
   
   // Initialise blocks. Called once after all params created.
-  void init(int numRegions_);
+  void init(int numRegions_, const string& outdir);
 
   // Insert a new parameter (copy from old-style parameter)
   void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool local, int numRegions);
@@ -73,7 +74,7 @@ public:
   const gsl_vector_const_view lookupValue(int index, int region = 0) const;
 
   // Return 1st element of value
-  const double lookupValue0(paramIndex index, int region = 0) const;
+  double lookupValue0(paramIndex index, int region = 0) const;
 
   // - - - - - - -
   // Key M-H code
@@ -82,7 +83,7 @@ public:
   // Calculate acceptance ratios (in parallel over blocks)
   void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
   // Implement acceptance
-  void doAccept(gsl_rng *rng, Region* country);
+  void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip);
   // Adapt MH distribution over time
   void adaptiveUpdate(int iter);
   // DEBUG output
@@ -131,10 +132,15 @@ public:
   double laccept;
   int acceptLastMove;  // Int for use in adaptive update
   int numAccept;
+  // Region index corresponding to this block, zero-based
+  // Also zero in the global block (for use in lookup index maths)
   int regionNum;
   
   likelihood lfx;
   likelihood prop_lfx;
+
+  double childProposalDensity;
+  double childCurrentDensity;
   
   // TODO: Breaks default copy/assign/destruct
   Region* propCountry;
@@ -148,7 +154,7 @@ public:
   // Match the key M-H methods from updParamSet
   void calcProposal(gsl_rng *rng);
   void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
-  void doAccept(gsl_rng *rng, Region* country, int numRegions);
+  void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip);
   void adaptiveUpdate(int iter);
 };
 
@@ -192,6 +198,8 @@ public:
   bool flag_any_child_nodes; // True if any flag child nodes are true
   std::vector<bool> flag_child_nodes; // Flag for each of the other parameters of the mode, indicating whether they are child nodes of the current node
 
+  std::ofstream outfile;
+  
   // Default constructor for constructing params vec in updParamSet
   updParam() { }
 

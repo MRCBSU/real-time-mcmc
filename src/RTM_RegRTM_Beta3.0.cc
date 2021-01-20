@@ -76,7 +76,7 @@ int main(void){
   // //
 
   // Block pars: Having read the parameters, initialise the rest of the block structure
-  paramSet.init(global_fixedpars.l_num_regions);
+  paramSet.init(global_fixedpars.l_num_regions, "pars");
 
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
@@ -106,7 +106,7 @@ int main(void){
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, all_true);
 
-  // Initialise region again for new code
+  // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
   Region* country2 = new Region[global_fixedpars.l_num_regions];
   for (int i = 0; i < global_fixedpars.l_num_regions; i++)
@@ -147,16 +147,21 @@ int main(void){
 		    global_fixedpars.l_Sero_data_flag,
 		    global_fixedpars.l_Prev_data_flag,
   		    global_fixedpars,
-  		    global_modpars);
+  		    global_modpars.gp_delay.distribution_function,
+		    global_modpars.hosp_delay.distribution_function
+    );
 
   likelihood block_llhood(global_fixedpars);
-  block_log_likelihood(block_llhood, country, 0, true, true, 
-		       global_fixedpars.l_GP_consultation_flag,
-		       global_fixedpars.l_Hospitalisation_flag,
-		       global_fixedpars.l_Viro_data_flag,
-		       global_fixedpars.l_Sero_data_flag,
-		       global_fixedpars.l_Prev_data_flag,
-		       global_fixedpars, paramSet);
+  fn_log_likelihood(block_llhood, country, 0, true, true, 
+		    global_fixedpars.l_GP_consultation_flag,
+		    global_fixedpars.l_Hospitalisation_flag,
+		    global_fixedpars.l_Viro_data_flag,
+		    global_fixedpars.l_Sero_data_flag,
+		    global_fixedpars.l_Prev_data_flag,
+		    global_fixedpars,
+		    paramSet.gp_delay.distribution_function,
+		    paramSet.hosp_delay.distribution_function
+    );
 
   for (auto& block : paramSet.blocks)
     block.setLlhood(block_llhood);

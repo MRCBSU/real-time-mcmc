@@ -506,7 +506,7 @@ void read_modpar(updateable_model_parameter& modpar,
 	string tempstring;
 	read_string_from_instruct(tempstring, "prior_hyper", var_string);
 	modpar.flag_hyperprior = ((tempstring.compare("") == 0) || (atoi(tempstring.c_str()) <= 0)) ? false : true; // NOTE THE DEFAULT IS TO ASSUME THAT THE PRIOR IS NOT A HYPERPRIOR
-
+	
 	// ERROR IF HYPERPRIOR IS SPECIFIED FOR A MULTIVARIATE PARAMETER
 	if(modpar.flag_hyperprior && (gsl_vector_int_get(modpar.prior_distribution, 0) == (int) cMVNORMAL)){
 	  perror("Multivariate normal hyperparameters specified\n");
@@ -628,12 +628,14 @@ void initialise_prior_density(updParamSet &paramSet,
 			     *modpar.prior_params[int_marker]);
 	} else if( modpar.parents[int_marker] >= 0) {
 	  // Get prior params from parent parameter instead
-	  // TODO: Confirm we don't need to split over regions
-	  gsl_vector_const_view view = paramSet.lookupValue(modpar.parents[int_marker]);
+	  // TODO: Can we be sure we don't need a region number here
+
+	  // Can't use lookupValue to retrieve parent values as blocks haven't
+	  // been constructed yet, but we can use init_value
 	  modpar.log_prior_dens +=
 	    prior_density_fn(modpar.init_value[int_marker],
 			     (distribution_type) prior_distributions[int_marker],
-			     &view.vector);
+			     *paramSet[modpar.parents[int_marker]].init_value);
 	}
     }
   else
@@ -741,15 +743,15 @@ void node_links(updParamSet& paramSet,
   int inti, intj;
   int int_delim_position = 0;
   string temp_param, temp_prior_param;
-
+  
   // FOR EACH PARAMETER, i
   for(inti = 0; inti < paramSet.numPars(); inti++) {
-    
+
     auto &par = paramSet[inti];
     
     par.flag_any_child_nodes = false;
     
-    for(intj = 0; intj < par.size; intj++) {
+    for(intj = 0; intj < paramSet.numPars(); intj++) {
       
       //FOR ALL OTHER PARAMETERS, j
       if(inti != intj){
@@ -759,7 +761,7 @@ void node_links(updParamSet& paramSet,
 	// NO PARAMETERS ARE HYPERPARAMETERS BY DEFAULT, SO NEEDS TO BE SPECIFIED IN FILE.
 	// CHECK THE VARIABLE APPEARS IN THE FILE
 	// STORE THE VARIABLE STRING
-	int num_strings = cut_out_parameter(temp_param, str_param_input, par.param_name.c_str());
+	int num_strings = cut_out_parameter(temp_param, str_param_input, child.param_name.c_str());
 	
 	if(num_strings > 0)
 	{
@@ -771,13 +773,14 @@ void node_links(updParamSet& paramSet,
 	  // TRIM FIRST AND LAST CHARACTERS (i.e. QUOTATION MARKS)
 	  temp_prior_param.erase(0, 1);
 	  temp_prior_param.erase(FN_MAX(temp_prior_param.length(), 1) - 1, 1);
-
+	  
 	  if(temp_prior_param.compare(par.param_name) == 0){
+
 	    // PARAMETER j IS A CHILD NODE OF PARAMETER i
 	    // SET PRIOR_PARAMS OF j TO BE A POINTER TO PARAM_VALUES OF i
-	    for(int intk = 0; intk < par.size; intk++){
+	    for(int intk = 0; intk < child.size; intk++){
 	      if(child.prior_distribution[1] != (int) cCONSTANT)
-		//par.prior_params[intk] = par.init_value;
+		//child.prior_params[intk] = par.init_value;
 
 		// We can't save a pointer here, as the param_value vector
 		// is no longer used. Instead, we save the parent indexes to
@@ -977,8 +980,7 @@ void read_global_model_parameters(globalModelParams& in_pars,
   // LINK PARENT AND CHILD NODES
   node_links(in_pars, str_source);
 
-  // TODO TODO UNCOMMENT
-  //node_links(paramSet, str_source);
+  node_links(paramSet, str_source);
 
   
    for(inti = 0; inti < num_instances; inti++)
