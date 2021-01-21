@@ -324,25 +324,30 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       paramSet.outputPars();
 
       // Posterior mean and sumsq on a per-parameter basis
-      /*
       for (auto& par : paramSet.params) {
-	if (int_iter >= simulation_parameters.burn_in) {
-	  for (int i = 0; i < par.size; i++) {
-	    double value;
-	    if (par.global) {
-	      value = paramSet.blocks[0].vals[par.value_index + i];
-	    } else {
-	      int region = i / par.regionSize; // Integer division
-	      int offset = i % par.regionSize;
-	      value = paramSet.blocks[region+1].vals[offset];
+	// mean/subsq only defined if flag_update = true
+	if (par.flag_update) {
+	  if (int_iter >= simulation_parameters.burn_in) {
+	    for (int i = 0; i < par.size; i++) {
+	      double value;
+	      if (par.global) {
+		value = paramSet.blocks[0].vals[par.value_index + i];
+	      } else {
+		int region = i / par.regionSize; // Integer division
+		int offset = i % par.regionSize;
+		value = paramSet.blocks[region+1].vals[offset];
+	      }
+	      par.posterior_mean[i] += value / CHAIN_LENGTH;
+	      
+	      par.posterior_sumsq[i] += gsl_pow_2(value) / CHAIN_LENGTH;
 	    }
-	    par.posterior_mean[i] += value / CHAIN_LENGTH;
-
-	    par.posterior_sumsq[i] += gsl_pow_2(value) / CHAIN_LENGTH;
 	  }
 	}
       }
-      */
+
+      if (int_iter > 0 && int_iter % 10 == 0)
+	paramSet.printAcceptRates(int_iter);
+      
       
       /* * * * * * * * * * * * *
 

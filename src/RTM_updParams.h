@@ -89,6 +89,7 @@ public:
   // DEBUG output
   void outputPars();
 
+  void printAcceptRates(int numIters);
 
   // - - - - - - -
   // Future work: Initialise pars directly from input file rather than copying
@@ -126,6 +127,7 @@ public:
   bool global;	// True for the global block
   gslVector vals;
   gslVector proposal;
+  gslVector dist; // Distribution for each of the vals; copy of vals in updParam
   gslVector mu;
   double beta;
   gslMatrix sigma;
@@ -199,7 +201,7 @@ public:
   std::vector<bool> flag_child_nodes; // Flag for each of the other parameters of the mode, indicating whether they are child nodes of the current node
 
   std::ofstream outfile;
-  
+
   // Default constructor for constructing params vec in updParamSet
   updParam() { }
 

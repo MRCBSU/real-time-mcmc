@@ -162,7 +162,7 @@ double R_proposenew2(double& newparam,
 {
   double param_trans = 0, ratio = 1;
   double proposenew_sd = sqrt(propvar);
-
+  
   // Forward transformation
   if(trunc_flag)
     {
