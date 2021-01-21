@@ -36,7 +36,7 @@ if (args[2] == "All")  {
 }
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
-sero.end.date <- ymd(20200605)
+sero.end.date <- ymd(20200522)
 
 google.data.date <- format(ymd("20210115"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
@@ -48,7 +48,7 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -87,9 +87,12 @@ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderl
 ## Is there a previous MCMC from which we can take some initial values?
 use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
+    if(region.type == "NHS"){
     if(prev.flag)
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "PrevCevik_60cutoff_prev14_matrices_20210104_timeuse_household_deaths")
     else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "NoPrev_60cutoff_matrices_20210104_timeuse_household_deaths")
+    } else if(region.type == "ONS")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
 }
 iteration.number.to.start.from <- 6400
 
@@ -103,8 +106,8 @@ if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
-	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
+	str.cutoff <- "60"
+	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
 if (data.desc == "all") {
@@ -150,7 +153,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20210113")
+date.prev <- ymd("20210118")
 num.prev.days <- 51
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
