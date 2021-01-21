@@ -44,9 +44,9 @@ if(!exists("regions")){
 
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
-    surv = "surv",
+    surv = c("surv", "Collection"),
     age = "age",
-    region = c("region", "Region"),
+    region = c("region", "Region", "NHS_Region"),
     sample_date = c("sampledate", "SampleDate"),
     Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome", "euroimmun_outcome"),
     Eresult = c("EuroImmun_units", "EuroImm_Units", "euroimmun_units"),
@@ -64,7 +64,6 @@ if (any(invalid.col.names)) {
 	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
 	stop(paste("No valid column name for:", names.invalid.cols))
 }
-
 
 ## Given a row in the sero data file, return its region, formatted with no spaces
 if (region.type == "NHS") {
@@ -145,7 +144,7 @@ sero.dat <- read_csv(input.loc,
 
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
-    filter(startsWith(surv, "NHSBT")) %>%
+    filter(startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT")) %>%
     filter(!is.na(region), SDate <= sero.end.date) %>%
     mutate(region = get.region(.),
            age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
