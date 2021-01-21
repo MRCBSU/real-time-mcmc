@@ -2,6 +2,7 @@
 repeat.for.regions <- function(v) {
 	paste(rep(v, nr), collapse = ", ")
 }
+if(!exists("beta.design.name")) beta.design.name <- "beta.design.txt"
 options(scipen=999)
 ```
 

@@ -13,36 +13,37 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-8
+#SBATCH --array=1-6
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20210111prevjobs_%a.out
-#SBATCH --error=model_runs_20210111prevjobs_%a.err
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210111/"
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-    workdir="${workdir}NoPrev_"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/"
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+    if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+	reg="NHS"
+    else
+	reg="ONS"
+    fi
+    workdir="${workdir}NoPrev_${reg}60cutoff_18"     
 else
-    workdir="${workdir}PrevCevik_"
+    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+	reg="NHS"
+    else
+	reg="ONS"	
+    fi
+    if (( $SLURM_ARRAY_TASK_ID %2 == 0 )); then
+	gap="7"
+    else
+	gap="14"
+    fi
+    workdir="${workdir}PrevCevik_${reg}60cutoff_11_prev${gap}"
 fi
-if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
-    workdir="${workdir}60"
-else
-    workdir="${workdir}28"
-fi
-workdir="${workdir}cutoff_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}18_"
-else
-    workdir="${workdir}11_"
-fi
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
-    workdir="${workdir}prev7_"
-fi
-workdir="${workdir}matrices_20210110_timeuse_household_deaths"
+workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 

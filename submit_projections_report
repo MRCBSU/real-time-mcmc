@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=5,7
+#SBATCH --array=1,3,7
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -62,27 +62,32 @@ if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210111/"
-if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210117/"
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
     workdir="${workdir}NoPrev_"
 else
     workdir="${workdir}PrevCevik_"
 fi
-if (( $SLURM_ARRAY_TASK_ID % 4 == 1 )) || (( $SLURM_ARRAY_TASK_ID % 4 == 2 )); then
+if [ $SLURM_ARRAY_TASK_ID -gt 5 ]; then
     workdir="${workdir}60"
 else
     workdir="${workdir}28"
 fi
 workdir="${workdir}cutoff_"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}18_"
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
+    workdir="${workdir}18"
 else
-    workdir="${workdir}11_"
+    workdir="${workdir}11"
 fi
-if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
-    workdir="${workdir}prev7_"
+if [ $SLURM_ARRAY_TASK_ID -gt 1 ]; then
+    workdir="${workdir}_prev"
+    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	workdir="${workdir}7"
+    else
+	workdir="${workdir}14"
+    fi
 fi
-workdir="${workdir}matrices_20210110_timeuse_household_deaths"
+workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
 
 echo -e $workdir
 
