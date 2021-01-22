@@ -438,8 +438,8 @@ deaths.growth.rates %>%
 
 The blue lines is show when interventions have been introduced (lockdown on 23 Mar and the relaxation of measures on 11 May), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
-<!-- ```{r eval=!is.null(prev.dat), child='prev-report.Rmd'} -->
-<!-- ``` -->
+```{r eval=!is.null(prev.dat), child='prev-report.Rmd'}
+```
 
 ```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
 ```
