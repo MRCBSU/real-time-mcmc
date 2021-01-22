@@ -180,7 +180,7 @@ double invTransform(double x, int dist, double low = 0, double high = 1) {
   case cUNIFORM:
     return (high * gsl_sf_exp(x) + low) / (1 + gsl_sf_exp(x));
   default:
-    throw invalid_argument("transform: invalid distribution");
+    throw invalid_argument("invTransform: invalid distribution");
   }
 }
 
@@ -379,6 +379,27 @@ void updParamBlock::copyCountry(Region* inCountry, int numRegions) {
   }
 }
 
+double jacobianFactor(double prop, double curr, int dist, double low = 0, double high = 1) {
+
+  switch(dist) {
+  case cCONSTANT:
+    return 0;
+  case cNORMAL:
+  case cMVNORMAL:
+    return 0;
+  case cGAMMA:
+  case cHALFNORMAL:
+    return gsl_sf_log(prop/curr);
+  case cBETA:
+    //a=0, b=1)
+    return gsl_sf_log(prop/curr) + gsl_sf_log((1-prop)/(1-curr));
+  case cUNIFORM:
+    return gsl_sf_log(((prop-low) * (high-prop)) / ((curr-low) * (high-curr)));
+  default:
+    throw invalid_argument("jacobianFactor: invalid distribution");
+  }
+}
+
 void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
 
   laccept = 0;
@@ -410,12 +431,14 @@ void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const glo
 	int parIndex = regionNum * par.regionSize + i;
 	int blockIndex = par.value_index + i;
 
+	laccept += jacobianFactor(proposal[i], vals[i], dist[i]);
+	
 	if (par.prior_distribution[parIndex] != cCONSTANT) {
 	  if (par.prior_distribution[parIndex] != cMVNORMAL) {
 	  
-	    // Code save proposal_log_prior_dens at this point
-	    // laccept += univariate_prior_ratio(par, a_component = component index)
+	    // Code saved proposal_log_prior_dens at this point
 
+	    // laccept += univariate_prior_ratio(par, a_component = component index)
 	    // dist_component = flag_hyperprior ? 1 : component
 	    const gsl_vector* prior;
 	    int distIndex;
@@ -435,7 +458,6 @@ void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const glo
 	      vals[blockIndex],
 	      par.prior_distribution[distIndex],
 	      prior);
-	    
 	  }
 	}
       }
@@ -475,8 +497,8 @@ void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const glo
 		
 	      // Child components are split over regions.
 	      for (int r = 0; r < paramSet.numRegions; r++) {
-		for (int i = 0; i < par.regionSize; i++) {
-
+		
+		for (int i = child.value_index; i < child.value_index + child.regionSize; i++) {
 		  double value = paramSet.blocks[r+1].vals[i];
 		  gsl_vector_view prop = gsl_vector_subvector(*proposal, par.value_index, par.regionSize);
 
@@ -492,6 +514,7 @@ void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const glo
 	      }
 
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
+
 	    }
 	  }
 	}
@@ -543,7 +566,9 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
   // TODO: Initialise properly??
   flagclass update_flags;
-    
+
+  //cout << regionNum << ": " << laccept << " " << acceptTest << endl;
+  
   if (laccept > acceptTest) {
     //cout << "accept\n";
     
@@ -639,6 +664,7 @@ void updParamSet::outputPars() {
   for (auto& par : params) {
     if (! par.flag_update)
       continue;
+    par.outfile << "  ";
     if (par.global) {
       for (int i = 0; i < par.size; i++)
 	par.outfile << blocks[0].vals[par.value_index + i] << " ";
@@ -652,6 +678,26 @@ void updParamSet::outputPars() {
     }
   }
 }
+
+void updParamSet::outputProposals() {
+  for (auto& par : params) {
+    if (! par.flag_update)
+      continue;
+    par.outfile << "P ";
+    if (par.global) {
+      for (int i = 0; i < par.size; i++)
+	par.outfile << blocks[0].proposal[par.value_index + i] << " ";
+      par.outfile << std::endl;
+    } else {
+      // local
+      for (int r = 0; r < numRegions; r++)
+	for (int i = 0; i < par.regionSize; i++)
+	  par.outfile << blocks[r+1].proposal[par.value_index + i] << " ";
+      par.outfile << std::endl;
+    }
+  }
+}
+
 
 void updParamSet::printAcceptRates(int numIters) {
   cout << "Accept: ";

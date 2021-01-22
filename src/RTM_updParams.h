@@ -88,6 +88,7 @@ public:
   void adaptiveUpdate(int iter);
   // DEBUG output
   void outputPars();
+  void outputProposals();
 
   void printAcceptRates(int numIters);
 

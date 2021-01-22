@@ -314,7 +314,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // CCS: Block Updates
       // For now, this is NOT done in parallel to avoid parallel RNG issues
       paramSet.calcProposals(r);
-      
+
+      paramSet.outputProposals();
       // Calculate acceptance ratio
       paramSet.calcAccept(country2, gmip, base_mix);
 
@@ -523,7 +524,7 @@ Acceptance step:
 			    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
-
+			  
 			}
 		    }
 		  }
