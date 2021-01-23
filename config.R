@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -48,7 +48,7 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 4 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -117,7 +117,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data)  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
+    date.adj.data <- ymd(date.data) - 1  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")

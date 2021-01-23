@@ -102,6 +102,7 @@ if(!exists("file.loc")){
 	source(file.path(file.loc, "utils.R"))
 	source(file.path(proj.dir, "config.R"))
 }
+
 if(!exists("serosam.files")){
     serosam.files <- build.data.filepath("RTM_format/serology",
                                          "sero",
@@ -220,7 +221,7 @@ for(reg in regions){
                 "rows.)"
                 )
           )
-
+    
     region.pos %>%
         write_tsv(
             tmpFile,
