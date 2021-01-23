@@ -62,8 +62,8 @@ if (exists("flg.cutoff")){
 data.files <- paste0(data.files, ".txt")
 names(data.files) <- regions
 if(sero.flag){
-  serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
-  seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
+  serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_samples.txt")
+  seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_positives.txt")
 } else {
   serosam.files <- seropos.files <- NULL
 }

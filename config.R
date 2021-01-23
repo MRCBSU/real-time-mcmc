@@ -65,7 +65,7 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "adjusted_mean"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
@@ -117,7 +117,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data)-2
+    date.adj.data <- ymd(date.data) - 1  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
