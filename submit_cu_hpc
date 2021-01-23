@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-6
+#SBATCH --array=1-2
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -22,28 +22,10 @@
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/"
-if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
-    if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-	reg="NHS"
-    else
-	reg="ONS"
-    fi
-    workdir="${workdir}NoPrev_${reg}60cutoff_18"     
-else
-    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-	reg="NHS"
-    else
-	reg="ONS"	
-    fi
-    if (( $SLURM_ARRAY_TASK_ID %2 == 0 )); then
-	gap="7"
-    else
-	gap="14"
-    fi
-    workdir="${workdir}PrevCevik_${reg}60cutoff_11_prev${gap}"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_11_prev14_matrices_20210115_timeuse_household_adjusted_mean"
+if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_4_prev14_matrices_20210115_timeuse_household_adjusted_mean"
 fi
-workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 

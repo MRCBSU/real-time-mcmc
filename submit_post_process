@@ -17,7 +17,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=3
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-9
+#SBATCH --array=1-2
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,32 +61,10 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210117/"
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    workdir="${workdir}NoPrev_"
-else
-    workdir="${workdir}PrevCevik_"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_11_prev14_matrices_20210115_timeuse_household_adjusted_mean"
+if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_4_prev14_matrices_20210115_timeuse_household_adjusted_mean"
 fi
-if [ $SLURM_ARRAY_TASK_ID -gt 5 ]; then
-    workdir="${workdir}60"
-else
-    workdir="${workdir}28"
-fi
-workdir="${workdir}cutoff_"
-if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
-    workdir="${workdir}18"
-else
-    workdir="${workdir}11"
-fi
-if [ $SLURM_ARRAY_TASK_ID -gt 1 ]; then
-    workdir="${workdir}_prev"
-    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	workdir="${workdir}7"
-    else
-	workdir="${workdir}14"
-    fi
-fi
-workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
