@@ -75,7 +75,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -145,7 +145,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 date.prev <- ymd("2021-01-18")
 ## Convert that to an analysis day number
-days.between.prev <- 14
+days.between.prev <- 7
 prev.end.day <- date.prev - start.date - 2
 first.prev.day <- date.prev - 51 - start.date + 1
 ## Default system for getting the days on which the likelihood will be calculated.
@@ -153,7 +153,7 @@ prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
-lag.last.beta <- 24 - 7*2
+lag.last.beta <- 24 #- 7*2
 if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
