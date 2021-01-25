@@ -265,9 +265,12 @@ if (!dths.flag) {
         ifr <- apply(ifr, 1:2, pad.fullrange, breaks = tbreaks.ifr, rmax = ndays)
         ifr <- aperm(ifr, c(2, 3, 1))
     }
+    merge.flg <- grepl("adjusted", data.desc)
     death.data <- derived.quantity(ifr,
                                    overdispersion.param = params$hosp_negbin_overdispersion,
-                                   convolution = F.death)
+                                   convolution = F.death,
+                                   merge.youngest.grps = 3 + merge.flg,
+                                   merge.youngest.label = ifelse(merge.flg, "<45", "<25"))
     deaths <- death.data$mean
     noisy_deaths <- death.data$noisy.out
     cum_deaths <- death.data$cumulative
@@ -328,7 +331,7 @@ load.data <- function(file.names, idx.age.to.combine = 1:4, label.age.to.combine
   }
   return(tbl_dat %>% pivot_longer(-c(date, region), names_to = "age"))
 }
-if (hosp.flag == 0 || grepl("adjusted", data.desc)) {
+if (hosp.flag == 0 || merge.flg) {
   dth.dat <- NULL
 } else  {
   dth.dat <- load.data(data.files)

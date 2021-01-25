@@ -3,7 +3,7 @@ suppressMessages(library(tidyverse))
 
 write.deaths <- FALSE
 source(file.path(proj.dir, "R/data/format_deaths.R"))
-age_groupings <- c("0-44", "45-64", "65-74", ">=75")
+age_groupings <- c("<45", "45-64", "65-74", "75+")
 raw.deaths <- dth.dat %>%
     mutate(Age.Grp = cut(
 		age,
@@ -178,7 +178,7 @@ for(reg in regions) {
 }
 
 ## Save the data as processed
-dth.dat <- dth.dat %>% rename(date = Date)
+dth.dat <- dth.dat %>% rename(date = Date, value = n, region = Region)
 save(dth.dat, rtm.dat, file = file.path(out.dir, "deaths_data.RData"))
 
 ## Save a quick plot of the data...

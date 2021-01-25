@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-2
+#SBATCH --array=8
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,9 +61,26 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_11_prev14_matrices_20210115_timeuse_household_adjusted_mean"
-if [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
-    workdir="$SLURM_SUBMIT_DIR/model_runs/20210120/PrevCevik_NHS60cutoff_4_prev14_matrices_20210115_timeuse_household_adjusted_mean"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210122/"
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+    workdir="${workdir}NoPrev_NHS"
+else
+    workdir="${workdir}PrevCevik_NHS"
+fi
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
+    workdir="${workdir}28"
+else
+    workdir="${workdir}60"
+fi
+workdir="${workdir}cutoff_11_"
+if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
+    workdir="${workdir}prev14_"
+fi
+workdir="${workdir}matrices_20210115_timeuse_household_"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    workdir="${workdir}deaths"
+else
+    workdir="${workdir}adjusted_mean"
 fi
 
 module load gcc/9 intel/compilers/2020.2
