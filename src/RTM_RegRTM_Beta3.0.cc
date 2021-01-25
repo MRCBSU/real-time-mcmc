@@ -82,6 +82,7 @@ int main(void){
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
   Region* country = new Region[global_fixedpars.l_num_regions];
 
+  
   // BELOW ROUTINES WILL READ IN ALL THE DATA THAT WE'RE GOING TO USE
   // POLYMOD MATRICES ALSO TREATED AS DATA. THE POLYMOD "DATA" FILE
   // SHOULD BE SPECIFIED IN THE FILE NAMED str_filename_modpars
@@ -89,6 +90,8 @@ int main(void){
   // FIRST, WANT TO READ IN THE MIXING MODEL
   mixing_model mixmod_struct;
   read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs, global_fixedpars);
+
+#ifdef USE_OLD_CODE
 
   // ALLOCATE MEMORY TO REGIONAL SUBSTRUCTURES
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
@@ -106,6 +109,9 @@ int main(void){
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, all_true);
 
+#endif
+
+  
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
   Region* country2 = new Region[global_fixedpars.l_num_regions];
@@ -116,8 +122,9 @@ int main(void){
   flagclass block_all_true;
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     block_regional_parameters(country2[int_i].det_model_params, paramSet, 
-  				 global_fixedpars, int_i, country[int_i].population,
-  				 country[int_i].total_population, mixmod_struct, block_all_true);
+  				 global_fixedpars, int_i, country2[int_i].population,
+  				 country2[int_i].total_population, mixmod_struct, block_all_true);
+
 
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
@@ -138,8 +145,9 @@ int main(void){
   // likelihood_alloc(llhood, global_fixedpars);
   likelihood llhood(global_fixedpars);
 
-  
+
   // MAKE AN INITIAL EVALUATION OF THE LIKELIHOOD
+#ifdef USE_OLD_CODE
   fn_log_likelihood(llhood, country, 0, true, true,
   		    global_fixedpars.l_GP_consultation_flag,
   		    global_fixedpars.l_Hospitalisation_flag,
@@ -150,9 +158,10 @@ int main(void){
   		    global_modpars.gp_delay.distribution_function,
 		    global_modpars.hosp_delay.distribution_function
     );
-
+#endif
+  
   likelihood block_llhood(global_fixedpars);
-  fn_log_likelihood(block_llhood, country, 0, true, true, 
+  fn_log_likelihood(block_llhood, country2, 0, true, true, 
 		    global_fixedpars.l_GP_consultation_flag,
 		    global_fixedpars.l_Hospitalisation_flag,
 		    global_fixedpars.l_Viro_data_flag,
@@ -188,13 +197,15 @@ int main(void){
   // FREE THE MIXING MODEL STRUCTURE INTO WHICH THE MATRICES WERE INITIALLY READ
   mixing_model_free(mixmod_struct);
 
+#ifdef USE_OLD_CODE
   // FREE THE SUBSTRUCTURES WITHIN THE COUNTRY ARRAY
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     Region_free(country[int_i], global_fixedpars);
-
+  
   /// FREE THE COUNTRY ARRAY
   delete [] country;
-
+#endif
+  
   /// FREE STRUCTURES ALLOCATED AHEAD OF read_model_inputs CALL
   free_global_model_instance(global_fixedpars);
 

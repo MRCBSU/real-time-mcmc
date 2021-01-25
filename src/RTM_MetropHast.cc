@@ -219,12 +219,19 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
   // Region
   Region* prop_country = new Region[nregions];
+
+#ifdef USE_OLD_CODE
   for(int int_reg = 0; int_reg < nregions; ++int_reg)
     {
       Region_alloc(prop_country[int_reg], state_country[int_reg]);
-
       Region_memcpy(prop_country[int_reg], state_country[int_reg], all_pos);
     }
+#else
+  for(int int_reg = 0; int_reg < nregions; ++int_reg) {
+    Region_alloc(prop_country[int_reg], country2[int_reg]);
+    Region_memcpy(prop_country[int_reg], country2[int_reg], all_pos);
+  }
+#endif
 
   // Block copy
   for (auto &block : paramSet.blocks) {
@@ -310,6 +317,18 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter % 10 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
+      // Global
+      paramSet.blocks[0].calcProposal(r);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+
+      // Pick one region [1, 7]
+      int reg = gsl_rng_uniform_int(r, 7) + 1;
+      paramSet.blocks[reg].calcProposal(r);
+      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+
+/*
       
       // CCS: Block Updates
       // For now, this is NOT done in parallel to avoid parallel RNG issues
@@ -323,7 +342,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       paramSet.doAccept(r, country2, gmip);
 
       paramSet.outputPars();
+*/
 
+      paramSet.outputPars();
+
+      
       // Posterior mean and sumsq on a per-parameter basis
       for (auto& par : paramSet.params) {
 	// mean/subsq only defined if flag_update = true
@@ -349,54 +372,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter > 0 && int_iter % 10 == 0)
 	paramSet.printAcceptRates(int_iter);
       
-      
-      /* * * * * * * * * * * * *
-
-Acceptance step:
-
-	 - Iterate over parameters {
-	     Q: All params or global/local subset?
-	   - If prior_distribution is not cMNVORMAL
-	     - Iterate over components of parameter
-	         proposal_log_prior_dens += univariate_prior_ratio
-	   - else prior distribut is multivar normal
-	       proposal_log_prior_dens = param.prior_multivariate_norm.ld_mvnorm_ratio()
-
-           log_accep += proposal_prior_log_dens
-
-           - Iterate over all child parameters of param, using flag_child_nodes array
-	     - For each component of child parameter
-	         child.proposal_log_prior_dens = R_univariate_prior_log_density
-	     - log_accep += child.proposal_log_prior_dens - child.log_prior_dens;
-	   Else if no child parameters:
-	     - Make copy of regional_model_params structure
-	     - Call evaluate_regional_parameters with new proposal
-	     - Call fn_log_likelihood
-	     - log_accep += proposed likelihood - current likelihood
-
-	  }
-
-	Now that each block has tested its proposal, do the accept/reject:
-
-	if (log_accep > 0) log_accep = 0 (why is this truncated?)
-	if (log_accep > log(uniform random in range [0, 1))
-	  - accept
-	  - Save propsal, and log_prior_dens of params and child params
-	else
-	  - reject
-	  - Restore old region structure, likelihood, ?model_statistics
-	 
-	if (iter >= 200) adaptive step
-
-	At end of process:
-	  - iterate posterior_mean and posterior_sumsq
-	  - Do a lot if output
-
-       */
-
-
-      
-      
+#ifdef USE_OLD_CODE
 
       // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
       // Previous update of individual params one by one
@@ -638,7 +614,10 @@ Acceptance step:
 
 	} // END FOR(int_param < size_param_list)
 
-	  // OUTPUT TO THE LIKELIHOOD CHAIN
+#endif // USE_OLD_CODE
+
+      
+      // OUTPUT TO THE LIKELIHOOD CHAIN
       if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every))
 	output_coda_lfx.write(reinterpret_cast<char const*>(&lfx.total_lfx), sizeof(double));
 
@@ -647,31 +626,31 @@ Acceptance step:
 	{
 	  for(int int_reg = 0; int_reg < nregions; int_reg++)
 	    {
-	      model_statistics_aggregate(output_NNI[int_reg], state_country[int_reg].region_modstats, gmip.l_reporting_time_steps_per_day);
+	      model_statistics_aggregate(output_NNI[int_reg], country2[int_reg].region_modstats, gmip.l_reporting_time_steps_per_day);
 	      if(simulation_parameters.oType == cMCMC)
 		{	 
 		  for(int int_i = 0; int_i < output_NNI[int_reg]->size1; int_i++)
 		    for(int int_j = 0; int_j < output_NNI[int_reg]->size2; int_j++)
 		      {
 			file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[int_reg], int_i, int_j)), sizeof(double));
-			file_Sero[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_seropositivity, int_i, int_j)), sizeof(double));
+			file_Sero[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_seropositivity, int_i, int_j)), sizeof(double));
 			if(gmip.l_GP_consultation_flag)
 			  {
-			    file_GP[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_Reported_GP_Consultations, int_i, int_j)), sizeof(double));
-			    file_Viro[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_viropositivity, int_i, int_j)), sizeof(double));
+			    file_GP[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_Reported_GP_Consultations, int_i, int_j)), sizeof(double));
+			    file_Viro[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_viropositivity, int_i, int_j)), sizeof(double));
 			  }
 			if(gmip.l_Hospitalisation_flag)
-			  file_Hosp[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_Reported_Hospitalisations, int_i, int_j)), sizeof(double));
+			  file_Hosp[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_Reported_Hospitalisations, int_i, int_j)), sizeof(double));
 			if(gmip.l_Prev_data_flag)
-			  file_Prev[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_prevalence, int_i, int_j)), sizeof(double));
+			  file_Prev[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_prevalence, int_i, int_j)), sizeof(double));
 		      }
 		}
 	      else if(simulation_parameters.oType == cSMC)
 		{
-		  for(int int_i = 0; int_i < state_country[int_reg].region_modstats.d_NNI->size1; int_i++)
-		    for(int int_j = 0; int_j < state_country[int_reg].region_modstats.d_NNI->size2; int_j++)		  
-		      file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_NNI, int_i, int_j)), sizeof(double));
-		  state_country[int_reg].region_modstats.d_end_state->write(file_state[int_reg]);
+		  for(int int_i = 0; int_i < country2[int_reg].region_modstats.d_NNI->size1; int_i++)
+		    for(int int_j = 0; int_j < country2[int_reg].region_modstats.d_NNI->size2; int_j++)		  
+		      file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[int_reg].region_modstats.d_NNI, int_i, int_j)), sizeof(double));
+		  country2[int_reg].region_modstats.d_end_state->write(file_state[int_reg]);
 		}
 	    }
 	}

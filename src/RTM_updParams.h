@@ -10,6 +10,8 @@
 
 #include <gsl/gsl_rng.h>
 
+// #define USE_OLD_CODE
+
 #include "gslWrapper.h"
 #include "RTM_StructDefs.h"
 
@@ -131,10 +133,13 @@ public:
   gslVector dist; // Distribution for each of the vals; copy of vals in updParam
   gslVector mu;
   double beta;
+  static double regbeta;
   gslMatrix sigma;
   double laccept;
-  int acceptLastMove;  // Int for use in adaptive update
+  int acceptLastMove;
+  static int regacceptLastMove;  // Int for use in adaptive update
   int numAccept;
+  int numProposed;
   // Region index corresponding to this block, zero-based
   // Also zero in the global block (for use in lookup index maths)
   int regionNum;

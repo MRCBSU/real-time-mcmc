@@ -232,7 +232,6 @@ void updParamSet::init(int numRegions_, const string& dir) {
   std::vector<int> localIndex(numRegions, 0);
   for (auto &par : params) {
     if (par.flag_update) {
-      par.value_index = localIndex[0];
       if (par.global) {
 	par.value_index = globalIndex;
 	for (int i = 0; i < par.size; i++) {
@@ -244,6 +243,7 @@ void updParamSet::init(int numRegions_, const string& dir) {
 	// local block
 	int readIndex = 0;
 	int regionSize = par.size / numRegions; // Integer division
+	par.value_index = localIndex[0];
 	for (int r = 0; r < numRegions; r++) {
 	  for (int i = 0; i < regionSize; i++) {
 	    blocks[r+1].vals[localIndex[r]] = par.init_value[readIndex];
@@ -272,7 +272,7 @@ void updParamSet::init(int numRegions_, const string& dir) {
       if (block.sigma[i][i] == 0)
 	block.sigma[i][i] = 0.01;
     }
-    
+
     block.beta = 0;
     block.proposal.alloc(block.vals.size());
   }
@@ -325,7 +325,11 @@ void updParamBlock::calcProposal(gsl_rng *rng) {
   
   // Multivar normal. mu = param values, not the variable 'mu'.
   // After 1st 200 iters, sigma/beta change every iter, so no benefit to caching
-  gslMatrix covar = sigma * exp(beta);
+  gslMatrix covar;
+  if (global)
+    covar = sigma * exp(beta);
+  else
+    covar = sigma * exp(regbeta);
 
   gslVector transformed(vals.size());
   for (int i = 0; i < vals.size(); i++)
@@ -342,20 +346,53 @@ void updParamBlock::calcProposal(gsl_rng *rng) {
   }
 }
 
+double updParamBlock::regbeta = 0;
+int updParamBlock::regacceptLastMove = 0;
+
 void updParamBlock::adaptiveUpdate(int iter) {
-  double eta = pow(iter - 199 + 1, -0.6);
-  beta = beta + eta * (acceptLastMove - 0.234);
 
-  // delta = proposed vals - curr vals
-  gslVector delta = proposal - vals;
-  mu = (1 - eta) * mu + eta * delta;
-  gslMatrix deltaProd(delta.size(), delta.size());
+  if (global) {
 
-  for (int i = 0; i < delta.size(); i++)
-    for (int j = 0; j < delta.size(); j++)
-      deltaProd[i][j] = delta[i] * delta[j];
-  
-  sigma = (1 - eta) * sigma + eta * deltaProd;
+    double eta = pow(iter - 199 + 1, -0.6);
+    beta = beta + eta * (acceptLastMove - 0.234);
+    
+    // delta = proposed vals - curr vals
+    // We need to be working on the transformed scale
+    gslVector transProp(proposal);
+    gslVector transVals(vals);
+    for (int i = 0; i < transProp.size(); i++) {
+      transProp[i] = transform(transProp[i], dist[i]);
+      transVals[i] = transform(transVals[i], dist[i]);
+    }
+    
+    gslVector delta = transProp - transVals;
+
+    
+    mu = (1 - eta) * mu + eta * delta;
+    gslMatrix deltaProd(delta.size(), delta.size());
+    
+    for (int i = 0; i < delta.size(); i++)
+      for (int j = 0; j < delta.size(); j++)
+	deltaProd[i][j] = delta[i] * delta[j];
+    
+    sigma = (1 - eta) * sigma + eta * deltaProd;
+
+  } else {
+    // local
+    double eta = pow(iter - 199 + 1, -0.6);
+    regbeta = regbeta + eta * (regacceptLastMove - 0.234);
+    
+    // delta = proposed vals - curr vals
+    gslVector delta = proposal - vals;
+    mu = (1 - eta) * mu + eta * delta;
+    gslMatrix deltaProd(delta.size(), delta.size());
+    
+    for (int i = 0; i < delta.size(); i++)
+      for (int j = 0; j < delta.size(); j++)
+	deltaProd[i][j] = delta[i] * delta[j];
+    
+    sigma = (1 - eta) * sigma + eta * deltaProd;
+  }
 }
 
 
@@ -403,7 +440,10 @@ double jacobianFactor(double prop, double curr, int dist, double low = 0, double
 void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
 
   laccept = 0;
-  acceptLastMove = 0;
+  if (global)
+    acceptLastMove = 0;
+  else
+    regacceptLastMove = 0;
   
   for (auto &par : paramSet.params) {
 
@@ -568,12 +608,18 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
   flagclass update_flags;
 
   //cout << regionNum << ": " << laccept << " " << acceptTest << endl;
+
+  numProposed++;
   
   if (laccept > acceptTest) {
     //cout << "accept\n";
     
     numAccept++;
-    acceptLastMove = 1;
+    if (global)
+      acceptLastMove = 1;
+    else
+      regacceptLastMove = 1;
+    
     vals = proposal;
 
     // Log prior dens: Original code saves this, but appears not to use the
@@ -702,6 +748,6 @@ void updParamSet::outputProposals() {
 void updParamSet::printAcceptRates(int numIters) {
   cout << "Accept: ";
   for (auto& block : blocks)
-    cout << setprecision(2) << block.numAccept / (double) numIters << " ";
+    cout << setprecision(2) << block.numAccept / (double) block.numProposed << " ";
   cout << endl;
 }
