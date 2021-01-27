@@ -76,7 +76,7 @@ int main(void){
   // //
 
   // Block pars: Having read the parameters, initialise the rest of the block structure
-  paramSet.init(global_fixedpars.l_num_regions, "pars");
+  paramSet.init("pars");
 
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION

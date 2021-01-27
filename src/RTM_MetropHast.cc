@@ -240,6 +240,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   
   // Likelihood
   likelihood prop_lfx(gmip);
+  prop_lfx = lfx;
   // CCS: Alloc no longer required
   //likelihood_alloc(prop_lfx, gmip);
   //likelihood_memcpy(prop_lfx, lfx);
@@ -318,16 +319,20 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Global
-      paramSet.blocks[0].calcProposal(r);
+      paramSet.blocks[0].calcProposal(paramSet, r);
       paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
 
       // Pick one region [1, 7]
       int reg = gsl_rng_uniform_int(r, 7) + 1;
-      paramSet.blocks[reg].calcProposal(r);
+      if (debug) {
+	cout << "Iter: " << int_iter << " ";
+	cout << "Local region: " << reg-1 << endl;
+      }
+      paramSet.blocks[reg].calcProposal(paramSet, r);
       paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
-
+      
 /*
       
       // CCS: Block Updates
@@ -353,17 +358,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	if (par.flag_update) {
 	  if (int_iter >= simulation_parameters.burn_in) {
 	    for (int i = 0; i < par.size; i++) {
-	      double value;
-	      if (par.global) {
-		value = paramSet.blocks[0].vals[par.value_index + i];
-	      } else {
-		int region = i / par.regionSize; // Integer division
-		int offset = i % par.regionSize;
-		value = paramSet.blocks[region+1].vals[offset];
-	      }
-	      par.posterior_mean[i] += value / CHAIN_LENGTH;
-	      
-	      par.posterior_sumsq[i] += gsl_pow_2(value) / CHAIN_LENGTH;
+	      par.posterior_mean[i] += par.values[i] / CHAIN_LENGTH;
+	      par.posterior_sumsq[i] += gsl_pow_2(par.values[i]) / CHAIN_LENGTH;
 	    }
 	  }
 	}
@@ -500,6 +496,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
+
+			  //cout << "Old llhood: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
 			  
 			}
 		    }

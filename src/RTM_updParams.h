@@ -2,7 +2,6 @@
 #define HEADER_updParams_
 
 #include <cassert>
-#include <exception>
 #include <fstream>
 #include <map>
 #include <string>
@@ -10,14 +9,37 @@
 
 #include <gsl/gsl_rng.h>
 
-// #define USE_OLD_CODE
-
 #include "gslWrapper.h"
 #include "RTM_StructDefs.h"
+
+// Debugging flags
+//#define USE_OLD_CODE
+//#define SKIP_NEW_CODE
+extern bool debug;  // Set in RTM_updParams.cc
+
 
 // upd = Updateable
 class updParam;
 class updParamBlock;
+
+// The new block structure needs an array of design matrices for each param
+class updRegrDef {
+public:
+  gslVectorInt region_breakpoints;
+  gslVectorInt age_breakpoints;
+  gslVectorInt time_breakpoints;
+  link_function regression_link;
+  std::vector<gslMatrix> design_matrix;
+
+  updRegrDef(regression_def& in)
+    : region_breakpoints(in.region_breakpoints),
+      age_breakpoints(in.age_breakpoints),
+      time_breakpoints(in.time_breakpoints),
+      regression_link(in.regression_link) { }
+
+  updRegrDef() { }
+};
+
 
 // Class for managing the set of params
 class updParamSet {
@@ -44,7 +66,7 @@ public:
   // The parameters
   std::vector<updParam> params;
 
-  // Vector of parameter blocks. First block (index 0) is global.
+  // Parameter component blocks. First block (index 0) is global, others local.
   std::vector<updParamBlock> blocks;  
 
   // Mapping of string names to paramIndex above
@@ -54,44 +76,44 @@ public:
   infection_to_data_delay hosp_delay;
   infection_to_data_delay death_delay;
 
-  // Useful to have
   int numRegions;
   
   updParamSet() :
     params(UMP_FINAL_NUM_PARAMS) { }
 
   int numPars() const {
+    assert(params.size() == UMP_FINAL_NUM_PARAMS);
     return UMP_FINAL_NUM_PARAMS;
   }
   
-  // Initialise blocks. Called once after all params created.
-  void init(int numRegions_, const string& outdir);
-
   // Insert a new parameter (copy from old-style parameter)
-  void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool local, int numRegions);
+  void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool local, int numRegions_);
+
+  // Initialise blocks. Called once after all params created.
+  void init(const string& outdir);
 
   // Return a view for the given parameter, i.e. a sub-vector
   // Warning: View is only valid as long as parameter exists, and is not moved etc
-  const gsl_vector_const_view lookupValue(paramIndex index, int region = 0) const;
-  const gsl_vector_const_view lookupValue(int index, int region = 0) const;
+  const gsl_vector_const_view lookup(paramIndex index, int region) const;
+  const gsl_vector_const_view lookup(int index, int region) const;
 
   // Return 1st element of value
-  double lookupValue0(paramIndex index, int region = 0) const;
+  double lookup0(paramIndex index, int region) const;
 
   // - - - - - - -
   // Key M-H code
   // Calculate new proposal vectors (sequential)
-  void calcProposals(gsl_rng *rng);
+  void calcProposals(updParamSet& paramSet, gsl_rng *rng);
   // Calculate acceptance ratios (in parallel over blocks)
   void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
-  // Implement acceptance
+  // Accept or reject
   void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip);
   // Adapt MH distribution over time
   void adaptiveUpdate(int iter);
-  // DEBUG output
+  
+  // Debugging output
   void outputPars();
   void outputProposals();
-
   void printAcceptRates(int numIters);
 
   // - - - - - - -
@@ -101,7 +123,7 @@ public:
   void readInputFile();
 
   // Helper:
-  // Use [] as shortcut to get individual param
+  // Enable use of [] as shortcut to get individual param
   updParam& operator[](paramIndex index) {
     return params[index];
   }
@@ -127,40 +149,51 @@ using upd = updParamSet;
 // Either all global param values, or local values for single region
 class updParamBlock {
 public:
+
+  gslVector values;     // Values: Copied from parameters at each update
+  gslVector parIndex;   // Index of param each component comes from
+  gslVector parOffset;  // Index of component in that param
+  gslVector proposal;   // Proposal value
+  std::vector<distribution_type> dist;       // Prior distribution for each component
+			// Copied from param object, but fixed during execution
+
   bool global;	// True for the global block
-  gslVector vals;
-  gslVector proposal;
-  gslVector dist; // Distribution for each of the vals; copy of vals in updParam
+  // Zero-based region number for block. Also zero in global block.
+  int regionNum;
+ 
+  // Proposal distribution
   gslVector mu;
+  gslMatrix sigma;
+
+  // For adapting the proposal distribution
+  // Static vars are a hack for the values shared among all local blocks
   double beta;
   static double regbeta;
-  gslMatrix sigma;
-  double laccept;
   int acceptLastMove;
-  static int regacceptLastMove;  // Int for use in adaptive update
-  int numAccept;
+  static int regacceptLastMove;  
+
+  double laccept;   // Acceptance score
+  int numAccept;    // Acceptance rate
   int numProposed;
-  // Region index corresponding to this block, zero-based
-  // Also zero in the global block (for use in lookup index maths)
-  int regionNum;
   
   likelihood lfx;
   likelihood prop_lfx;
 
+  // Initialise likelihood
+  void setLlhood(likelihood& l) {
+    lfx = l;
+    prop_lfx = l;  // Sets vector sizes of prop_lfx
+  }
   double childProposalDensity;
   double childCurrentDensity;
   
-  // TODO: Breaks default copy/assign/destruct
+  // TODO: Region ptr breaks default copy/assign/destruct
+  // Safe for now as blocks aren't moved/copied once added to blocks vector
   Region* propCountry;
   void copyCountry(Region* inCountry, int numRegions);
-  void setLlhood(likelihood l) {
-    lfx = l;
-    // Do this to set sizes
-    prop_lfx = l;
-  }
-  
-  // Match the key M-H methods from updParamSet
-  void calcProposal(gsl_rng *rng);
+
+  // M-H methods
+  void calcProposal(updParamSet& paramSet, gsl_rng *rng);
   void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
   void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip);
   void adaptiveUpdate(int iter);
@@ -173,27 +206,28 @@ class updParam {
 public:
 
   std::string param_name;
-  upd::paramIndex index;    // Index of param in names enum
-  unsigned int size;	    // Number of components in param
-  int regionSize;	    // For local params, num components per region
+  gslVector values;
   
-  gslVector init_value;     // Initial value of parameter. Used only in setup.
-  unsigned int value_index; // Starting index in either global or local value vector
-  bool global;		    // True if global param, false if local
+  upd::paramIndex index;  // Index of param in names enum
+  unsigned int size;  // Number of components in param
+  int regionSize;     // For local params, num components per region
+	              // Warning: *Not* number of components per proposal block
+  bool global;	// True if global param, false if local
 
   // Prior params: Vector of length number of components.
   std::vector<gslVector> prior_params;
   // If prior is separate parameter, prior_params[i].size() == 0 and the index of
   // the prior is stored in parents[i].
   std::vector<int> parents;
-  std::vector<distribution_type> prior_distribution; // Flag giving distribution of individual components
+  // Distribution for each indvidiual component
+  std::vector<distribution_type> prior_distribution;
   bool flag_hyperprior;
   double log_prior_dens;
   double proposal_log_prior_dens;
-  bool flag_update; // True if prior_distribution[i] != cDETERM for all i
+  bool flag_update; // True if prior_distribution[i] != cCONSTANT for all i
 
   mvnorm *prior_multivariate_norm;
-  regression_def map_to_regional;
+  updRegrDef map_to_regional;
   gslVector posterior_mean;
   gslVector posterior_sumsq;
   bool flag_transmission_model; // True if number of new infected needs to be recalculated

@@ -2,6 +2,9 @@
 #include "RTM_FunctDefs.h"
 
 
+bool debug = false;
+
+
 const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "exponential_growth_rate_hyper", EGR_HYPER },  // 0
   { "l_p_lambda_0_hyper", LPL0_HYPER },
@@ -38,7 +41,7 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
 // Initialise from defaults in updParamSet. Method currently unused.
 updParam::updParam(string name, double value, int flags)
   : param_name(name),
-    init_value(value),
+    values(value),
     // Note: Specifying bitmasks with 0b is a C++14 feature, but is a compiler
     // extension in both gcc (4.3 or later) and clang (since at least 2013).
     flag_transmission_model (flags & 0b1000000),
@@ -56,7 +59,7 @@ updParam::updParam(updateable_model_parameter &in, const int num_instances, bool
     index(upd::INVALID), // -ve indicates invalid; set this during 'insert()'
     size (in.param_value->size),
     regionSize(in.param_value->size),  // For local pars this will be reset
-    init_value (in.param_value),
+    values (in.param_value),
     // value_index: set in paramSet initialisation
     global(!regional),
     prior_params (in.param_value->size),    
@@ -82,17 +85,18 @@ updParam::updParam(updateable_model_parameter &in, const int num_instances, bool
     flag_any_child_nodes (in.flag_any_child_nodes), 
     flag_child_nodes (num_instances) {
   
-  // Prior distribution is a vector, not gsl_vector_int*, so need copy and cast
+  // Convert from gsl_vector_int* to std::vector<distribution_type>
   prior_distribution.resize(in.prior_distribution->size);
   for (int i = 0; i < prior_distribution.size(); i++)
     prior_distribution[i] = (distribution_type) gsl_vector_int_get(in.prior_distribution, i);
   
   if (flag_update) {
-    // prior_params - copy from gsl_vector**
+    // Copy from gsl_vector**
     for (int i = 0; i < prior_params.size(); i++)
       prior_params[i] = gslVector(in.prior_params[i]);
   }
-  // flag_child_nodes - copy from bool*
+  
+  // Copy from bool*
   for (int i = 0; i < num_instances; i++)
     flag_child_nodes[i] = in.flag_child_nodes[i];
 }
@@ -111,43 +115,48 @@ updParam updParamSet::defaultParam(std::string &name) {
 
 
 // Insert parameter into parameter set
-void updParamSet::insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool regional, int numRegions) {
+void updParamSet::insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool regional, int numRegions_) {
+
+  numRegions = numRegions_;
   
   updParam newPar(inPar, num_instances, regional);
   newPar.index = nameMap.at(newPar.param_name);
+  newPar.map_to_regional.design_matrix.resize(numRegions);
 
-  if (regional) {
+  if (! regional) {
+    // Global par. Make n copies of the design matrix (each region has its own copy)
+    for (int r = 0; r < numRegions; r++)
+      newPar.map_to_regional.design_matrix[r] = inPar.map_to_regional.design_matrix;
+    
+  } else {
+    // Local
     if (newPar.size % numRegions != 0) {
-      std::cerr << "Error: parameter " << newPar.param_name << " is marked as regional but number of regions does not evenly divide number of components\n";
-      std::cerr << "Param size: " << newPar.size << " , numRegions: " << numRegions << endl;
+      std::cerr << "Error: Number of components of parameter " << newPar.param_name << " is not evenly divided by number of regions\n";
       exit(1);
     }
-
+    
     newPar.regionSize = newPar.size / numRegions;     // Integer division
-  }
 
-  // For local parameters, we need to resize design matrix
-  if (inPar.map_to_regional.design_matrix.nrows() > 0) {
-    if (! newPar.global) {
-      // Take submatrices for each param
-      // Assume main design matrix is square
-      assert(inPar.map_to_regional.design_matrix.nrows() == inPar.map_to_regional.design_matrix.ncols());
-      
-      int size = inPar.map_to_regional.design_matrix.nrows() / numRegions;
-      newPar.map_to_regional.design_matrix.eraseRealloc(size, size);
-      gsl_matrix_view submat = gsl_matrix_submatrix(*inPar.map_to_regional.design_matrix, 0, 0, size, size);
-      newPar.map_to_regional.design_matrix = &submat.matrix;
+    // Number of columns = num param components
+    // Number of rows = total of (region, time, age) group combinations,
+    //   OR num param components, whichever is larger
+    int nrows = inPar.map_to_regional.design_matrix.nrows() / numRegions;
+    int ncols = newPar.regionSize;
+
+    for (int r = 0; r < numRegions; r++) {
+      newPar.map_to_regional.design_matrix[r].eraseRealloc(nrows, ncols);
+      gsl_matrix_view submat = gsl_matrix_submatrix(*inPar.map_to_regional.design_matrix, r*nrows, r*ncols, nrows, ncols);
+      newPar.map_to_regional.design_matrix[r] = &submat.matrix;
     }
   }
-  
+
   params[newPar.index] = std::move(newPar);
 }
 
 // low/high only used for uniform
-double transform(double x, int dist, double low = 0, double high = 1) {
+double transform(double x, distribution_type dist, double low = 0, double high = 1) {
   switch(dist) {
   case cCONSTANT:
-    return x;
   case cNORMAL:
   case cMVNORMAL:
     return x;
@@ -164,11 +173,9 @@ double transform(double x, int dist, double low = 0, double high = 1) {
   }
 }
 
-// newparam, trunc_flag, low, high
-double invTransform(double x, int dist, double low = 0, double high = 1) {
+double invTransform(double x, distribution_type dist, double low = 0, double high = 1) {
   switch(dist) {
   case cCONSTANT:
-    return x;
   case cNORMAL:
   case cMVNORMAL:
     return x;
@@ -184,227 +191,156 @@ double invTransform(double x, int dist, double low = 0, double high = 1) {
   }
 }
 
-void updParamSet::init(int numRegions_, const string& dir) {
+void updParamSet::init(const string& dir) {
 
-  numRegions = numRegions_;
-
-  // Open output files
-  // Will write over existing contents
-  for (auto& par : params) {
-    if (! par.flag_update)
-      continue;
-    string filename = dir + "/" + par.param_name + ".txt";
-    par.outfile.open(filename, std::ofstream::out);
-    if (! par.outfile.is_open()) {
-      std::cerr << "Error: Unable to open output file " << filename << "\n";
-      exit(1);
+  // Debug output: parameter output files. Overwrites existing files
+  for (updParam& par : params) {
+    if (par.flag_update) {
+      string filename = dir + "/" + par.param_name + ".txt";
+      par.outfile.open(filename, std::ofstream::out);
+      if (! par.outfile.is_open()) {
+	std::cerr << "Error: Unable to open output file " << filename << "\n";
+	exit(1);
+      }
     }
   }
-  
+
+  // Count non-constant components
   int globalSize = 0, localSize = 0;
-  for (auto &par : params) {
+  for (updParam &par : params) {
     if (par.flag_update)
-      if (par.global)
-	globalSize += par.size;
-      else
-	localSize += par.size;
+      for (int i = 0; i < par.size; i++)
+	if (par.prior_distribution[i] != cCONSTANT)
+	  if (par.global)
+	    globalSize++;
+	  else
+	    localSize++;
   }
-  
-  // Split local params by region. Integer division
   localSize /= numRegions;
 
+  // Alloc space
   blocks.resize(numRegions + 1);
   
-  blocks[0].vals.alloc(globalSize);
-  blocks[0].dist.alloc(globalSize);
+  blocks[0].values.alloc(globalSize);
+  blocks[0].dist.resize(globalSize);
+  blocks[0].parIndex.alloc(globalSize);
+  blocks[0].parOffset.alloc(globalSize);
   blocks[0].regionNum = 0;
   blocks[0].global = true;
 
   for (int i = 1; i < blocks.size(); i++) {
-    blocks[i].vals.alloc(localSize);
-    blocks[i].dist.alloc(localSize);
+    blocks[i].values.alloc(localSize);
+    blocks[i].dist.resize(localSize);
+    blocks[i].parIndex.alloc(localSize);
+    blocks[i].parOffset.alloc(localSize);
     blocks[i].regionNum = i-1;
     blocks[i].global = false;
   }
 
-  
+  // Insert components to blocks
+  // Counters give current insertion index for each region
   int globalIndex = 0;
   std::vector<int> localIndex(numRegions, 0);
-  for (auto &par : params) {
+  for (updParam &par : params) {
     if (par.flag_update) {
       if (par.global) {
-	par.value_index = globalIndex;
 	for (int i = 0; i < par.size; i++) {
-	  blocks[0].vals[globalIndex] = par.init_value[i];
-	  blocks[0].dist[globalIndex] = par.prior_distribution[i];
-	  globalIndex++;
+	  if (par.prior_distribution[i] != cCONSTANT) {
+	    blocks[0].values[globalIndex] = par.values[i];
+	    blocks[0].parIndex[globalIndex] = par.index;
+	    blocks[0].parOffset[globalIndex] = i;
+	    blocks[0].dist[globalIndex] = par.prior_distribution[i];
+	    globalIndex++;
+	  }
 	}
       } else {
 	// local block
-	int readIndex = 0;
-	int regionSize = par.size / numRegions; // Integer division
-	par.value_index = localIndex[0];
-	for (int r = 0; r < numRegions; r++) {
-	  for (int i = 0; i < regionSize; i++) {
-	    blocks[r+1].vals[localIndex[r]] = par.init_value[readIndex];
-	    blocks[r+1].dist[localIndex[r]] = par.prior_distribution[readIndex];
+
+	// Count number of non-const components
+	int nonconst = 0;
+	for (int i = 0; i < par.size; i++)
+	  if (par.prior_distribution[i] != cCONSTANT)
+	    nonconst++;
+
+	if (nonconst % numRegions != 0) {
+	  cerr << "Error: Number of non-constant components of param " << par.param_name << " is not evenly divisible by number of regions\n";
+	  exit(1);
+	}
+	int perRegion = nonconst / numRegions; // Integer division
+	
+	int r = 0;   // Region number
+	int rcount = 0; // Count components per region
+	for (int i = 0; i < par.size; i++) {
+	  if (par.prior_distribution[i] != cCONSTANT) {
+	    // localIndex holds insertion points for each block
+	    blocks[r+1].values[localIndex[r]] = par.values[i];
+	    blocks[r+1].parIndex[localIndex[r]] = par.index;
+	    blocks[r+1].parOffset[localIndex[r]] = i;
+	    blocks[r+1].dist[localIndex[r]] = par.prior_distribution[i];
+
 	    localIndex[r]++;
-	    readIndex++;
+	    rcount++;
+	    if (rcount >= perRegion) {
+	      // We have filled this region
+	      r++;
+	      rcount = 0;
+	    }
 	  }
 	}
       }
     }	
   }
-  
-  // Initialise mu and sigma for each block.
-  // Need to transform params accordingly
-      
-  for (auto &block : blocks) { 
-    // Init the paramBlocks
-    block.mu.alloc(block.vals.size());
-    for (int i = 0; i < block.vals.size(); i++)
-      block.mu[i] = transform(block.vals[i], block.dist[i]);
+
+  // Initialise mu and sigma for each block. Use transformed param values
+  for (updParamBlock &block : blocks) { 
+
+    block.proposal.alloc(block.values.size());
+
+    block.mu.alloc(block.values.size());
+    for (int i = 0; i < block.values.size(); i++)
+      block.mu[i] = transform(block.values[i], block.dist[i]);
 
     // Set the diagonal of sigma matrix
-    block.sigma.allocZero(block.vals.size(), block.vals.size());
-    for (int i = 0; i < block.vals.size(); i++) {
-      block.sigma[i][i] = fabs(block.mu[i]) * 0.01;
+    block.sigma.allocZero(block.values.size(), block.values.size());
+    for (int i = 0; i < block.values.size(); i++) {
+      block.sigma[i][i] = fabs(block.mu[i]);
       if (block.sigma[i][i] == 0)
-	block.sigma[i][i] = 0.01;
+	block.sigma[i][i] = 1;
     }
-
+    block.sigma *= 0.01;   // Scale
+    
+    if (debug && block.global)
+      cout << "mu: " << block.mu << block.sigma;
+    
     block.beta = 0;
-    block.proposal.alloc(block.vals.size());
   }
 }
 
 
-const gsl_vector_const_view updParamSet::lookupValue(upd::paramIndex index, int region) const {
-  const updParam &par = params[index];
-  if (! par.flag_update) {
-    // Constant param, return initial value
-    return gsl_vector_const_subvector(*par.init_value, 0, par.size);
-  }
+// Region is a number between 0 and r-1. This is ignored if the parameter is global.
+const gsl_vector_const_view updParamSet::lookup(upd::paramIndex index, int region) const {
+  const updParam& par = params[index];
   if (par.global) {
-    return gsl_vector_const_subvector(*blocks[0].vals, par.value_index, par.size);
+    // Return the whole vector
+    return gsl_vector_const_subvector(*par.values, 0, par.size);
   } else {
-    // local
-    return gsl_vector_const_subvector(*blocks[region+1].vals, par.value_index, par.regionSize);
+    int start = par.regionSize * region;
+    return gsl_vector_const_subvector(*par.values, start, par.regionSize);
   }
+} 
+
+const gsl_vector_const_view updParamSet::lookup(int index, int region) const {
+  return lookup((paramIndex) index, region);
 }
 
-const gsl_vector_const_view updParamSet::lookupValue(int index, int region) const {
-  // TODO: CHECK REGION BOUNDS
-  return lookupValue((paramIndex) index, region);
-}
-
-
-double updParamSet::lookupValue0(upd::paramIndex index, int region) const {
+double updParamSet::lookup0(upd::paramIndex index, int region) const {
   const updParam &par = params[index];
-  int i = par.value_index;
-  if (! par.flag_update)
-    return par.init_value[0];
-  if (par.global) {
-    return blocks[0].vals[i];
-  } else {
-    return blocks[region+1].vals[i];
+  if (par.global)
+    return par.values[0];
+  else {
+    int start = par.regionSize * region;
+    return par.values[start];
   }
-}
-
-
-void updParamSet::calcProposals(gsl_rng *rng) {  
-  // #pragma omp parallel for
-  for (auto &block : blocks)
-    block.calcProposal(rng);
-}
-
-// Main block update method
-void updParamBlock::calcProposal(gsl_rng *rng) {
-
-  // Calculate proposal
-  
-  // Multivar normal. mu = param values, not the variable 'mu'.
-  // After 1st 200 iters, sigma/beta change every iter, so no benefit to caching
-  gslMatrix covar;
-  if (global)
-    covar = sigma * exp(beta);
-  else
-    covar = sigma * exp(regbeta);
-
-  gslVector transformed(vals.size());
-  for (int i = 0; i < vals.size(); i++)
-    transformed[i] = transform(vals[i], dist[i]);
-  
-  gsl_linalg_cholesky_decomp1(*covar);
-  gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
-
-  for (int i = 0; i < vals.size(); i++) {
-    if (dist[i] == cCONSTANT)
-      proposal[i] = vals[i];
-    else
-      proposal[i] = invTransform(proposal[i], dist[i]);
-  }
-}
-
-double updParamBlock::regbeta = 0;
-int updParamBlock::regacceptLastMove = 0;
-
-void updParamBlock::adaptiveUpdate(int iter) {
-
-  if (global) {
-
-    double eta = pow(iter - 199 + 1, -0.6);
-    beta = beta + eta * (acceptLastMove - 0.234);
-    
-    // delta = proposed vals - curr vals
-    // We need to be working on the transformed scale
-    gslVector transProp(proposal);
-    gslVector transVals(vals);
-    for (int i = 0; i < transProp.size(); i++) {
-      transProp[i] = transform(transProp[i], dist[i]);
-      transVals[i] = transform(transVals[i], dist[i]);
-    }
-    
-    gslVector delta = transProp - transVals;
-
-    
-    mu = (1 - eta) * mu + eta * delta;
-    gslMatrix deltaProd(delta.size(), delta.size());
-    
-    for (int i = 0; i < delta.size(); i++)
-      for (int j = 0; j < delta.size(); j++)
-	deltaProd[i][j] = delta[i] * delta[j];
-    
-    sigma = (1 - eta) * sigma + eta * deltaProd;
-
-  } else {
-    // local
-    double eta = pow(iter - 199 + 1, -0.6);
-    regbeta = regbeta + eta * (regacceptLastMove - 0.234);
-    
-    // delta = proposed vals - curr vals
-    gslVector delta = proposal - vals;
-    mu = (1 - eta) * mu + eta * delta;
-    gslMatrix deltaProd(delta.size(), delta.size());
-    
-    for (int i = 0; i < delta.size(); i++)
-      for (int j = 0; j < delta.size(); j++)
-	deltaProd[i][j] = delta[i] * delta[j];
-    
-    sigma = (1 - eta) * sigma + eta * deltaProd;
-  }
-}
-
-
-void updParamSet::adaptiveUpdate(int iter) {
-  for (auto &block : blocks)
-    block.adaptiveUpdate(iter);
-}
-
-void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
-  // #pragma omp parallel for
-  for (auto &block : blocks)
-    block.calcAccept(*this, country, gmip, base_mix);
 }
 
 void updParamBlock::copyCountry(Region* inCountry, int numRegions) {
@@ -415,12 +351,53 @@ void updParamBlock::copyCountry(Region* inCountry, int numRegions) {
     Region_memcpy(propCountry[r], inCountry[r], all_pos);
   }
 }
+void updParamSet::calcProposals(updParamSet& paramSet, gsl_rng *rng) {  
+  for (auto &block : blocks)
+    block.calcProposal(paramSet, rng);
+}
 
-double jacobianFactor(double prop, double curr, int dist, double low = 0, double high = 1) {
+void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
 
+  // Calculate proposal
+  // Assumes that the values vector is already up to date.
+  // It is set on init, and set whenever proposal is accepted
+  
+  // Covariance matrix
+  // After 1st 200 iters, sigma changes every iter, so no benefit to caching
+  gslMatrix covar;
+  if (global)
+    covar = sigma * exp(beta);
+  else
+    covar = sigma * exp(regbeta);
+
+  // Transform
+  gslVector transformed(values.size());
+  for (int i = 0; i < values.size(); i++)
+    transformed[i] = transform(values[i], dist[i]);
+
+  // Random sample
+  gsl_linalg_cholesky_decomp1(*covar);
+  gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
+
+  for (int i = 0; i < values.size(); i++)
+    proposal[i] = invTransform(proposal[i], dist[i]);
+
+  if (debug) {
+    if (global)
+      cout << "covar factor: " << exp(beta) << endl;
+    else
+      cout << "covar factor: " << exp(regbeta) << endl;
+    cout << "V: " << values << endl << "P: " << proposal << endl;
+  }
+}
+
+double updParamBlock::regbeta = 0;
+int updParamBlock::regacceptLastMove = 0;
+
+
+double jacobianFactor(double prop, double curr, distribution_type dist, double low = 0, double high = 1) {
   switch(dist) {
   case cCONSTANT:
-    return 0;
   case cNORMAL:
   case cMVNORMAL:
     return 0;
@@ -428,7 +405,7 @@ double jacobianFactor(double prop, double curr, int dist, double low = 0, double
   case cHALFNORMAL:
     return gsl_sf_log(prop/curr);
   case cBETA:
-    //a=0, b=1)
+    // a=0, b=1
     return gsl_sf_log(prop/curr) + gsl_sf_log((1-prop)/(1-curr));
   case cUNIFORM:
     return gsl_sf_log(((prop-low) * (high-prop)) / ((curr-low) * (high-curr)));
@@ -437,91 +414,63 @@ double jacobianFactor(double prop, double curr, int dist, double low = 0, double
   }
 }
 
-void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+  // #pragma omp parallel for
+  for (auto &block : blocks)
+    block.calcAccept(*this, country, gmip, base_mix);
+}
+
+void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
 
   laccept = 0;
   if (global)
     acceptLastMove = 0;
   else
     regacceptLastMove = 0;
-  
-  for (auto &par : paramSet.params) {
+
+  // Prior densities for components in the block
+  for (int i = 0; i < values.size(); i++) {
+    laccept += jacobianFactor(proposal[i], values[i], dist[i]);
+
+    if (dist[i] != cMVNORMAL) {
+
+      // Get prior from node
+      // If the prior is a parent node, get the parent value.
+      // (Original code used a pointer here so no need for extra logic)
+      updParam& par = paramSet[parIndex[i]];
+      gsl_vector* prior = *(par.prior_params[parOffset[i]]);
+      if (prior->size == 0) {
+	// Use parent
+	int parent = par.parents[parOffset[i]];
+	prior = *paramSet[parent].values;
+      }
+      
+      laccept += R_univariate_prior_log_density_ratio(
+	proposal[i], values[i], dist[i], prior);
+    } else {
+      // TODO: Fix
+      cout << "ERROR: Multivariate normal code path not implemented\n";
+      exit(1);
+    }
+  }
+
+  if (debug)
+    cout << "After log density, laccept: " << laccept << endl;
+ 
+  if (laccept == GSL_NEGINF)
+    return;
+
+  for (updParam& par : paramSet.params) {
 
     // Skip over constant params
     if (! par.flag_update)
       continue;
-    
-    // Both block and par are either both global or both local, so consider par
+
+    // If the flags match, the parameter is part of this block
     if (global == par.global) {
-
-      // par.proposal_log_prior_dens = 0;
-
-      // Iterate over components in block
-      // For each region, we only consider that region's components
-
-      flagclass update_flags(par.index);
-
-      // Iterate over components in the current block
-      // (for global blocks, regionSize is the same as the parameter size)
-      for (int i = 0; i < par.regionSize; i++) {
-	// value = block.vals[par.value_index + i]
-	// Region component index in par: regionNum * regionSize + i;
-
-	// Index of component in parameter and block
-	int parIndex = regionNum * par.regionSize + i;
-	int blockIndex = par.value_index + i;
-
-	laccept += jacobianFactor(proposal[i], vals[i], dist[i]);
-	
-	if (par.prior_distribution[parIndex] != cCONSTANT) {
-	  if (par.prior_distribution[parIndex] != cMVNORMAL) {
-	  
-	    // Code saved proposal_log_prior_dens at this point
-
-	    // laccept += univariate_prior_ratio(par, a_component = component index)
-	    // dist_component = flag_hyperprior ? 1 : component
-	    const gsl_vector* prior;
-	    int distIndex;
-	    if (par.flag_hyperprior) {
-	      assert(par.prior_params[parIndex].size() == 0);
-	      // Use parent distribution
-	      gsl_vector_const_view parentView = paramSet.lookupValue(par.parents[parIndex]);
-	      prior = &parentView.vector;
-	      distIndex = 1;
-	    } else {
-	      prior = *par.prior_params[parIndex];
-	      distIndex = parIndex;
-	    }
-	      
-	    laccept += R_univariate_prior_log_density_ratio(
-	      proposal[blockIndex],
-	      vals[blockIndex],
-	      par.prior_distribution[distIndex],
-	      prior);
-	  }
-	}
-      }
-
-      if (laccept == GSL_NEGINF)
-	return;
-
-      if (par.prior_distribution[0] == cMVNORMAL) {
-
-	// TODO: Test this code path
-	cout << "WARNING: Multivariate normal code path untested\n";
-	gsl_vector_view prop = gsl_vector_subvector(*proposal, par.value_index, par.regionSize);
-	gsl_vector_view value = gsl_vector_subvector(*vals, par.value_index, par.regionSize);
-	
-	laccept += par.prior_multivariate_norm->ld_mvnorm_ratio(
-	  &prop.vector, &value.vector);
-      }
-	
-      if (laccept == GSL_NEGINF)
-	return;
       
       if (par.flag_any_child_nodes) {
-	// Loop over other parameters
-	
+	// Find the child node(s)
 	for (int ch = 0; ch < par.flag_child_nodes.size(); ch++) {
 	  if (par.flag_child_nodes[ch]) {
 	    
@@ -529,71 +478,109 @@ void updParamBlock::calcAccept(updParamSet &paramSet, Region* country, const glo
 	    	    
 	    if (child.global) {
 	      // TODO TODO TODO
-	      // Iterate over child and add up R_univariate_prior_log_density for each component
-	      // For now, we have no global child nodes
+	      // Sum R_univariate_prior_log_density for each component
+	      std::cerr << "calcAccept(): child node is global; not implemented yet\n";
+	      exit(1);
 	    } else {
 
 	      child.proposal_log_prior_dens = 0;
 		
-	      // Child components are split over regions.
-	      for (int r = 0; r < paramSet.numRegions; r++) {
-		
-		for (int i = child.value_index; i < child.value_index + child.regionSize; i++) {
-		  double value = paramSet.blocks[r+1].vals[i];
-		  gsl_vector_view prop = gsl_vector_subvector(*proposal, par.value_index, par.regionSize);
+	      // We assume parent is 2 params, as it is acting as a prior
+	      assert(par.size == 2);
 
-		  // We assume parent is 2 params, as it is acting as a prior
-		  assert(par.size == 2);
-		  
-		  child.proposal_log_prior_dens += R_univariate_prior_log_density(
-		    value,
-		    child.prior_distribution[0],
-		    // parameter is theta_i->proposal_value, the parent proposal
-		    &prop.vector);
-		}
+	      // We haven't accepted, so the prior is the relevant proposal components
+	      // WARNING: We assume both components of the prior are non-constant
+	      // We need to search the proposal looking for the parent
+	      int start = -1;
+	      for (int i = 0; i < proposal.size(); i++)
+		if (parIndex[i] == par.index)
+		  start = i;
+
+	      gsl_vector_view prior = gsl_vector_subvector(*proposal, start, 2);
+	      
+	      for (int i = 0; i < child.size; i++) {
+		child.proposal_log_prior_dens += R_univariate_prior_log_density(
+		    child.values[i],
+		    child.prior_distribution[i],
+		    &prior.vector);
 	      }
-
+	      
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
 
+	      if (debug)
+		cout << "Child: " << laccept << endl;
 	    }
 	  }
 	}
-      } else {
-	// No child nodes
-	
-	gslVector originalVals = vals;
-	vals = proposal;
-	
-	if (par.global) {
-	  // Evaluate all regions
-	  for (int reg = 0; reg < paramSet.numRegions; reg++) {
-	    block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mix, update_flags);
-	  }
-	} else {
-	  // Local. Evaluate only region of this block
-	  int reg = regionNum;
-	  block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mix, update_flags);
-	}
-	
-	vals = originalVals;
-	
-	fn_log_likelihood(prop_lfx, propCountry, 0,
-			  par.flag_transmission_model,
-			  par.flag_reporting_model,
-			  par.flag_GP_likelihood,
-			  par.flag_Hosp_likelihood,
-			  par.flag_Viro_likelihood,
-			  par.flag_Sero_likelihood,
-			  par.flag_Prev_likelihood,
-			  gmip,
-			  paramSet.gp_delay.distribution_function,
-			  paramSet.hosp_delay.distribution_function
-	  );
-	
-	laccept += prop_lfx.total_lfx - lfx.total_lfx;
       }
     }
   }
+
+  // Do the region update and likelihood for the block as a whole, rather than
+  // param by param
+
+  // TEMPORARY HACK
+  // Global parameters: hosp_negbin_overdispersion, infectious_period, prop_case_to_hosp, sero_test_sensitivity, sero_test_specificity
+  // Correspond to regional params: l_hosp_negbin_overdispersion, l_average_infectious_period, l_R0_init, l_I0, l_R0_Amplitude, l_pr_onset_to_Hosp, l_sero_sensitivity, l_sero_specificity
+  
+  // Local: contact_parameters, log_beta_rw, exponential_growth_rate, log_p_lambda_0
+  // Corresponding regional: l_MIXMOD, l_lbeta_rw, l_EGR, l_R0_init, l_I0, l_R0_Amplitude
+
+  flagclass blockflags;
+  // Default is all flags set to true
+  for (int i = 0; i < 27; i++)
+    blockflags.regional_update_flags[i] = false;
+  
+  if (global) {
+    blockflags.regional_update_flags[2] = true;
+    blockflags.regional_update_flags[8] = true;
+    blockflags.regional_update_flags[10] = true;
+    blockflags.regional_update_flags[11] = true;
+    blockflags.regional_update_flags[14] = true;
+    blockflags.regional_update_flags[23] = true;
+    blockflags.regional_update_flags[25] = true;
+    blockflags.regional_update_flags[26] = true;
+  } else {
+    blockflags.regional_update_flags[6] = true;
+    blockflags.regional_update_flags[7] = true;
+    blockflags.regional_update_flags[8] = true;
+    blockflags.regional_update_flags[10] = true;
+    blockflags.regional_update_flags[11] = true;
+    blockflags.regional_update_flags[18] = true;
+  }
+  
+  // Copy proposal to paramSet to evaluate region
+  for (int i = 0; i < values.size(); i++)
+    paramSet[parIndex[i]].values[parOffset[i]] = proposal[i];
+  
+  if (global) {
+    // Evaluate all regions
+    for (int reg = 0; reg < paramSet.numRegions; reg++) {
+      block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mix, blockflags);
+      
+    }
+  } else {
+    // Local. Evaluate only region of this block
+    int reg = regionNum;
+    block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mix, blockflags);
+  }
+  
+  // Need to restore original values so that other blocks can run
+  for (int i = 0; i < values.size(); i++)
+    paramSet[parIndex[i]].values[parOffset[i]] = values[i];
+
+  // For at least one of the updated parameters, all of the flags are set to true
+  fn_log_likelihood(prop_lfx, propCountry, 0,
+		    true, true, true, true, true, true, true, 
+		    gmip,
+		    paramSet.gp_delay.distribution_function,
+		    paramSet.hosp_delay.distribution_function
+    );
+	
+  laccept += prop_lfx.total_lfx - lfx.total_lfx;
+
+  if (debug)
+    cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
@@ -602,39 +589,35 @@ void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_ins
 }
 
 void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip) {
+  
   double acceptTest = gsl_sf_log(gsl_rng_uniform(rng));
 
-  // TODO: Initialise properly??
-  flagclass update_flags;
-
-  //cout << regionNum << ": " << laccept << " " << acceptTest << endl;
+  flagclass update_flags; // Set flags to update whole region
 
   numProposed++;
-  
+
   if (laccept > acceptTest) {
-    //cout << "accept\n";
-    
+    if(debug) cout << "Prop accept\n";
+
     numAccept++;
+   
     if (global)
       acceptLastMove = 1;
     else
       regacceptLastMove = 1;
-    
-    vals = proposal;
 
-    // Log prior dens: Original code saves this, but appears not to use the
-    // saved values anywhere. Except for child nodes:
-    
-    // TODO: Speed this up?
-    for (auto& par : paramSet.params) {
-      if (par.flag_any_child_nodes) {
+    // values = proposal
+    for (int i = 0; i < values.size(); i++)
+      paramSet[parIndex[i]].values[parOffset[i]] = proposal[i];
+
+    // Save child log prior density
+    for (updParam& par : paramSet.params)
+      if (par.flag_any_child_nodes)
 	for (int i = 0; i < par.size; i++)
 	  if (par.flag_child_nodes[i]) {
 	    updParam& child = paramSet[i];
 	    child.log_prior_dens = child.proposal_log_prior_dens;
 	  }
-      }
-    }
     
     lfx = prop_lfx;
 
@@ -642,46 +625,34 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
       for (int r = 0; r < numRegions; r++) {
 	regional_model_params_memcpy(country[r].det_model_params, propCountry[r].det_model_params, update_flags);
 
-	// TODO: Existing code does this parameter by parameter, so passes a bunch of parameter-specific flags
-	// For now, set all these flags to true. (Only downside is a slower copy.)
-	model_statistics_memcpy(country[r].region_modstats, propCountry[r].region_modstats,
-				true,
-				(bool) gmip.l_GP_consultation_flag,
-			        (bool) gmip.l_Hospitalisation_flag,
-				true,
-				(bool) gmip.l_Viro_data_flag,
-				(bool) gmip.l_Prev_data_flag);
-
+	model_statistics_memcpy(
+	  country[r].region_modstats, propCountry[r].region_modstats,
+	  true, gmip.l_GP_consultation_flag, gmip.l_Hospitalisation_flag,
+	  true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
       }
-      
     } else {
       // local
       int r = regionNum;
       
       regional_model_params_memcpy(country[r].det_model_params, propCountry[r].det_model_params, update_flags);
-      model_statistics_memcpy(country[r].region_modstats, propCountry[r].region_modstats,
-			      true,
-			      (bool) gmip.l_GP_consultation_flag,
-			      (bool) gmip.l_Hospitalisation_flag,
-			      true,
-			      (bool) gmip.l_Viro_data_flag,
-			      (bool) gmip.l_Prev_data_flag);
+      model_statistics_memcpy(
+	country[r].region_modstats, propCountry[r].region_modstats,
+	true, gmip.l_GP_consultation_flag, gmip.l_Hospitalisation_flag,
+	true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
     }
   } else {
-    //cout << "reject\n";
+    // Reject proposal
+    if(debug) cout << "Prop accept\n";
     
-    // Undo region changes stuff
+    // Undo region changes 
     if (global) {
       for (int r = 0; r < numRegions; r++) {
 	regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
 	
-	model_statistics_memcpy(propCountry[r].region_modstats, country[r].region_modstats,
-				true,
-				(bool) gmip.l_GP_consultation_flag,
-				(bool) gmip.l_Hospitalisation_flag,
-				true,
-				(bool) gmip.l_Viro_data_flag,
-				(bool) gmip.l_Prev_data_flag);
+	model_statistics_memcpy(
+	  propCountry[r].region_modstats, country[r].region_modstats,
+	  true,  gmip.l_GP_consultation_flag, gmip.l_Hospitalisation_flag,
+	  true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
       }
     } else {
       // local
@@ -689,56 +660,81 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
       
       regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
       
-      model_statistics_memcpy(propCountry[r].region_modstats, country[r].region_modstats,
-			      true,
-			      (bool) gmip.l_GP_consultation_flag,
-			      (bool) gmip.l_Hospitalisation_flag,
-			      true,
-			      (bool) gmip.l_Viro_data_flag,
-			      (bool) gmip.l_Prev_data_flag);
+      model_statistics_memcpy(
+	propCountry[r].region_modstats, country[r].region_modstats,
+	true, gmip.l_GP_consultation_flag, gmip.l_Hospitalisation_flag,
+	true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
 
     }
-    // TODO:
-    // if (!par.flag_any_child_nodes)
+
     prop_lfx = lfx;
   }
-  
+}
+
+
+
+void updParamBlock::adaptiveUpdate(int iter) {
+
+  // delta = proposed vals - curr vals, on the transformed scale
+  gslVector delta(values.size());
+  for (int i = 0; i < values.size(); i++) {
+    delta[i] = transform(proposal[i], dist[i]) - transform(values[i], dist[i]);
+  }
+
+  double eta = pow(iter - 199 + 1, -0.6);
+  if (global)
+    beta = beta + eta * (acceptLastMove - 0.234);
+  // else: beta for local blocks is calculated in calling function
+
+  gslMatrix deltaProd(delta.size(), delta.size());
+    
+  for (int i = 0; i < delta.size(); i++)
+    for (int j = 0; j < delta.size(); j++)
+      deltaProd[i][j] = delta[i] * delta[j];
+    
+  sigma = (1 - eta) * sigma + eta * deltaProd;
+
+  if(debug && global)
+    cout << "beta: " << beta << " 1-eta: " << 1-eta << " deltaProd: " << deltaProd << "sigma: " <<  sigma;
+}
+
+
+void updParamSet::adaptiveUpdate(int iter) {
+  // All local regions share the same beta
+  double eta = pow(iter - 199 + 1, -0.6);
+  updParamBlock::regbeta = updParamBlock::regbeta + eta * (updParamBlock::regacceptLastMove - 0.234);
+
+  for (updParamBlock& block : blocks)
+    block.adaptiveUpdate(iter);
 }
 
 
 void updParamSet::outputPars() {
   for (auto& par : params) {
-    if (! par.flag_update)
-      continue;
-    par.outfile << "  ";
-    if (par.global) {
+    if (par.flag_update) {
+      par.outfile << "  ";
       for (int i = 0; i < par.size; i++)
-	par.outfile << blocks[0].vals[par.value_index + i] << " ";
-      par.outfile << std::endl;
-    } else {
-      // local
-      for (int r = 0; r < numRegions; r++)
-	for (int i = 0; i < par.regionSize; i++)
-	  par.outfile << blocks[r+1].vals[par.value_index + i] << " ";
+	par.outfile << par.values[i] << " ";
       par.outfile << std::endl;
     }
   }
 }
 
 void updParamSet::outputProposals() {
+  cerr << "WARNING: outputProposals() currently disabled\n";
   for (auto& par : params) {
     if (! par.flag_update)
       continue;
     par.outfile << "P ";
     if (par.global) {
       for (int i = 0; i < par.size; i++)
-	par.outfile << blocks[0].proposal[par.value_index + i] << " ";
+	par.outfile << endl;//blocks[0].proposal[par.value_index + i] << " ";
       par.outfile << std::endl;
     } else {
       // local
       for (int r = 0; r < numRegions; r++)
 	for (int i = 0; i < par.regionSize; i++)
-	  par.outfile << blocks[r+1].proposal[par.value_index + i] << " ";
+	  par.outfile << endl;//blocks[r+1].proposal[par.value_index + i] << " ";
       par.outfile << std::endl;
     }
   }

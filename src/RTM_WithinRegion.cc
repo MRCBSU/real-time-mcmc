@@ -140,9 +140,9 @@ void regional_scalar_parameter(double& out_val, const gsl_vector* param_value, c
 // Block version
 void regional_scalar_parameter(double& out_val, const updParamSet &paramSet, const upd::paramIndex index, const int region_index) {
   // Design matrix is 1x1
-  const regression_def &map = paramSet[index].map_to_regional;
-  double x = map.design_matrix[0][0];
-  double beta = paramSet.lookupValue0(index, region_index);
+  const updRegrDef &map = paramSet[index].map_to_regional;
+  double x = map.design_matrix[region_index][0][0];
+  double beta = paramSet.lookup0(index, region_index);
 
   out_val = R_inverse_link_function(x * beta, map.regression_link);
 }
@@ -203,20 +203,19 @@ void regional_time_vector_parameter(gsl_vector* out_vec, const gsl_vector* param
 //Design matrix already divided over regions, no need to divide further (?)
 void regional_time_vector_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::paramIndex index, const int region_index, const int time_steps_per_day) {
   
-  gsl_vector_const_view view = paramSet.lookupValue(index, region_index);
-  //regional_time_vector_parameter(out_vec, &view.vector, paramSet[index].map_to_regional, region_index, time_steps_per_day);
+  gsl_vector_const_view view = paramSet.lookup(index, region_index);
 
-  const regression_def &map = paramSet[index].map_to_regional;
+  const updRegrDef &map = paramSet[index].map_to_regional;
 
-  if(map.design_matrix.nrows() == 0)
+  if(map.design_matrix[region_index].nrows() == 0)
   {
     // no variation, only first component of parameter value will be used.
-    gsl_vector_set_all(out_vec, paramSet.lookupValue0(index, region_index));
+    gsl_vector_set_all(out_vec, paramSet.lookup0(index, region_index));
   } else {
     int dim_t = (map.time_breakpoints.size() == 0) ? 1 : map.time_breakpoints.size() + 1;
     
-    gsl_vector* intermediate_vec = gsl_vector_alloc(map.design_matrix.nrows());
-    R_generalised_linear_regression(intermediate_vec, *map.design_matrix,
+    gsl_vector* intermediate_vec = gsl_vector_alloc(map.design_matrix[region_index].nrows());
+    R_generalised_linear_regression(intermediate_vec, *map.design_matrix[region_index],
 				    &view.vector, map.regression_link);
     
     gslVectorInt rescaled_temporal_breakpoints;
@@ -229,9 +228,9 @@ void regional_time_vector_parameter(gsl_vector* out_vec, const updParamSet &para
   }
 }
 
-// TODO: UNUSED DELETE
 
-void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector_const_view param_value, const regression_def& map_to_regional, const int region_index)
+// Block version
+void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector_const_view param_value, const updRegrDef& map_to_regional, const int region_index)
 {
   /// IN THIS FUNCTION, THE CODE LINES INVOLVING THE subdesign MATRICES HAVE BEEN DONE IN A VERY
   /// SAFE MANNER, ONCE WORKING, THIS MAY BE SPEEDED UP - INVESTIGATE
@@ -242,7 +241,7 @@ void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector_const_view 
 
 
   // if there's any temporal, regional or age variation then the design matrix should be non-zero
-  if(map_to_regional.design_matrix.nrows() == 0)
+  if(map_to_regional.design_matrix[region_index].nrows() == 0)
     {
       // no variation, only first component of parameter value will be used.
       gsl_vector_set_all(out_vec,
@@ -255,10 +254,10 @@ void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector_const_view 
       int dim_r = (map_to_regional.region_breakpoints.size() == 0) ? 1 : map_to_regional.region_breakpoints.size() + 1;
       int dim_a = (map_to_regional.age_breakpoints.size() == 0) ? 1 : map_to_regional.age_breakpoints.size() + 1;
 
-      gslMatrix subdesign(dim_a, map_to_regional.design_matrix.ncols());
+      gslMatrix subdesign(dim_a, map_to_regional.design_matrix[region_index].ncols());
       gsl_vector* intermediate_vec = gsl_vector_alloc(subdesign.nrows());
 
-      select_design_matrix(subdesign, map_to_regional.design_matrix, dim_r == 1,
+      select_design_matrix(subdesign, map_to_regional.design_matrix[region_index], dim_r == 1,
 			   region_index * dim_a, dim_a);
 
       R_generalised_linear_regression(intermediate_vec, *subdesign,
@@ -321,10 +320,11 @@ void regional_vector_parameter(gsl_vector* out_vec, const gsl_vector* param_valu
 }
 
 
-// TODO: UNUSED DELETE
 
-void regional_matrix_parameter(gsl_matrix* out_mat, const gsl_vector_const_view param_value, const regression_def& map_to_regional, const int region_index, const int time_steps_per_day)
+// Block version - copy of old code
+void regional_matrix_parameter(gsl_matrix* out_mat, gsl_vector_const_view param_value, const updRegrDef& map_to_regional, const int region_index, const int time_steps_per_day)
 {
+
   /// IN THIS FUNCTION, THE CODE LINES INVOLVING THE subdesign MATRICES HAVE BEEN DONE IN A VERY
   /// SAFE MANNER, ONCE WORKING, THIS MAY BE SPEEDED UP - INVESTIGATE
 
@@ -333,7 +333,7 @@ void regional_matrix_parameter(gsl_matrix* out_mat, const gsl_vector_const_view 
 
 
   // if there's any temporal, regional or age variation then the design matrix should be non-zero
-  if(map_to_regional.design_matrix.nrows() == 0)
+  if(map_to_regional.design_matrix[region_index].nrows() == 0)
     {
       // no variation, only first component of parameter value will be used.
       gsl_matrix_set_all(out_mat,
@@ -347,10 +347,10 @@ void regional_matrix_parameter(gsl_matrix* out_mat, const gsl_vector_const_view 
       int dim_a = (map_to_regional.age_breakpoints.size() == 0) ? 1 : map_to_regional.age_breakpoints.size() + 1;
       int dim_t = (map_to_regional.time_breakpoints.size() == 0) ? 1 : map_to_regional.time_breakpoints.size() + 1;
 
-      gslMatrix subdesign(dim_t * dim_a, map_to_regional.design_matrix.ncols());
+      gslMatrix subdesign(dim_t * dim_a, map_to_regional.design_matrix[region_index].ncols());
       gsl_vector* intermediate_vec = gsl_vector_alloc(subdesign.nrows());
 
-      select_design_matrix(subdesign, map_to_regional.design_matrix, dim_r == 1,
+      select_design_matrix(subdesign, map_to_regional.design_matrix[region_index], dim_r == 1,
 			   region_index * dim_t * dim_a, dim_t * dim_a);
 
       R_generalised_linear_regression(intermediate_vec, *subdesign,
@@ -520,14 +520,14 @@ void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSe
 {
   int dim_r, dim_t, dim_a;
 
-  const regression_def &map = paramSet[index].map_to_regional;
-  gsl_vector_const_view view = paramSet.lookupValue(index, region_index);
+  const updRegrDef &map = paramSet[index].map_to_regional;
+  gsl_vector_const_view view = paramSet.lookup(index, region_index);
   
   // COPY THE ELEMENTS OF THE BASIC MIXING MODEL INTO THE OUTPUT MIXING MODEL
   mixing_model_memcpy(out_mix, base_mix);
 
   // HOPEFULLY ONLY REGIONAL VARIATION IS SPECIFIED WITHIN THE INPUT PARAMETER FILE
-  if(map.design_matrix.nrows() == 0)
+  if(map.design_matrix[region_index].nrows() == 0)
     {
       // NO REGIONAL VARIATION - ALL PARAMETERS APPLY TO ALL REGIONS
       gsl_vector_memcpy(out_mix.scalants, &view.vector);
@@ -566,9 +566,9 @@ void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSe
 			   region_index * out_mix.scalants->size,
 			   out_mix.scalants->size);
       */
-      gsl_vector* temp_subvec = gsl_vector_alloc(map.design_matrix.nrows());
+      gsl_vector* temp_subvec = gsl_vector_alloc(map.design_matrix[region_index].nrows());
 
-      R_generalised_linear_regression(temp_subvec, *map.design_matrix, &view.vector, map.regression_link);
+      R_generalised_linear_regression(temp_subvec, *map.design_matrix[region_index], &view.vector, map.regression_link);
       
       gsl_vector_memcpy(out_mix.scalants, temp_subvec);
 
@@ -583,9 +583,10 @@ void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSe
 }
 
 // Wrapper for actional regional_matrix_parameter that sorts out conversion of view to vector
+/*
 void regional_matrix_parameter(gsl_matrix* out_mat, const updParamSet &paramSet, const upd::paramIndex index, const int region_index, const int time_steps_per_day) {
 
-  gsl_vector_const_view view = paramSet.lookupValue(index, region_index);
+  gsl_vector_const_view view = paramSet.lookup(index, region_index);
 
   regional_matrix_parameter(out_mat,
 			    &(view.vector),
@@ -593,11 +594,12 @@ void regional_matrix_parameter(gsl_matrix* out_mat, const updParamSet &paramSet,
 			    region_index,
 			    time_steps_per_day);
 }
-
+*/
+/*
 // Note: Actual GP_PATCH method defined in gp_param_patch.h/cc
 void regional_matrix_param_GP_PATCH(gsl_matrix* out_mat, const updParamSet &paramSet, const upd::paramIndex index, const int region_index, const int time_steps_per_day) {
 
-  gsl_vector_const_view view = paramSet.lookupValue(index, region_index);
+  gsl_vector_const_view view = paramSet.lookup(index, region_index);
 
   regional_matrix_parameter_GP_PATCH(out_mat,
 			    &(view.vector),
@@ -605,7 +607,7 @@ void regional_matrix_param_GP_PATCH(gsl_matrix* out_mat, const updParamSet &para
 			    region_index,
 			    time_steps_per_day);
 }
-
+*/
 
 void block_regional_parameters(regional_model_params& out_rmp,
 			       const updParamSet &updPars,
@@ -643,37 +645,37 @@ void block_regional_parameters(regional_model_params& out_rmp,
   // This function should also be parallelisable over regions
 
   if(update_flags.getFlag("l_gp_negbin_overdispersion")){
-    //regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, updPars.lookupValue(upd::GP_OVERDISP, region_index), updPars[upd::GP_OVERDISP].map_to_regional, region_index, 1); // Only want this per day rather per delta t
-    regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, updPars, upd::GP_OVERDISP, region_index, 1);  // Only want this per day rather per delta t
+    regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, updPars.lookup(upd::GP_OVERDISP, region_index), updPars[upd::GP_OVERDISP].map_to_regional, region_index, 1); // Only want this per day rather per delta t
+    //regional_matrix_parameter(out_rmp.l_gp_negbin_overdispersion, updPars, upd::GP_OVERDISP, region_index, 1);  // Only want this per day rather per delta t
   }
   if(update_flags.getFlag("l_hosp_negbin_overdispersion")){
-    //regional_matrix_parameter(out_rmp.l_hosp_negbin_overdispersion, updPars.lookupValue(upd::HOSP_OVERDISP, region_index), updPars[upd::HOSP_OVERDISP].map_to_regional, region_index, 1);
-    regional_matrix_parameter(out_rmp.l_hosp_negbin_overdispersion, updPars, upd::HOSP_OVERDISP, region_index, 1);
+    regional_matrix_parameter(out_rmp.l_hosp_negbin_overdispersion, updPars.lookup(upd::HOSP_OVERDISP, region_index), updPars[upd::HOSP_OVERDISP].map_to_regional, region_index, 1);
+    //regional_matrix_parameter(out_rmp.l_hosp_negbin_overdispersion, updPars, upd::HOSP_OVERDISP, region_index, 1);
     // Again, only valid per observation, rather than per timestep.
   }
   if(update_flags.getFlag("l_day_of_week_effect"))
-    regional_matrix_parameter(out_rmp.l_day_of_week_effect, updPars.lookupValue(upd::DOW_EFFECTS, region_index), updPars[upd::DOW_EFFECTS].map_to_regional, region_index, 1); // Only want this per day rather per delta t
+    regional_matrix_parameter(out_rmp.l_day_of_week_effect, updPars.lookup(upd::DOW_EFFECTS, region_index), updPars[upd::DOW_EFFECTS].map_to_regional, region_index, 1); // Only want this per day rather per delta t
   if(update_flags.getFlag("l_init_prop_sus"))
-    regional_vector_parameter(out_rmp.l_init_prop_sus, updPars.lookupValue(upd::PROP_SUS, region_index), updPars[upd::PROP_SUS].map_to_regional, region_index);
+    regional_vector_parameter(out_rmp.l_init_prop_sus, updPars.lookup(upd::PROP_SUS, region_index), updPars[upd::PROP_SUS].map_to_regional, region_index);
   if(update_flags.getFlag("l_init_prop_sus_HI_geq_32"))
-    regional_vector_parameter(out_rmp.l_init_prop_sus_HI_geq_32, updPars.lookupValue(upd::PROP_HI_GEQ_32, region_index), updPars[upd::PROP_HI_GEQ_32].map_to_regional, region_index);
+    regional_vector_parameter(out_rmp.l_init_prop_sus_HI_geq_32, updPars.lookup(upd::PROP_HI_GEQ_32, region_index), updPars[upd::PROP_HI_GEQ_32].map_to_regional, region_index);
   if(update_flags.getFlag("l_average_infectious_period"))
     {
-      regional_matrix_parameter(out_rmp.l_average_infectious_period, updPars.lookupValue(upd::AIP, region_index), updPars[upd::AIP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      regional_matrix_parameter(out_rmp.l_average_infectious_period, updPars.lookup(upd::AIP, region_index), updPars[upd::AIP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_average_infectious_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
   if(update_flags.getFlag("l_r1_period"))
     {
-      regional_matrix_parameter(out_rmp.l_r1_period, updPars.lookupValue(upd::AR1, region_index), updPars[upd::AR1].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      regional_matrix_parameter(out_rmp.l_r1_period, updPars.lookup(upd::AR1, region_index), updPars[upd::AR1].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_r1_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / (2 * (double) in_gmip.l_transmission_time_steps_per_day));
     }
   if(update_flags.getFlag("l_latent_period"))
     {
-      regional_matrix_parameter(out_rmp.l_latent_period, updPars.lookupValue(upd::ALP, region_index), updPars[upd::ALP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      regional_matrix_parameter(out_rmp.l_latent_period, updPars.lookup(upd::ALP, region_index), updPars[upd::ALP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_latent_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
-    regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookupValue(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+    regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookup(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_lbeta_rw")){
     regional_time_vector_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, region_index, in_gmip.l_transmission_time_steps_per_day);
     if(0 != gsl_vector_get(out_rmp.l_lbeta_rw, 0))
@@ -681,57 +683,57 @@ void block_regional_parameters(regional_model_params& out_rmp,
   }
   if(update_flags.getFlag("l_sensitivity"))
   { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookupValue(upd::SENS, region_index);
+    gsl_vector_const_view view = updPars.lookup(upd::SENS, region_index);
       fixed_quantity(out_rmp.l_sensitivity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SENS].param_name,
-		     updPars[upd::SENS].map_to_regional.design_matrix);
+		     updPars[upd::SENS].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_specificity"))
   { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookupValue(upd::SPEC, region_index);
+    gsl_vector_const_view view = updPars.lookup(upd::SPEC, region_index);
       fixed_quantity(out_rmp.l_specificity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SPEC].param_name,
-		     updPars[upd::SPEC].map_to_regional.design_matrix);
+		     updPars[upd::SPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_sensitivity"))
   { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookupValue(upd::SSENS, region_index);
+    gsl_vector_const_view view = updPars.lookup(upd::SSENS, region_index);
       fixed_quantity(out_rmp.l_sero_sensitivity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SSENS].param_name,
-		     updPars[upd::SSENS].map_to_regional.design_matrix);
+		     updPars[upd::SSENS].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_specificity"))
   { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookupValue(upd::SSPEC, region_index);
+    gsl_vector_const_view view = updPars.lookup(upd::SSPEC, region_index);
       fixed_quantity(out_rmp.l_sero_specificity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SSPEC].param_name,
-		     updPars[upd::SSPEC].map_to_regional.design_matrix);
+		     updPars[upd::SSPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_pr_symp"))
-    regional_matrix_parameter(out_rmp.l_pr_symp, updPars.lookupValue(upd::PROP_SYMP, region_index), updPars[upd::PROP_SYMP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
+    regional_matrix_parameter(out_rmp.l_pr_symp, updPars.lookup(upd::PROP_SYMP, region_index), updPars[upd::PROP_SYMP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
   if(update_flags.getFlag("l_pr_onset_to_GP"))
     { // PATCHED CODE!!!
       if(in_gmip.l_GP_patch_flag)
-	regional_matrix_param_GP_PATCH(out_rmp.l_pr_onset_to_GP, updPars, upd::PROP_GP, region_index, in_gmip.l_reporting_time_steps_per_day);	
-      else regional_matrix_parameter(out_rmp.l_pr_onset_to_GP, updPars.lookupValue(upd::PROP_GP, region_index), updPars[upd::PROP_GP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
+	regional_matrix_parameter_GP_PATCH(out_rmp.l_pr_onset_to_GP, updPars, upd::PROP_GP, region_index, in_gmip.l_reporting_time_steps_per_day);	
+      else regional_matrix_parameter(out_rmp.l_pr_onset_to_GP, updPars.lookup(upd::PROP_GP, region_index), updPars[upd::PROP_GP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
     } // PATCHED CODE ENDS
   if(update_flags.getFlag("l_pr_onset_to_Hosp"))
-    regional_matrix_parameter(out_rmp.l_pr_onset_to_Hosp, updPars.lookupValue(upd::PROP_HOSP, region_index), updPars[upd::PROP_HOSP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
+    regional_matrix_parameter(out_rmp.l_pr_onset_to_Hosp, updPars.lookup(upd::PROP_HOSP, region_index), updPars[upd::PROP_HOSP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
   if(update_flags.getFlag("l_pr_onset_to_Death"))
-    regional_matrix_parameter(out_rmp.l_pr_onset_to_Death, updPars.lookupValue(upd::PROP_DEATH, region_index), updPars[upd::PROP_DEATH].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
+    regional_matrix_parameter(out_rmp.l_pr_onset_to_Death, updPars.lookup(upd::PROP_DEATH, region_index), updPars[upd::PROP_DEATH].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
   if(update_flags.getFlag("l_importation_rate"))
-    regional_matrix_parameter(out_rmp.l_importation_rate, updPars.lookupValue(upd::IMPORTATION, region_index), updPars[upd::IMPORTATION].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+    regional_matrix_parameter(out_rmp.l_importation_rate, updPars.lookup(upd::IMPORTATION, region_index), updPars[upd::IMPORTATION].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_MIXMOD")) {
     //gsl_vector_const_view view = updPars.lookupValue(upd::CONTACT, region_index);
     regional_mixmod_parameter(out_rmp.l_MIXMOD, updPars, upd::CONTACT, in_mix, region_index, population_by_age, true);
   }
   if(update_flags.getFlag("l_background_gps_counts"))
     {
-      regional_matrix_parameter(out_rmp.l_background_gps_counts, updPars.lookupValue(upd::BGR, region_index), updPars[upd::BGR].map_to_regional, region_index, 1);
+      regional_matrix_parameter(out_rmp.l_background_gps_counts, updPars.lookup(upd::BGR, region_index), updPars[upd::BGR].map_to_regional, region_index, 1);
       // THE PARAMETER VECTOR GIVES CONSULTATION RATES. CONVERT THESE HERE TO BACKGROUND GP CONSULTATION TOTALS FOR EACH REGION.
       // RATES ARE NUMBER OF CONSULTATIONS PER 100K PEOPLE PER YEAR
       // FIRST WRITE AS NUMBER OF CONSULTATIONS PER PERSON PER DAY
@@ -742,11 +744,11 @@ void block_regional_parameters(regional_model_params& out_rmp,
     }
   if(update_flags.getFlag("l_R0_peakday"))
     {
-      if(updPars[upd::R0_PEAKDAY].map_to_regional.design_matrix.nrows() > 0)
+      if(updPars[upd::R0_PEAKDAY].map_to_regional.design_matrix[region_index].nrows() > 0)
 	{
 	  ERROR_PARAM_INPUT(updPars[upd::R0_PEAKDAY].param_name.c_str());
 	}
-      out_rmp.l_R0_peakday = updPars.lookupValue0(upd::R0_PEAKDAY, region_index);
+      out_rmp.l_R0_peakday = updPars.lookup0(upd::R0_PEAKDAY, region_index);
     }
   if(update_flags.getFlag("l_EGR"))
   {
@@ -773,7 +775,7 @@ void block_regional_parameters(regional_model_params& out_rmp,
 
       // Do we need to check whether LPL0 is regional? Or is it safe to take first
       // value regardless?
-      double val = updPars.lookupValue0(upd::LPL0, region_index);
+      double val = updPars.lookup0(upd::LPL0, region_index);
       double nu = gsl_sf_exp(val);
       out_rmp.l_I0 = total_population_size * d_A * nu / (gsl_matrix_get(out_rmp.l_pr_onset_to_GP, 0, 0) * out_rmp.l_R0_init);
     }
@@ -785,11 +787,11 @@ void block_regional_parameters(regional_model_params& out_rmp,
 				 in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_R0_Amplitude"))
     { // STRICTLY A SCALAR QUANTITY
-      if(updPars[upd::R0_AMP].map_to_regional.design_matrix.nrows() > 0)
+      if(updPars[upd::R0_AMP].map_to_regional.design_matrix[region_index].nrows() > 0)
 	{
 	  ERROR_PARAM_INPUT(updPars[upd::R0_AMP].param_name.c_str());
 	}
-      out_rmp.l_R0_Amplitude = updPars.lookupValue0(upd::R0_AMP, region_index) * out_rmp.l_R0_init / (1 + fn_initial_phase(in_gmip.l_day_of_start - out_rmp.l_R0_peakday, DAYS_IN_YEAR));
+      out_rmp.l_R0_Amplitude = updPars.lookup0(upd::R0_AMP, region_index) * out_rmp.l_R0_init / (1 + fn_initial_phase(in_gmip.l_day_of_start - out_rmp.l_R0_peakday, DAYS_IN_YEAR));
     }
   
 

@@ -11,13 +11,15 @@ using std::string;
 class flagclass
 {
  private:
-  bool *regional_update_flags;
   static unsigned int instances;
   static unsigned int iSize;
   static string* rmp_member_names;
   void flagclass_static_new();
   void new_and_set_all_flags(const bool&);
- public:
+public:
+  // CCS: Temporarily public for testing block updates
+  bool *regional_update_flags;
+
   flagclass();
   string UPItoRMP(const int&);
   bool getFlag(const string&);

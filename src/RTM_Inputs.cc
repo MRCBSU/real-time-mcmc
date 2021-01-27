@@ -623,7 +623,7 @@ void initialise_prior_density(updParamSet &paramSet,
 	// Test for existance of prior
 	if (modpar.prior_params[int_marker].size() > 0) {
 	  modpar.log_prior_dens +=
-	    prior_density_fn(modpar.init_value[int_marker],
+	    prior_density_fn(modpar.values[int_marker],
 			     (distribution_type) prior_distributions[int_marker],
 			     *modpar.prior_params[int_marker]);
 	} else if( modpar.parents[int_marker] >= 0) {
@@ -633,9 +633,9 @@ void initialise_prior_density(updParamSet &paramSet,
 	  // Can't use lookupValue to retrieve parent values as blocks haven't
 	  // been constructed yet, but we can use init_value
 	  modpar.log_prior_dens +=
-	    prior_density_fn(modpar.init_value[int_marker],
+	    prior_density_fn(modpar.values[int_marker],
 			     (distribution_type) prior_distributions[int_marker],
-			     *paramSet[modpar.parents[int_marker]].init_value);
+			     *paramSet[modpar.parents[int_marker]].values);
 	}
     }
   else
@@ -652,9 +652,10 @@ void initialise_prior_density(updParamSet &paramSet,
 	  gsl_vector_view mv_covar_subrow = gsl_vector_subvector(*modpar.prior_params[int_marker], 1, modpar.prior_params[int_marker].size() - 1);
 	  gsl_matrix_set_row(mv_covar, int_marker, &mv_covar_subrow.vector);
 	} else if (modpar.parents[int_marker] >= 0) {
-	  gsl_vector_const_view view = paramSet.lookupValue(modpar.parents[int_marker]);
-	  const gsl_vector *parentVals = &view.vector;
+	  
+	  gsl_vector* parentVals = *paramSet[modpar.parents[int_marker]].values;
 	  gsl_vector_set(mv_mean, int_marker, gsl_vector_get(parentVals, 0));
+
 	  gsl_vector_const_view subrow = gsl_vector_const_subvector(parentVals, 1, parentVals->size - 1);
 	  gsl_matrix_set_row(mv_covar, int_marker, &subrow.vector);
 	}
@@ -667,9 +668,9 @@ void initialise_prior_density(updParamSet &paramSet,
 
       // EVALUATE THE LOG-DENSITY
       if(modpar.flag_hyperprior)
-	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm(*modpar.init_value);
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm(*modpar.values);
       else
-	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm_nonnorm(*modpar.init_value);
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm_nonnorm(*modpar.values);
 
       // FREE ANY MEMORY ALLOCATED
       gsl_vector_free(mv_mean);
