@@ -1,3 +1,5 @@
+// -*- mode: poly-markdown -*-
+
 `r options(scipen=999)`
 \#\#\#\#\# DATA FLAGS AND FILENAMES
 
