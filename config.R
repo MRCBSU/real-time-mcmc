@@ -153,7 +153,7 @@ prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
-lag.last.beta <- 24 - 7*2
+lag.last.beta <- 24 - 7#*2
 if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
