@@ -42,7 +42,7 @@ iteration.number.to.start.from <- 6400
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210122"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210129"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -158,11 +158,11 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("2021-01-27")
+date.prev <- ymd("2021-01-25")
 num.prev.days <- 51
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+prev.end.day <- date.prev - start.date - prev.cutoff.days ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 14
