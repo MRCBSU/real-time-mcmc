@@ -307,6 +307,7 @@ void updParamSet::init(const string& dir) {
       if (block.sigma[i][i] == 0)
 	block.sigma[i][i] = 1;
     }
+
     block.sigma *= 0.01;   // Scale
     
     if (debug && block.global)
@@ -374,7 +375,7 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
   gslVector transformed(values.size());
   for (int i = 0; i < values.size(); i++)
     transformed[i] = transform(values[i], dist[i]);
-
+  
   // Random sample
   gsl_linalg_cholesky_decomp1(*covar);
   gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
@@ -384,9 +385,9 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
 
   if (debug) {
     if (global)
-      cout << "covar factor: " << exp(beta) << endl;
+      cout << "global covar factor: " << exp(beta) << endl;
     else
-      cout << "covar factor: " << exp(regbeta) << endl;
+      cout << "local covar factor: " << exp(regbeta) << endl;
     cout << "V: " << values << endl << "P: " << proposal << endl;
   }
 }
@@ -454,8 +455,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     }
   }
 
-  if (debug)
-    cout << "After log density, laccept: " << laccept << endl;
+  //if (debug)
+  // cout << "After log density, laccept: " << laccept << endl;
  
   if (laccept == GSL_NEGINF)
     return;
@@ -507,8 +508,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	      
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
 
-	      if (debug)
-		cout << "Child: " << laccept << endl;
+	      //if (debug)
+	      //cout << "Child: " << laccept << endl;
 	    }
 	  }
 	}
@@ -579,8 +580,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	
   laccept += prop_lfx.total_lfx - lfx.total_lfx;
 
-  if (debug)
-    cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
+  //if (debug)
+  //cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
@@ -596,6 +597,7 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
   numProposed++;
 
+  //if(debug) cout << "test: " << laccept << " " << acceptTest << " " << (laccept > acceptTest) << endl;
   if (laccept > acceptTest) {
     if(debug) cout << "Prop accept\n";
 
@@ -606,10 +608,14 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     else
       regacceptLastMove = 1;
 
-    // values = proposal
+    // Update the parameters
     for (int i = 0; i < values.size(); i++)
       paramSet[parIndex[i]].values[parOffset[i]] = proposal[i];
-
+    
+    // To calculate the adaptive delta, we swap these two, so proposal
+    // temporarily holds the previous iteration's values.
+    values.swapWith(proposal);
+    
     // Save child log prior density
     for (updParam& par : paramSet.params)
       if (par.flag_any_child_nodes)
@@ -642,7 +648,10 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     }
   } else {
     // Reject proposal
-    if(debug) cout << "Prop accept\n";
+    if(debug) cout << "Prop reject\n";
+
+    // We need to reset the proposal so that adpative delta is calculated correctly 
+    proposal = values;
     
     // Undo region changes 
     if (global) {
@@ -691,11 +700,20 @@ void updParamBlock::adaptiveUpdate(int iter) {
   for (int i = 0; i < delta.size(); i++)
     for (int j = 0; j < delta.size(); j++)
       deltaProd[i][j] = delta[i] * delta[j];
-    
+
+  mu = (1 - eta) * mu + eta * delta;
   sigma = (1 - eta) * sigma + eta * deltaProd;
 
-  if(debug && global)
-    cout << "beta: " << beta << " 1-eta: " << 1-eta << " deltaProd: " << deltaProd << "sigma: " <<  sigma;
+  if(debug) {
+    if (global) cout << "Global: a " << acceptLastMove << " beta " << beta;
+    else cout << "Locl " << regionNum << ": a " << updParamBlock::regacceptLastMove << " beta " << updParamBlock::regbeta;
+
+    cout << endl << "P: " << proposal << endl << "V: " << values << endl;
+    
+    cout << " eta " << eta << " 1-eta " << 1-eta << " delta " << delta << "; mu: " << mu << endl;
+    //cout << "deltaProd: " << deltaProd;
+    cout << "sigma: " <<  sigma;
+  }
 }
 
 
@@ -744,6 +762,6 @@ void updParamSet::outputProposals() {
 void updParamSet::printAcceptRates(int numIters) {
   cout << "Accept: ";
   for (auto& block : blocks)
-    cout << setprecision(2) << block.numAccept / (double) block.numProposed << " ";
+    cout << setprecision(4) << block.numAccept / (double) block.numProposed << " ";
   cout << endl;
 }

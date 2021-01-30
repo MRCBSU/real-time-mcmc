@@ -75,8 +75,6 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
-  // Block pars: Having read the parameters, initialise the rest of the block structure
-  paramSet.init("pars");
 
 
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
@@ -111,10 +109,14 @@ int main(void){
 
 #endif
 
+
+  Region* country2 = new Region[global_fixedpars.l_num_regions];
+
+  // Block pars: Having read the parameters, initialise the rest of the block structure
+  paramSet.init("pars");
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
-  Region* country2 = new Region[global_fixedpars.l_num_regions];
   for (int i = 0; i < global_fixedpars.l_num_regions; i++)
     Region_alloc(country2[i], global_fixedpars, mixmod_struct);
   read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);
@@ -124,7 +126,6 @@ int main(void){
     block_regional_parameters(country2[int_i].det_model_params, paramSet, 
   				 global_fixedpars, int_i, country2[int_i].population,
   				 country2[int_i].total_population, mixmod_struct, block_all_true);
-
 
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
@@ -159,7 +160,7 @@ int main(void){
 		    global_modpars.hosp_delay.distribution_function
     );
 #endif
-  
+
   likelihood block_llhood(global_fixedpars);
   fn_log_likelihood(block_llhood, country2, 0, true, true, 
 		    global_fixedpars.l_GP_consultation_flag,

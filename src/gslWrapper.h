@@ -86,6 +86,11 @@ public:
     }
     return *this;
   }
+
+  // Swap two vectors without copying contents
+  void swapWith(gslVector& other) {
+    std::swap(base, other.base);
+  }
     
   void alloc(size_t len) {
     assert(base == nullptr);
@@ -427,7 +432,7 @@ public:
     }
     return *this;
   }
-  
+
   void alloc(size_t rows, size_t cols) {
     assert(base == nullptr);
     base = gsl_matrix_alloc(rows, cols);

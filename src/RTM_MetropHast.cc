@@ -241,10 +241,6 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Likelihood
   likelihood prop_lfx(gmip);
   prop_lfx = lfx;
-  // CCS: Alloc no longer required
-  //likelihood_alloc(prop_lfx, gmip);
-  //likelihood_memcpy(prop_lfx, lfx);
-  // //
 
   int maximum_block_size = simulation_parameters.maximum_block_size;
 
@@ -300,43 +296,50 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       gsl_vector_int_set_1ton(b[int_param]);
       if(theta_i_size <= maximum_block_size)
 	gsl_vector_int_set_1ton(a[int_param]);
+
+      // OPEN PARAMETER OUTPUT FILES...
+      string filename("coda_");
+      filename += theta.param_list[int_param].param_name;
+      if(theta.param_list[int_param].flag_update)
+	output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);
     }
 
+/*
+  // TODO: Uncomment this and remove output file creation above
   for (int i = 0; i < paramSet.params.size(); i++) {
-    // OPEN PARAMETER OUTPUT FILES...
     string filename("coda_");
     filename += paramSet[i].param_name;
-    if(paramSet[i].flag_update) {
+    if(paramSet[i].flag_update)
       output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
-    }
   }
+*/
   
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-
       if (int_iter % 10 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
+      // Block update
+
+      // Update two blocks every iter: global block and one of the local blocks
+
+      int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
+      if (debug)
+	cout << "Iter: " << int_iter << endl << "Global:" << endl;
+      
       // Global
       paramSet.blocks[0].calcProposal(paramSet, r);
       paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
 
-      // Pick one region [1, 7]
-      int reg = gsl_rng_uniform_int(r, 7) + 1;
-      if (debug) {
-	cout << "Iter: " << int_iter << " ";
-	cout << "Local region: " << reg-1 << endl;
-      }
+      if (debug) cout << "Local reg " << reg-1 << endl;
+
       paramSet.blocks[reg].calcProposal(paramSet, r);
       paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
       
 /*
-      
-      // CCS: Block Updates
-      // For now, this is NOT done in parallel to avoid parallel RNG issues
       paramSet.calcProposals(r);
 
       paramSet.outputProposals();
@@ -345,15 +348,16 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // Accept/reject
       paramSet.doAccept(r, country2, gmip);
-
-      paramSet.outputPars();
 */
-
       paramSet.outputPars();
 
-      
-      // Posterior mean and sumsq on a per-parameter basis
-      for (auto& par : paramSet.params) {
+      // Block adaptive
+      if (int_iter > 199) {
+	paramSet.adaptiveUpdate(int_iter);
+      }
+
+      // Update Posterior mean and sumsq on a per-parameter basis
+      for (updParam& par : paramSet.params) {
 	// mean/subsq only defined if flag_update = true
 	if (par.flag_update) {
 	  if (int_iter >= simulation_parameters.burn_in) {
@@ -672,11 +676,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 				theta, lfx, true, true, false);
       }
       if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
-      
-      // Block adaptive
-      if (int_iter > 199) {
-	paramSet.adaptiveUpdate(int_iter);
-      }
+     
 
 	  
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase

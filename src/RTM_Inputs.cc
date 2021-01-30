@@ -1000,8 +1000,8 @@ void read_global_model_parameters(globalModelParams& in_pars,
 	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density);
        else
 	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density_nonnorm);
-   
-	 
+
+
   // NOW TO READ IN THE PARAMETERS OF THE DELAY DISTRIBUTIONS
   // ALLOCATE THE STRUCTURE... NEED TO KNOW HOW MANY VARIABLES IT CONTAINS
   num_instances = count_instances_in_string(str_delay_names, ":");
