@@ -14,7 +14,7 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 24
+nweeks.ahead <- 12
 
 counterfactual <- FALSE
 
@@ -27,22 +27,22 @@ mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
-prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
+prev.flag <- prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag & (prev.data$lmeans == "NULL")){
     if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20201119")
+		date.prev <- ymd("20201227")
 		## Convert that to an analysis day number
 		prev.end.day <- date.prev - start.date + 1
 		last.prev.day <- (prev.end.day - 4)
-		first.prev.day <- 168
-		days.between.prev <- 28
+		if(!exists("first.prev.day")) first.prev.day <- 168
+		if(!exists("days.between.prev")) days.between.prev <- 28
 		## Default system for getting the days on which the likelihood will be calculated.
-		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+		if(!exists("prev.lik.days")) prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
 	}
     for(r in 1:nr){
 	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", regions[r], "_ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
-          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt") 
+          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt")
       prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
       prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
     }
@@ -76,7 +76,7 @@ symlink.design <- function(design)
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
     oList <- do.call(abind, args = list(oList, along = 0))
-    
+
     }
 
 ## ## ## --------------------
@@ -248,4 +248,4 @@ lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
 if(prev.flag)
     lapply(prev.data, file.remove)
-    
+

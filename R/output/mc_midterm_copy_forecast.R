@@ -4,35 +4,78 @@ require(rmarkdown)
 require(abind)
 require(parallel)
 require(knitr)
+require(Matrix)
 
+out.dir <- commandArgs(trailingOnly = TRUE)[1]
+QUANTILES <- c(0.025, 0.5, 0.975)
+## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+if (!is.na(out.dir)) setwd(out.dir)
 load("mcmc.RData")
 load("tmp.RData")
-
 source(file.path(Rfile.loc, "sim_func.R"))
-
-QUANTILES <- c(0.025, 0.5, 0.975)
-
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 24
+nweeks.ahead <- 8
 
-projections.basedir <- file.path(out.dir, "projections")
+counterfactual <- FALSE
 
+projections.basedir <- file.path(out.dir, "projections_MTP2")
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
-google.data.date <- ymd("20201115")
+google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
-
+sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
+prev.flag <- prev.flag ## Are we interested in simulating prevalence outputs?
+if(prev.flag & (prev.data$lmeans == "NULL")){
+    if (!exists("date.prev")) {
+		## Get the date of the prevalence data
+		date.prev <- ymd("20201227")
+		## Convert that to an analysis day number
+		prev.end.day <- date.prev - start.date + 1
+		last.prev.day <- (prev.end.day - 4)
+		if(!exists("first.prev.day")) first.prev.day <- 168
+		if(!exists("days.between.prev")) days.between.prev <- 28
+		## Default system for getting the days on which the likelihood will be calculated.
+		if(!exists("prev.lik.days")) prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+	}
+    for(r in 1:nr){
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", regions[r], "_ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
+          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt")
+      prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
+      prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
+    }
+    names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
+}
 ## ## Do the contract matrices that will be used in the projection exist on file and are they correct?
-overwrite.matrices <- TRUE
+overwrite.matrices <- FALSE
+
+## ## Model for the betas
+## Do we want to specify additional beta breakpoints and how do they modify the design matrix for the random-walk.
+new.betas <- TRUE
+if(new.betas){
+    beta.breaks <- cm.breaks[-1][(start.date - 1 + cm.breaks[-1]) < ymd(date.data)]
+    n.new.betas <- length(beta.breaks) + 1 - nbetas
+    new.beta.design <- matrix(1, nbetas, nbetas)
+    for(i in 1:(nbetas-1))
+        for(j in (i+1):nbetas)
+            new.beta.design[i,j] <- 0
+    for(i in 1:n.new.betas){
+        dimr <- nrow(new.beta.design);dimc <- ncol(new.beta.design)
+        new.beta.design <- rbind(new.beta.design, new.beta.design[dimr, ])
+        new.beta.design[dimr+1, dimc] <- new.beta.design[dimr, dimc] + 1
+    }                        
+    new.beta.design <- as.matrix(bdiag(lapply(1:nr, function(x) new.beta.design)))
+    beta.design.name <- "new.beta.design.txt"
+    write_tsv(as.data.frame(new.beta.design), file.path(out.dir, beta.design.name), col_names = FALSE)
+} else beta.design.name <- "beta.design.txt"
 
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-
+if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -54,7 +97,7 @@ symlink.design <- function(design)
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
     oList <- do.call(abind, args = list(oList, along = 0))
-    
+
     }
 
 ## ## ## --------------------
@@ -63,7 +106,6 @@ if(!file.exists(projections.basedir))
     dir.create(projections.basedir)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
-sero.flag <- 0 ## Are we interested in serological outputs? Switched off for the moment.
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
@@ -71,17 +113,27 @@ start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
-## prev.flag <- 0
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", format(google.data.date, "%Y%m%d"), ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
-matrix.dir <- file.path(dirname(matrix.dir), paste0("google_mobility_relative_matrices_", format(google.data.date, "%Y%m%d")))
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+## Get the new contract matrix modifiers to use
+cm.mults <- c(cm.mults,
+              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              )
+if(counterfactual){
+    cm.dates <- start.date + cm.breaks - 1
+    future.mats <- cm.dates > google.data.date
+    cm.breaks <- cm.breaks[!future.mats]
+    cm.bases <- cm.bases[c(TRUE, !future.mats)]
+    cm.mults <- cm.mults[c(TRUE, !future.mats)]
+}
+## Write to file any contact matrix that doesn't already exist.
 if(!all(file.exists(cm.bases)) || overwrite.matrices){
     idx.miss <- which(!file.exists(cm.bases))
     if(overwrite.matrices) idx.miss <- 2:length(cm.bases)
@@ -91,10 +143,6 @@ if(!all(file.exists(cm.bases)) || overwrite.matrices){
             write_tsv(cm.bases[idx], col_names = FALSE)
     }
 }
-## Get the new contract matrix modifiers to use
-cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod3levels", mult.order, ".txt"))
-              )
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
 
@@ -147,7 +195,7 @@ if(gp.flag)
 if(rw.flag)
     symlink.design("m.design.txt")
 if(beta.rw.flag)
-    symlink.design("beta.design.txt")
+    symlink.design(beta.design.name)
 if(!single.ifr)
     symlink.design("ifr.design.txt")
 ## ## ## --------------------------------------------------------------
@@ -166,7 +214,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] == "pjb51"){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
@@ -213,7 +261,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections.RData")
+save(list = save.list, file = "projections_midterm_alt.RData")
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
@@ -221,4 +269,4 @@ lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
 if(prev.flag)
     lapply(prev.data, file.remove)
-    
+

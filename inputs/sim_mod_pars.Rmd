@@ -2,6 +2,7 @@
 repeat.for.regions <- function(v) {
 	paste(rep(v, nr), collapse = ", ")
 }
+if(!exists("beta.design.name")) beta.design.name <- "beta.design.txt"
 options(scipen=999)
 ```
 
@@ -112,7 +113,7 @@ prior_hyper = `r as.integer(beta.update)`;
 
 regression_link = 1;
 
-`r ifelse(beta.rw.flag, "regression_design = beta.design.txt;", "")`
+`r ifelse(beta.rw.flag, paste0("regression_design = ", beta.design.name, ";"), "")`
 
 time_breakpoints = `r paste(beta.breaks, collapse = ", ")`;
 

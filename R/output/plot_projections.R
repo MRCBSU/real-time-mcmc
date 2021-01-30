@@ -13,8 +13,9 @@ external <- FALSE
 
 output_filename <- gsub("RData", "html", projections_file)
 rmarkdown::render(
-	file.path(Rfile.loc, 'projinf-report.Rmd'),
-	html_document(pandoc_args = "--self-contained"),
-	output_dir = out.dir,
-	intermediates_dir = file.path(out.dir, paste0(output_filename, "_tmp"))
+    file.path(Rfile.loc, 'projinf-report.Rmd'),
+    html_document(pandoc_args = "--self-contained"),
+    output_dir = out.dir,
+    intermediates_dir = file.path(out.dir, paste0(output_filename, "_tmp")),
+    output_file = output_filename
 )
