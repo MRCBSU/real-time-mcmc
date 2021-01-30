@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210122"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210129"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -72,7 +72,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -89,8 +89,8 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
     if(prev.flag)
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "PrevCevik_60cutoff_prev14_matrices_20210104_timeuse_household_deaths")
-    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "NoPrev_60cutoff_matrices_20210104_timeuse_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
+    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
 }
@@ -154,8 +154,8 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20210118")
-num.prev.days <- 51
+date.prev <- ymd("20210125")
+num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
