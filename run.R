@@ -56,7 +56,7 @@ data.files <- paste0(data.dirs["deaths"], "/",
                      ifelse(flg.confirmed, "CONF", ""),
                      reporting.delay, "delay")
 if (exists("flg.cutoff")){
-    if(flg.cutoff) 
+    if(flg.cutoff)
 	data.files <- paste0(data.files, "cutoff", str.cutoff)
 }
 data.files <- paste0(data.files, ".txt")
@@ -84,6 +84,9 @@ if(prev.flag){
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
+if(vacc.flag){
+    vacc.files <- file.path(data.dirs["vacc"], paste0("dummy_vaccinations_", regions, ".txt"))
+    }
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))

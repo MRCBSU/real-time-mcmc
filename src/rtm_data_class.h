@@ -28,6 +28,7 @@ class rtmData
   gsl_vector* popn_weights;
   vector<int> col_grouping;
  public:
+  static unsigned int ndays;
   rtmData();
   rtmData(const likelihood_bounds&, const data_type&);
   ~rtmData();
@@ -41,6 +42,7 @@ class rtmData
   double meld_lfx(gsl_matrix*);
   int getDim1();
   int getDim2();
+  void switchData();
   const gsl_vector* access_weights() const;
   const vector<int> access_groups() const;
 };
