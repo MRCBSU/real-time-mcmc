@@ -197,21 +197,23 @@ population %>%
   formatPercentage(2:4)
 ```
 
-### IFR
+### Current IFR
 
 
 ```{r ifr, eval=!is.null(deaths)}
-ifr.start <- ifr[, , 1]
+## ifr.start <- ifr[, , 1]
+names(dim(ifr)) <- c("iteration", "age", "date")
+dimnames(ifr) <- list(iteration = parameter.iterations, age = dimnames(deaths)$age, date = dimnames(deaths)$date)
 ifr.today <- ifr[, , ymd(date.data) - start.date]
 today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum)
-merge.youngest.age.groups <- function(mat, num.to.group = 2) {
+merge.youngest.age.groups <- function(mat, num.to.group = 2, idx = "iteration") {
   if (num.ages <= 1) {return(mat)}
   add.function <- function(x) {
     to.merge <- x[1:num.to.group]
     to.preserve <- x[(num.to.group+1):length(x)]
     return(c(sum(to.merge), to.preserve))
   }
-  result <- apply(mat, "iteration", add.function)
+  result <- apply(mat, idx, add.function)
   return(result)
 }
 
@@ -226,8 +228,8 @@ overall_ifr <- function(day.ifr)
     enframe(name = "quantile") %>%
     mutate(age = "Overall")
 
-if(!single.ifr)
-	overall_ifr_start <- overall_ifr(ifr.start)
+## if(!single.ifr)
+##	overall_ifr_start <- overall_ifr(ifr.start)
 overall_ifr_today <- overall_ifr(ifr.today)
 
 ifr.table <- function(x, overall_x)
@@ -249,20 +251,20 @@ ifr.table <- function(x, overall_x)
     select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
     arrange(match(Age, c("Overall", dimnames(deaths)$age)))
 
-if(!single.ifr){
-	ifr.table(ifr.start, overall_ifr_start) %>%
-  			     inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
-  			     rename(Med_early = Median.x,
-    			     		      Lower_early = `95% CrI (lower).x`,
-    					      Upper_early = `95% CrI (upper).x`,
-    					      Med_late = Median.y,
-    					      Lower_late = `95% CrI (lower).y`,
-    					      Upper_late = `95% CrI (upper).y`) %>%
-   					       datatable()
-} else {
+## if(!single.ifr){
+## 	ifr.table(ifr.start, overall_ifr_start) %>%
+##   			     inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
+##   			     rename(Med_early = Median.x,
+##     			     		      Lower_early = `95% CrI (lower).x`,
+##     					      Upper_early = `95% CrI (upper).x`,
+##     					      Med_late = Median.y,
+##     					      Lower_late = `95% CrI (lower).y`,
+##     					      Upper_late = `95% CrI (upper).y`) %>%
+##    					       datatable()
+## } else {
   ifr.table(ifr.today, overall_ifr_today) %>%
-  		       datatable()
-}
+   		       datatable()
+## }
 
 # (params$prop_case_to_hosp %>%
 #   as.matrix() %>%
@@ -474,7 +476,34 @@ make.plots(cum_infections, by = "age")
 ```{r eval=!is.null(deaths), child='deaths-report.Rmd'}
 ```
 
+### IFR
+```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
+## ## Base R proved quicker than tidyr equivalents
+## Aggregate infections over region
+inf_by_age <- apply(infections, c("age", "date", "iteration"), sum)
+## Aggegrate the two youngest age groups
+inf_by_age <- merge.youngest.age.groups(inf_by_age, idx = c("iteration", "date"))
+names(dimnames(inf_by_age))[1] <- "age"; dimnames(inf_by_age)$age <- dimnames(ifr)$age
+## Only look at IFR iterations for which the infections array has been evaluated
+ifr.tab <- extract(ifr, indices=list(parameter.to.outputs), dims="iteration")
+## Calculate time-specific weighted-mean for the IFR, weighted by current age-profile of infections
+inf_by_age <- aperm(inf_by_age, names(dimnames(ifr.tab)))
+total_inf_by_age <- apply(inf_by_age, c("iteration", "date"), sum)
+ifr.all <- array(apply(inf_by_age * ifr.tab, "age", `/`, total_inf_by_age), dim = dim(ifr.tab)[c("iteration", "date", "age")])
+dimnames(ifr.all) <- list(iteration = dimnames(ifr.tab)$iteration, date = dimnames(ifr.tab)$date, age = dimnames(ifr.tab)$age)
+ifr.eng <- apply(ifr.all, c("iteration", "date"), sum)
+rm(inf_by_age, total_inf_by_age, ifr.all)
 
+## Join England to the rest of the IFR array.
+require(abind)
+name.order <- c("iteration", "date", "age")
+ifr.tab <- aperm(ifr.tab, name.order)
+ifr.tab <- abind(ifr.eng, ifr.tab, along = 3); rm(ifr.eng)
+names(dimnames(ifr.tab)) <- name.order
+dimnames(ifr.tab)$age[1] <- "All ages"
+
+make.plots(ifr.tab, by = "age", y.format = ".2%", combine.to.England = NULL)
+```
 
 ### Prob $R_t > 1$
 

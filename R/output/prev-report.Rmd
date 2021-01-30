@@ -32,7 +32,7 @@ l.norm.noise <- function(mu, sd, replicates = noise.replicates){
                   )
            )
 }
-cat("Got here 7\n")
+
 prev_gof <- prev_plot %>%
     as.tbl_cube(met_name = "prev") %>%
     as_tibble() %>%
@@ -44,7 +44,7 @@ prev_gof <- prev_plot %>%
               qlo = quantile(sampled, 0.025),
               qhi = quantile(sampled, 0.975))
 
-cat("Got here 8\n")
+
 ggplot(prev_gof, aes(y = q50, ymin = qlo, ymax = qhi, x = date, colour = region, group = region)) +
     geom_point(position = position_dodge(8)) +
     geom_linerange(position = position_dodge(8)) +
