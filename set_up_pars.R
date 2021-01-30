@@ -1,6 +1,6 @@
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
-  rows.to.add <- nbetas - length(vec) / nr 
+  rows.to.add <- nbetas - length(vec) / nr
   mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
   return(rbind(mat, mat.new))
 }
@@ -32,6 +32,26 @@ if(prev.prior == "tight") pars.r1 <- c(550000,100000)
 if(prev.prior == "relax") pars.r1 <- c(5.5, 1)
 if(prev.prior == "long_positive") pars.r1 <- c(11.7, 0.903)
 if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
+
+## Efficacy against disease from one vaccine dose
+value.vac.alpha1 <- 0.8
+prior.vac.alpha1 <- ifelse(vacc.flag, 3, 1)
+if(vacc.flag) pars.alpha1 <- c(4, 1)
+
+## Efficacy against disease from one vaccine dose
+value.vac.alpha2 <- 0.95
+prior.vac.alpha2 <- ifelse(vacc.flag, 3, 1)
+if(vacc.flag) pars.alpha2 <- c(4, 1)
+
+## Efficacy against disease from one vaccine dose
+value.vac.pi1 <- 0.8
+prior.vac.pi1 <- ifelse(vacc.flag, 3, 1)
+if(vacc.flag) pars.pi1 <- c(4, 1)
+
+## Efficacy against disease from one vaccine dose
+value.vac.pi2 <- 0.95
+prior.vac.pi2 <- ifelse(vacc.flag, 3, 1)
+if(vacc.flag) pars.pi2 <- c(4, 1)
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
@@ -67,7 +87,7 @@ if(!gp.flag | nA == 1){
             pivot_longer(-Age, names_to = "Region") %>%
             inner_join(ll.prior) %>%
             mutate(p = npos / value) %>%
-            arrange(Region, Age)    
+            arrange(Region, Age)
         ## Weighted regression
         ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
                                     weights = value,
@@ -93,7 +113,7 @@ if(!gp.flag | nA == 1){
             value.pgp <- jitter(ex6$coefficients[-nl])
             pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
             mex6 <- model.matrix(ex6)[,-nl]
-        }   
+        }
     } else {
         reg.mod.loc <- file.path(dirname(proj.dir), "Pillar2", "ascertatinment_regs.RData")
         load(reg.mod.loc)
@@ -237,7 +257,7 @@ if(grepl("newOtoD", scenario.name, fixed = TRUE)){
     ddelay.mean <- 9.3
     ddelay.sd <- 9.7
 }
-    
+
 ## Reporting delay on the deaths
 ## First, write down Tom's cdf for the delay distribution function
 F <- c(0, 0.0581397, 0.3410914, 0.5708017, 0.7027247, 0.7794353, 0.8213025, 0.8516836, 0.8770857, 0.8940002, .9123456, 0.924536, .9387407, .9544153, .9685447, .9821035, .9868954, .991038, 1)

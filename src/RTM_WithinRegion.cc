@@ -394,6 +394,14 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
       regional_matrix_parameter(out_rmp.l_latent_period, in_umps[ALP_INDEX].param_value, in_umps[ALP_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_latent_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
+  if(update_flags.getFlag("l_vacc1_disease"))
+    regional_matrix_parameter(out_rmp.l_vacc1_disease, in_umps[VAC1_DISEASE_INDEX].param_value, in_umps[VAC1_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vaccn_disease"))
+    regional_matrix_parameter(out_rmp.l_vaccn_disease, in_umps[VACN_DISEASE_INDEX].param_value, in_umps[VACN_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vacc1_infect"))
+    regional_matrix_parameter(out_rmp.l_vacc1_infect, in_umps[VAC1_INFECT_INDEX].param_value, in_umps[VAC1_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vaccn_infect"))
+ regional_matrix_parameter(out_rmp.l_vaccn_infect, in_umps[VACN_INFECT_INDEX].param_value, in_umps[VACN_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, in_umps[REL_INFECT_INDEX].param_value, in_umps[REL_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_lbeta_rw")){

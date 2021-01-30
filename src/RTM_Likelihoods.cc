@@ -128,7 +128,9 @@ void prob_infection_RF_MA(
 }
 
 void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PARAMETERS THAT ARE PASSED BY REFERENCE AND ARE NOT CONSTANT
-					 register gsl_matrix* l_S, 
+					 register gsl_matrix* l_S,
+					 register gsl_matrix* l_SV1,
+					 register gsl_matrix* l_SVn,
 					 register gsl_matrix* l_E_1, 
 					 register gsl_matrix* l_E_2, 
 					 register gsl_matrix* l_I_1, 
@@ -159,6 +161,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
   // INITIALISING: SEIR view variables
   gsl_vector_view S_view = gsl_matrix_row(l_S, 0);
+  gsl_vector_view SV1_view = gsl_matrix_row(l_SV1, 0);
+  gsl_vector_view SVn_view = gsl_matrix_row(l_SVn, 0);
   gsl_vector_view I1_view = gsl_matrix_row(l_I_1, 0);
   gsl_vector_memcpy(&I1_view.vector, I1_0);
   gsl_vector_view I2_view = gsl_matrix_row(l_I_2, 0);
@@ -178,6 +182,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   for (register int a = 0; a < NUM_AGE_GROUPS; ++a)
     {
       gsl_matrix_set(l_S, 0, a, gsl_vector_get(regional_population_by_age, a) * gsl_vector_get(in_dmp.l_init_prop_sus, a));
+      gsl_matrix_set(l_SV1, 0, a, 0)
+      gsl_matrix_set(l_SVn, 0, a, 0)
       gsl_matrix_set(l_R, 0, a, 0);
       // gsl_matrix_set(l_R, 0, a, gsl_vector_get(regional_population_by_age, a) * (1 - gsl_vector_get(in_dmp.l_init_prop_sus, a))); // OLD CODE, l_R WAS IGNORED, SO HOPEFULLY CAN RE-PURPOSE IT FOR THE NEW SWAB POSITIVE STATE
       P_view = gsl_matrix_row(P, a);
@@ -219,6 +225,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
       for (register int a = 0; a < NUM_AGE_GROUPS; ++a)
 	{
 	  gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)));
+	  gsl_matrix_set(l_SV1, t + 1, a, ??);
+	  gsl_matrix_set(l_SVn, t + 1, a, ??);
 	  gsl_matrix_set(l_E_1, t + 1, a, gsl_matrix_get(l_E_1, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + gsl_matrix_get(p_lambda, t, a) * gsl_matrix_get(l_S, t, a));
 	
 	  gsl_matrix_set(l_E_2, t + 1, a, gsl_matrix_get(l_E_2, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + (2/(gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)) * gsl_matrix_get(l_E_1, t, a));
@@ -307,6 +315,8 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
   const mixing_model l_MIXMOD_ADJUSTED2 = in_dmp.l_MIXMOD;
 
   register gsl_matrix* S = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  register gsl_matrix* SV1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  register gsl_matrix* SVn = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
   register gsl_matrix* E_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
   register gsl_matrix* E_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
   register gsl_matrix* I_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
@@ -314,7 +324,9 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
   register gsl_matrix* R = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS);
 
   Deterministic_S_E1_E2_I1_I2_R_AG_RF( // OUTPUTS THE NUMBER OF NEW INFECTEDS, THE INPUT TO THE REPORTING MODEL
-				      S, 
+				      S,
+				      SV1,
+				      SVn,
 				      E_1, 
 				      E_2, 
 				      I_1, 
@@ -335,6 +347,8 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 				      l_MIXMOD_ADJUSTED2);
 
   gsl_matrix_free(S);
+  gsl_matrix_free(SV1);
+  gsl_matrix_free(SVn);
   gsl_matrix_free(E_1);
   gsl_matrix_free(E_2);
   gsl_matrix_free(I_1);

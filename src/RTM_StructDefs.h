@@ -33,6 +33,7 @@ struct global_model_instance_parameters{
   int l_Sero_data_flag;
   int l_Viro_data_flag;
   int l_Prev_data_flag;
+  int l_Vacc_data_flag;
   int l_GP_patch_flag;
   int l_Sero_delay; // NUMBER OF DAYS OF LAG BUILT INTO SEROLOGY DATA REPRESENTING THE TIME TAKEN FOR IMMUNOLOGICAL RESPONSE
   likelihood_bounds l_GP_likelihood; // WHICH DAYS/WEEKS OF DATA TO USE IN CALCULATING THE LIKELIHOOD, THIS ROW DOWN
@@ -41,6 +42,7 @@ struct global_model_instance_parameters{
   likelihood_bounds l_Sero_likelihood;
   likelihood_bounds l_Viro_likelihood;
   likelihood_bounds l_Prev_likelihood;
+  likelihood_bounds l_Vacc_date_range;
 };
 
 // ALLOC FUNCTION FOR MEMORY ASSIGNED TO THE ABOVE TYPE OF STRUCTURE
@@ -136,13 +138,17 @@ void globalModelParams_alloc(globalModelParams&, size_t);
 void globalModelParams_free(globalModelParams&);
 
 // REGION SPECIFIC PARAMETER STRUCTURE, FOR INPUT TO THE TRANSMISSION (AND DISEASE?) MODEL
-#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_r1_period, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_lbeta_rw, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity;" 
+#define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_r1_period, l_vacc1_disease, l_vaccn_disease, l_vacc1_infect, l_vaccn_infect, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_lbeta_rw, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity;" 
 struct regional_model_params{
   gsl_vector* l_init_prop_sus; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
   gsl_vector* l_init_prop_sus_HI_geq_32; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
   gsl_matrix* l_average_infectious_period; // TEMPORALLY VARYING TO ALLOW FOR CHANGES DUE TO ACCESS TO ANTIVIRALS
   gsl_matrix* l_latent_period;
   gsl_matrix* l_r1_period;
+  gsl_matrix* l_vacc1_disease;
+  gsl_matrix* l_vaccn_disease;
+  gsl_matrix* l_vacc1_infect;
+  gsl_matrix* l_vaccn_infect;
   gsl_matrix* l_relative_infectiousness_I2_wrt_I1;
   double l_EGR; // CURRENTLY NON-AGE DEPENDENT INITIAL EXPONENTIAL GROWTH RATE
   gsl_vector* l_lbeta_rw; // RANDOM-WALK SCALING TO APPLY TO THE WHOLE MATRIX, RANDOM WALKS OVER TIME.
@@ -167,7 +173,7 @@ struct regional_model_params{
   double l_sero_specificity;
 };
 
-void regional_model_params_alloc(regional_model_params&, const int, const int, const int, const int, const mixing_model);
+void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model);
 void regional_model_params_memcpy(regional_model_params&, const regional_model_params&, flagclass&);
 void regional_model_params_free(regional_model_params&);
 
@@ -202,6 +208,7 @@ struct Region{
   rtmData* Serology_data;
   rtmData* Virology_data;
   rtmData* Prevalence_data;
+  rtmData* Vaccination_data;
   model_statistics region_modstats;
 };
 

@@ -138,14 +138,15 @@ double inverse_rw_transformation(const double& in_y, const char& trunc_flag,
 				 const double& a, const double& b)
 {
   switch(trunc_flag) {
-  case cNO_TRUNC :
-    return in_y;
   case cTRUNC_LO :
     return a + gsl_sf_exp(in_y);
   case cTRUNC_UP :
     return b - gsl_sf_exp(-in_y);
   case cTRUNC :
     return ((b * gsl_sf_exp(in_y)) + a) / (1 + gsl_sf_exp(in_y));
+  case cNO_TRUNC :
+  default :
+    return in_y;    
   }
 }
   // IMPORTANT FUNCTION FOR GENERATING CANDIDATE PROPOSALS FROM A POSSIBLY TRUNCATED RANDOM WALK

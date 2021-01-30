@@ -68,6 +68,46 @@ prior_distribution = `r prior.r1`;
 
 }
 
+vacc_1st_disease = { param_value = `r value.vac.alpha1`;
+
+prior_distribution = `r prior.vac.alpha1`;
+
+`r ifelse(vacc.flag & (prior.alpha1 > 1), paste0("prior_parameters = ", paste(pars.alpha1, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha1 > 1), "proposal_variance = 0.007562;", "")`
+
+}
+
+vacc_nth_disease = { param_value = `r value.vac.alpha2`'
+
+prior_distribution = `r prior.vac.alpha2`;
+
+`r ifelse(vacc.flag & (prior.alpha2 > 1), paste0("prior_parameters = ", paste(pars.alpha2, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha2 > 1), "proposal_variance = 0.007562;", "")`
+
+}
+
+vacc_1st_infect = { param_value = `r value.vac.pi1`;
+
+prior_distribution = `r prior.vac.pi1`;
+
+`r ifelse(vacc.flag & (prior.pi1 > 1), paste0("prior_parameters = ", paste(pars.pi1, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi1 > 1), "proposal_variance = 0.007562;", "")`
+
+}
+
+vacc_nth_infect = { param_value = `r value.vac.pi2`'
+
+prior_distribution = `r prior.vac.pi2`;
+
+`r ifelse(vacc.flag & (prior.pi2 > 1), paste0("prior_parameters = ", paste(pars.pi2, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi2 > 1), "proposal_variance = 0.007562;", "")`
+
+}
+
 prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
 
 prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, ifelse(pgp.prior.diffuse, 4, 5)), 1), length(value.pgp)), collapse = ", ")`;

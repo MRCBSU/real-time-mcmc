@@ -14,12 +14,14 @@ using std::string;
   data_population = NULL;			\
   popn_weights = NULL;
 
+unsigned int rtmData::ndays = 0;
+
 /////// ///////
 rtmData::rtmData()
 {
-  lbounds.lower = 0;
-  lbounds.upper = 100;
-  likelihood_type = cPOISSON_LIK;
+  lbounds.lower = 1;
+  lbounds.upper = ndays;
+  likelihood_type = cNO_LIK;
   NULL_ALLOC;
 }
 rtmData::rtmData(const likelihood_bounds& lfx_range, const data_type& lfx)
@@ -154,3 +156,10 @@ const gsl_vector* rtmData::access_weights() const {
 const vector<int> rtmData::access_groups() const {
   return col_grouping;
 }
+void rtmData::switchData()
+  {
+    gsl_matrix* tmp;
+    tmp = counts;
+    counts = denoms;
+    denoms = tmp;
+  }

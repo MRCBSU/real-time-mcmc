@@ -14,15 +14,15 @@ if (length(args) < 3) args <- c(args, "All", "England")
 if (!exists("date.data")) date.data <- args[1]
 stopifnot(!is.na(ymd(date.data)))
 if (args[2] == "All")  {
-	if (region.type == "NHS") 
+	if (region.type == "NHS")
 		regions <- c("East_of_England", "London", "Midlands",
                      "North_East_and_Yorkshire", "North_West",
                      "South_East", "South_West"## ,
                      ## "Scotland", "Northern_Ireland", "Wales"
                      )
-	else if (region.type == "ONS") 
+	else if (region.type == "ONS")
 		regions <- c("East_of_England", "East_Midlands",
-					 "London", 
+					 "London",
                      "North_East", "North_West",
                      "South_East", "South_West",
 					 "West_Midlands", "Yorkshire_and_The_Humber"
@@ -79,6 +79,9 @@ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
 
+## Any inputs here for the vaccination data (or even if there is any)
+vacc.flag <- 1
+
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
@@ -115,10 +118,10 @@ if (data.desc == "all") {
 }
 
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
                        )
-names(data.dirs) <- c("deaths", "sero", "cases", "prev")
-      
+names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc")
+
 flg.confirmed = TRUE
 
 English.regions <- c("East_of_England", "London", "Midlands",
@@ -180,3 +183,13 @@ previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
+
+########### VACCINATION OPTIONS ###########
+vacc.flag <- 1 ## Do we have any vaccination data
+if(vacc.flag){
+    start.vac <- 301 ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- 322 ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
+    vacc1.files <- file.path(out.dir, paste0("dummy_dose1_", regions, ".txt"))
+    vacc2.files <- file.path(out.dir, paste0("dummy_dose2_", regions, ".txt"))
+}
+
