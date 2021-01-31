@@ -35,7 +35,7 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-use.previous.run.for.start <- TRUE
+use.previous.run.for.start <- F #TRUE
 previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210111/PrevCevik_60cutoff_prev7_last_break_10_days_matrices_20210110_deaths"
 iteration.number.to.start.from <- 6400
 
@@ -76,7 +76,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -88,17 +88,6 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
-## Is there a previous MCMC from which we can take some initial values?
-use.previous.run.for.start <- TRUE
-if(use.previous.run.for.start){
-    if(region.type == "NHS"){
-    if(prev.flag)
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "PrevCevik_60cutoff_prev14_matrices_20210104_timeuse_household_deaths")
-    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", "NoPrev_60cutoff_matrices_20210104_timeuse_household_deaths")
-    } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
-}
-iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
@@ -106,7 +95,7 @@ if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.mo
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "2bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
