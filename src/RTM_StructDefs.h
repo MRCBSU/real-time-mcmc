@@ -181,6 +181,7 @@ void regional_model_params_free(regional_model_params&);
 struct model_statistics{
   model_state *d_end_state; // should contain a value for S(T, a), E_1(T, a), E_2(T, a), I_1(T, a), I_2(T, a) for all a = 1, ..., NUM_AGES
   gsl_matrix *d_NNI; // SHOULD INCORPORATE PROJECTION DAYS
+  gsl_matrix *d_Delta_Dis;
   gsl_matrix *d_H1N1_GP_Consultations;
   gsl_matrix *d_Reported_GP_Consultations;
   gsl_matrix *d_Reported_Hospitalisations;
