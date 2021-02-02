@@ -89,7 +89,7 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
     if(prev.flag)
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
     else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
@@ -161,7 +161,7 @@ prev.cutoff.days <- 2
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
-days.between.prev <- 7
+days.between.prev <- 14
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
