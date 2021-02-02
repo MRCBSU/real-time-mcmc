@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -35,15 +35,11 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20201231/Prev_laterCevik_60cutoff_prev14_matrices_20201229_timeuse_household_new_base_deaths"
-iteration.number.to.start.from <- 6400
-
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
-sero.end.date <- ymd(20200605)
+sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210110"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
+google.data.date <- format(ymd("20210131"), format = "%Y%m%d")
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -52,6 +48,7 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
+time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -75,7 +72,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -90,19 +87,33 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
-## Give the run a name to identify the configuratio
+## Is there a previous MCMC from which we can take some initial values?
+use.previous.run.for.start <- TRUE
+if(use.previous.run.for.start){
+    if(region.type == "NHS"){
+    if(prev.flag)
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
+    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
+    } else if(region.type == "ONS")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
+}
+iteration.number.to.start.from <- 6400
+
+## Give the run a name to identify the configuration
 contact.model <- 4
 if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.model) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-
+if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
 	str.cutoff <- "60"
-	scenario.name <- paste0(scenario.name, "_", str.cutoff, "cutoff")
+	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
+scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -110,7 +121,7 @@ if (data.desc == "all") {
 } else if (data.desc == "deaths") {
     reporting.delay <- 6
 } else if (grepl("adjusted", data.desc)) {
-    date.adj.data <- ymd(date.data)-2
+    date.adj.data <- ymd(date.data) - 1  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
     reporting.delay <- 1
 } else {
 	stop("Unknown data description")
@@ -146,20 +157,23 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("2021-01-06")
+date.prev <- ymd("20210125")
+num.prev.days <- 57
+prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-days.between.prev <- 14
-prev.end.day <- date.prev - start.date - 2
-first.prev.day <- date.prev - 51 - start.date + 1
+prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
+first.prev.day <- prev.end.day - num.prev.days + 1
+
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
-# Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
-lag.last.beta <- 24 - 7
-if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
+## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
+## lag.last.beta <- 24 - 7
+## if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
-if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,

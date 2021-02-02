@@ -171,19 +171,43 @@ if(single.ifr){
         (logit(rbeta(1000000, 195/2.9375, 805/2.9375))-logit(rbeta(1000000, 281/1.240235,719/1.240235))) / 30, ## 65-74
         (logit(rbeta(1000000, 321/1.375, 679/1.375))-logit(rbeta(1000000, 382*2.625, 618*2.625))) / 30 ## 75+
         )
-        pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))));rm(grad.samp)
+        ## expand pars.ifr according to the model
+        pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))))
+        if(ifr.mod == "2bp"){
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-mean(x), sd(x)))))
+        } else if(ifr.mod == "lin.bp"){
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) 0.3 * c(-mean(x), sd(x)))))
+        }; rm(grad.samp)
         value.ifr <- c(value.ifr, rep(0, (length(pars.ifr) / 2) - length(value.ifr)))
         var.ifr <- c(var.ifr, rep(0.00036, length(value.ifr) - length(var.ifr)))
         tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June
         ## Put together the model matrix.
         times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
         ages <- 1:(nA - 1)
-        TA <- expand.grid(ages, times);colnames(TA) <- c("age", "time")
+        if(ifr.mod=="2bp"){ ## Use era variable to introduce a second round of breakpoints
+            TA <- expand.grid(ages, times, era <- c(0,1)); colnames(TA) <- c("age", "time", "era")
+        } else if(ifr.mod == "lin.bp"){
+            TA.sub <- expand.grid(ages, times, times.tmp <- 0); colnames(TA.sub) <- c("age", "time1", "time2")
+            TA.sub2 <- expand.grid(ages, times.tmp <- max(times), times2 <- 1:100); colnames(TA.sub2) <- c("age", "time1", "time2")
+            TA <- rbind(TA.sub, TA.sub2)
+        } else {TA <- expand.grid(ages, times);colnames(TA) <- c("age", "time")}
         TA$age.grad <- TA$age
         TA$age.grad[TA$age <= 4] <- 4
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
+        if(ifr.mod=="2bp"){ ## Expand the actual breakpoints and tweak the design
+            tbreaks2 <- tbreaks.ifr + min(tbreaks.ifr) - 1
+            tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
+            TA$full.era <- TA$time
+            TA <- TA[-((nrow(TA) / 2) + 1:(nA - 1)), ]  ## Remove rows that correspond to a duplicate batch of rows in design matrix
+            TA$full.era[TA$era == 1] <- max(TA$time)
+            reg.form <- "y ~ 0 + age + age.grad:full.era + age.grad:time:era"
+        } else if(ifr.mod == "lin.bp"){
+            tbreaks2 <- ymd(date.data) - start.date - (99:0)
+            tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
+            reg.form <- "y ~ 0 + age + age.grad:time1 + age.grad:time2"
+        } else reg.form <- "y ~ 0 + age + age.grad:time"
         TA$y <- rnorm(nrow(TA))
-        lm.TA2 <- lm(y ~ 0 + age + age.grad:time, data = TA)
+        lm.TA2 <- lm(as.formula(reg.form), data = TA)
         write_tsv(as.data.frame(model.matrix(lm.TA2)), file.path(out.dir, "ifr.design.txt"), col_names = FALSE)
     }
 }
@@ -313,8 +337,9 @@ if(rw.flag){
 }
 ## ## End of contact model ##
 
-beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - lag.last.beta)][-1]
-## beta.breaks <- cm.breaks[-c(1, length(cm.breaks))]
+## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - time.to.last.breakpoint)][-1] ## Josh's version
+beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+
 nbetas <- length(beta.breaks) + 1
 beta.rw.vals <- c(
     0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -374,7 +399,6 @@ ssens.prop <- 0.1
 sspec.prop <- 0.077976
 if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
 if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
-
 if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))
 
 stopifnot(all(!is.na(beta.rw.vals)))

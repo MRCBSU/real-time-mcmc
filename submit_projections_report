@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1
+#SBATCH --array=1,3,7
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -62,8 +62,32 @@ if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-# Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201108/NoPrev_relax_shortsero_ifr_60cutoff6day_matrices_20201106_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210117/"
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+    workdir="${workdir}NoPrev_"
+else
+    workdir="${workdir}PrevCevik_"
+fi
+if [ $SLURM_ARRAY_TASK_ID -gt 5 ]; then
+    workdir="${workdir}60"
+else
+    workdir="${workdir}28"
+fi
+workdir="${workdir}cutoff_"
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
+    workdir="${workdir}18"
+else
+    workdir="${workdir}11"
+fi
+if [ $SLURM_ARRAY_TASK_ID -gt 1 ]; then
+    workdir="${workdir}_prev"
+    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	workdir="${workdir}7"
+    else
+	workdir="${workdir}14"
+    fi
+fi
+workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
 
 echo -e $workdir
 
@@ -72,11 +96,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-<<<<<<< HEAD
-options="../../../R/output/plot_projections.R projections_*.RData"
-=======
-options="../../../R/output/plot_projections.R projections_counter.RData"
->>>>>>> COVID
+options="../../../R/output/plot_projections.R projections_midterm.RData"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
