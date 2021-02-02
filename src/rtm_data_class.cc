@@ -163,3 +163,9 @@ void rtmData::switchData()
     counts = denoms;
     denoms = tmp;
   }
+double rtmData::getCount(int &inti, int &intj) const {
+  return gsl_matrix_get(counts, inti, intj);
+}
+double rtmData::getDenom(int &inti, int &intj) const {
+  return gsl_matrix_get(denoms, inti, intj);
+}

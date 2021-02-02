@@ -43,6 +43,8 @@ class rtmData
   int getDim1();
   int getDim2();
   void switchData();
+  double getCount(int&, int&) const;
+  double getDenom(int&, int&) const;
   const gsl_vector* access_weights() const;
   const vector<int> access_groups() const;
 };

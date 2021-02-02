@@ -356,6 +356,7 @@ void model_statistics_alloc(model_statistics &ms, const int times, const int age
 {
   ms.d_end_state = new model_state(age_classes);
   ms.d_NNI = gsl_matrix_alloc(times * reporting_timesteps, age_classes);
+  ms.d_Delta_Dis = gsl_matrix_alloc(times * reporting_timesteps, age_classes);
   ms.d_H1N1_GP_Consultations = gsl_matrix_alloc(times, age_classes);
   ms.d_Reported_GP_Consultations = gsl_matrix_alloc(times, age_classes);
   ms.d_Reported_Hospitalisations = gsl_matrix_alloc(times, age_classes);
@@ -373,8 +374,10 @@ void model_statistics_memcpy(model_statistics &ms_dest, const model_statistics m
 			     bool NNI_flag, bool GP_flag, bool Hosp_flag, bool Sero_flag, bool Viro_flag, bool Prev_flag)
 {
   *ms_dest.d_end_state = *ms_src.d_end_state;
-if(NNI_flag)
+  if(NNI_flag){
     gsl_matrix_memcpy(ms_dest.d_NNI, ms_src.d_NNI);
+    gsl_matrix_memcpy(ms_dest.d_Delta_Dis, ms_src.d_Delta_Dis);
+  }
   if(GP_flag)
     {
       gsl_matrix_memcpy(ms_dest.d_Reported_GP_Consultations, ms_src.d_Reported_GP_Consultations);
@@ -396,6 +399,7 @@ void model_statistics_free(struct model_statistics &ms)
 {
   delete ms.d_end_state;
   gsl_matrix_free(ms.d_NNI);
+  gsl_matrix_free(ms.d_Delta_Dis);
   gsl_matrix_free(ms.d_Reported_GP_Consultations);
   gsl_matrix_free(ms.d_H1N1_GP_Consultations);
   gsl_matrix_free(ms.d_Reported_Hospitalisations);
