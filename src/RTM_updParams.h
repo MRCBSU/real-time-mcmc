@@ -76,6 +76,8 @@ public:
   infection_to_data_delay hosp_delay;
   infection_to_data_delay death_delay;
 
+  likelihood lfx;
+  
   int numRegions;
   
   updParamSet() :

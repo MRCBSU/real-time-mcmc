@@ -313,11 +313,14 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
   }
 */
+
+  ofstream betaout("beta.txt", ofstream::out);
+
   
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (int_iter % 10 == 0)
+      if (int_iter % 500 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
@@ -327,6 +330,20 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
       if (debug)
 	cout << "Iter: " << int_iter << endl << "Global:" << endl;
+
+
+      if (int_iter > 0 && int_iter % 500 == 0) {
+	paramSet.printAcceptRates(int_iter);
+	paramSet.outputPars();
+      }
+
+      /*
+      if (int_iter % 100 == 0)
+	for (auto& block : paramSet.blocks) {
+	  block.numProposed = 0;
+	  block.numAccept = 0;
+	}
+      */
       
       // Global
       paramSet.blocks[0].calcProposal(paramSet, r);
@@ -349,11 +366,23 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Accept/reject
       paramSet.doAccept(r, country2, gmip);
 */
-      paramSet.outputPars();
+      //paramSet.outputPars();
 
       // Block adaptive
       if (int_iter > 199) {
-	paramSet.adaptiveUpdate(int_iter);
+	//paramSet.adaptiveUpdate(int_iter);
+	paramSet.blocks[0].adaptiveUpdate(int_iter);
+	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+	
+	if (false) {
+	  double eta = pow(int_iter - 199 + 1, -0.6);
+	  double eta2 = pow(int_iter - 199 + 2, -0.6);
+	  
+	  betaout << paramSet.blocks[0].acceptLastMove << " " << updParamBlock::regacceptLastMove << " " << eta << " : " << paramSet.blocks[0].beta << " " << paramSet.blocks[1].beta;
+	  for (auto& block : paramSet.blocks)
+	    betaout << block.beta << " ";
+	  betaout << endl;
+	}
       }
 
       // Update Posterior mean and sumsq on a per-parameter basis
@@ -369,8 +398,6 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	}
       }
 
-      if (int_iter > 0 && int_iter % 10 == 0)
-	paramSet.printAcceptRates(int_iter);
       
 #ifdef USE_OLD_CODE
 

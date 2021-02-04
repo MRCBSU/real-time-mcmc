@@ -155,6 +155,7 @@ void updParamSet::insertAndRegister(updateable_model_parameter& inPar, int num_i
 
 // low/high only used for uniform
 double transform(double x, distribution_type dist, double low = 0, double high = 1) {
+  //return x;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -174,6 +175,7 @@ double transform(double x, distribution_type dist, double low = 0, double high =
 }
 
 double invTransform(double x, distribution_type dist, double low = 0, double high = 1) {
+  //return x;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -309,9 +311,11 @@ void updParamSet::init(const string& dir) {
     }
 
     block.sigma *= 0.01;   // Scale
-    
+
+    /*
     if (debug && block.global)
       cout << "mu: " << block.mu << block.sigma;
+    */
     
     block.beta = 0;
   }
@@ -365,11 +369,36 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
   
   // Covariance matrix
   // After 1st 200 iters, sigma changes every iter, so no benefit to caching
+
+  if (debug) {
+    //if (global)
+    //  cout << "global beta " << exp(beta) << endl;
+    //else
+    //  cout << "local " << regionNum << ": expbeta " << exp(regbeta) << endl;
+    if (global) cout << "global ";
+    else cout << "local ";
+    cout << "beta " << beta << " expbeta " << exp(beta) << endl;
+  }
+  
   gslMatrix covar;
-  if (global)
+  //if (global)
     covar = sigma * exp(beta);
-  else
-    covar = sigma * exp(regbeta);
+    //else
+    //covar = sigma * exp(regbeta);
+
+  if (debug) {
+    cout << "covar: " << setprecision(6) << covar << setprecision(4);
+    /*
+    gslMatrix covar2(covar);
+    gslVector eval(covar2.nrows());
+    gsl_eigen_symm_workspace* work = gsl_eigen_symm_alloc(covar2.nrows());
+    // covar2 is overwitten
+    gsl_eigen_symm(*covar2, *eval, work);
+    cout << "evals: " << eval << endl;
+    gsl_eigen_symm_free(work);
+    */
+  }
+  
 
   // Transform
   gslVector transformed(values.size());
@@ -378,17 +407,29 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
   
   // Random sample
   gsl_linalg_cholesky_decomp1(*covar);
-  gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
-
-  for (int i = 0; i < values.size(); i++)
-    proposal[i] = invTransform(proposal[i], dist[i]);
 
   if (debug) {
-    if (global)
+    double rcond;
+    gsl_vector *workv = gsl_vector_alloc(3*values.size());
+    gsl_linalg_cholesky_rcond(*covar, &rcond, workv);
+    cout << "condition: " << 1/rcond << endl;
+    gsl_vector_free(workv);
+  }
+  
+  gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
+  
+  for (int i = 0; i < values.size(); i++)
+    proposal[i] = invTransform(proposal[i], dist[i]);
+  
+  if (debug) {
+/*    if (global)
       cout << "global covar factor: " << exp(beta) << endl;
-    else
+      else
       cout << "local covar factor: " << exp(regbeta) << endl;
-    cout << "V: " << values << endl << "P: " << proposal << endl;
+*/
+    //if (global) {
+      cout << "V: " << values << endl << "P: " << proposal << endl;
+      //}
   }
 }
 
@@ -397,6 +438,7 @@ int updParamBlock::regacceptLastMove = 0;
 
 
 double jacobianFactor(double prop, double curr, distribution_type dist, double low = 0, double high = 1) {
+  return 0;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -429,6 +471,31 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   else
     regacceptLastMove = 0;
 
+  // Check bounds
+  if (global) {
+    for (int i = 3; i <= 11; i++) {
+      // prop_case_to_hosp, [0,1]
+      if (proposal[i] < 0 || proposal[i] > 1) {
+	laccept = GSL_NEGINF;
+	return;
+      }
+    }
+  } //else {
+    //}
+
+  // Get region
+  flagclass update_flags;
+  for (int r = 0; r < paramSet.numRegions; r++) {
+    regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+  }
+  /*
+  } else {
+    int r = regionNum;
+    regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+  }
+  */
+
+  
   // Prior densities for components in the block
   for (int i = 0; i < values.size(); i++) {
     laccept += jacobianFactor(proposal[i], values[i], dist[i]);
@@ -448,12 +515,16 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
       
       laccept += R_univariate_prior_log_density_ratio(
 	proposal[i], values[i], dist[i], prior);
+
     } else {
       // TODO: Fix
       cout << "ERROR: Multivariate normal code path not implemented\n";
       exit(1);
     }
   }
+
+  if (debug && global)
+    cout << "Prior log dens: " << laccept << " ";
 
   //if (debug)
   // cout << "After log density, laccept: " << laccept << endl;
@@ -505,11 +576,13 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 		    child.prior_distribution[i],
 		    &prior.vector);
 	      }
-	      
-	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
 
-	      //if (debug)
-	      //cout << "Child: " << laccept << endl;
+	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
+	      if (debug)
+		cout << "prop " << child.proposal_log_prior_dens << " curr " << child.log_prior_dens;
+
+	      if (debug)
+		cout << " After child: " << laccept << endl;
 	    }
 	  }
 	}
@@ -549,6 +622,18 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     blockflags.regional_update_flags[11] = true;
     blockflags.regional_update_flags[18] = true;
   }
+/*
+  if (debug && global) {
+    cout << "test: before " << prop_lfx.total_lfx;
+    fn_log_likelihood(prop_lfx, country, 0,
+		      true, true, true, true, true, true, true, 
+		      gmip,
+		      paramSet.gp_delay.distribution_function,
+		      paramSet.hosp_delay.distribution_function
+      );
+  cout << " after: " << prop_lfx.total_lfx << endl;
+  }
+*/
   
   // Copy proposal to paramSet to evaluate region
   for (int i = 0; i < values.size(); i++)
@@ -578,10 +663,10 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 		    paramSet.hosp_delay.distribution_function
     );
 	
-  laccept += prop_lfx.total_lfx - lfx.total_lfx;
+  laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
 
-  //if (debug)
-  //cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
+  if (debug && global)
+   cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << paramSet.lfx.total_lfx << endl;
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
@@ -599,8 +684,12 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
   //if(debug) cout << "test: " << laccept << " " << acceptTest << " " << (laccept > acceptTest) << endl;
   if (laccept > acceptTest) {
-    if(debug) cout << "Prop accept\n";
-
+    //if(debug && (regionNum == 1 || regionNum == 2)) cout << "Prop accept\n";
+    if (debug)
+      if (global) cout << "global accept\n";
+    else
+      cout << "Prop accept\n";
+    
     numAccept++;
    
     if (global)
@@ -619,14 +708,19 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     // Save child log prior density
     for (updParam& par : paramSet.params)
       if (par.flag_any_child_nodes)
-	for (int i = 0; i < par.size; i++)
+	for (int i = 0; i < par.flag_child_nodes.size(); i++)
 	  if (par.flag_child_nodes[i]) {
 	    updParam& child = paramSet[i];
 	    child.log_prior_dens = child.proposal_log_prior_dens;
+	    if (debug)
+	      cout << "saving log dens as " << child.log_prior_dens << endl;
 	  }
     
-    lfx = prop_lfx;
+    paramSet.lfx = prop_lfx;
 
+    if (debug)
+      cout << "Region " << regionNum << " gl " << global << " Setting lfx to " << prop_lfx.total_lfx << endl;
+    
     if (global) {
       for (int r = 0; r < numRegions; r++) {
 	regional_model_params_memcpy(country[r].det_model_params, propCountry[r].det_model_params, update_flags);
@@ -656,7 +750,8 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     // Undo region changes 
     if (global) {
       for (int r = 0; r < numRegions; r++) {
-	regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+	// Don't need o restore - we do this at the start of the next iter
+	// regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
 	
 	model_statistics_memcpy(
 	  propCountry[r].region_modstats, country[r].region_modstats,
@@ -666,17 +761,16 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     } else {
       // local
       int r = regionNum;
-      
-      regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+      //regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
       
       model_statistics_memcpy(
 	propCountry[r].region_modstats, country[r].region_modstats,
 	true, gmip.l_GP_consultation_flag, gmip.l_Hospitalisation_flag,
 	true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
-
     }
 
-    prop_lfx = lfx;
+    // TODO do we need to do this?
+    prop_lfx = paramSet.lfx;
   }
 }
 
@@ -690,9 +784,14 @@ void updParamBlock::adaptiveUpdate(int iter) {
     delta[i] = transform(proposal[i], dist[i]) - transform(values[i], dist[i]);
   }
 
+  double betastart = beta;
+  
   double eta = pow(iter - 199 + 1, -0.6);
   if (global)
     beta = beta + eta * (acceptLastMove - 0.234);
+  else
+    beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
+  
   // else: beta for local blocks is calculated in calling function
 
   gslMatrix deltaProd(delta.size(), delta.size());
@@ -704,23 +803,30 @@ void updParamBlock::adaptiveUpdate(int iter) {
   mu = (1 - eta) * mu + eta * delta;
   sigma = (1 - eta) * sigma + eta * deltaProd;
 
+  
   if(debug) {
-    if (global) cout << "Global: a " << acceptLastMove << " beta " << beta;
-    else cout << "Locl " << regionNum << ": a " << updParamBlock::regacceptLastMove << " beta " << updParamBlock::regbeta;
+    cout << "------\n";
+    if (global)
+      cout << "Global: a " << acceptLastMove << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart << " beta " << beta << endl;
+    else
+      cout << "Locl " << regionNum << ": a " << updParamBlock::regacceptLastMove << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart << " beta " << beta << endl;
+//updParamBlock::regbeta;
 
-    cout << endl << "P: " << proposal << endl << "V: " << values << endl;
-    
-    cout << " eta " << eta << " 1-eta " << 1-eta << " delta " << delta << "; mu: " << mu << endl;
+    cout << "P: " << proposal << endl << "V: " << values << endl;
+
+    //cout << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart 
+      // cout << "delta " << delta << "; mu: " << mu << endl;
     //cout << "deltaProd: " << deltaProd;
-    cout << "sigma: " <<  sigma;
+    //cout << "sigma: " <<  sigma;
   }
+  
 }
 
 
 void updParamSet::adaptiveUpdate(int iter) {
   // All local regions share the same beta
-  double eta = pow(iter - 199 + 1, -0.6);
-  updParamBlock::regbeta = updParamBlock::regbeta + eta * (updParamBlock::regacceptLastMove - 0.234);
+  //double eta = pow(iter - 199 + 1, -0.6);
+  //updParamBlock::regbeta = updParamBlock::regbeta + eta * (updParamBlock::regacceptLastMove - 0.234);
 
   for (updParamBlock& block : blocks)
     block.adaptiveUpdate(iter);
@@ -760,7 +866,7 @@ void updParamSet::outputProposals() {
 
 
 void updParamSet::printAcceptRates(int numIters) {
-  cout << "Accept: ";
+  cout << "Acceptance Rates: ";
   for (auto& block : blocks)
     cout << setprecision(4) << block.numAccept / (double) block.numProposed << " ";
   cout << endl;

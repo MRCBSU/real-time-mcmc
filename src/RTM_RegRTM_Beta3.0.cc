@@ -163,11 +163,11 @@ int main(void){
 
   likelihood block_llhood(global_fixedpars);
   fn_log_likelihood(block_llhood, country2, 0, true, true, 
-		    global_fixedpars.l_GP_consultation_flag,
-		    global_fixedpars.l_Hospitalisation_flag,
-		    global_fixedpars.l_Viro_data_flag,
-		    global_fixedpars.l_Sero_data_flag,
-		    global_fixedpars.l_Prev_data_flag,
+		    true, //global_fixedpars.l_GP_consultation_flag,
+		    true, //global_fixedpars.l_Hospitalisation_flag,
+		    true, //global_fixedpars.l_Viro_data_flag,
+		    true, //global_fixedpars.l_Sero_data_flag,
+		    true, //global_fixedpars.l_Prev_data_flag,
 		    global_fixedpars,
 		    paramSet.gp_delay.distribution_function,
 		    paramSet.hosp_delay.distribution_function
@@ -175,6 +175,7 @@ int main(void){
 
   for (auto& block : paramSet.blocks)
     block.setLlhood(block_llhood);
+  paramSet.lfx = block_llhood;
   
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES
   metrop_hast(sim_pars,

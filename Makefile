@@ -8,7 +8,7 @@ RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc/%.o)
 
-LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp
+LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
 CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -std=c++11
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
@@ -19,7 +19,7 @@ rtm: $(RTM_OBJS) $(HEADERS)
 	$(CXX) $(RTM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm
 
 rtm_optim: $(RTM_OPTIM_OBJS) $(HEADERS)
-	$(CXX) $(RTM_OPTIM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_optim
+	$(CXX) -fopenmp $(RTM_OPTIM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_optim
 
 rtm_hanson: $(RTM_HANSON_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hanson
