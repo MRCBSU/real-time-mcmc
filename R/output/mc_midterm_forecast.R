@@ -31,20 +31,19 @@ prev.flag <- 1 ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
     if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20201227")
+		date.prev <- ymd("20201119")
 		## Convert that to an analysis day number
 		prev.end.day <- date.prev - start.date + 1
 		last.prev.day <- (prev.end.day - 4)
-		if(!exists("first.prev.day")) first.prev.day <- 168
-		if(!exists("days.between.prev")) days.between.prev <- 28
+		first.prev.day <- 168
+		days.between.prev <- 28
 		## Default system for getting the days on which the likelihood will be calculated.
-		if(!exists("prev.lik.days")) prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
 	}
     for(r in 1:nr){
-	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", regions[r], "_ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
-          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt")
-      prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
-      prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
+      prev.data$lmeans[r] <- paste0(prev.file.prefix, regions[r], "ons_meanlogprev.txt")
+      prev.data$lsds[r] <- paste0(prev.file.prefix, regions[r], "ons_sdlogprev.txt")
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
@@ -76,7 +75,7 @@ symlink.design <- function(design)
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
     oList <- do.call(abind, args = list(oList, along = 0))
-
+    
     }
 
 ## ## ## --------------------
@@ -252,4 +251,4 @@ lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
 if(prev.flag)
     lapply(prev.data, file.remove)
-
+    
