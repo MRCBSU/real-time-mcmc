@@ -23,7 +23,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- F
+format.inputs <- FALSE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -62,8 +62,8 @@ if (exists("flg.cutoff")){
 data.files <- paste0(data.files, ".txt")
 names(data.files) <- regions
 if(sero.flag){
-  serosam.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_samples.txt")
-  seropos.files <- paste0(data.dirs["sero"], "/", date.data, "_", regions, "_", nA, "ag_positives.txt")
+  serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_samples.txt")
+  seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_positives.txt")
 } else {
   serosam.files <- seropos.files <- NULL
 }
@@ -75,8 +75,11 @@ if(gp.flag){
     denoms.files <- NULL
 }
 if(prev.flag){
-	prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste0(prev.lik.days, collapse = "_"), "_")
-	if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
+    prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
+                            paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
+                            paste0(prev.lik.days, collapse = "_"))
+    prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+    if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat.csv")

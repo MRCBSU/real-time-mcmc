@@ -10,9 +10,13 @@
 ## command-line argument.
 if(!exists("prev.loc")){ ## Set to default format for the filename
     input.loc <- "data/raw/prevalence"
-    if (region.type == "ONS") input.loc <- file.path(input.loc, "ONS_regions")
+	if (region.type == "ONS") input.loc <- file.path(input.loc, "ONS_regions")
     ## List the possible files in the directory
-    prev.loc <- file.info(file.path(input.loc, list.files(path = input.loc, pattern=glob2rx("202*csv"))))
+    prev.loc <- file.info(file.path(input.loc,
+                                    list.files(path = input.loc,
+                                               pattern=glob2rx("202*csv"))
+                                    )
+                          )
     ## Pick the most recently added
     input.loc <- rownames(prev.loc)[which.max(prev.loc$ctime)]
 } else {
@@ -152,7 +156,8 @@ prev.dat <- prev.dat %>%
            lmean = ifelse(include, lmean, 0),
            lsd = ifelse(include, lsd, 0)) %>%
     select(-include) %>%
-    get.region()
+    get.region() %>%
+    filter(region %in% regions)
 
 # Check correct number of days
 stopifnot(

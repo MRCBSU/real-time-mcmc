@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0-6
+#SBATCH --array=0
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -115,8 +115,8 @@ JOBID=$SLURM_JOB_ID
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
 
-dirs=(*/)
-cd ${dirs[SLURM_ARRAY_TASK_ID]}
+#dirs=(*/)
+#cd ${dirs[SLURM_ARRAY_TASK_ID]}
 eval $CMD
 Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
