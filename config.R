@@ -35,7 +35,7 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-use.previous.run.for.start <- F #TRUE
+use.previous.run.for.start <- FALSE
 previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210111/PrevCevik_60cutoff_prev7_last_break_10_days_matrices_20210110_deaths"
 iteration.number.to.start.from <- 6400
 
