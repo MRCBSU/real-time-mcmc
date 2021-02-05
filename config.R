@@ -35,9 +35,6 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-use.previous.run.for.start <- FALSE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210111/PrevCevik_60cutoff_prev7_last_break_10_days_matrices_20210110_deaths"
-iteration.number.to.start.from <- 6400
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
@@ -177,5 +174,9 @@ out.dir <- file.path(proj.dir,
 							"_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
+
+use.previous.run.for.start <- TRUE
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210202-2/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_last_break_10_days_matrices_20210129_deaths"
+iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
