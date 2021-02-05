@@ -131,11 +131,24 @@ public:
 #ifndef GSL_RANGE_CHECK_OFF
     if (idx >= base->size) {
       gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
-      throw std::invalid_argument("gslVector: Index out of range");
+      throw std::invalid_argument("gslVector operator[]: Index out of range");
     }
 #endif
     return base->data[idx * base->stride];
   }
+
+  // Return a pointer to the i-th element of the vector
+  // Example use: Writing a binary value to file with ofstream::write()
+  const double* ptr(size_t idx) const {
+#ifndef GSL_RANGE_CHECK_OFF
+    if (idx >= base->size) {
+      gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
+      throw std::invalid_argument("gslVector ptr(): Index out of range");
+    }
+    return base->data + (idx * base->stride);
+#endif
+  }
+    
   
   // Vector addition
   gslVector& operator+=(const gslVector& rhs) {

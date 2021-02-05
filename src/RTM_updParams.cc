@@ -196,13 +196,15 @@ double invTransform(double x, distribution_type dist, double low = 0, double hig
 void updParamSet::init(const string& dir) {
 
   // Debug output: parameter output files. Overwrites existing files
-  for (updParam& par : params) {
-    if (par.flag_update) {
-      string filename = dir + "/" + par.param_name + ".txt";
-      par.outfile.open(filename, std::ofstream::out);
-      if (! par.outfile.is_open()) {
-	std::cerr << "Error: Unable to open output file " << filename << "\n";
-	exit(1);
+  if (debug) {
+    for (updParam& par : params) {
+      if (par.flag_update) {
+	string filename = dir + "/" + par.param_name + ".txt";
+	par.outfile.open(filename, std::ofstream::out);
+	if (! par.outfile.is_open()) {
+	  std::cerr << "Error: Unable to open output file " << filename << "\n";
+	  exit(1);
+	}
       }
     }
   }
@@ -689,7 +691,7 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
       if (global) cout << "global accept\n";
     else
       cout << "Prop accept\n";
-    
+
     numAccept++;
    
     if (global)

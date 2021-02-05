@@ -178,12 +178,12 @@ public:
   int numAccept;    // Acceptance rate
   int numProposed;
   
-  likelihood lfx;
+  //likelihood lfx;
   likelihood prop_lfx;
 
   // Initialise likelihood
   void setLlhood(likelihood& l) {
-    lfx = l;
+    //lfx = l;
     prop_lfx = l;  // Sets vector sizes of prop_lfx
   }
   double childProposalDensity;
