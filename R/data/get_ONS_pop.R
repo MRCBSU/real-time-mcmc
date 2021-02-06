@@ -15,3 +15,5 @@ for(reg in regions){
 }
 
 
+pdf.all <- pop.input
+names(pdf.all) <- pdf.all %>% names() %>% tolower()

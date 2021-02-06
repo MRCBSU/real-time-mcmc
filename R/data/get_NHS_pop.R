@@ -17,24 +17,24 @@ for (region in regions) {
     }
 }
 pop.input <- NULL
+pdf.all <- NULL
 for(reg in regions){
     reg.nhs <- get.nhs.region(reg)
 	if (reg == "Scotland" && age.labs[1] == "All") {
 		pop.input <- c(pop.input, 5438100)
 	} else {
-		pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
-		pop.full <- apply(pop.full, 2, sum)
-		if(age.labs[1] == "All"){
-                    pop.input <- c(pop.input, pop.full["All ages"])
-                } else {
-                    pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
-                    pdf <- pdf %>%
-                        mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
-                        group_by(age.grp) %>%
-                        summarise(count = sum(count))
-                    pop.input <- c(pop.input, pdf$count)
-                }
+            pop.full <- pop[pop$Name %in% nhs.regions[[get.nhs.region(reg)]] & !is.na(pop$Name), -(1:3), drop = FALSE]
+            pop.full <- apply(pop.full, 2, sum)
+            if(age.labs[1] == "All"){
+                pop.input <- c(pop.input, pop.full["All ages"])
+            } else {
+                pdf <- data.frame(age = as.numeric(names(pop.full)[-1]), count = pop.full[-1])
+                pdf <- pdf %>%
+                    mutate(age.grp = cut(pdf$age, age.agg, age.labs, right = FALSE, ordered_result = T)) %>%
+                    group_by(age.grp) %>%
+                    summarise(count = sum(count))
+                pdf.all <- pdf.all %>% bind_rows(pdf %>% mutate(region = reg))
+                pop.input <- c(pop.input, pdf$count)
+            }
         }
 }
-
-

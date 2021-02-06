@@ -135,8 +135,8 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 		 regions_logprevalence_estimates = `r ifelse(prev.flag, paste(prev.data$lmeans, collapse = ", "), "NULL")`;
 		 regions_logprevalence_sd = `r ifelse(prev.flag, paste(prev.data$lsds, collapse = ", "), "NULL")`;
 
-		 regions_1stvaccination_data = `r ifelse(vacc.flag, paste(vacc1.files, collapse = ", "), "NULL")`;
-		 regions_2ndvaccination_data = `r ifelse(vacc.flag, paste(vacc2.files, collapse = ", "), "NULL")`;
+		 regions_1stvaccination_data = `r ifelse(vacc.flag, paste(vac1.files, collapse = ", "), "NULL")`;
+		 regions_nthvaccination_data = `r ifelse(vacc.flag, paste(vacn.files, collapse = ", "), "NULL")`;
 	       
 	       }
 

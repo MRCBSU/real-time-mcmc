@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -157,16 +157,17 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("20210125")
 num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
+date.prev <- lubridate::ymd("20210201")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
+days.between.prev <- 14
 
 ## Default system for getting the days on which the likelihood will be calculated.
-prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
+prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
@@ -180,9 +181,9 @@ out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
                      paste0(
-							scenario.name,
-							"_matrices_", google.data.date,
-							"_", data.desc))	# Value actually used
+                         scenario.name,
+                         "_matrices_", google.data.date, matrix.suffix,
+                         "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
@@ -190,10 +191,11 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
+str.date.vacc <- "20210203" ## Optional: if not specified will take the most recent data file.
+vacc.lag <- 21
+vac.overwrite <- TRUE
 if(vacc.flag){
-    start.vac <- 301 ## Gives the day number of the first date for which we have vaccination data
-    end.vac <- 322 ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
-    vacc1.files <- file.path(out.dir, paste0("dummy_dose1_", regions, ".txt"))
-    vacc2.files <- file.path(out.dir, paste0("dummy_dose2_", regions, ".txt"))
+    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
 
