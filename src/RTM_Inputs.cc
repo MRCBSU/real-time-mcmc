@@ -1211,15 +1211,15 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
       read_metaregion_datatype(meta_data_type, tempmat, countfiles, denomfiles, num_regions,
 			       "regions_1stvaccination_data",
 			       "regions_nthvaccination_data",
-			       "regions_vaccination_aggregation", str_var, cTRUE); // set last variable to false if using actual numbers of vaccines given.
-      for(int_i = 0; int_i < num_regions; int_i++)
-	{ // extra normalisation: read_metaregion_datatype gives the second vaccinations as a proportion of the population
-	  // now need to do the same for the number of the first vaccinations.
-	  meta_data_type[int_i]->switchData();
-	  gsl_vector_const_view pop_row = gsl_matrix_const_row(tempmat, int_i);
-	  meta_data_type[int_i]->normalise(&pop_row.vector);
-	  meta_data_type[int_i]->switchData();
-	}
+			       "regions_vaccination_aggregation", str_var, cFALSE); // set last variable to false if using actual numbers of vaccines given.
+      // for(int_i = 0; int_i < num_regions; int_i++)
+      // 	{ // extra normalisation: read_metaregion_datatype gives the second vaccinations as a proportion of the population
+      // 	  // now need to do the same for the number of the first vaccinations.
+      // 	  meta_data_type[int_i]->switchData();
+      // 	  gsl_vector_const_view pop_row = gsl_matrix_const_row(tempmat, int_i);
+      // 	  meta_data_type[int_i]->normalise(&pop_row.vector);
+      // 	  meta_data_type[int_i]->switchData();
+      // 	}
     }
   // Free all allocated memory
   delete [] countfiles;
