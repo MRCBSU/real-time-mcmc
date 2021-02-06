@@ -86,7 +86,7 @@ prior_distribution = `r prior.vac.alpha1`;
 
 }
 
-vacc_nth_disease = { param_value = `r value.vac.alpha2`'
+vacc_nth_disease = { param_value = `r value.vac.alpha2`;
 
 prior_distribution = `r prior.vac.alpha2`;
 
@@ -122,7 +122,7 @@ prior_distribution = `r prior.vac.pi1`;
 
 }
 
-vacc_nth_infect = { param_value = `r value.vac.pi2`'
+vacc_nth_infect = { param_value = `r value.vac.pi2`;
 
 prior_distribution = `r prior.vac.pi2`;
 
