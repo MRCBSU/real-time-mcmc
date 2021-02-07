@@ -1,7 +1,7 @@
 ### Prevalence {.tabset}
 
 #### By region
-```{r reg-prevalence, cache=TRUE, cache.extra=results_hash}
+```{r reg-prevalence, cache=F, cache.extra=results_hash}
 dim.id <- which(names(dimnames(prevalence)) == "date")
 ndate.data <- lubridate::as_date(date.data) - start.date + 1
 prev_plot <- R.utils::extract(prevalence, indices = list(start.prev:ndate.data), dims = dim.id)
@@ -51,15 +51,3 @@ ggplot(prev_gof, aes(y = q50, ymin = qlo, ymax = qhi, x = date, colour = region,
     theme(legend.position = "bottom") +
     geom_point(aes(x=date, y=exp(lmean), group=region), data=prev.dat, colour="black", inherit.aes=FALSE, position=position_dodge(8))
 ```
-
-<!-- ### Cumulative hospitalisations {.tabset} -->
-
-<!-- #### By region -->
-<!-- ```{r} -->
-<!-- make.plots(cum_case, by = "region") -->
-<!-- ``` -->
-
-<!-- #### By age -->
-<!-- ```{r} -->
-<!-- make.plots(cum_case, by = "age") -->
-<!-- ``` -->
