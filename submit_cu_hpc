@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=3-6
+#SBATCH --array=1-6
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -43,9 +43,9 @@ else
 	days="60"
     fi
 fi
-bp="IFRlin.bp_"
+bp="IFR2bp_"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210131/${prev}_${bp}NHS${days}cutoff_11_${gap}matrices_20210131_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210205/${prev}_${bp}NHS${days}cutoff_11_${gap}matrices_20210205_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
