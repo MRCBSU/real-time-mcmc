@@ -64,7 +64,7 @@ if (any(invalid.col.names)) {
 }
 
 ## Given a row in the prev data file, return its region, formatted with no spaces
-get.region <- function(x) {
+vac.nhs.regions <- function(x) {
 	if (region.type == "NHS") north.east.name <- "North_East_and_Yorkshire"
 	if (region.type == "ONS") north.east.name <- "North_East"
     x %>% mutate(region = str_replace_all(region, " ", "_"),
@@ -78,6 +78,9 @@ get.region <- function(x) {
 					Yorkshire = "Yorkshire_and_The_Humber",
 				))
 }
+
+if (region.type == "NHS") get.region <- vac.nhs.regions
+if (region.type == "ONS") get.region <- ons.region
 
 
 ####################################################################
