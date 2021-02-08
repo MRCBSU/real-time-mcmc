@@ -230,20 +230,22 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
       for (int a = 0; a < NUM_AGE_GROUPS; ++a)
 	{
-	  gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(p_lambda, t, a) * (gsl_matrix_get(l_S, t, a) + gsl_matrix_get(in_dmp.l_vacc1_infect, t, a) * gsl_matrix_get(l_SV1, t, a) + gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) * gsl_matrix_get(l_SVn, t, a)));
+	  gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(p_lambda, t, a) * (gsl_matrix_get(l_S, t, a) +
+											  (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(l_SV1, t, a) +
+											  (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(l_SVn, t, a)));
 
 	  gsl_matrix_set(Delta_Disease, t + 1, a, gsl_matrix_get(p_lambda, t, a) * (gsl_matrix_get(l_S, t, a) +
-										    (gsl_matrix_get(in_dmp.l_vacc1_infect, t, a) * gsl_matrix_get(in_dmp.l_vacc1_disease, t, a) * gsl_matrix_get(l_SV1, t, a)) +
-										    (gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) * gsl_matrix_get(in_dmp.l_vaccn_disease, t, a) * gsl_matrix_get(l_SVn, t, a)))
+										    ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vacc1_disease, t, a)) * gsl_matrix_get(l_SV1, t, a)) +
+										    ((1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vaccn_disease, t, a)) * gsl_matrix_get(l_SVn, t, a)))
 			 );
 	  
 	  gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t, a) * (1 - Vaccination->getCount(nday, a) / timestepsperday) * (1 - gsl_matrix_get(p_lambda, t, a)));
 	  
-	  gsl_matrix_set(l_SV1, t + 1, a, (gsl_matrix_get(l_S, t, a) * Vaccination->getCount(nday, a) / timestepsperday) +
-			 gsl_matrix_get(l_SV1, t, a) * (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a) * gsl_matrix_get(p_lambda, t, a)) * (1 - Vaccination->getDenom(nday, a) / timestepsperday));
+	  gsl_matrix_set(l_SV1, t + 1, a, (gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)) * Vaccination->getCount(nday, a) / timestepsperday) +
+			 gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * (1 - Vaccination->getDenom(nday, a) / timestepsperday));
 
-	  gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * Vaccination->getDenom(nday, a) / timestepsperday) +
-			 gsl_matrix_get(l_SVn, t, a) * (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) * gsl_matrix_get(p_lambda, t, a)));
+	  gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)) * Vaccination->getDenom(nday, a) / timestepsperday) +
+			 gsl_matrix_get(l_SVn, t, a) * (1 - (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)));
 
 	  gsl_matrix_set(l_E_1, t + 1, a, gsl_matrix_get(l_E_1, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + gsl_matrix_get(Number_New_Infected, t + 1, a));
      

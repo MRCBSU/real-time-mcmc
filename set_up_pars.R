@@ -40,7 +40,7 @@ value.vac.alpha1 <- c(0.88, 0.7) ## efficacy against disease of Pfizer and AZ va
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
-write_tsv(as.data.frame(t(v1.design)), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
+write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
 vacc.alpha.bps <- TRUE
 
 ## Efficacy against disease from second/nth vaccine dose
@@ -48,7 +48,7 @@ value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ v
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
-write_tsv(as.data.frame(t(vn.design)), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
+write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
 ## Efficacy against disease from one vaccine dose
 value.vac.pi1 <- 0.48

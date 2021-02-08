@@ -37,7 +37,7 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
 }
 
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), "vacc", str.date.vacc, ".RData")
+vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -171,7 +171,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                                     !is.na(sdate),
                                     !is.na(dose),
                                     !is.na(age.grp)) %>%
-        get.region()
+        mutate(region = get.region(.))
     n.vaccs.complete <- nrow(vacc.dat)
     
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
@@ -236,6 +236,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                       ) %>%
             replace_na(list(value = 0)) %>%
             ungroup() %>%
+            mutate(value = 2 * (1 - sqrt(1 - value))) %>%  ## This line transforms the data from a fraction to a rate
             pivot_wider(id_cols = sdate,
                         names_from = age.grp,
                         values_from = value) %>%
@@ -261,10 +262,11 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             arrange(sdate) %>%
             group_by(age.grp) %>%
             summarise(sdate = sdate,
-                      value = n / (lag(sum.first) - lag(cumsum(n)))
+                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
                       ) %>%
             replace_na(list(value = 0)) %>%
             ungroup() %>%
+            mutate(value = 2 * (1 - sqrt(1 - value))) %>%   ## This line transforms the data from a fraction to a rate
             pivot_wider(id_cols = sdate,
                         names_from = age.grp,
                         values_from = value) %>%

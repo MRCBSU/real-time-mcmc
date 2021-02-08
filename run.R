@@ -124,7 +124,6 @@ if(format.inputs){
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
-
 ## Compile the code
 if(compile.code) {
     system("make rtm_optim")
@@ -136,6 +135,7 @@ setwd(out.dir)
 if(exists("outpp"))
     rm(outpp)
 save.image("tmp.RData")
+
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
@@ -143,7 +143,6 @@ if(run.code){
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")
-
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
 	external = FALSE
