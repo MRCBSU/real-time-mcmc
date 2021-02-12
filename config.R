@@ -153,7 +153,7 @@ prev.cutoff.days <- 0
 date.prev <- lubridate::ymd("20210206") # Set this to last date in dataset
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
-first.prev.day <- prev.end.day - num.prev.days + 1
+first.prev.day <- date.prev - start.date - num.prev.days + 1
 days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
