@@ -23,7 +23,6 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
 }
 
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
