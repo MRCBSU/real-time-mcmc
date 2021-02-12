@@ -64,7 +64,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s}", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data,
                        project.forwards = !(is.null(data) && external), x.label = "",
-                       denoms = NULL) {
+                       denoms = NULL, y.percent = FALSE) {
 
   if (is.null(combine.to.England)) {
     Eng_projection <- Eng_data <- NULL
@@ -106,6 +106,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       add_lines(y = ~`0.5`, color = I("black"), text = ~`0.5_prop`,
                 hovertemplate = paste0("%{x}: %{y:", y.format, "<extra>Median</extra>")) %>%
       layout(xaxis = list(title = x.label))
+    if (y.percent) plot <- plot %>% layout(yaxis = list(tickformat = "%"))
     if (is.null(data)) {
       return(plot)
     } else {
