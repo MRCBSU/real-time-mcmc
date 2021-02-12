@@ -182,7 +182,7 @@ use.previous.run.for.start <- FALSE
 previous.run.to.use <- "/mrc-bsu/scratch/jbb50/old-model-runs/20210202-2/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_last_break_10_days_matrices_20210129_deaths"
 iteration.number.to.start.from <- 6400
 
-threads.per.regions <- 2
+threads.per.regions <- 3
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
