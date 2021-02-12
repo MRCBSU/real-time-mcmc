@@ -5,6 +5,10 @@ require(dplyr)
 dir.data <- "data"
 load(build.data.filepath("population", "pop_ons.RData"))
 
+regions.lkup <- data.frame(region = as.character(regions), reg.short = toupper(regions), stringsAsFactors = FALSE)
+idx <- which(regions.lkup == "East_of_England")
+regions.lkup[idx, "reg.short"] <- "EAST"
+
 pop.input <- NULL
 for(reg in regions){
 	if (reg == "East_of_England") reg <- "EAST"
@@ -14,4 +18,9 @@ for(reg in regions){
 	pop.input <- c(pop.input, pop.full$x)
 }
 
+pdf.all <- pop %>% left_join(regions.lkup, by = c("Region" = "reg.short")) %>%
+    select(-Region) %>%
+    rename(age.grp = Age, count = x)
 
+## pdf.all <- pop.input
+## names(pdf.all) <- pdf.all %>% names() %>% tolower()

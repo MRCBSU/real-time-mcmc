@@ -14,15 +14,15 @@ if (length(args) < 3) args <- c(args, "All", "England")
 if (!exists("date.data")) date.data <- args[1]
 stopifnot(!is.na(ymd(date.data)))
 if (args[2] == "All")  {
-	if (region.type == "NHS") 
+	if (region.type == "NHS")
 		regions <- c("East_of_England", "London", "Midlands",
                      "North_East_and_Yorkshire", "North_West",
                      "South_East", "South_West"## ,
                      ## "Scotland", "Northern_Ireland", "Wales"
                      )
-	else if (region.type == "ONS") 
+	else if (region.type == "ONS")
 		regions <- c("East_of_England", "East_Midlands",
-					 "London", 
+					 "London",
                      "North_East", "North_West",
                      "South_East", "South_West",
 					 "West_Midlands", "Yorkshire_and_The_Humber"
@@ -79,12 +79,26 @@ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
 
+## Any inputs here for the vaccination data (or even if there is any)
+vacc.flag <- 1
+
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
+## Is there a previous MCMC from which we can take some initial values?
+use.previous.run.for.start <- TRUE
+if(use.previous.run.for.start){
+    if(region.type == "NHS"){
+    if(prev.flag)
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
+    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
+    } else if(region.type == "ONS")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
+}
+iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
@@ -115,10 +129,10 @@ if (data.desc == "all") {
 }
 
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
                        )
-names(data.dirs) <- c("deaths", "sero", "cases", "prev")
-      
+names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc")
+
 flg.confirmed = TRUE
 
 English.regions <- c("East_of_England", "London", "Midlands",
@@ -144,34 +158,33 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("2021-02-03")
-num.prev.days <- 51
+num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date - prev.cutoff.days ## Last date in the dataset
+date.prev <- lubridate::ymd("20210203")
+prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 14
-prev.end.day <- date.prev - start.date - 2
-first.prev.day <- date.prev - 51 - start.date + 1
+
 ## Default system for getting the days on which the likelihood will be calculated.
-prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
+prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 
 # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 lag.last.beta <- 24 - 7*2
 if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
-if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
                      paste0(
-							scenario.name,
-							"_matrices_", google.data.date,
-							"_", data.desc))	# Value actually used
+                         scenario.name,
+                         "_matrices_", google.data.date, matrix.suffix,
+                         "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
@@ -180,3 +193,14 @@ previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
+
+########### VACCINATION OPTIONS ###########
+vacc.flag <- 1 ## Do we have any vaccination data
+str.date.vacc <- "20210205" ## Optional: if not specified will take the most recent data file.
+vacc.lag <- 21
+vac.overwrite <- FALSE
+if(vacc.flag){
+    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
+}
+

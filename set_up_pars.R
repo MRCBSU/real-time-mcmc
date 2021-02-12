@@ -1,6 +1,6 @@
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
-  rows.to.add <- nbetas - length(vec) / nr 
+  rows.to.add <- nbetas - length(vec) / nr
   mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
   return(rbind(mat, mat.new))
 }
@@ -32,6 +32,36 @@ if(prev.prior == "tight") pars.r1 <- c(550000,100000)
 if(prev.prior == "relax") pars.r1 <- c(5.5, 1)
 if(prev.prior == "long_positive") pars.r1 <- c(11.7, 0.903)
 if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
+
+vac.effec.bp <- 1:(length(vac.dates) - 1)
+
+## Efficacy against disease from one vaccine dose
+value.vac.alpha1 <- c(0.88, 0.7) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
+prior.alpha1 <- max(prior.vac.alpha1)
+if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
+write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
+vacc.alpha.bps <- TRUE
+
+## Efficacy against disease from second/nth vaccine dose
+value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
+prior.alpha2 <- max(prior.vac.alpha2)
+if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
+write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
+
+## Efficacy against disease from one vaccine dose
+value.vac.pi1 <- 0.48
+prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
+prior.pi1 <- max(prior.vac.pi1)
+if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
+vacc.pi.bps <- FALSE
+
+## Efficacy against disease from one vaccine dose
+value.vac.pi2 <- 0.6
+prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
+prior.pi2 <- max(prior.vac.pi2)
+if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
@@ -67,7 +97,7 @@ if(!gp.flag | nA == 1){
             pivot_longer(-Age, names_to = "Region") %>%
             inner_join(ll.prior) %>%
             mutate(p = npos / value) %>%
-            arrange(Region, Age)    
+            arrange(Region, Age)
         ## Weighted regression
         ex6 <- suppressWarnings(glm(p~Region + Age + log(nbar),
                                     weights = value,
@@ -93,7 +123,7 @@ if(!gp.flag | nA == 1){
             value.pgp <- jitter(ex6$coefficients[-nl])
             pars.pgp <- as.vector(t(cbind(ex6$coefficients[-nl], round(vcov(ex6)[-nl,-nl], digits = 5))))
             mex6 <- model.matrix(ex6)[,-nl]
-        }   
+        }
     } else {
         reg.mod.loc <- file.path(dirname(proj.dir), "Pillar2", "ascertatinment_regs.RData")
         load(reg.mod.loc)
@@ -237,7 +267,7 @@ if(grepl("newOtoD", scenario.name, fixed = TRUE)){
     ddelay.mean <- 9.3
     ddelay.sd <- 9.7
 }
-    
+
 ## Reporting delay on the deaths
 ## First, write down Tom's cdf for the delay distribution function
 F <- c(0, 0.0581397, 0.3410914, 0.5708017, 0.7027247, 0.7794353, 0.8213025, 0.8516836, 0.8770857, 0.8940002, .9123456, 0.924536, .9387407, .9544153, .9685447, .9821035, .9868954, .991038, 1)
@@ -343,8 +373,6 @@ beta.rw.props <- c(
     0.000000, 0.000003, 0.000007, 0.000011, 0.000016, 0.000020, 0.000059, 0.000101, 0.000157, 0.000436, 0.001271, 0.004388, 0.008550, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000005, 0.000008, 0.000008, 0.000023, 0.000030, 0.000063, 0.000131, 0.000279, 0.000616, 0.001303, 0.004852, 0.009842, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000006, 0.000008, 0.000012, 0.000023, 0.000027, 0.000056, 0.000119, 0.000272, 0.000384, 0.001462, 0.004730, 0.013297, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )
