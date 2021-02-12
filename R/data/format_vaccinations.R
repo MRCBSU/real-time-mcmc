@@ -12,21 +12,7 @@ require(tidyverse)
 require(cubelyr)
 require(lubridate)
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-    input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
-    ## List the possible files in the directory
-    vacc.loc <- file.info(file.path(input.loc,
-                                    list.files(path = input.loc,
-                                               pattern=glob2rx(paste("202", "immunisations SPIM", "csv", sep = "*")))
-                                    )
-                          )
-    ## Has a particular date's data been specified
-    rnames <- rownames(vacc.loc)
-    if(exists("str.date.vacc")){
-        input.loc <- rnames[grepl(str.date.vacc, rnames)]
-    } else {
-        ## Pick up the most recently added
-        input.loc <- rnames[which.max(vacc.loc$ctime)]
-    }
+	input.loc <- glue::glue("/data/covid-19/data-raw/dstl/{ymd(str.date.vacc)}/{str.date.vacc} immunisations SPIM.csv")
 } else {
     if(is.null(vacc.loc)){
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
