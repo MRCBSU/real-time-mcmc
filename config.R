@@ -39,7 +39,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("2021-02-05"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-02-12"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -88,17 +88,6 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
-## Is there a previous MCMC from which we can take some initial values?
-use.previous.run.for.start <- TRUE
-if(use.previous.run.for.start){
-    if(region.type == "NHS"){
-    if(prev.flag)
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
-    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
-    } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
-}
-iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
@@ -159,13 +148,13 @@ if(gp.flag){
 
 ## Get the date of the prevalence data
 num.prev.days <- 57
-prev.cutoff.days <- 2
+prev.cutoff.days <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210203")
-prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+date.prev <- lubridate::ymd("20210206") # Set this to last date in dataset
+prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
-days.between.prev <- 14
+days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
