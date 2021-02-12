@@ -12,7 +12,6 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
-Rfile.loc.bak <- Rfile.loc
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 
 suppressMessages(library(knitr))
@@ -20,10 +19,15 @@ suppressMessages(library(DT))
 suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
-source(file.path(Rfile.loc, "results_api.R"))
-Rfile.loc <- Rfile.loc.bak
-source(file.path(Rfile.loc, "plot_funcs.R"))
-Rfile.loc <- Rfile.loc.bak
+suppressMessages(extract <- R.utils::extract)
+if(exists("Rfile.loc")) {
+  source(file.path(Rfile.loc, "results_api.R"))
+  source(file.path(Rfile.loc, "plot_funcs.R"))
+} else {
+  proj.dir <- "~/RTM"
+  source("results_api.R")
+  source("plot_funcs.R")
+}
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
@@ -52,17 +56,16 @@ We fit a transmission model ([Birrell et al. 2020](https://www.medrxiv.org/conte
 
 We use:
   
-1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing. The definition of a COVID-19 confirmed death is any death that occurs in an individual who had a lab-confirmed infection, within 60 days from the date of their most recent positive test. This definition reflects more realistically the burden of COVID-19. This consists of a combination of deaths notified to:
+1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing   This consists of a combination of deaths notified to:
     * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnosed with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20th March, 2020).
     * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
-    * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020).
-2. Data on antibody prevalence in blood samples from a PHE survey of NHS Blood Transfusion (NHSBT) donors. From early June, the NHSBT began giving a constantly declining prevalence of antibodies, making them no longer an accurate measure of cumulative infection. Consequently, these data have been curtailed at this time.
-3. Age- and region-specific estimates of community prevalence of PCR positive COVID-19 infection as derived from the COVID-19 Infection Survey of the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases/methodologies/covid19infectionsurveypilotmethodsandfurtherinformation) (ONS) using the methodology of [Pouwels et al., 2020](https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(20)30282-6/fulltext).
+    * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020)
+2. Data on antibody prevalence in blood samples from a PHE survey of NHS Blood Transfusion (NHSBT) donors.
 
 Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+, and the NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West).
 
-4. Published information on the the natural history of COVID-19 ([Verity et al., 2020](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099%2920%2930243-7/abstract); [Li et al, 2020](https://www.nejm.org/doi/10.1056/NEJMoa2001316)) 
-5. Information on contacts between different age groups from:
+3. Published information on the the natural history of COVID-19 ([Verity et al., 2020](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099%2920%2930243-7/abstract); [Li et al, 2020](https://www.nejm.org/doi/10.1056/NEJMoa2001316)) 
+4. Information on contacts between different age groups from:
     * A Survey that describes relative rates of contacts between different age groups ([Mossong et al. 2008](https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074)).
     * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the March 23rd lockdown measures.
     * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
@@ -299,7 +302,7 @@ ifr.table <- function(x, overall_x)
 
 #### Growth rates
 
-```{r growth-rate-func, message=FALSE}
+```{r growth-rate-func}
 signed_inf <- function(num) {
   ifelse(
     num == 0, 0,
@@ -476,6 +479,7 @@ make.plots(cum_infections, by = "age")
 ```
 
 ### IFR
+
 ```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
 ## ## Base R proved quicker than tidyr equivalents
 ## Aggregate infections over region
@@ -509,7 +513,7 @@ make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL, y.
 The figure below shows the probability that $R_t$ is greater than 1 (ie: the number of infections is growing) in each region over time.
 Clicking the regions in the legend allows lines to be added or removed from the figure.
 
-```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash, echo=FALSE, message=FALSE}
+```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash}
 (Rt > 1) %>%
   apply(c("date", "region"), sum) %>%
   `/`(length(dimnames(Rt)$iteration)) %>%
@@ -525,7 +529,7 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
-make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
+make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
 ```
 
 ```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
