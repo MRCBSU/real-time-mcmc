@@ -44,6 +44,7 @@ prev_gof <- prev_plot %>%
               qlo = quantile(sampled, 0.025),
               qhi = quantile(sampled, 0.975))
 
+
 ggplot(prev_gof, aes(y = q50, ymin = qlo, ymax = qhi, x = date, colour = region, group = region)) +
     geom_point(position = position_dodge(8)) +
     geom_linerange(position = position_dodge(8)) +

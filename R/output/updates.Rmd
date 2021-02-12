@@ -2,30 +2,27 @@
 
 #### Model and report changes
 
-1. The model incorporates estimates of community prevalence, by region and age group, from the Office of National Statistics COVID-19 Infection Survey (see Data Sources for details). These are included weekly over the last 50 days and for the age groups >4 years to inform trends in incidence that are too recent to be captured by the data on deaths.
-1. The geographical definition has been changed from the seven NHS regions ([map](https://www.arcgis.com/sharing/rest/content/items/e4dd34a2d07b43088e17ed73e1bd3357/data)) to the nine regions typically used in government ([map](https://www.arcgis.com/sharing/rest/content/items/738566d958834b70a809dc72a154eaf9/data)). This new spatial definition more appropriately reflects the existing regional heterogeneity.
+1. The definition of deaths has been adapted to include all deaths that occur in individuals who have had lab-confirmed infection within 60 days from the date of their most recent positive test. This definition reflects more realistically the burden of COVID-19.
 2. Using observations of improved survival in hospitalised COVID-19 patients, we have allowed the probability of dying following infection with SARS-CoV2 (the infection-fatality rate, IFR) to gradually change over the course of June 2020, with a decrease being estimated.
-1. The modelling now accounts for a different susceptibility to infection in the under-15s, using information from literature ([Viner et al, 2020](https://jamanetwork.com/journals/jamapediatrics/fullarticle/2771181)) suggesting that children less likely to acquire infection when in contact with an infectious individual.
+3. The model uses seroprevalence data on the presence of COVID-19 antibodies in blood samples taken by NHSBT to estimate the levels of cumulative infection within the population over time. As, from early June, the NHSBT has been giving a constantly declining prevalence of antibodies, and these data have been curtailed at this point.
 
 
 
 #### Updated findings
 
-1. The current estimate of the daily number of new infections occurring each day across England is 60,200 (45,800--80,000, 95% credible interval).
-2. The daily infection rate is particularly high in the North West (NW) and North East (NE) with 16,300, 6,010 new daily infections, corresponding to 223, and 226 per 100,000 population, respectively. Note that a substantial proportion of these daily infections will be asymptomatic.
-3. We predict that the number of deaths occurring daily is likely to be between 518 and 860 on the 28th January 2021. 
-4. The probability of Rt exceeding 1 is 85% and 84% in the South West (SW) and NE respectively; 61% in NW;  53% in the East Midlands (EM) and lower than 14% in all the other regions.
-5. The growth rate for England is now estimated to be -0.02 (-0.04--0.00, 95% credible interval) per day. This means that, nationally, the number of infections is declining but with a high degree of regional variation. Infections are still increasing in the SW and NE, whilst plateauing in the WM and EM.
-6. London, followed by the NW and the NE continues to have the highest attack rate, that is the proportion of the population who have ever been infected, with 30%, 26% and 21% respectively. The SW continues to have the lowest attack rate at 8%.
-7. Note that the deaths data used are only very weakly informative on Rt over the last two weeks. Therefore, the estimate for current incidence, Rt and the forecast of daily numbers of deaths are likely to be subject to some revision.
+1. Our current estimate of the daily number of new infections occurring each day across England is 55,600 (38,400--81,600, 95% credible interval).
+1. The daily number of new infections is particularly high in the North West and the North East and Yorkshire (17,600 and 14,800 infections per day, respectively). Note that a substantial proportion of these daily infections will be asymptomatic.
+1. We predict that the number of deaths each day is likely to be between 237 and 422 on the 5th of November.
+1. We estimate Rt to be above 1 in most regions with almost 100% probability, apart from London for which the probability of Rt exceeding 1 is 67%.
+1. The estimated growth rate for England is estimated at 0.04 (0.03--0.05, 95% credible interval) per day. This means that the number of infections is growing by 4% each day. This translates into a doubling in the number of new infections approximately every 17 days.
+1. London, followed by the North West, continues to have the highest attack rate, that is the proportion of the population who have ever been infected, at 21% and 18% respectively. The South West continues to have the lowest attack rate (4%).
+1. Note that the deaths data used are only weakly informative on Rt over the last two weeks and are still occurring in relatively small numbers in some regions. Therefore, the estimate for current incidence, Rt and the forecast of daily numbers of deaths remain very uncertain. 
 
 
 #### Interpretation
 
-The plots of Rt over time are showing downward trends, following a period of increased transmission from the middle of the November lockdown to around the introduction of the national Tier 4 restrictions and the beginning of the Christmas period. These result in many of the Rt values being below 1, with the exception of the SW, NE, EM and NW where the number of infections is increasing (SW, NE) or plateauing (EM, NW).
+The Rt values almost certainly remain above 1 in all regions except London, where the probability that Rt is above 1 is 67%. This indicates that the number of new infections occurring each day will continue to rise, unless further interventions or behavioural changes are introduced.
 
-Incidence of deaths which had levelled off during the last week of November / first week of December, with some falls noted in the North East, North West, and Yorkshire & Humberside, started to climb significantly throughout December and early January in all regions. The deaths that we are currently observing will be predominantly from infections acquired pre-Christmas. The deaths, which are now at a level similar to the first wave (e.g. SE and EE) are predicted to start falling soon, once the majority of the pre-Christmas infections have been resolved.
+Despite this, the plots of Rt over time show decreases over the last few weeks in most regions, while showing a plateauing in the South East, South West and East of England. This, together with the Rt remaining greater than 1, means that the number of new infections continues to rise, but at a slower speed.
 
-It is now possible to estimate that the Tier 4 restriction introduced on Saturday 19th December, in combination with the school holidays and reduced movements around the Christmas period, have contributed to a downward trends in Rt and the slowing down in the growth in the number of infections in most regions. The impact of the lockdown announced on 5th January cannot yet be measured, and therefore any potential effects are excluded from the discussion of these results. Regardless, the prevalence of infection remains high and the demand on healthcare services is currently extreme, so continued restrictions are needed to lower these levels and to maintain control over transmission.
-
-
+These lower values of Rt might be the result of the various social distancing interventions, but it is unclear what the impact of any single intervention is from this analysis; and the continued rise in the number of new infections will probably continue unless further interventions or behavioural changes are introduced.
