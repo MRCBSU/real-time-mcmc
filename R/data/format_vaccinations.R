@@ -222,6 +222,8 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                       ) %>%
             replace_na(list(value = 0)) %>%
             ungroup() %>%
+			mutate(value = pmin(value, 1)) %>%
+			mutate(value = pmax(value, 0)) %>%
             mutate(value = 2 * (1 - sqrt(1 - value))) %>%  ## This line transforms the data from a fraction to a rate
             pivot_wider(id_cols = sdate,
                         names_from = age.grp,
