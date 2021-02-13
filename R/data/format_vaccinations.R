@@ -65,7 +65,10 @@ vac.nhs.regions <- function(x) {
 }
 
 if (region.type == "NHS") get.region <- vac.nhs.regions
-if (region.type == "ONS") get.region <- ons.region
+if (region.type == "ONS") get.region <- function(x) {
+    y <- ons.region(x)
+    x %>% mutate(region = y)
+}
 
 
 ####################################################################
@@ -108,6 +111,25 @@ pad.rows.at.end <- function(df, nrows.full){
     df
 }
 
+## Function to format aggregated counts of vaccinations into the cross-tabulated datasets required for the rtm.
+fn.region.crosstab <- function(dat, reg_r, dose_d){
+    dat %>%
+        filter(region == reg_r, dose == dose_d) %>%
+        arrange(sdate) %>%
+        group_by(age.grp, pop) %>%
+        summarise(sdate, n, n.cum = cumsum(n)) %>%
+        mutate(pop = max(pop, n.cum + 1)) %>%
+        mutate(value = n / (pop - dplyr::lag(n.cum))) %>% ## Calculating the fraction of the denominator population still at risk.
+        replace_na(list(value = 0)) %>%
+        ungroup() %>%
+        mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 
+        pivot_wider(id_cols = sdate,
+                    names_from = age.grp,
+                    values_from = value) %>%
+        pad.rows.at.end(ndays)
+    }
+
+
 ## Get date of data file
 if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
 ## Substitute this into the names of the intended data file names
@@ -143,7 +165,9 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     print(paste("Reading from", input.loc))
     ## strPos <- c("+", "Positive", "positive")
     vacc.dat <- read_csv(input.loc,
-                         col_types = vacc.cols) %>%
+                         col_types = vacc.cols)
+
+    vacc.dat <- vacc.dat %>%
         rename(!!!col.names) %>%
 	mutate(sdate = fuzzy_date_parse(sdate),
                age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
@@ -156,7 +180,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                                     !is.na(sdate),
                                     !is.na(dose),
                                     !is.na(age.grp)) %>%
-        mutate(region = get.region(.))
+        get.region()
     n.vaccs.complete <- nrow(vacc.dat)
     
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
@@ -212,20 +236,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     v1.design <- NULL
     vn.design <- NULL
     for(reg in regions){
-        region.dat <- jab.dat %>%
-            filter(region == reg, dose == "First") %>%
-            arrange(sdate) %>%
-            group_by(age.grp) %>%
-            summarise(sdate = sdate,
-                      value = n / (pop - dplyr::lag(cumsum(n))) ## Fraction of the denominator population receiving their first vaccine.
-                      ) %>%
-            replace_na(list(value = 0)) %>%
-            ungroup() %>%
-            mutate(value = 2 * (1 - sqrt(1 - value))) %>%  ## This line transforms the data from a fraction to a rate
-            pivot_wider(id_cols = sdate,
-                        names_from = age.grp,
-                        values_from = value) %>%
-            pad.rows.at.end(ndays)
+        region.dat <- jab.dat %>% fn.region.crosstab(reg, "First")
         
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
@@ -235,7 +246,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
         tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First"), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
-                           
+
         region.dat <- jab.dat %>%
             filter(region == reg, dose == "Second") %>%
             left_join(jab.dat %>%
