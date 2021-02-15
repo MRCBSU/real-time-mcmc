@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=3,6,9
+#SBATCH --array=4
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -71,25 +71,27 @@ if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
     fi
 else
     prev="PrevCevik"
-    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+	gap="prev7_"
+    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
 	gap="prev14_"
     else
-	gap="prev7_"
+	gap="prev7-5_"
     fi
-    if [ $SLURM_ARRAY_TASK_ID -lt 6 ]; then
+    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
 	days="28"
     else
 	days="60"
     fi
 fi
-if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+if [ $SLURM_ARRAY_TASK_ID -gt 9 ]; then
     geog="ONS"
 else
     geog="NHS"
 fi
 bp="IFRlin.bp_"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210207/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210205_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
