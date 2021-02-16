@@ -65,6 +65,63 @@ prior_distribution = `r paste(rep(1, length(value.r1)), collapse = ", ")`;
 
 }
 
+vacc_1st_disease = { param_value = `r value.vac.alpha1`;
+
+prior_distribution = `r paste(rep(1, length(value.vec.alpha1)), collapse = ", ")`;
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "regression_design = vac.alpha1.design.txt;", "")`
+
+}
+
+vacc_nth_disease = { param_value = `r value.vac.alpha2`;
+
+prior_distribution = `r paste(rep(1, length(value.vac.alpha2)), collapse = ", ")`;
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "regression_design = vac.alphan.design.txt;", "")`
+
+}
+
+vacc_1st_infect = { param_value = `r value.vac.pi1`;
+
+prior_distribution = `r paste(rep(1, length(value.vac.pi1)), collapse = ", ")`;
+
+`r ifelse(vacc.flag & vacc.pi.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pi1.design.txt;", "")`
+
+}
+
+vacc_nth_infect = { param_value = `r value.vac.pi2`;
+
+prior_distribution = `r paste(rep(1, length(value.vac.pi2)), collapse = ", ")`;
+
+`r ifelse(vacc.flag & vacc.pi.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pin.design.txt;", "")`
+
+}
+
+
 prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
 
 prior_distribution = `r paste(rep(1, length(value.pgp)), collapse = ", ")`;
