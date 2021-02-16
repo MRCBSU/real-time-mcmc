@@ -106,13 +106,15 @@ if(!exists("file.loc")){
 pad.rows.at.end <- function(df, nrows.full){
     if(nrow(df) < nrows.full){
         nadds <- nrows.full - nrow(df)
-        df[nrow(df) + (1:nadds), ] <- df[nrow(df), ]
+        nold <- nrow(df)
+        df[nold + (1:nadds), ] <- df[nold, ]
+        df$sdate[nold + (1:nadds)] <- df$sdate[nold] + 1:nadds
     }
     df
 }
 
 ## Function to format aggregated counts of vaccinations into the cross-tabulated datasets required for the rtm.
-fn.region.crosstab <- function(dat, reg_r, dose_d){
+fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
     dat %>%
         filter(region == reg_r, dose == dose_d) %>%
         arrange(sdate) %>%
@@ -235,8 +237,13 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
+
+    ## Following code will extrapolate the vaccination programme out into the future.
+    source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
+
     for(reg in regions){
-        region.dat <- jab.dat %>% fn.region.crosstab(reg, "First")
+        
+        region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
         
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
@@ -244,7 +251,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First"), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
 
         region.dat <- jab.dat %>%
@@ -274,7 +281,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second"), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
         
     }
@@ -324,7 +331,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ##                   col_names = FALSE)
     ## }
 
-    save(vac.dates, v1.design, vn.design, file = vacc.rdata)
+    save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
     rm(vacc.dat)
     
 } else {
