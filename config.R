@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -193,7 +193,7 @@ threads.per.regions <- 2
 vacc.flag <- 1 ## Do we have any vaccination data
 ## str.date.vacc <- "20210205" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
-vac.overwrite <- FALSE
+vac.overwrite <- TRUE
 if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
