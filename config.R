@@ -170,7 +170,7 @@ if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
-                     paste0(date.data, "-debug"),
+                     date.data,
                      paste0(
                          scenario.name,
                          "_matrices_", google.data.date, matrix.suffix,
