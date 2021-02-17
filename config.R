@@ -147,11 +147,11 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("2021-02-03")
-num.prev.days <- 51
-prev.cutoff.days <- 2
+num.prev.days <- 57
+prev.cutoff.days <- 5
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date - prev.cutoff.days ## Last date in the dataset
+date.prev <- lubridate::ymd("20210213") # Set this to last date in dataset
+prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 14
