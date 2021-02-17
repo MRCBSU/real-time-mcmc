@@ -75,10 +75,8 @@ if(gp.flag){
     denoms.files <- NULL
 }
 if(prev.flag){
-    prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
-                            paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
-                            paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+	prev.file.txt <- paste0(prev.lik.days, collapse = "_")
+	prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_") 
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
@@ -88,8 +86,8 @@ if(prev.flag){
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
   if(data.desc == "reports") {
@@ -119,8 +117,11 @@ if(format.inputs){
   }
   if(vacc.flag){
       source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
-  }
+  } 
+} else if (vacc.flag) {
+  load(vacc.rdata)
 }
+
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))

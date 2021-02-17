@@ -2,7 +2,7 @@
 #SBATCH -J trial_hpc_batch
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
+#SBATCH --cpus-per-task=27
 #SBATCH --time=48:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
@@ -12,14 +12,14 @@
 #SBATCH --qos=covid0
 #SBATCH --exclusive
 
-#SBATCH --array=0-5
+#SBATCH --array=0-1
 #SBATCH -p skylake
 
 
 #SBATCH --output=model_runs_%a.out
 #SBATCH --error=model_runs_%a.err
 
-module load gcc/9 intel/compilers/2020.2
+module load gcc/9 intel/compilers/2020.2 gsl
 dirs=(*/)
 cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
