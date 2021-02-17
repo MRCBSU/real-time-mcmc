@@ -170,16 +170,16 @@ if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", m
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
-                     date.data,
+                     paste0(date.data, "-debug"),
                      paste0(
                          scenario.name,
-                         "_matrices_", google.data.date, matrix.suffix,
+                         "change_start_matrices_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
-use.previous.run.for.start <- FALSE
-previous.run.to.use <- "/mrc-bsu/scratch/jbb50/old-model-runs/20210202-2/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_last_break_10_days_matrices_20210129_deaths"
+use.previous.run.for.start <- TRUE
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210212/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_skip5_last_break_10_days_matrices_20210212_timeuse_household_new_base_deaths"
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2

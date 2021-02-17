@@ -2,7 +2,7 @@
 #SBATCH -J post_process_bulk
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=3
+#SBATCH --cpus-per-task=4
 #SBATCH --time=01:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
@@ -11,7 +11,7 @@
 #SBATCH --verbose
 #SBATCH --qos=covid0
 
-#SBATCH --array=0-5
+#SBATCH --array=0,1
 #SBATCH -p skylake-himem
 
 
