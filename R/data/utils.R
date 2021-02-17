@@ -67,9 +67,9 @@ ons.region <- function(x) {
 		)
 	 )
 	x %>%
-		left_join(tbl_rgn_lkup ,by=c("ltla_code"="LAD19CD")) %>%
-		`$`("RGN19NM") %>%
-		str_replace_all(" ", "_")
+            left_join(tbl_rgn_lkup ,by=c("ltla_code"="LAD19CD")) %>%
+            `$`("RGN19NM") %>%
+            str_replace_all(" ", "_")
 }
 
 inverse.map <- function(r, l){
@@ -116,4 +116,13 @@ all.regions <- list( ## Region names that might be used and their constituent NH
     South_West = "South_West"
 )
 all.regions$Outside_London = all.regions$England[-3]
+
+# Given a vector, return the first element where predicate is true
+# Returns NULL if not true for any
+first.where.true <- function(vec, predicate) {
+	true.at <- which(predicate(vec))
+	if (length(true.at) == 0) return(NULL)
+	index.to.use <- min(true.at)
+	return(vec[index.to.use])
+}	
 

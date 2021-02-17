@@ -64,7 +64,6 @@ module load R/3.6
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 
-
 #! Full path to application executable: 
 application="Rscript"
 
@@ -115,8 +114,8 @@ JOBID=$SLURM_JOB_ID
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
 
-#dirs=(*/)
-#cd ${dirs[SLURM_ARRAY_TASK_ID]}
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
 eval $CMD
 Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
