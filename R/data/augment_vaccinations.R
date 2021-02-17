@@ -1,5 +1,5 @@
 ## What can we expect in the coming weeks.
-future.n <- c(2, 1.7, 1.4, 2.5, 2.7, 2.5, 3.2) * 10^6
+future.n <- c(2, 1.7, 1.4, 2.5, 2.7, 2.5, 3.2, 3, 3, 3) * 10^6
 vacc.guide <- tibble(wc = max((jab.dat %>% filter(n > 0))$sdate) + 1:(length(future.n) * 7), pricks = rep(future.n, each = 7) / 7) %>%
     mutate(week.fac = as.numeric(format(wc, format = "%Y%W")))
 
@@ -26,7 +26,7 @@ xdist <- jab.dat %>%
                            vacc.under50s))))
 
 d0 <- max(vac.dates)
-d.end <- d0 + 40
+d.end <- d0 + length(future.n) * 7
 twelve.weeks <- 84
 pos.part <- function(x){
     x[x<0] <- 0
