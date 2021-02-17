@@ -37,7 +37,7 @@ pop <- read_csv(build.data.filepath(subdir = "", "popn2018_all.csv")) %>%
 	filter(Geography=="Country") %>%
 	bind_rows(pop) %>%
 	assertr::assert(assertr::is_uniq, Name) %>%
-	assertr::assert(function(x) !is.na(x), everything())
+       assertr::assert(function(x) !is.na(x), everything())
 
 ## Put back into long format with age aggregation.
 ## Long format...

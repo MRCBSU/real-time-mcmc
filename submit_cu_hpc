@@ -3,7 +3,7 @@
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=14
-#SBATCH --time=36:00:00
+#SBATCH --time=72:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=3,6,9
+#SBATCH --array=9-12
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -22,7 +22,7 @@
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
+if [ $SLURM_ARRAY_TASK_ID -lt 4 ] || [[ $SLURM_ARRAY_TASK_ID -eq 9 ]]; then
     prev="NoPrev"
     gap=""
     if [ $SLURM_ARRAY_TASK_ID -lt 2 ]; then
@@ -32,25 +32,27 @@ if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
     fi
 else
     prev="PrevCevik"
-    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+	gap="prev7_"
+    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
 	gap="prev14_"
     else
-	gap="prev7_"
+	gap="prev7-5_"
     fi
-    if [ $SLURM_ARRAY_TASK_ID -lt 6 ]; then
+    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
 	days="28"
     else
 	days="60"
     fi
 fi
-if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+if [ $SLURM_ARRAY_TASK_ID -gt 8 ]; then
     geog="ONS"
 else
     geog="NHS"
 fi
 bp="IFRlin.bp_"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210207/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210205_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
