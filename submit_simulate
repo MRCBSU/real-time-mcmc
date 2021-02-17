@@ -63,8 +63,6 @@ module load pandoc                         # Need this to generate the STAN mode
 module load R/3.6
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
-
-
 #! Full path to application executable: 
 application="Rscript"
 
