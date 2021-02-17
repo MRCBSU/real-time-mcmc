@@ -173,7 +173,7 @@ out.dir <- file.path(proj.dir,
                      paste0(date.data, "-debug"),
                      paste0(
                          scenario.name,
-                         "change_start_matrices_", google.data.date, matrix.suffix,
+                         "_matrices_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
