@@ -170,7 +170,7 @@ if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", m
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
-                     paste0(date.data, "-debug"),
+                     date.data,
                      paste0(
                          scenario.name,
                          "_matrices_", google.data.date, matrix.suffix,
