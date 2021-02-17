@@ -148,9 +148,9 @@ if(gp.flag){
 
 ## Get the date of the prevalence data
 num.prev.days <- 57
-prev.cutoff.days <- 0
+prev.cutoff.days <- 5
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210206") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210213") # Set this to last date in dataset
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- date.prev - start.date - num.prev.days + 1
