@@ -9,7 +9,7 @@
 
 #! sbatch directives begin here ###############################
 #! Name of the job:
-#SBATCH -J process_hpc_batch
+#SBATCH -J post_process_hpc_batch
 #! Which project should be charged:
 #SBATCH -A MRC-BSU-SL2-CPU
 #! How many whole nodes should be allocated?
