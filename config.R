@@ -186,7 +186,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- ymd(20210217) #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210217" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 vacc.lag <- 21
 vac.overwrite <- TRUE
