@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(7)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210212"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210219"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -91,9 +91,9 @@ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderl
 use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
-    if(prev.flag)
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
-    else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
+        if(prev.flag)
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
 }
@@ -105,12 +105,12 @@ if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.mo
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "3bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
@@ -160,15 +160,15 @@ if(gp.flag){
 num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210208")
+date.prev <- lubridate::ymd("20210215")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
-last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
+last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
-if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
+if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-5")
 
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 ## lag.last.beta <- 24 - 7
@@ -198,4 +198,7 @@ if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
+## How many vaccinations can we expect in the coming weeks
+## - this is mostly set for the benefit of projections rather than model fitting.
+future.n <- c(2.1, 2.4, 2.2, 2.5, 1.8, 2.8, 2.4) * 10^6
 

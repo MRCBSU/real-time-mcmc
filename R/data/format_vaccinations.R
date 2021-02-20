@@ -26,7 +26,7 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
     } else {
         ## Pick up the most recently added
         input.loc <- rnames[which.max(vacc.loc$ctime)]
-        input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
+        ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
         str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
     }
 } else {
@@ -37,6 +37,7 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
         else input.loc <- build.data.filepath(subdir = "raw", "vaccination", prev.loc)
     }
 }
+
 
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
 vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")

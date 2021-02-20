@@ -1,5 +1,4 @@
-## What can we expect in the coming weeks.
-future.n <- c(2, 1.7, 1.4, 2.5, 2.7, 2.5, 3.2) * 10^6
+## How will future vaccinations be distributed by region and by age-group?
 vacc.guide <- tibble(wc = max((jab.dat %>% filter(n > 0))$sdate) + 1:(length(future.n) * 7), pricks = rep(future.n, each = 7) / 7) %>%
     mutate(week.fac = as.numeric(format(wc, format = "%Y%W")))
 
@@ -8,7 +7,9 @@ vacc.over75s <- 0.95
 vacc.over65s <- 0.85
 care.workers <- 3.2e6 / sum(matrix(pop.input, nr, nA, byrow = TRUE)[, 4:6])
 vacc.under50s <- (0.85 * care.workers) + (0.75 * (1 - care.workers))
-under.50s <- sum((pop %>% filter(Name == "ENGLAND"))[, 5 + 45:49]) / sum((pop %>% filter(Name == "ENGLAND"))[, 5 + 45:64])
+pop.tmp <- pop.tmp <- read_csv(build.data.filepath(subdir = "population", "popn2018_all.csv")) %>%
+    filter(Name == "ENGLAND")
+under.50s <- sum(pop.tmp[, 5 + 45:49]) / sum(pop.tmp[, 5 + 45:64])
 vacc.over50s <- (0.75 * under.50s) + (0.85 * (1 - under.50s))
 
 ## What are we getting in the current weeks

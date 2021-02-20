@@ -183,8 +183,12 @@ if(single.ifr){
         )
         ## expand pars.ifr according to the model
         pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))))
-        if(ifr.mod == "2bp"){
+        if(bp.flag <- !is.na(str_extract(ifr.mod, "[0-9]bp"))){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-mean(x), sd(x)))))
+            if((num.bp <- as.numeric(str_extract(ifr.mod, "[0-9]"))) > 2){
+                for(i in num.bp:3)
+                    pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
+            }
         } else if(ifr.mod == "lin.bp"){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) 0.3 * c(-mean(x), sd(x)))))
         }; rm(grad.samp)
@@ -194,8 +198,8 @@ if(single.ifr){
         ## Put together the model matrix.
         times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
         ages <- 1:(nA - 1)
-        if(ifr.mod=="2bp"){ ## Use era variable to introduce a second round of breakpoints
-            TA <- expand.grid(ages, times, era <- c(0,1)); colnames(TA) <- c("age", "time", "era")
+        if(bp.flag){ ## Use era variable to introduce a second round of breakpoints
+            TA <- expand.grid(ages, times, era <- 0:(num.bp - 1)); colnames(TA) <- c("age", "time", "era")
         } else if(ifr.mod == "lin.bp"){
             TA.sub <- expand.grid(ages, times, times.tmp <- 0); colnames(TA.sub) <- c("age", "time1", "time2")
             TA.sub2 <- expand.grid(ages, times.tmp <- max(times), times2 <- 1:100); colnames(TA.sub2) <- c("age", "time1", "time2")
@@ -204,13 +208,24 @@ if(single.ifr){
         TA$age.grad <- TA$age
         TA$age.grad[TA$age <= 4] <- 4
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
-        if(ifr.mod=="2bp"){ ## Expand the actual breakpoints and tweak the design
-            tbreaks2 <- tbreaks.ifr + min(tbreaks.ifr) - 1
+        if(bp.flag){ ## Expand the actual breakpoints and tweak the design
+            tbreaks2 <- tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*min(tbreaks.ifr)) - 1
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
-            TA$full.era <- TA$time
-            TA <- TA[-((nrow(TA) / 2) + 1:(nA - 1)), ]  ## Remove rows that correspond to a duplicate batch of rows in design matrix
-            TA$full.era[TA$era == 1] <- max(TA$time)
-            reg.form <- "y ~ 0 + age + age.grad:full.era + age.grad:time:era"
+            reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
+            for(per in 1:num.bp){
+
+                TAcolname <- paste0("time", per)
+                TA <- bind_rows(TA %>% filter(era < (per - 1)) %>% mutate(!!TAcolname := 0),
+                                TA %>% filter(era == (per - 1)) %>% mutate(!!TAcolname := time),
+                                TA %>% filter(era > (per - 1)) %>% mutate(!!TAcolname := max(TA$time))
+                                )
+                reg.form <- paste0(reg.form,  " + age.grad:", TAcolname)
+                if(per > 1){ ## Remove some redundant rows
+                    TAprevcolname <- paste0("time", per - 1)
+                    TA <- TA %>% filter(!(!!sym(TAprevcolname) == max(TA$time) & !!sym(TAcolname) == 0 & time == 0))
+                }
+            }
+
         } else if(ifr.mod == "lin.bp"){
             tbreaks2 <- ymd(date.data) - start.date - (99:0)
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
