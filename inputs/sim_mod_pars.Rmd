@@ -67,7 +67,7 @@ prior_distribution = `r paste(rep(1, length(value.r1)), collapse = ", ")`;
 
 vacc_1st_disease = { param_value = `r value.vac.alpha1`;
 
-prior_distribution = `r paste(rep(1, length(value.vec.alpha1)), collapse = ", ")`;
+prior_distribution = `r paste(rep(1, length(value.vac.alpha1)), collapse = ", ")`;
 
 `r ifelse(vacc.flag & vacc.alpha.bps, "region_breakpoints = true;", "")`
 

@@ -14,7 +14,7 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 12
+nweeks.ahead <- 8
 
 counterfactual <- FALSE
 
@@ -92,6 +92,7 @@ start.prev <- 1
 end.hosp <- ifelse(hosp.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
+end.vac <- ifelse(vacc.flag, ndays, 1)
 
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
@@ -181,6 +182,10 @@ if(beta.rw.flag)
     symlink.design("beta.design.txt")
 if(!single.ifr)
     symlink.design("ifr.design.txt")
+if(vacc.flag){
+    symlink.design("vac.alpha1.design.txt")
+    symlink.design("vac.alphan.design.txt")
+}
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP

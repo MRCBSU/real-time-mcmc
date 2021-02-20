@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1,3,7
+#SBATCH --array=1,5
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -64,32 +64,37 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210117/"
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    workdir="${workdir}NoPrev_"
-else
-    workdir="${workdir}PrevCevik_"
-fi
-if [ $SLURM_ARRAY_TASK_ID -gt 5 ]; then
-    workdir="${workdir}60"
-else
-    workdir="${workdir}28"
-fi
-workdir="${workdir}cutoff_"
-if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
-    workdir="${workdir}18"
-else
-    workdir="${workdir}11"
-fi
-if [ $SLURM_ARRAY_TASK_ID -gt 1 ]; then
-    workdir="${workdir}_prev"
-    if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	workdir="${workdir}7"
+if [ $SLURM_ARRAY_TASK_ID -lt 4 ] || [[ $SLURM_ARRAY_TASK_ID -eq 9 ]]; then
+    prev="NoPrev"
+    gap=""
+    if [ $SLURM_ARRAY_TASK_ID -lt 2 ]; then
+	days="28"
     else
-	workdir="${workdir}14"
+	days="60"
+    fi
+else
+    prev="PrevCevik"
+    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+	gap="prev7_"
+    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+	gap="prev14_"
+    else
+	gap="prev7-5_"
+    fi
+    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+	days="28"
+    else
+	days="60"
     fi
 fi
-workdir="${workdir}_matrices_20210115_timeuse_household_deaths"
+if [ $SLURM_ARRAY_TASK_ID -gt 8 ]; then
+    geog="ONS"
+else
+    geog="NHS"
+fi
+bp="IFRlin.bp_"
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
 
 echo -e $workdir
 
@@ -143,8 +148,8 @@ JOBID=$SLURM_JOB_ID
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
 
-dirs=(*/)
-cd ${dirs[SLURM_ARRAY_TASK_ID]}
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
 eval $CMD
 # Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
