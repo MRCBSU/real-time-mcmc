@@ -524,12 +524,12 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     }
   }
 
-  if (iter >= 100000) {
-    cout << "Iter " << iter;
-    if (global) cout << " globl: ";
-    else cout << " local: ";
-    cout << "jcbn+prior " << laccept;
-  }
+  //if (iter >= 100000) {
+  //  cout << "Iter " << iter;
+  //  if (global) cout << " globl: ";
+  //  else cout << " local: ";
+  //  cout << "jcbn+prior " << laccept;
+  //}
   
   if (laccept == GSL_NEGINF)
     return;
@@ -588,8 +588,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
 
-	      if (iter >= 100000)
-		cout << " child prior " << child.proposal_log_prior_dens - child.log_prior_dens;
+	      //if (iter >= 100000)
+	      //  cout << " child prior " << child.proposal_log_prior_dens - child.log_prior_dens;
 	    }
 	  }
 	}
@@ -660,10 +660,10 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	
   laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
 
-  if (iter >= 100000) {
-    cout << " lhood " << prop_lfx.total_lfx - paramSet.lfx.total_lfx;
-    cout << "; laccept: " << laccept << endl;
-  }
+  //if (iter >= 100000) {
+  //  cout << " lhood " << prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+  //  cout << "; laccept: " << laccept << endl;
+  //}
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
