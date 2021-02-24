@@ -368,7 +368,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (debug && int_iter % 500 == 0)
+      if (int_iter % 10000 == 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
@@ -377,23 +377,14 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
 
-      if (debug)
-	cout << "Iter: " << int_iter << endl << "Global:" << endl;
-
-      if (debug && int_iter > 0 && int_iter % 500 == 0) {
-	paramSet.printAcceptRates(int_iter);
-	paramSet.outputPars();
-      }
-      
       // Global
       paramSet.blocks[0].calcProposal(paramSet, r);
-      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
       paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
 
-      if (debug) cout << "Local reg " << reg-1 << endl;
-
+      // Local
       paramSet.blocks[reg].calcProposal(paramSet, r);
-      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
       
 /*
@@ -406,7 +397,12 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Accept/reject
       paramSet.doAccept(r, country2, gmip);
 */
-      //paramSet.outputPars();
+
+      // debug
+      paramSet.outputPars();
+      if (int_iter % 1000 == 0 && int_iter > 0)
+      	paramSet.printAcceptRates(int_iter);
+
 
       // Block adaptive
       if (int_iter > 199) {

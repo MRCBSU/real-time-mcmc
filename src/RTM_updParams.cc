@@ -155,7 +155,6 @@ void updParamSet::insertAndRegister(updateable_model_parameter& inPar, int num_i
 
 // low/high only used for uniform
 double transform(double x, distribution_type dist, double low = 0, double high = 1) {
-  //return x;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -175,7 +174,6 @@ double transform(double x, distribution_type dist, double low = 0, double high =
 }
 
 double invTransform(double x, distribution_type dist, double low = 0, double high = 1) {
-  //return x;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -196,18 +194,17 @@ double invTransform(double x, distribution_type dist, double low = 0, double hig
 void updParamSet::init(const string& dir) {
 
   // Debug output: parameter output files. Overwrites existing files
-  if (debug) {
-    for (updParam& par : params) {
-      if (par.flag_update) {
-	string filename = dir + "/" + par.param_name + ".txt";
-	par.outfile.open(filename, std::ofstream::out);
-	if (! par.outfile.is_open()) {
-	  std::cerr << "Error: Unable to open output file " << filename << "\n";
-	  exit(1);
-	}
+  for (updParam& par : params) {
+    if (par.flag_update) {
+      string filename = dir + "/" + par.param_name + ".txt";
+      par.outfile.open(filename, std::ofstream::out);
+      if (! par.outfile.is_open()) {
+	std::cerr << "Error: Unable to open output file " << filename << "\n";
+	exit(1);
       }
     }
   }
+
 
   // Count non-constant components
   int globalSize = 0, localSize = 0;
@@ -440,7 +437,6 @@ int updParamBlock::regacceptLastMove = 0;
 
 
 double jacobianFactor(double prop, double curr, distribution_type dist, double low = 0, double high = 1) {
-  return 0;
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -459,13 +455,14 @@ double jacobianFactor(double prop, double curr, distribution_type dist, double l
   }
 }
 
-void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter) {
   // #pragma omp parallel for
   for (auto &block : blocks)
-    block.calcAccept(*this, country, gmip, base_mix);
+    block.calcAccept(*this, country, gmip, base_mix, iter);
 }
 
-void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+// TODO: int iter only for debugging
+void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter) {
 
   laccept = 0;
   if (global)
@@ -474,16 +471,18 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     regacceptLastMove = 0;
 
   // Check bounds
+  /*
   if (global) {
-    for (int i = 3; i <= 11; i++) {
-      // prop_case_to_hosp, [0,1]
-      if (proposal[i] < 0 || proposal[i] > 1) {
-	laccept = GSL_NEGINF;
-	return;
-      }
-    }
-  } //else {
-    //}
+    for (int i = 0; i < values.size(); i++) {
+      if (dist[i] == cGAMMA || dist[i] == cBETA)
+	if (proposal[i] < 0 || proposal[i] > 1) {
+	  cout << "bounds check triggered\n";
+	  exit(1);
+	  laccept = GSL_NEGINF;
+	  return;
+	}
+  }
+  */
 
   // Get region
   flagclass update_flags;
@@ -525,12 +524,13 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     }
   }
 
-  if (debug && global)
-    cout << "Prior log dens: " << laccept << " ";
-
-  //if (debug)
-  // cout << "After log density, laccept: " << laccept << endl;
- 
+  if (iter >= 100000) {
+    cout << "Iter " << iter;
+    if (global) cout << " globl: ";
+    else cout << " local: ";
+    cout << "jcbn+prior " << laccept;
+  }
+  
   if (laccept == GSL_NEGINF)
     return;
 
@@ -563,28 +563,33 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	      assert(par.size == 2);
 
 	      // We haven't accepted, so the prior is the relevant proposal components
-	      // WARNING: We assume both components of the prior are non-constant
-	      // We need to search the proposal looking for the parent
-	      int start = -1;
-	      for (int i = 0; i < proposal.size(); i++)
-		if (parIndex[i] == par.index)
-		  start = i;
 
-	      gsl_vector_view prior = gsl_vector_subvector(*proposal, start, 2);
+	      // WARNING WARNING TOFIX
+	      // Prior is mix of const and non-const, so can't just subset
+	      // the proposal vector
+	      gslVector prior(2);
+	      prior[0] = par.values[0];
+	      prior[1] = proposal[0];
+
+	      // We need to search the proposal looking for the parent
+	      //int start = -1;
+	      //for (int i = 0; i < proposal.size(); i++)
+	      //  if (parIndex[i] == par.index)
+	      //    start = i;
+
+	      //gsl_vector_view prior = gsl_vector_subvector(*proposal, start, 2);
 	      
 	      for (int i = 0; i < child.size; i++) {
 		child.proposal_log_prior_dens += R_univariate_prior_log_density(
 		    child.values[i],
 		    child.prior_distribution[i],
-		    &prior.vector);
+		    *prior);
 	      }
 
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
-	      if (debug)
-		cout << "prop " << child.proposal_log_prior_dens << " curr " << child.log_prior_dens;
 
-	      if (debug)
-		cout << " After child: " << laccept << endl;
+	      if (iter >= 100000)
+		cout << " child prior " << child.proposal_log_prior_dens - child.log_prior_dens;
 	    }
 	  }
 	}
@@ -624,18 +629,6 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     blockflags.regional_update_flags[11] = true;
     blockflags.regional_update_flags[18] = true;
   }
-/*
-  if (debug && global) {
-    cout << "test: before " << prop_lfx.total_lfx;
-    fn_log_likelihood(prop_lfx, country, 0,
-		      true, true, true, true, true, true, true, 
-		      gmip,
-		      paramSet.gp_delay.distribution_function,
-		      paramSet.hosp_delay.distribution_function
-      );
-  cout << " after: " << prop_lfx.total_lfx << endl;
-  }
-*/
   
   // Copy proposal to paramSet to evaluate region
   for (int i = 0; i < values.size(); i++)
@@ -667,8 +660,10 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	
   laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
 
-  if (debug && global)
-   cout << "laccept: " << laccept << " llhoods: " << prop_lfx.total_lfx << " " << paramSet.lfx.total_lfx << endl;
+  if (iter >= 100000) {
+    cout << " lhood " << prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+    cout << "; laccept: " << laccept << endl;
+  }
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
@@ -684,13 +679,11 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
   numProposed++;
 
-  //if(debug) cout << "test: " << laccept << " " << acceptTest << " " << (laccept > acceptTest) << endl;
   if (laccept > acceptTest) {
-    //if(debug && (regionNum == 1 || regionNum == 2)) cout << "Prop accept\n";
     if (debug)
       if (global) cout << "global accept\n";
-    else
-      cout << "Prop accept\n";
+      else
+	cout << "local accept\n";
 
     numAccept++;
    
@@ -714,8 +707,6 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 	  if (par.flag_child_nodes[i]) {
 	    updParam& child = paramSet[i];
 	    child.log_prior_dens = child.proposal_log_prior_dens;
-	    if (debug)
-	      cout << "saving log dens as " << child.log_prior_dens << endl;
 	  }
     
     paramSet.lfx = prop_lfx;

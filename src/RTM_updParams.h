@@ -107,7 +107,7 @@ public:
   // Calculate new proposal vectors (sequential)
   void calcProposals(updParamSet& paramSet, gsl_rng *rng);
   // Calculate acceptance ratios (in parallel over blocks)
-  void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
+  void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter);
   // Accept or reject
   void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip);
   // Adapt MH distribution over time
@@ -196,7 +196,7 @@ public:
 
   // M-H methods
   void calcProposal(updParamSet& paramSet, gsl_rng *rng);
-  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
+  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter);
   void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip);
   void adaptiveUpdate(int iter);
 };
