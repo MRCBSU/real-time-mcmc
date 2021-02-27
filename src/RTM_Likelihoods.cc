@@ -156,7 +156,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   int timestepsperday = gmip.l_transmission_time_steps_per_day;
   int time_points = l_S->size1; 
   gsl_matrix* Number_New_Infected = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
-  gsl_matrix* Delta_Disease = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
+  gsl_matrix* Delta_Disease = (Vaccination) ? gsl_matrix_alloc(time_points, NUM_AGE_GROUPS) : Number_New_Infected;
   gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
   gsl_vector* I = gsl_vector_alloc(NUM_AGE_GROUPS);
@@ -164,8 +164,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
   // INITIALISING: SEIR view variables
   gsl_vector_view S_view = gsl_matrix_row(l_S, 0);
-  gsl_vector_view SV1_view = gsl_matrix_row(l_SV1, 0);
-  gsl_vector_view SVn_view = gsl_matrix_row(l_SVn, 0);
+  gsl_vector_view SV1_view, SVn_view;
+  if(Vaccination){
+    SV1_view = gsl_matrix_row(l_SV1, 0);
+    SVn_view = gsl_matrix_row(l_SVn, 0);
+  }
+  // gsl_vector_view SVn_view = (Vaccination) ? gsl_matrix_row(l_SVn, 0) : NULL;
   gsl_vector_view I1_view = gsl_matrix_row(l_I_1, 0);
   gsl_vector_memcpy(&I1_view.vector, I1_0);
   gsl_vector_view I2_view = gsl_matrix_row(l_I_2, 0);
@@ -343,8 +347,8 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
   const mixing_model l_MIXMOD_ADJUSTED2 = in_dmp.l_MIXMOD;
 
   gsl_matrix* S = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* SV1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* SVn = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
+  gsl_matrix* SV1 = (vaccination) ? gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS) : NULL;
+  gsl_matrix* SVn = (vaccination) ? gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS) : NULL;
   gsl_matrix* E_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
   gsl_matrix* E_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
   gsl_matrix* I_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
@@ -377,8 +381,10 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 				      vaccination);
 
   gsl_matrix_free(S);
-  gsl_matrix_free(SV1);
-  gsl_matrix_free(SVn);
+  if(vaccination){
+    gsl_matrix_free(SV1);
+    gsl_matrix_free(SVn);
+  }
   gsl_matrix_free(E_1);
   gsl_matrix_free(E_2);
   gsl_matrix_free(I_1);
