@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=4
+#SBATCH --array=8
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,37 +61,25 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
-    prev="NoPrev"
-    gap=""
-    if [ $SLURM_ARRAY_TASK_ID -lt 2 ]; then
-	days="28"
-    else
-	days="60"
-    fi
+prev="PrevCevik"
+gap="prev7-5_"
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
+    bp="IFR3bp_"
 else
-    prev="PrevCevik"
-    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	gap="prev7_"
-    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	gap="prev14_"
-    else
-	gap="prev7-5_"
-    fi
-    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
-	days="28"
-    else
-	days="60"
-    fi
+    bp="IFRlin.bp_"
 fi
-if [ $SLURM_ARRAY_TASK_ID -gt 9 ]; then
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    days="60"
+else
+    days="28"
+fi
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
     geog="ONS"
 else
     geog="NHS"
 fi
-bp="IFRlin.bp_"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210219/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210219_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
