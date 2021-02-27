@@ -12,8 +12,12 @@ if (prev.flag && prev.env$prev.flag) value.r1 <- prev.params$r1_period[iteration
 #value.pgp GP stream not currently used
 contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
 beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
-beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas * nr)
-beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas * nr)
+beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
+if(nrow(beta.rw.vals) > nbetas)
+    beta.rw.vals <- beta.rw.vals[c(1, 1 + sort(sample.int(nrow(beta.rw.vals)-1, nbetas-1))), ]
+beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas)
+if(nrow(beta.rw.props) > nbetas)
+    beta.rw.props <- beta.rw.props[c(1, 1 + sort(sample.int(nrow(beta.rw.props)-1, nbetas-1))), ]
 beta.rw.sd <- prev.params$log_beta_rw_sd[iteration.number.to.start.from, 2]
 value.egr <- prev.params$exponential_growth_rate[iteration.number.to.start.from,]
 value.nu <- prev.params$log_p_lambda_0[iteration.number.to.start.from,]

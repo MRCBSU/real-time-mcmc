@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210219"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210226"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -48,7 +48,8 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -72,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -105,7 +106,7 @@ if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.mo
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "3bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
@@ -113,7 +114,7 @@ if(flg.cutoff) {
 	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
+scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -160,15 +161,15 @@ if(gp.flag){
 num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210215")
+date.prev <- lubridate::ymd("20210224")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
-last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
+last.prev.day <- prev.end.day ## - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
-if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-5")
+if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "")
 
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 ## lag.last.beta <- 24 - 7
@@ -200,5 +201,5 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- c(2.1, 2.4, 2.2, 2.5, 1.8, 2.8, 2.4) * 10^6
+future.n <- c(2.0, 2.2, 2.5, 1.8, 4.7, 4.7, 4.7) * 10^6
 

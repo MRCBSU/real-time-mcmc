@@ -1,7 +1,9 @@
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
-  rows.to.add <- nbetas - length(vec) / nr
-  mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
+  rows.to.add <- num - length(vec) / nr
+  if(rows.to.add > 0){
+    mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
+    } else mat.new <- NULL
   return(rbind(mat, mat.new))
 }
 
@@ -36,7 +38,7 @@ if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
 vac.effec.bp <- 1:(length(vac.dates) - 1)
 
 ## Efficacy against disease from one vaccine dose
-value.vac.alpha1 <- c(0.88, 0.7) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+value.vac.alpha1 <- c(0.80, 0.50) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
@@ -44,7 +46,7 @@ write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"),
 vacc.alpha.bps <- TRUE
 
 ## Efficacy against disease from second/nth vaccine dose
-value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+value.vac.alpha2 <- c(0.95, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
@@ -363,9 +365,12 @@ if(rw.flag){
 ## ## End of contact model ##
 
 ## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - time.to.last.breakpoint)][-1] ## Josh's version
-beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+beta.breaks.full <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+beta.breaks <- beta.breaks.full[rev(seq(length(beta.breaks.full), 1, by = -break.window))]
+beta.inds <- beta.breaks.full %in% beta.breaks
 
 nbetas <- length(beta.breaks) + 1
+nbetas.full <- length(beta.breaks.full) + 1
 beta.rw.vals <- c(
     0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0163618520524716, 0.333494806429032, 0.21527031558633, 0.161083514287401, 0.0463132886726999, -0.0332667493328686, 0.0912165703264888, -0.0674068339766244, -0.191029847903661, -0.289385771665435, -0.0712357129236337, 0.17504363429134, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -374,8 +379,10 @@ beta.rw.vals <- c(
     0, -0.348925402477912, 0.0679687980318762, 0.213164755977372, 0.074591979115163, 0.0750080453232727, 0.102336034443526, -0.229377011561744, 0.0520233979921866, -0.279980273239356, 0.0347612260908936, -0.114458350262099, 0.0545339652877542, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-)[1:(nbetas*nr)]
-beta.rw.vals <- c(beta.rw.vals, rep(0, nbetas*nr - length(beta.rw.vals)))[1:(nbetas*nr)]
+)[1:(nbetas.full*nr)]
+beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
+if(length(beta.rw.vals) > nbetas*nr)
+    beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
 beta.update <- TRUE
 beta.rw.flag <- TRUE
@@ -389,8 +396,8 @@ beta.rw.props <- c(
     0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )
-beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas * nr)
-if (length(beta.rw.props) > nbetas*nr) beta.rw.props <- beta.rw.props[nbetas*nr]
+beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas.full)
+if (length(beta.rw.props) > nbetas.full*nr) beta.rw.props <- beta.rw.props[nbetas.full*nr]
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
     for(j in (i+1):nbetas)
