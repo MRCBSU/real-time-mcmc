@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -111,7 +111,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -163,19 +163,21 @@ prev.cutoff.days <- 2
 ## Convert that to an analysis day number
 date.prev <- lubridate::ymd("20210224")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
-last.prev.day <- prev.end.day ## - 5 ## Which is the last date that we will actually use in the likelihood?
+last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
-if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "")
+if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-5")
 
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 ## lag.last.beta <- 24 - 7
 ## if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 ## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+efficacies <- "SPIM" ## current values can be 'Nick' or 'SPIM'.
+scenario.name <- paste0(scenario.name, efficacies)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
@@ -192,7 +194,8 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-## str.date.vacc <- "20210205" ## Optional: if not specified will take the most recent data file.
+## str.date.vacc <- "20210226" ## Optional: if not specified will take the most recent data file.
+
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
