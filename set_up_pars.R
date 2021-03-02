@@ -38,7 +38,11 @@ if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
 vac.effec.bp <- 1:(length(vac.dates) - 1)
 
 ## Efficacy against disease from one vaccine dose
-value.vac.alpha1 <- c(0.80, 0.50) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(efficacies == "Nick"){
+    value.vac.alpha1 <- c(0.80, 0.50)
+} else {
+    value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+}
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
@@ -46,21 +50,33 @@ write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"),
 vacc.alpha.bps <- TRUE
 
 ## Efficacy against disease from second/nth vaccine dose
-value.vac.alpha2 <- c(0.95, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(efficacies == "Nick"){
+    value.vac.alpha2 <- c(0.95, 0.70)
+} else {
+    value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+}
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
 write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
 ## Efficacy against disease from one vaccine dose
-value.vac.pi1 <- 0.48
+if(efficacies == "Nick"){
+    value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
+} else {
+    value.vac.pi1 <- 0.48
+}
 prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
 prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
 vacc.pi.bps <- FALSE
 
 ## Efficacy against disease from one vaccine dose
-value.vac.pi2 <- 0.6
+if(efficacies == "Nick"){
+    value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
+} else {
+    value.vac.pi2 <- 0.6
+}
 prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)

@@ -38,7 +38,6 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
     }
 }
 
-
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
 vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
 
@@ -48,46 +47,6 @@ if(!exists("age.agg")){
     age.labs <- c("<1yr", "1-4", "5-14", "15-24", "25-44", "45-64", "65-74", "75+")
 }
 nA <- length(age.labs)
-
-## Map our names for columns (LHS) to data column names (RHS)
-possible.col.names <- list(
-    age = "age",
-    region = "region_of_residence",
-    sdate = "vaccination_date",
-    type = "product_display_type",
-    dose = "string_dose_number")
-input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
-is.valid.col.name <- function(name) {name %in% input.col.names}
-first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
-col.names <- lapply(possible.col.names, first.valid.col.name)
-invalid.col.names <- sapply(col.names, is.null)
-if (any(invalid.col.names)) {
-	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
-	stop(paste("No valid column name for:", names.invalid.cols))
-}
-
-## Given a row in the prev data file, return its region, formatted with no spaces
-vac.nhs.regions <- function(x) {
-	if (region.type == "NHS") north.east.name <- "North_East_and_Yorkshire"
-	if (region.type == "ONS") north.east.name <- "North_East"
-    x %>% mutate(region = str_replace_all(region, " ", "_"),
-				 region = recode(region,
-					North_East = north.east.name,
-					East_England = "East_of_England",
-					North_East_England = north.east.name,
-					North_West_England = "North_West",
-					South_East_England = "South_East",
-					South_West_England = "South_West",
-					Yorkshire = "Yorkshire_and_The_Humber",
-				))
-}
-
-if (region.type == "NHS") get.region <- vac.nhs.regions
-if (region.type == "ONS") get.region <- function(x) {
-    y <- ons.region(x)
-    x %>% mutate(region = y)
-}
-
 
 ####################################################################
 ## BELOW THIS LINE SHOULD NOT NEED EDITING
@@ -150,8 +109,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
     }
 
 
-## Get date of data file
-if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
+
 ## Substitute this into the names of the intended data file names
 vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
 vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
@@ -159,19 +117,60 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
+    if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
+    
+    ## Map our names for columns (LHS) to data column names (RHS)
+    possible.col.names <- list(
+        age = "age",
+        region = "region_of_residence",
+        sdate = "vaccination_date",
+        type = "product_display_type",
+        dose = "string_dose_number")
+    input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+    is.valid.col.name <- function(name) {name %in% input.col.names}
+    first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
+    col.names <- lapply(possible.col.names, first.valid.col.name)
+    invalid.col.names <- sapply(col.names, is.null)
+    if (any(invalid.col.names)) {
+	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+	stop(paste("No valid column name for:", names.invalid.cols))
+    }
+    
+    ## Given a row in the prev data file, return its region, formatted with no spaces
+    vac.nhs.regions <- function(x) {
+	if (region.type == "NHS") north.east.name <- "North_East_and_Yorkshire"
+	if (region.type == "ONS") north.east.name <- "North_East"
+        x %>% mutate(region = str_replace_all(region, " ", "_"),
+                     region = recode(region,
+                                     North_East = north.east.name,
+                                     East_England = "East_of_England",
+                                     North_East_England = north.east.name,
+                                     North_West_England = "North_West",
+                                     South_East_England = "South_East",
+                                     South_West_England = "South_West",
+                                     Yorkshire = "Yorkshire_and_The_Humber",
+                                     ))
+    }
+    
+    if (region.type == "NHS") get.region <- vac.nhs.regions
+    if (region.type == "ONS") get.region <- function(x) {
+        y <- ons.region(x)
+        x %>% mutate(region = y)
+    }
+    
     if(!exists("vac1.files")){
         vac1.files <- build.data.filepath("RTM_format/vaccination",
-                                               str.date.vacc,
-                                               "_1stvaccinations_",
-                                               regions,
-                                               ".txt")
+                                          str.date.vacc,
+                                          "_1stvaccinations_",
+                                          regions,
+                                          ".txt")
         vacn.files <- build.data.filepath("RTM_format/vaccination",
-                                             str.date.vacc,
-                                             "_nthvaccinations_",
-                                             regions,
-                                             ".txt")
+                                          str.date.vacc,
+                                          "_nthvaccinations_",
+                                          regions,
+                                          ".txt")
     }
-
+    
     ## Which columns are we interested in?
     vacc.col.args <- list()
     vacc.col.args[[col.names[["type"]]]] <- col_character()
