@@ -29,17 +29,17 @@ mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
-    if (!exists("date.prev")) {
+    ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20210226")
+		date.prev <- ymd("20210224")
 		## Convert that to an analysis day number
 		prev.end.day <- 367
 		last.prev.day <- 367
-		if(!exists("first.prev.day")) first.prev.day <- 318
+		first.prev.day <- 316
 		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
-		if(!exists("prev.lik.days")) prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
-	}
+		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+	## }
     for(r in 1:nr){
 	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste(prev.lik.days, collapse = "_"), "_", regions[r], "ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
           prev.file.suffix <- paste0("logprev.txt")
@@ -54,7 +54,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7.3
+if(prev.flag & all(prior.r1 == 1)) value.r1 <- 5.304735
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
