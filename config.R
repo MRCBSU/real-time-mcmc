@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210226"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210305"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -93,10 +93,13 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210122_timeuse_household_deaths")
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210124", "NoPrev_IFRlin.bp_NHS60cutoff_11_matrices_20210122_timeuse_household_deaths")
-    } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210115", "ONS_inits")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210226", "PrevCevik_IFRlin.bp_NHS28cutoff_18wk2_prev7-5_matrices_20210226_timeuse_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210226", "NoPrev_IFRlin.bp_NHS28cutoff_18wk2_matrices_20210226_timeuse_household_deaths")
+    } else if(region.type == "ONS"){
+        if(prev.flag)
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210301", "PrevCevik_IFRlin.bp_ONS60cutoff_18wk2_prev7-5Nick_matrices_20210226_timeuse_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210226", "NoPrev_IFRlin.bp_ONS60cutoff_18wk2_matrices_20210226_timeuse_household_deaths")
+    }
 }
 iteration.number.to.start.from <- 6400
 
@@ -106,12 +109,12 @@ if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.mo
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "3bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -161,7 +164,7 @@ if(gp.flag){
 num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210224")
+date.prev <- lubridate::ymd("20210303")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -176,7 +179,7 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev,
 ## if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 ## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
-efficacies <- "SPIM" ## current values can be 'Nick' or 'SPIM'.
+efficacies <- "Nick" ## current values can be 'Nick' or 'SPIM'.
 scenario.name <- paste0(scenario.name, efficacies)
 
 ## ## Choose the name of the subdirectory in model_runs to use
@@ -204,5 +207,5 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- c(2.0, 2.2, 2.5, 1.8, 4.7, 4.7, 4.7) * 10^6
+future.n <- (c(1.2, 2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5) * 10^6) * (55.98 / 66.65)
 

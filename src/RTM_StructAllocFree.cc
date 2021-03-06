@@ -485,7 +485,7 @@ void Region_memcpy(Region& reg_dest, const Region& reg_src, flagclass& update_fl
       reg_dest.Virology_data = reg_src.Virology_data;
   if(reg_src.Prevalence_data != 0)
     reg_dest.Prevalence_data = reg_src.Prevalence_data;
-  if(reg_src.Vaccination_data != 0)
+  // if(reg_src.Vaccination_data != 0)
     reg_dest.Vaccination_data = reg_src.Vaccination_data;
   
   regional_model_params_memcpy(reg_dest.det_model_params, reg_src.det_model_params, update_flags);
