@@ -27,22 +27,22 @@ mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
-prev.flag <- prev.flag ## Are we interested in simulating prevalence outputs?
+prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
-    if (!exists("date.prev")) {
+    ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20201227")
+		date.prev <- ymd("20210224")
 		## Convert that to an analysis day number
-		prev.end.day <- date.prev - start.date + 1
-		last.prev.day <- (prev.end.day - 4)
-		if(!exists("first.prev.day")) first.prev.day <- 168
-		if(!exists("days.between.prev")) days.between.prev <- 28
+		prev.end.day <- 367
+		last.prev.day <- 367
+		first.prev.day <- 316
+		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
-		if(!exists("prev.lik.days")) prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
-	}
+		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+	## }
     for(r in 1:nr){
-	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", regions[r], "_ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
-          prev.file.suffix <- paste0("logprev_", prev.end.day, "every", days.between.prev, ".txt")
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste(prev.lik.days, collapse = "_"), "_", regions[r], "ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
+          prev.file.suffix <- paste0("logprev.txt")
       prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
       prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
     }
@@ -54,7 +54,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7
+if(prev.flag & all(prior.r1 == 1)) value.r1 <- 5.304735
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -135,15 +135,16 @@ if(gp.flag)
 if(hosp.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
-if(prev.flag)
-	if (is.null(names(prev.data$lmeans))) {
-		names(prev.data$lmeans) <- regions
-		names(prev.data$lsds) <- regions
-	}
+if(prev.flag){
+    if (is.null(names(prev.data$lmeans))) {
+        names(prev.data$lmeans) <- regions
+        names(prev.data$lsds) <- regions
+    }
     for(reg in regions){
         prev.data$lmeans[reg] <- repeat.last.row(prev.data$lmeans[reg], paste0("dummy_prev_lmeans_", reg))
         prev.data$lsds[reg] <- repeat.last.row(prev.data$lsds[reg], paste0("dummy_prev_lsds_", reg))
     }
+}
 
 ## MCMC control
 num.iterations <- 1
@@ -192,6 +193,7 @@ if(vacc.flag){
 
 ## ## Set-up output quantities
 NNI <- NNI.files <- vector("list", nr)
+if(vacc.flag) DNNI <- DNNI.files <- vector("list", nr)
 if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
 if(gp.flag) Cases <- Cases.files <- vector("list", nr)
 if(prev.flag) Prevs <- Prev.files <- vector("list", nr)
@@ -209,6 +211,7 @@ cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 NNI <- lapply(xtmp, function(x) x$NNI)
+if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)
 Prevs <- lapply(xtmp, function(x) x$Prevs)
@@ -234,11 +237,16 @@ dim.list <- list(iteration = 1:niter,
 infections <- melt.list(NNI);rm(NNI)
 save.list <- "infections"
 dimnames(infections) <- dim.list
+if(vacc.flag) {
+    vacc.infections <- melt.list(DNNI);rm(DNNI)
+    save.list <- c(save.list, "vacc.infections")
+    dimnames(vacc.infections) <- dim.list
+}
 if(hosp.flag) {
     deaths <- melt.list(Deaths);rm(Deaths)
     save.list <- c(save.list, "deaths")
     dimnames(deaths) <- dim.list
-    }
+}
 if(gp.flag){
     cases <- melt.list(Cases);rm(Cases)
     save.list <- c(save.list, "cases")
@@ -257,4 +265,3 @@ lapply(cases.files, file.remove)
 lapply(denoms.files, file.remove)
 if(prev.flag)
     lapply(prev.data, file.remove)
-

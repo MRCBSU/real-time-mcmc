@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=9-12
+#SBATCH --array=1
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -22,37 +22,28 @@
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ] || [[ $SLURM_ARRAY_TASK_ID -eq 9 ]]; then
+bp="IFRlin.bp_"
+if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
     prev="NoPrev"
     gap=""
-    if [ $SLURM_ARRAY_TASK_ID -lt 2 ]; then
-	days="28"
-    else
-	days="60"
-    fi
 else
     prev="PrevCevik"
-    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	gap="prev7_"
-    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	gap="prev14_"
-    else
-	gap="prev7-5_"
-    fi
-    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
-	days="28"
-    else
-	days="60"
-    fi
+    gap="_prev7-5"
 fi
-if [ $SLURM_ARRAY_TASK_ID -gt 8 ]; then
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    eff="Nick"
+else
+    eff="SPIM"
+fi
+if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
     geog="ONS"
+    days="60"
 else
     geog="NHS"
+    days="28"
 fi
-bp="IFRlin.bp_"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210301/${prev}_${bp}${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210226_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 

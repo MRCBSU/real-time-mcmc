@@ -192,6 +192,7 @@ struct model_statistics{
 
 void model_statistics_alloc(model_statistics&, const int, const int);
 void model_statistics_aggregate(gsl_matrix*, const model_statistics&, const int);
+void model_statistics_aggregate(gsl_matrix*, gsl_matrix*, const model_statistics&, const int);
 void model_statistics_memcpy(model_statistics&, const model_statistics,
 			     bool NNI_flag = true, bool GP_flag = true, bool Hosp_flag = true, bool Sero_flag = true, bool Viro_flag = true, bool Prev_flag = true);
 void model_statistics_free(model_statistics&);
