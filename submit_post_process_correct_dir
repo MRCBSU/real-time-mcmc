@@ -9,7 +9,7 @@
 
 #! sbatch directives begin here ###############################
 #! Name of the job:
-#SBATCH -J process_hpc_batch
+#SBATCH -J post_process_hpc_batch
 #! Which project should be charged:
 #SBATCH -A MRC-BSU-SL2-CPU
 #! How many whole nodes should be allocated?
@@ -126,6 +126,7 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD
+sbatch ../../../submit_simulate
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

@@ -29,10 +29,10 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
 }
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
-if(!exists("date.prev")){
-    fl.name <- basename(input.loc)
-    date.prev <- lubridate::ymd(strapplyc(fl.name, "[0-9/]{8,}", simplify = TRUE))
-}
+if(date.prev != lubridate::ymd(strapplyc(input.loc, "[0-9/-]{8,}", simplify = TRUE))) stop("Specified date.prev does not match the most recent prevalence data file.")
+## Substitute this date into the output file names
+prev.mean.files <- gsub("date_prev", date.prev, prev.mean.files, fixed = TRUE)
+prev.sd.files <- gsub("date_prev", date.prev, prev.sd.files, fixed = TRUE)
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -60,7 +60,7 @@ if (any(invalid.col.names)) {
 	stop(paste("No valid column name for:", names.invalid.cols))
 }
 
-## Given a row in the sero data file, return its region, formatted with no spaces
+## Given a row in the prev data file, return its region, formatted with no spaces
 get.region <- function(x) {
 	if (region.type == "NHS") north.east.name <- "North_East_and_Yorkshire"
 	if (region.type == "ONS") north.east.name <- "North_East"

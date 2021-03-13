@@ -32,43 +32,14 @@ create.spim.table <- function(data, name, by = NULL) {
       get.aggregated.quantiles(by, qprobs) %>%
       mutate(region = "England")
     ) %>%
+	mutate(
+      Geography = region,
+	  ValueType = name,
+	) %>%
     pivot_wider(
       names_from = "quantile",
-      names_prefix = "q",
+      names_prefix = "quantile",
       values_from = value
-    ) %>%
-    rename(
-      `1st centile` = q0.01,
-      `5th centile` = q0.05,
-      `25th centile` = q0.25,
-      `75th centile` = q0.75,
-      `95th centile` = q0.95,
-      `99th centile` = q0.99,
-      Geography = region
-    ) %>%
-    mutate(
-      Group = "PHE/Cambridge",
-      Model = "Regional/age",
-      CreationDate = ymd(date.data),
-      Scenario = "Forecast",
-      ValueType = name
-    )
-}
-create.spim.summary <- function(data, name, q = NULL) {
-  if(is.null(q)) q <- seq(from = 0.05, to = 0.95, by = 0.05)
-  qdata <- data %>% apply("region", quantile, probs = q) %>%
-    as.tbl_cube(met_name = "value") %>%
-    as_tibble() %>%
-    rename(quantile = Var1,
-           Geography = region) %>%
-    mutate(quantile = parse.percentage(quantile)) %>%
-    pivot_wider(id_cols = Geography,
-                names_from = quantile,
-                names_prefix = "Quantile ",
-                values_from = value) %>%
-    mutate(
-      CreationDate = ymd(date.data),
-      ValueType = name,
     )
 }
 
@@ -79,20 +50,19 @@ create.spim.table.noagg <- function(data, name) {
     get.aggregated.quantiles("region", qprobs) %>%
     pivot_wider(
       names_from = "quantile",
-      names_prefix = "Quantile ",
+      names_prefix = "quantile",
       values_from = value
     ) %>%
     mutate(
-      CreationDate = ymd(date.data),
       Geography = region,
       ValueType = name,
-
     )
 }
 
-fl.proj <- file.path(out.dir, "projections_midterm.RData")
+#fl.proj <- file.path(out.dir, "projections_midterm.RData")
 spi.proj <- file.path(out.dir, "forSPI.RData")
-load(fl.proj)
+#load(fl.proj)
+load(spi.proj)
 tbl_inf_inc <- create.spim.table(infections, "infections_inc")
 dir.string <- file.path(proj.dir, paste0("phe-nowcasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
@@ -103,6 +73,6 @@ names(dimnames(Rtx)) <- names(dimnames(Rt))
 dimnames(Rtx)$region[1] <- "England"
 tbl_R <- create.spim.table.noagg(Rtx, "R") ## For full history
 
-bind_rows(tbl_inf, tbl_R) %>%
+bind_rows(tbl_inf_inc, tbl_R) %>%
   write.csv(file.path(out.dir, paste0("JBC_RTM_outputs", format(Sys.time(), "%Y%m%d_prev.csv"))), row.names = FALSE)
 

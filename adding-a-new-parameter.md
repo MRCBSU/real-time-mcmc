@@ -1,10 +1,11 @@
+
 # Steps to go through when adding a new parameter to the model.
 
-- add a name for the parameter in the list of parameter names attached to the definition of ``GLOBAL_MODEL_PARAMETERS`` in `RTM_StructAssign.h`. This will only determine the string that is searched for in the `mod_pars.txt` file for this parameter's info.
+- add a name for the parameter in the list of parameter names attached to the definition of ``GLOBAL_MODEL_PARAMETERS_MEMBERS`` in `RTM_StructAssign.h`. This will only determine the string that is searched for in the `mod_pars.txt` file for this parameter's info.
 
 - add an index name to the enumerated typedef ``updateable_parameter_index``. The position in this list must correspond to the position of the parameter name in the above list.
 
-- add a default parameter value to the string ``GLOBAL_MODEL_PARAMETERS_MEMBERS``. The position in this list must correspond to the position of the parameter name in the ``GLOBAL_MODEL_PARAMETERS`` list.
+- add a default parameter value to the string ``GLOBAL_MODEL_PARAMETERS_DEFAULT_FIXED_VALS``. The position in this list must correspond to the position of the parameter name in the ``GLOBAL_MODEL_PARAMETERS`` list.
 
 - add a string of 0 and 1 flags to the string ``GLOBAL_MODEL_PARAMETERS_LIKELIHOOD_FLAGS``. These are indicators of quantities that will need to be recalculated if a new value for the parameter is proposed. In sequence, the flags correspond to the transmission mode, the reporting model, the GP_likelihood, the Hospitalisation likelihood, the serological likelihood, and the virological likelihood. The position in this list must correspond to the position of the parameter name in the ``GLOBAL_MODEL_PARAMETERS`` list.
 

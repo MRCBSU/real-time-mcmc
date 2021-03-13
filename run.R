@@ -56,7 +56,7 @@ data.files <- paste0(data.dirs["deaths"], "/",
                      ifelse(flg.confirmed, "CONF", ""),
                      reporting.delay, "delay")
 if (exists("flg.cutoff")){
-    if(flg.cutoff) 
+    if(flg.cutoff)
 	data.files <- paste0(data.files, "cutoff", str.cutoff)
 }
 data.files <- paste0(data.files, ".txt")
@@ -75,10 +75,8 @@ if(gp.flag){
     denoms.files <- NULL
 }
 if(prev.flag){
-    prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
-                            paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
-                            paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+	prev.file.txt <- paste0(prev.lik.days, collapse = "_")
+	prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_") 
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
@@ -87,6 +85,10 @@ if(prev.flag){
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
+if(vacc.flag){
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+} else vac1.files <- vacn.files <- NULL
 if(format.inputs){
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
@@ -113,11 +115,16 @@ if(format.inputs){
   if(prev.flag){
       source(file.path(proj.dir, "R", "data", "format_prev.R"))
   }
+  if(vacc.flag){
+      source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+  } 
+} else if (vacc.flag) {
+  load(vacc.rdata)
 }
+
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
-
 ## Compile the code
 if(compile.code) {
     system("make rtm_optim")
@@ -129,6 +136,7 @@ setwd(out.dir)
 if(exists("outpp"))
     rm(outpp)
 save.image("tmp.RData")
+
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")
@@ -136,7 +144,6 @@ if(run.code){
 
 ## Post processing the results.
 Rfile.loc <- file.path(file.loc, "R/output")
-
 if(run.outputs){
     source(file.path(Rfile.loc, "tracePlots.R"))
 	external = FALSE

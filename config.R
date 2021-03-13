@@ -8,21 +8,21 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
 stopifnot(!is.na(ymd(date.data)))
 if (args[2] == "All")  {
-	if (region.type == "NHS") 
+	if (region.type == "NHS")
 		regions <- c("East_of_England", "London", "Midlands",
                      "North_East_and_Yorkshire", "North_West",
                      "South_East", "South_West"## ,
                      ## "Scotland", "Northern_Ireland", "Wales"
                      )
-	else if (region.type == "ONS") 
+	else if (region.type == "ONS")
 		regions <- c("East_of_England", "East_Midlands",
-					 "London", 
+					 "London",
                      "North_East", "North_West",
                      "South_East", "South_West",
 					 "West_Midlands", "Yorkshire_and_The_Humber"
@@ -39,7 +39,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("2021-02-05"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-02-19"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -79,6 +79,9 @@ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
 
+## Any inputs here for the vaccination data (or even if there is any)
+vacc.flag <- 1
+
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
 if (!prev.flag) scenario.name <- "NoPrev"
@@ -92,7 +95,7 @@ if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.mo
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "2bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
@@ -115,10 +118,10 @@ if (data.desc == "all") {
 }
 
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence"))                       
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
                        )
-names(data.dirs) <- c("deaths", "sero", "cases", "prev")
-      
+names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc")
+
 flg.confirmed = TRUE
 
 English.regions <- c("East_of_England", "London", "Midlands",
@@ -144,19 +147,19 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-date.prev <- ymd("2021-02-03")
-num.prev.days <- 51
-prev.cutoff.days <- 2
+num.prev.days <- 57
+prev.cutoff.days <- 0
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date - prev.cutoff.days ## Last date in the dataset
+date.prev <- lubridate::ymd("20210213") # Set this to last date in dataset
+prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
-days.between.prev <- 14
-prev.end.day <- date.prev - start.date - 2
-first.prev.day <- date.prev - 51 - start.date + 1
+days.between.prev <- 7
+
 ## Default system for getting the days on which the likelihood will be calculated.
-prev.lik.days <- rev(seq(from = as.integer(prev.end.day), to = as.integer(first.prev.day), by = -days.between.prev))
+prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
+if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_skip", prev.cutoff.days)
 
 # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 lag.last.beta <- 24 - 7*2
@@ -169,14 +172,26 @@ out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
                      paste0(
-							scenario.name,
-							"_matrices_", google.data.date,
-							"_", data.desc))	# Value actually used
+                         scenario.name,
+                         "_matrices_", google.data.date, matrix.suffix,
+                         "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210202-2/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_last_break_10_days_matrices_20210129_deaths"
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210212-debug/PrevCevik_IFRlin.bp_ONS60cutoff_11_prev7_skip5_last_break_10_dayschange_start_matrices_20210212_timeuse_household_new_base_deaths"
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
+
+########### VACCINATION OPTIONS ###########
+vacc.flag <- 1 ## Do we have any vaccination data
+str.date.vacc <- "20210217" #date.data ## Optional: if not specified will take the most recent data file.
+vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
+vacc.lag <- 21
+vac.overwrite <- TRUE
+if(vacc.flag){
+    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
+}
+

@@ -67,9 +67,9 @@ ons.region <- function(x) {
 		)
 	 )
 	x %>%
-		left_join(tbl_rgn_lkup ,by=c("ltla_code"="LAD19CD")) %>%
-		`$`("RGN19NM") %>%
-		str_replace_all(" ", "_")
+            left_join(tbl_rgn_lkup ,by=c("ltla_code"="LAD19CD")) %>%
+            `$`("RGN19NM") %>%
+            str_replace_all(" ", "_")
 }
 
 inverse.map <- function(r, l){

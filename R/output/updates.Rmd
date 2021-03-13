@@ -28,3 +28,4 @@ The incidence of deaths appears now to have peaked having reached levels similar
 Other indicators (e.g. hospital bed prevalence, reported new cases etc) also suggest a declining epidemic.  
 However, regardless of current positive trends, the prevalence of infection remains high and the demand on healthcare services is still extreme. Control measures continue to be essential to lower prevalence and to contain transmission until vaccination has been completed.
 
+These lower values of Rt might be the result of the various social distancing interventions, but it is unclear what the impact of any single intervention is from this analysis; and the continued rise in the number of new infections will probably continue unless further interventions or behavioural changes are introduced.

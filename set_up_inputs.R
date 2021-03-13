@@ -202,6 +202,11 @@ if(prev.flag == 1){
         stop("One of the specified prevalence data files does not exist")
     if(is.null(end.prev)) end.prev <- set.end.date(end.prev, prev.data)
 }
+if(vacc.flag == 1){
+    if(!all(file.exists(vac1.files)) || !all(file.exists(vacn.files))) {
+        stop("One of the specified vaccination data files does not exist")
+	}
+}
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
     cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
