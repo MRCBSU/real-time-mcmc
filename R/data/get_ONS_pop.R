@@ -21,6 +21,3 @@ for(reg in regions){
 pdf.all <- pop %>% left_join(regions.lkup, by = c("Region" = "reg.short")) %>%
     select(-Region) %>%
     rename(age.grp = Age, count = x)
-
-pdf.all <- pop.input
-names(pdf.all) <- pdf.all %>% names() %>% tolower()
