@@ -106,31 +106,10 @@ if(!exists("file.loc")){
 pad.rows.at.end <- function(df, nrows.full){
     if(nrow(df) < nrows.full){
         nadds <- nrows.full - nrow(df)
-        nold <- nrow(df)
-        df[nold + (1:nadds), ] <- df[nold, ]
-        df$sdate[nold + (1:nadds)] <- df$sdate[nold] + 1:nadds
+        df[nrow(df) + (1:nadds), ] <- df[nrow(df), ]
     }
     df
 }
-
-## Function to format aggregated counts of vaccinations into the cross-tabulated datasets required for the rtm.
-fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
-    dat %>%
-        filter(region == reg_r, dose == dose_d) %>%
-        arrange(sdate) %>%
-        group_by(age.grp, pop) %>%
-        summarise(sdate, n, n.cum = cumsum(n)) %>%
-        mutate(pop = max(pop, n.cum + 1)) %>%
-        mutate(value = n / (pop - dplyr::lag(n.cum))) %>% ## Calculating the fraction of the denominator population still at risk.
-        replace_na(list(value = 0)) %>%
-        ungroup() %>%
-        mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 
-        pivot_wider(id_cols = sdate,
-                    names_from = age.grp,
-                    values_from = value) %>%
-        pad.rows.at.end(ndays)
-    }
-
 
 ## Get date of data file
 if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
@@ -167,9 +146,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     print(paste("Reading from", input.loc))
     ## strPos <- c("+", "Positive", "positive")
     vacc.dat <- read_csv(input.loc,
-                         col_types = vacc.cols)
-
-    vacc.dat <- vacc.dat %>%
+                         col_types = vacc.cols) %>%
         rename(!!!col.names) %>%
 	mutate(sdate = fuzzy_date_parse(sdate),
                age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
@@ -237,13 +214,20 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
-
-    ## Following code will extrapolate the vaccination programme out into the future.
-    source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
-
     for(reg in regions){
-        
-        region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
+        region.dat <- jab.dat %>%
+            filter(region == reg, dose == "First") %>%
+            arrange(sdate) %>%
+            group_by(age.grp) %>%
+            summarise(sdate = sdate,
+                      value = n / (pop - dplyr::lag(cumsum(n))) ## Fraction of the denominator population receiving their first vaccine.
+                      ) %>%
+            replace_na(list(value = 0)) %>%
+            ungroup() %>%
+            pivot_wider(id_cols = sdate,
+                        names_from = age.grp,
+                        values_from = value) %>%
+            pad.rows.at.end(ndays)
         
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
@@ -251,9 +235,9 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First"), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
-
+                           
         region.dat <- jab.dat %>%
             filter(region == reg, dose == "Second") %>%
             left_join(jab.dat %>%
@@ -265,11 +249,10 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             arrange(sdate) %>%
             group_by(age.grp) %>%
             summarise(sdate = sdate,
-                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
+                      value = n / (lag(sum.first) - lag(cumsum(n)))
                       ) %>%
             replace_na(list(value = 0)) %>%
             ungroup() %>%
-            mutate(value = 2 * (1 - sqrt(1 - value))) %>%   ## This line transforms the data from a fraction to a rate
             pivot_wider(id_cols = sdate,
                         names_from = age.grp,
                         values_from = value) %>%
@@ -281,7 +264,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second"), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
         
     }
