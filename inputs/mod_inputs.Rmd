@@ -120,7 +120,6 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 
 
 		 regions_hosp_data = `r paste(hosp.data, collapse = ", ")`;
-		 `r study_region_str`
 
 
 		 regions_death_data = NULL; \#\#\#\#\# this null comment doesn't have to be here, I've just put it in to be explicit

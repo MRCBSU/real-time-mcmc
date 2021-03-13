@@ -325,7 +325,9 @@ sd <- sqrt(log(5) - 2*log(2))
 rw.flag <- FALSE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
                    increments = c(0, 0.1 * sd),
-                   viner = c(-0.775, sqrt(-0.775 - log(0.44)))
+                   ## viner = c(-0.775, sqrt(-0.775 - log(0.44))),
+                   viner = c(-0.4325, sqrt(-0.4325 - log(0.64))),
+                   ons = c(-0.6554688, sqrt(-0.6554688 - log(0.5)))
                    )
 ## prior.list <- list(relax = c(4, 4))
 contact.dist <- rep(c(1, rep(4, nm)), nr)
@@ -334,11 +336,11 @@ contact.pars <- array(0, dim = c(2, nm, nr))
 for(i in 1:nm){
     contact.pars[, i, ] <- prior.list$lock
     if((contact.model == 4) & (i %in% c(1, 4)))
-        contact.pars[, i, ] <- prior.list$viner
+        contact.pars[, i, ] <- prior.list[[contact.prior]]
     if((contact.model == 5) & (i %in% c(1, 5)))
-        contact.pars[, i, ] <- prior.list$viner
+        contact.pars[, i, ] <- prior.list[[contact.prior]]
     if((contact.model == 5) & (i %in% c(2, 6)))
-        contact.pars[, i, ] <- 0.5 * (prior.list$viner + prior.list$lock)
+        contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
 }
 ## if(nm > 1){
 ##     for(j in 2:nm)
