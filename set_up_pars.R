@@ -1,7 +1,9 @@
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
-  rows.to.add <- nbetas - length(vec) / nr
-  mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
+  rows.to.add <- num - length(vec) / nr
+  if(rows.to.add > 0){
+    mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
+    } else mat.new <- NULL
   return(rbind(mat, mat.new))
 }
 
@@ -36,29 +38,45 @@ if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
 vac.effec.bp <- 1:(length(vac.dates) - 1)
 
 ## Efficacy against disease from one vaccine dose
-value.vac.alpha1 <- c(0.88, 0.7) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(efficacies == "Nick"){
+    value.vac.alpha1 <- c(0.80, 0.50)
+} else {
+    value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+}
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
-write_tsv(as.data.frame(t(v1.design)), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
+write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
 vacc.alpha.bps <- TRUE
 
 ## Efficacy against disease from second/nth vaccine dose
-value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(efficacies == "Nick"){
+    value.vac.alpha2 <- c(0.95, 0.70)
+} else {
+    value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+}
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
-write_tsv(as.data.frame(t(vn.design)), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
+write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
 ## Efficacy against disease from one vaccine dose
-value.vac.pi1 <- 0.48
+if(efficacies == "Nick"){
+    value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
+} else {
+    value.vac.pi1 <- 0.48
+}
 prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
 prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
 vacc.pi.bps <- FALSE
 
 ## Efficacy against disease from one vaccine dose
-value.vac.pi2 <- 0.6
+if(efficacies == "Nick"){
+    value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
+} else {
+    value.vac.pi2 <- 0.6
+}
 prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
@@ -183,8 +201,12 @@ if(single.ifr){
         )
         ## expand pars.ifr according to the model
         pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))))
-        if(ifr.mod == "2bp"){
+        if(bp.flag <- !is.na(str_extract(ifr.mod, "[0-9]bp"))){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-mean(x), sd(x)))))
+            if((num.bp <- as.numeric(str_extract(ifr.mod, "[0-9]"))) > 2){
+                for(i in num.bp:3)
+                    pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
+            }
         } else if(ifr.mod == "lin.bp"){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) 0.3 * c(-mean(x), sd(x)))))
         }; rm(grad.samp)
@@ -194,8 +216,8 @@ if(single.ifr){
         ## Put together the model matrix.
         times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
         ages <- 1:(nA - 1)
-        if(ifr.mod=="2bp"){ ## Use era variable to introduce a second round of breakpoints
-            TA <- expand.grid(ages, times, era <- c(0,1)); colnames(TA) <- c("age", "time", "era")
+        if(bp.flag){ ## Use era variable to introduce a second round of breakpoints
+            TA <- expand.grid(ages, times, era <- 0:(num.bp - 1)); colnames(TA) <- c("age", "time", "era")
         } else if(ifr.mod == "lin.bp"){
             TA.sub <- expand.grid(ages, times, times.tmp <- 0); colnames(TA.sub) <- c("age", "time1", "time2")
             TA.sub2 <- expand.grid(ages, times.tmp <- max(times), times2 <- 1:100); colnames(TA.sub2) <- c("age", "time1", "time2")
@@ -204,13 +226,24 @@ if(single.ifr){
         TA$age.grad <- TA$age
         TA$age.grad[TA$age <= 4] <- 4
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
-        if(ifr.mod=="2bp"){ ## Expand the actual breakpoints and tweak the design
-            tbreaks2 <- tbreaks.ifr + min(tbreaks.ifr) - 1
+        if(bp.flag){ ## Expand the actual breakpoints and tweak the design
+            tbreaks2 <- tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*min(tbreaks.ifr)) - 1
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
-            TA$full.era <- TA$time
-            TA <- TA[-((nrow(TA) / 2) + 1:(nA - 1)), ]  ## Remove rows that correspond to a duplicate batch of rows in design matrix
-            TA$full.era[TA$era == 1] <- max(TA$time)
-            reg.form <- "y ~ 0 + age + age.grad:full.era + age.grad:time:era"
+            reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
+            for(per in 1:num.bp){
+
+                TAcolname <- paste0("time", per)
+                TA <- bind_rows(TA %>% filter(era < (per - 1)) %>% mutate(!!TAcolname := 0),
+                                TA %>% filter(era == (per - 1)) %>% mutate(!!TAcolname := time),
+                                TA %>% filter(era > (per - 1)) %>% mutate(!!TAcolname := max(TA$time))
+                                )
+                reg.form <- paste0(reg.form,  " + age.grad:", TAcolname)
+                if(per > 1){ ## Remove some redundant rows
+                    TAprevcolname <- paste0("time", per - 1)
+                    TA <- TA %>% filter(!(!!sym(TAprevcolname) == max(TA$time) & !!sym(TAcolname) == 0 & time == 0))
+                }
+            }
+
         } else if(ifr.mod == "lin.bp"){
             tbreaks2 <- ymd(date.data) - start.date - (99:0)
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
@@ -292,7 +325,9 @@ sd <- sqrt(log(5) - 2*log(2))
 rw.flag <- FALSE
 prior.list <- list(lock = c(log(2) - 0.5*log(5), sd),
                    increments = c(0, 0.1 * sd),
-                   viner = c(-0.775, sqrt(-0.775 - log(0.44)))
+                   ## viner = c(-0.775, sqrt(-0.775 - log(0.44))),
+                   viner = c(-0.4325, sqrt(-0.4325 - log(0.64))),
+                   ons = c(-0.6554688, sqrt(-0.6554688 - log(0.5)))
                    )
 ## prior.list <- list(relax = c(4, 4))
 contact.dist <- rep(c(1, rep(4, nm)), nr)
@@ -301,11 +336,11 @@ contact.pars <- array(0, dim = c(2, nm, nr))
 for(i in 1:nm){
     contact.pars[, i, ] <- prior.list$lock
     if((contact.model == 4) & (i %in% c(1, 4)))
-        contact.pars[, i, ] <- prior.list$viner
+        contact.pars[, i, ] <- prior.list[[contact.prior]]
     if((contact.model == 5) & (i %in% c(1, 5)))
-        contact.pars[, i, ] <- prior.list$viner
+        contact.pars[, i, ] <- prior.list[[contact.prior]]
     if((contact.model == 5) & (i %in% c(2, 6)))
-        contact.pars[, i, ] <- 0.5 * (prior.list$viner + prior.list$lock)
+        contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
 }
 ## if(nm > 1){
 ##     for(j in 2:nm)
@@ -347,9 +382,13 @@ if(rw.flag){
 }
 ## ## End of contact model ##
 
-beta.breaks <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - time.to.last.breakpoint)][-1] ## Josh's version
+beta.breaks.full <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+beta.breaks <- beta.breaks.full[rev(seq(length(beta.breaks.full), 1, by = -break.window))]
+beta.inds <- beta.breaks.full %in% beta.breaks
 
 nbetas <- length(beta.breaks) + 1
+nbetas.full <- length(beta.breaks.full) + 1
 beta.rw.vals <- c(
     0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.157278692089345, 0.100224366819243, -0.00751722586102982, 0.242453478585049, 0.115532807450752, -0.0739340379686089, -0.253747153954472, -0.154515402774888, -0.0116745847409388, 0.178320412236642, -0.121550440418646, 0.136056150333538, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -360,8 +399,10 @@ beta.rw.vals <- c(
     0, -0.348925402477912, 0.0679687980318762, 0.213164755977372, 0.074591979115163, 0.0750080453232727, 0.102336034443526, -0.229377011561744, 0.0520233979921866, -0.279980273239356, 0.0347612260908936, -0.114458350262099, 0.0545339652877542, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-)
-beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas * nr)[1:(nbetas*nr)]
+)[1:(nbetas.full*nr)]
+beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
+if(length(beta.rw.vals) > nbetas*nr)
+    beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
 beta.update <- TRUE
 beta.rw.flag <- TRUE
@@ -375,8 +416,8 @@ beta.rw.props <- c(
     0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )
-beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas * nr)
-if (length(beta.rw.props) > nbetas*nr) beta.rw.props <- beta.rw.props[nbetas*nr]
+beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas.full)
+if (length(beta.rw.props) > nbetas.full*nr) beta.rw.props <- beta.rw.props[nbetas.full*nr]
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
     for(j in (i+1):nbetas)
@@ -408,6 +449,7 @@ ssens.prop <- 0.1
 sspec.prop <- 0.077976
 if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
 if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
+
 if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))
 
 stopifnot(all(!is.na(beta.rw.vals)))

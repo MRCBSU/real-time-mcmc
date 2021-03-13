@@ -29,6 +29,8 @@ class model_state
   model_state& operator=(const model_state&);
   void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*,
 	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
+  void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*,
+	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
   bool write(ofstream&);
 };
 

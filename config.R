@@ -7,7 +7,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -48,7 +48,8 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
@@ -89,19 +90,21 @@ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderl
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
-if (contact.model != 4) scenario.name <- paste0(scenario.name, "_cm", contact.model) ## _latestart" ## _morefreq"
+contact.prior <- "viner"
+## if (contact.model != 4)
+    scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "lin.bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "3bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint)
+scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -146,7 +149,7 @@ if(gp.flag){
 
 ## Get the date of the prevalence data
 num.prev.days <- 57
-prev.cutoff.days <- 0
+prev.cutoff.days <- 5
 ## Convert that to an analysis day number
 date.prev <- lubridate::ymd("20210213") # Set this to last date in dataset
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
@@ -161,6 +164,8 @@ if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_
 
 
 ## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+efficacies <- "Nick" ## current values can be 'Nick' or 'SPIM'.
+scenario.name <- paste0(scenario.name, efficacies)
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
@@ -183,10 +188,14 @@ threads.per.regions <- 2
 vacc.flag <- 1 ## Do we have any vaccination data
 str.date.vacc <- "20210311" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
+
 vacc.lag <- 21
-vac.overwrite <- TRUE
+vac.overwrite <- FALSE
 if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
-
+## How many vaccinations can we expect in the coming weeks
+## - this is mostly set for the benefit of projections rather than model fitting.
+## future.n <- (c(1.2, 2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5) * 10^6) * (55.98 / 66.65)
+future.n <- (c(2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5, 4.2) * 10^6) * (55.98 / 66.65)

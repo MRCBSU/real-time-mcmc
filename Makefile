@@ -6,7 +6,7 @@ RTM_OPTIM_OBJS = $(SRC:src/%.cc=build/rtm_optim/%.o)
 RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
 RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
-RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc/%.o)
+RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc2/%.o)
 
 LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgomp
 CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE
@@ -27,16 +27,16 @@ rtm_hanson: $(RTM_HANSON_OBJS) $(HEADERS)
 rtm_morricone: $(RTM_MORRICONE_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_morricone
 
-rtm_hpc: $(RTM_HPC_OBJS) $(HEADERS)
-	icpc $^ -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hpc
+rtm_hpc2: $(RTM_HPC_OBJS) $(HEADERS)
+	icpc $^ -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hpc2
 
 .PHONY: all
-all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc
+all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2
 
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc
+	rm -f rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2
 
 build/rtm_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_debug
@@ -58,6 +58,6 @@ build/rtm_morricone/%.o: src/%.cc
 	@mkdir -p build/rtm_morricone
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O3 -march=native
 
-build/rtm_hpc/%.o: src/%.cc
-	@mkdir -p build/rtm_hpc
+build/rtm_hpc2/%.o: src/%.cc
+	@mkdir -p build/rtm_hpc2
 	icpc -g -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -c -o $@ $<

@@ -365,9 +365,16 @@ void model_statistics_alloc(model_statistics &ms, const int times, const int age
   ms.d_prevalence = gsl_matrix_alloc(times, age_classes);
 }
 
-void model_statistics_aggregate(gsl_matrix* output_NNI, const model_statistics& ms, const int contraction)
+void model_statistics_aggregate(gsl_matrix* output_NNI,
+				const model_statistics& ms, const int contraction)
 {
   output_per_selected_period(contraction, ms.d_NNI, output_NNI);
+}
+void model_statistics_aggregate(gsl_matrix* output_NNI, gsl_matrix* output_Delta_Dis,
+				const model_statistics& ms, const int contraction)
+{
+  output_per_selected_period(contraction, ms.d_NNI, output_NNI);
+  output_per_selected_period(contraction, ms.d_Delta_Dis, output_Delta_Dis);
 }
 
 void model_statistics_memcpy(model_statistics &ms_dest, const model_statistics ms_src,
@@ -485,7 +492,7 @@ void Region_memcpy(Region& reg_dest, const Region& reg_src, flagclass& update_fl
       reg_dest.Virology_data = reg_src.Virology_data;
   if(reg_src.Prevalence_data != 0)
     reg_dest.Prevalence_data = reg_src.Prevalence_data;
-  if(reg_src.Vaccination_data != 0)
+  // if(reg_src.Vaccination_data != 0)
     reg_dest.Vaccination_data = reg_src.Vaccination_data;
   
   regional_model_params_memcpy(reg_dest.det_model_params, reg_src.det_model_params, update_flags);

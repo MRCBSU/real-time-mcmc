@@ -45,6 +45,7 @@ if(ncol(m) %% r != 0) {
   }
   names(M) <- names(M.mult) <- NULL
   pop.total <- all.pop[1, ];names(pop.total) <- regions
+  stop()
   for(reg in regions){
     ireg <- which(regions %in% reg)
     for(idir in 1:length(cm.bases)){
@@ -71,9 +72,11 @@ if(ncol(m) %% r != 0) {
                                                          init.func(regions.total.population[reg,] / pop.total[reg], M.star[[1]][,,x]),
                                                          R0[x,reg] * M.star[[1]][,,x] / (pop.total[reg] * R.star[[ireg]][x]))
                          )
-    ## Calculate number of susceptiables for each day
-    S <- apply(NNI[[reg]][,,outputs.for.Rt, drop = FALSE], c(1, 3), cumsum)  ## TxAxI array
-    S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+    ## Calculate number of susceptibles for each day
+    ## S <- apply(NNI[[reg]][,,outputs.for.Rt, drop = FALSE], c(1, 3), cumsum)  ## TxAxI array
+    ## S <- -sweep(S, 2, regions.total.population[ireg, ], `-`) ## TxAxI
+    S <- (regions.total.population[ireg, ] * (1 - sero[[reg]][,,outputs.for.Rt,drop=FALSE])) %>%
+        aperm(c(2, 1, 3))
     ## Calculate the relative Rt values as a function of the next generation matrix for each day
     R.prime <- sapply(1:ndays,
                       function(x) sapply(1:length(iterations.for.Rt),

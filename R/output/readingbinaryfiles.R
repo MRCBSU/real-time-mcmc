@@ -36,6 +36,8 @@ if(exists("var.priors")){
   
   ## ## OPEN FILE CONNECTIONS ## ##
   NNI <- NNI.files <- vector("list", r)
+  sero <- sero.files <- vector("list", r)
+  if(vacc.flag) DNNI <- DNNI.files <- vector("list", r)
   dths.flag <- FALSE
   if(hosp.flag & !SMC.output) {
       Deaths <- Deaths.files <- vector("list", r)
@@ -55,6 +57,9 @@ if(exists("var.priors")){
   for(intr in 1:r)
     {
         NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
+        sero.files[[intr]] <- file(file.path(target.dir, paste0("Sero_", regions[intr])), "rb")
+        if(vacc.flag)
+            DNNI.files[[intr]] <- file(file.path(target.dir, paste0("Delta_Dis_", regions[intr])), "rb")
         if(dths.flag)
             Deaths.files[[intr]] <- file(file.path(target.dir, paste0("Hosp_", regions[intr])), "rb")
         if(cases.flag)
@@ -65,7 +70,8 @@ if(exists("var.priors")){
             ## state files
             state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
     }
-  names(NNI.files) <- regions
+  names(NNI.files) <- names(sero.files) <- regions
+  if(vacc.flag) names(DNNI.files) <- regions
   if(dths.flag) names(Deaths.files) <- regions
   if(cases.flag) names(Cases.files) <- regions
   if(prev.flag) names(Prev.files) <- regions
@@ -84,6 +90,12 @@ if(exists("var.priors")){
     {
       NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * ndays * nA)
       NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
+      sero[[intr]] <- readBin(sero.files[[intr]], double(), n = i.summary * ndays * nA) %>%
+          array(dim = c(nA, ndays, i.summary))
+      if(vacc.flag){
+          DNNI[[intr]] <- readBin(DNNI.files[[intr]], double(), n = i.summary * ndays * nA)
+          DNNI[[intr]] <- array(DNNI[[intr]], dim = c(nA, ndays, i.summary))
+      }
       if(dths.flag){
           Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = i.summary * ndays * nA) %>%
               array(dim = c(nA, ndays, i.summary))
@@ -97,7 +109,8 @@ if(exists("var.priors")){
               array(dim = c(nA, ndays, i.summary))
       }
     }
-  names(NNI) <- regions
+  names(NNI) <- names(sero) <- regions
+  if(vacc.flag) names(DNNI) <- regions
   if(dths.flag) names(Deaths) <- regions
   if(cases.flag) names(Cases) <- regions
   if(prev.flag) names(Prev) <- regions
@@ -109,32 +122,41 @@ if(exists("var.priors")){
       for(intr in 1:r)
           states[[intr]] <- readBin(state.files[[intr]], double(), n = nA * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
       names(states) <- regions
-    }
-
+  }
+  
   for(inti in 1:npar){
-	seek(coda.files[[inti]], -8, origin="end")
-	num.params <- readBin(coda.files[[inti]], "integer")
-	num.samples <- readBin(coda.files[[inti]], "integer")
-	if (num.params != parameter.dims[inti]) {
-		print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
-                            "but", num.params, "found. Discarding extra ones and not plotting missing ones."))
-	}
-	## expected.num.samples <- parameter.dims[inti] * i.saved
-	if (num.samples != i.saved) {
+      seek(coda.files[[inti]], -8, origin="end")
+      num.params <- readBin(coda.files[[inti]], "integer")
+      num.samples <- readBin(coda.files[[inti]], "integer")
+      if (num.params != parameter.dims[inti]) {
+          print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
+                      "but", num.params, "found. Discarding extra ones and not plotting missing ones."))
+      }
+      ## expected.num.samples <- parameter.dims[inti] * i.saved
+      if (num.samples != i.saved) {
 		print(paste("WARNING: Expected", i.saved, "samples for", parameter.names[inti],
-					"but", num.samples, "found. Discarding the extra ones."))
-	}
-	seek(coda.files[[inti]], 0)
-	params[[inti]] <- readBin(coda.files[[inti]], "double", num.samples * num.params)
- 	params[[inti]] <- array(params[[inti]], dim = c(num.params, num.samples))
-	params[[inti]] <- params[[inti]][1:parameter.dims[inti], 1:i.saved, drop=FALSE]
+                            "but", num.samples, "found. Discarding the extra ones."))
+      }
+      seek(coda.files[[inti]], 0)
+      params[[inti]] <- readBin(coda.files[[inti]], "double", num.samples * num.params)
+      params[[inti]] <- array(params[[inti]], dim = c(num.params, num.samples))
+      params[[inti]] <- params[[inti]][1:parameter.dims[inti], 1:i.saved, drop=FALSE]
   }
   names(params) <- parameter.names
-  ## ## ## ##
+  
+  ## ## #### TEMPORARY HARD-CODED FIX - REMOVE BEYOND 20210219!!!!!!!
+  ## if(lubridate::ymd("20210219") == lubridate::as_date(date.data))
+  ## {
+  ##     parameter.dims[10] <- parameter.dims[10] - nr
+  ##     params[[10]] <- params[[10]][-seq(nrow(beta.rw.props) + 1, nrow(params[[10]]), by = nrow(beta.rw.props) + 1), ]
+  ## }
+  ## ## ## ## ##  
   
   ## ## CLOSE FILE CONNECTIONS ## ##
   for(intr in 1:r){
       close(NNI.files[[intr]])
+      close(sero.files[[intr]])
+      if(vacc.flag) close(DNNI.files[[intr]])
       if(dths.flag) close(Deaths.files[[intr]])
       if(cases.flag) close(Cases.files[[intr]])
       if(prev.flag) close(Prev.files[[intr]])

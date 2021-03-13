@@ -232,9 +232,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Outputs
   ofstream* output_codas = new ofstream[num_component_updates->size];
   ofstream output_coda_lfx("coda_lfx", ios::out|ios::trunc|ios::binary);
-  ofstream *file_NNI, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
+  ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
 
   fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, state_country);
+  fstream_model_statistics_open(file_Delta_Dis, "Delta_Dis", gmip.l_num_regions, state_country);
   if(simulation_parameters.oType == cMCMC)
     {
       fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, state_country);
@@ -251,8 +252,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
     fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, state_country);
 
   gsl_matrix** output_NNI = new gsl_matrix*[nregions];
-  for(int int_reg = 0; int_reg < nregions; ++int_reg)
+  gsl_matrix** output_Delta_Dis = new gsl_matrix*[nregions];
+  for(int int_reg = 0; int_reg < nregions; ++int_reg){
     output_NNI[int_reg] = gsl_matrix_alloc(gmip.l_duration_of_runs_in_days, NUM_AGE_GROUPS);
+    output_Delta_Dis[int_reg] = gsl_matrix_alloc(gmip.l_duration_of_runs_in_days, NUM_AGE_GROUPS);
+  }
 
   gsl_vector_int_set_1ton(adaptive_progress_report_iterations, 1);
   gsl_vector_int_scale(adaptive_progress_report_iterations, simulation_parameters.adaptive_phase / simulation_parameters.num_progress_reports); // NOTE THE INTEGRAL DIVISION
@@ -535,13 +539,17 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	{
 	  for(int int_reg = 0; int_reg < nregions; int_reg++)
 	    {
-	      model_statistics_aggregate(output_NNI[int_reg], state_country[int_reg].region_modstats, gmip.l_reporting_time_steps_per_day);
+	      model_statistics_aggregate(output_NNI[int_reg], // Overloaded function, might need an IF statement to control
+					 output_Delta_Dis[int_reg],
+					 state_country[int_reg].region_modstats,
+					 gmip.l_reporting_time_steps_per_day);
 	      if(simulation_parameters.oType == cMCMC)
 		{	 
 		  for(int int_i = 0; int_i < output_NNI[int_reg]->size1; int_i++)
 		    for(int int_j = 0; int_j < output_NNI[int_reg]->size2; int_j++)
 		      {
 			file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[int_reg], int_i, int_j)), sizeof(double));
+			file_Delta_Dis[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[int_reg], int_i, int_j)), sizeof(double));			
 			file_Sero[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_seropositivity, int_i, int_j)), sizeof(double));
 			if(gmip.l_GP_consultation_flag)
 			  {
@@ -557,8 +565,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	      else if(simulation_parameters.oType == cSMC)
 		{
 		  for(int int_i = 0; int_i < state_country[int_reg].region_modstats.d_NNI->size1; int_i++)
-		    for(int int_j = 0; int_j < state_country[int_reg].region_modstats.d_NNI->size2; int_j++)		  
+		    for(int int_j = 0; int_j < state_country[int_reg].region_modstats.d_NNI->size2; int_j++){
 		      file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_NNI, int_i, int_j)), sizeof(double));
+		      file_Delta_Dis[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_Delta_Dis, int_i, int_j)), sizeof(double));
+		    }
 		  state_country[int_reg].region_modstats.d_end_state->write(file_state[int_reg]);
 		}
 	    }
@@ -574,15 +584,15 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	}
 
       // OUTPUT MCMC SAMPLER PROGRESS REPORTS...
-	  if (int_progress_report < simulation_parameters.num_progress_reports) {
-		  if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-		write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
-					  theta, lfx, false, true, true);
-		  else if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
-		write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
-					  theta, lfx, true, true, false);
-	  }
-	  if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
+      if (int_progress_report < simulation_parameters.num_progress_reports) {
+	if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
+	  write_progress_report("adaptive_report", ++int_progress_report, int_iter + 1, CHAIN_LENGTH,
+				theta, lfx, false, true, true);
+	else if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
+	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+				theta, lfx, true, true, false);
+      }
+      if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
 
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase
       // or the end of the burn-in
@@ -595,6 +605,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   likelihood_free(prop_lfx);
   for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
+    gsl_matrix_free(output_Delta_Dis[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES
 
     Region_free(prop_country[int_i], gmip);
@@ -613,7 +624,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       gsl_vector_int_free(b[int_param]);
     }
   delete [] output_NNI;
+  delete [] output_Delta_Dis;
   fstream_model_statistics_close(file_NNI, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days * (simulation_parameters.oType == cMCMC ? 1 : gmip.l_reporting_time_steps_per_day),
+				 (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
+  fstream_model_statistics_close(file_Delta_Dis, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days * (simulation_parameters.oType == cMCMC ? 1 : gmip.l_reporting_time_steps_per_day),
 				 (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
   if(simulation_parameters.oType == cMCMC)
     {

@@ -182,8 +182,9 @@ nice.array <- function(x)
         unlist(x),
         dim = output.quantity.dims,
         dimnames = output.dimnames)
-infections <- nice.array(NNI)
-rm(NNI)
+infections <- nice.array(NNI); rm(NNI)
+sero <- nice.array(sero)
+if(vacc.flag) vacc.infections <- nice.array(DNNI); rm(DNNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 if(dths.flag){
     deaths2 <- nice.array(Deaths)
@@ -347,7 +348,7 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
 print('Saving results')
-save.objs <- c("infections", "cum_infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
+save.objs <- c("infections", "cum_infections", "vacc.infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
      "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")
 save.exists <- save.objs[sapply(save.objs, exists)]
 save(list = save.exists,

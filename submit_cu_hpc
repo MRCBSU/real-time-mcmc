@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1
+#SBATCH --array=1-12
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -22,27 +22,32 @@
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210203/PrevCevik_IFRlin.bp_NHS60cutoff_11_prev14_matrices_20210131_timeuse_household_deaths"
-# if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-#     workdir="${workdir}NoPrev_NHS"
-# else
-#     workdir="${workdir}PrevCevik_NHS"
-# fi
-# if (( $SLURM_ARRAY_TASK_ID % 4 < 2 )); then
-#     workdir="${workdir}28"
-# else
-#     workdir="${workdir}60"
-# fi
-# workdir="${workdir}cutoff_11_"
-# if [ $SLURM_ARRAY_TASK_ID -gt 4 ]; then
-#     workdir="${workdir}prev14_"
-# fi
-# workdir="${workdir}matrices_20210115_timeuse_household_"
-# if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-#     workdir="${workdir}deaths"
-# else
-#     workdir="${workdir}adjusted_mean"
-# fi
+bp="IFR3bp_"
+if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+    prev="NoPrev"
+    gap=""
+else
+    prev="PrevCevik"
+    gap="_prev7-5"
+fi
+if (( $SLURM_ARRAY_TASK_ID % 6 < 3 )); then
+    fixS="fixedSero_"
+else
+    fixS=""
+fi
+eff="Nick"
+if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+    geog="ONS"
+    days="60"
+elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+    geog="NHS"
+    days="28"
+else
+    geog="NHS"
+    days="60"
+fi
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210305/${prev}_${fixS}${bp}${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210305_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 
@@ -53,5 +58,5 @@ cd $workdir
 if [ -f "posterior_report10" ]; then
     echo "existing output found"
 else
-  ../../../rtm_hpc
+  ../../../rtm_hpc2
 fi

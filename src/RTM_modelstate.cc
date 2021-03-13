@@ -40,6 +40,16 @@ void model_state::fill(const gsl_vector* inS, const gsl_vector* inSV1, const gsl
   gsl_populate_vector(R_1, inR_1);
   gsl_populate_vector(p_lambda, inp_lambda);
 }
+void model_state::fill(const gsl_vector* inS, const gsl_vector* inE_1, const gsl_vector* inE_2, const gsl_vector* inI_1, const gsl_vector* inI_2, const gsl_vector* inR_1, const gsl_vector* inp_lambda)
+{
+  gsl_populate_vector(S, inS);
+  gsl_populate_vector(E_1, inE_1);
+  gsl_populate_vector(E_2, inE_2);
+  gsl_populate_vector(I_1, inI_1);
+  gsl_populate_vector(I_2, inI_2);
+  gsl_populate_vector(R_1, inR_1);
+  gsl_populate_vector(p_lambda, inp_lambda);
+}
 bool model_state::write(ofstream& outFile)
 {
   if(!outFile.is_open())

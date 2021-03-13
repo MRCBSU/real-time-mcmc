@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=1
+#SBATCH --array=4,10
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -72,27 +72,6 @@ if [ $SLURM_ARRAY_TASK_ID -lt 4 ] || [[ $SLURM_ARRAY_TASK_ID -eq 9 ]]; then
     fi
 else
     prev="PrevCevik"
-    if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	gap="prev7_"
-    elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	gap="prev14_"
-    else
-	gap="prev7-5_"
-    fi
-    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
-	days="28"
-    else
-	days="60"
-    fi
-fi
-if [ $SLURM_ARRAY_TASK_ID -gt 8 ]; then
-    geog="ONS"
-else
-    geog="NHS"
-fi
-bp="IFRlin.bp_"
-
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210212/${prev}_${bp}${geog}${days}cutoff_11_${gap}matrices_20210212_timeuse_household_deaths"
 
 echo -e $workdir
 
