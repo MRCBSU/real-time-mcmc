@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("2021-02-19"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-03-12"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -72,7 +72,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -181,7 +181,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210217" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210311" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 vacc.lag <- 21
 vac.overwrite <- TRUE
