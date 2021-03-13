@@ -46,6 +46,7 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     for(intr in 1:nr)
     {
         NNI.files[[intr]] <- file(paste0("NNI_", regions[intr]), "rb")
+        Sero.files[[intr]] <- file(paste0("Sero_", regions[intr]), "rb")
         if(vacc.flag)
             DNNI.files[[intr]] <- file(paste0("Delta_Dis_", regions[intr]), "rb")
         if(dths.flag)
@@ -55,7 +56,7 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
         if(prev.flag)
             Prev.files[[intr]] <- file(paste0("Prev_", regions[intr]), "rb")
     }
-    names(NNI.files) <- regions
+    names(NNI.files) <- names(Sero.files) <- regions
     if(vacc.flag) names(DNNI.files) <- regions
     if(dths.flag) names(Deaths.files) <- regions
     if(cases.flag) names(Cases.files) <- regions
@@ -66,6 +67,9 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
         NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
             array(dim = c(nA, ndays, num.iterations))
         close(NNI.files[[intr]])
+        Sero[[intr]] <- readBin(Sero.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
+            array(dim = c(nA, ndays, num.iterations))
+        close(Sero.files[[intr]])
         if(vacc.flag){
             DNNI[[intr]] <- readBin(DNNI.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
                 array(dim = c(nA, ndays, num.iterations))
@@ -92,5 +96,5 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     ##     cat(pct, "% Complete\n")
     ## }
     setwd("..")
-    list(NNI = NNI, DNNI = DNNI, Deaths = Deaths, Cases = Cases, Prevs = Prevs)
+    list(NNI = NNI, DNNI = DNNI, Deaths = Deaths, Cases = Cases, Prevs = Prevs, Sero = Sero)
 }

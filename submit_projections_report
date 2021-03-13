@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --mem=20000
-#SBATCH --array=2
+#SBATCH --array=4,10
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -62,37 +62,36 @@ if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210226/"
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
 
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    workdir="${workdir}NoPrev_IFRlin.bp_NHS28cutoff_18wk2_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
-    workdir="${workdir}NoPrev_IFRlin.bp_ONS60cutoff_18wk2_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 3 ]; then
-    workdir="${workdir}PrevCevik_IFR3bp_ONS60cutoff_18wk1_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 4 ]; then
-    workdir="${workdir}PrevCevik_IFR3bp_ONS60cutoff_18wk2_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 5 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_NHS28cutoff_18wk1_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 6 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_NHS28cutoff_18wk2_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 7 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_NHS60cutoff_18wk1_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 8 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_NHS60cutoff_18wk2_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 9 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_ONS60cutoff_18wk2_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 10 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_ONS60cutoff_18wk1_prev7-5_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 11 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_ONS60cutoff_18wk2_prev7_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 12 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_ONS60cutoff_18wk1_prev7_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 13 ]; then
-    workdir="${workdir}PrevCevik_IFRlin.bp_ONS60cutoff_18wk2_prev7-5NOVAC_matrices_20210226_timeuse_household_deaths"
-elif [ $SLURM_ARRAY_TASK_ID -eq 14 ]; then
-    workdir="${workdir}NoPrev_IFRlin.bp_ONS60cutoff_18wk2NOVAC_matrices_20210226_timeuse_household_deaths"
+# Navigate to the correct working directory
+bp="IFR3bp_"
+if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+    prev="NoPrev"
+    gap=""
+else
+    prev="PrevCevik"
+    gap="_prev7-5"
 fi
+if (( $SLURM_ARRAY_TASK_ID % 6 < 3 )); then
+    fixS="fixedSero_"
+else
+    fixS=""
+fi
+eff="Nick"
+if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+    geog="ONS"
+    days="60"
+elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+    geog="NHS"
+    days="28"
+else
+    geog="NHS"
+    days="60"
+fi
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210305/${prev}_${fixS}${bp}${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210305_timeuse_household_deaths"
 
 echo -e $workdir
 

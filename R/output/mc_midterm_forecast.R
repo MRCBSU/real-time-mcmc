@@ -31,11 +31,11 @@ prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence output
 if(prev.flag && any(prev.data$lmeans == "NULL")){
     ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20210224")
+		date.prev <- ymd("20210303")
 		## Convert that to an analysis day number
-		prev.end.day <- 367
-		last.prev.day <- 367
-		first.prev.day <- 316
+		prev.end.day <- 374
+		last.prev.day <- 374
+		first.prev.day <- 323
 		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
 		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
@@ -54,7 +54,7 @@ overwrite.matrices <- FALSE
 ## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
-if(prev.flag & all(prior.r1 == 1)) value.r1 <- 5.304735
+if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7.18
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -193,6 +193,7 @@ if(vacc.flag){
 
 ## ## Set-up output quantities
 NNI <- NNI.files <- vector("list", nr)
+Sero <- Sero.files <- vector("list", nr)
 if(vacc.flag) DNNI <- DNNI.files <- vector("list", nr)
 if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
 if(gp.flag) Cases <- Cases.files <- vector("list", nr)
@@ -208,9 +209,10 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
-cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
+cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-dev/rtm_", exe)), "\n")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 NNI <- lapply(xtmp, function(x) x$NNI)
+Sero <- lapply(xtmp, function(x) x$Sero)
 if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
 Deaths <- lapply(xtmp, function(x) x$Deaths)
 Cases <- lapply(xtmp, function(x) x$Cases)
@@ -235,8 +237,10 @@ dim.list <- list(iteration = 1:niter,
                  region = regions
                  )
 infections <- melt.list(NNI);rm(NNI)
-save.list <- "infections"
 dimnames(infections) <- dim.list
+seropos <- melt.list(Sero);rm(Sero)
+dimnames(seropos) <- dim.list
+save.list <- c("infections", "seropos")
 if(vacc.flag) {
     vacc.infections <- melt.list(DNNI);rm(DNNI)
     save.list <- c(save.list, "vacc.infections")
