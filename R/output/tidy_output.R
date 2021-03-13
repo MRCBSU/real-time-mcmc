@@ -183,6 +183,7 @@ nice.array <- function(x)
         dim = output.quantity.dims,
         dimnames = output.dimnames)
 infections <- nice.array(NNI); rm(NNI)
+sero <- nice.array(sero)
 if(vacc.flag) vacc.infections <- nice.array(DNNI); rm(DNNI)
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 if(dths.flag){

@@ -36,6 +36,7 @@ if(exists("var.priors")){
   
   ## ## OPEN FILE CONNECTIONS ## ##
   NNI <- NNI.files <- vector("list", r)
+  sero <- sero.files <- vector("list", r)
   if(vacc.flag) DNNI <- DNNI.files <- vector("list", r)
   dths.flag <- FALSE
   if(hosp.flag & !SMC.output) {
@@ -56,6 +57,7 @@ if(exists("var.priors")){
   for(intr in 1:r)
     {
         NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
+        sero.files[[intr]] <- file(file.path(target.dir, paste0("Sero_", regions[intr])), "rb")
         if(vacc.flag)
             DNNI.files[[intr]] <- file(file.path(target.dir, paste0("Delta_Dis_", regions[intr])), "rb")
         if(dths.flag)
@@ -68,7 +70,7 @@ if(exists("var.priors")){
             ## state files
             state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
     }
-  names(NNI.files) <- regions
+  names(NNI.files) <- names(sero.files) <- regions
   if(vacc.flag) names(DNNI.files) <- regions
   if(dths.flag) names(Deaths.files) <- regions
   if(cases.flag) names(Cases.files) <- regions
@@ -88,6 +90,8 @@ if(exists("var.priors")){
     {
       NNI[[intr]] <- readBin(NNI.files[[intr]], double(), n = i.summary * ndays * nA)
       NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
+      sero[[intr]] <- readBin(sero.files[[intr]], double(), n = i.summary * ndays * nA) %>%
+          array(dim = c(nA, ndays, i.summary))
       if(vacc.flag){
           DNNI[[intr]] <- readBin(DNNI.files[[intr]], double(), n = i.summary * ndays * nA)
           DNNI[[intr]] <- array(DNNI[[intr]], dim = c(nA, ndays, i.summary))
@@ -105,7 +109,7 @@ if(exists("var.priors")){
               array(dim = c(nA, ndays, i.summary))
       }
     }
-  names(NNI) <- regions
+  names(NNI) <- names(sero) <- regions
   if(vacc.flag) names(DNNI) <- regions
   if(dths.flag) names(Deaths) <- regions
   if(cases.flag) names(Cases) <- regions
@@ -140,18 +144,18 @@ if(exists("var.priors")){
   }
   names(params) <- parameter.names
   
-  ## #### TEMPORARY HARD-CODED FIX - REMOVE BEYOND 20210219!!!!!!!
-  if(lubridate::ymd("20210219") == lubridate::as_date(date.data))
-  {
-      parameter.dims[10] <- parameter.dims[10] - nr
-      params[[10]] <- params[[10]][-seq(nrow(beta.rw.props) + 1, nrow(params[[10]]), by = nrow(beta.rw.props) + 1), ]
-  }
-  ## ## ## ##
-  
+  ## ## #### TEMPORARY HARD-CODED FIX - REMOVE BEYOND 20210219!!!!!!!
+  ## if(lubridate::ymd("20210219") == lubridate::as_date(date.data))
+  ## {
+  ##     parameter.dims[10] <- parameter.dims[10] - nr
+  ##     params[[10]] <- params[[10]][-seq(nrow(beta.rw.props) + 1, nrow(params[[10]]), by = nrow(beta.rw.props) + 1), ]
+  ## }
+  ## ## ## ## ##  
   
   ## ## CLOSE FILE CONNECTIONS ## ##
   for(intr in 1:r){
       close(NNI.files[[intr]])
+      close(sero.files[[intr]])
       if(vacc.flag) close(DNNI.files[[intr]])
       if(dths.flag) close(Deaths.files[[intr]])
       if(cases.flag) close(Cases.files[[intr]])
