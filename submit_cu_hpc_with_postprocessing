@@ -20,5 +20,5 @@
 #SBATCH --error=model_runs.err
 
 module load gcc/9 intel/compilers/2020.2 gsl
-../../../rtm_hpc
+../../../rtm_hpc2
 sbatch ../../../submit_post_process_correct_dir

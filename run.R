@@ -1,4 +1,5 @@
 library(rmarkdown)
+library(tidyverse)
 
 ## Location of this script
 thisFile <- function() {

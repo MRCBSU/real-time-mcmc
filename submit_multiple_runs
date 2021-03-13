@@ -23,5 +23,5 @@ module load gcc/9 intel/compilers/2020.2 gsl
 dirs=(*/)
 cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
-../../../rtm_hpc
+../../../rtm_hpc2
 sbatch ../../../submit_post_process_correct_dir
