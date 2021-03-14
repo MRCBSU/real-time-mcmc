@@ -24,7 +24,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- FALSE
+format.inputs <- T
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -79,7 +79,11 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    if (exists("date.prev")) {
+		prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+	} else {
+		prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+	}
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
