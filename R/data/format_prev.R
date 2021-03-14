@@ -29,7 +29,7 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
 }
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
-if(date.prev != lubridate::ymd(strapplyc(input.loc, "[0-9/]{8,}", simplify = TRUE))) stop("Specified date.prev does not match the most recent prevalence data file.")
+if(date.prev != lubridate::ymd(strapplyc(input.loc, "[0-9-]{8,10}", simplify = TRUE))) stop("Specified date.prev does not match the most recent prevalence data file.")
 ## Substitute this date into the output file names
 prev.mean.files <- gsub("date_prev", date.prev, prev.mean.files, fixed = TRUE)
 prev.sd.files <- gsub("date_prev", date.prev, prev.sd.files, fixed = TRUE)

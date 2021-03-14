@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -151,10 +151,10 @@ if(gp.flag){
 num.prev.days <- 57
 prev.cutoff.days <- 5
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210213") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210308") # Set this to last date in dataset
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
-first.prev.day <- prev.end.day - num.prev.days + 1
+first.prev.day <- prev.end.day - num.prev.days + 1 + prev.cutoff.days
 days.between.prev <- 7
 
 ## Default system for getting the days on which the likelihood will be calculated.
