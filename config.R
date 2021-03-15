@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -49,6 +49,7 @@ ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+sdpar <- 1000
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
@@ -105,7 +106,7 @@ iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
-contact.prior <- "viner"
+contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
@@ -116,10 +117,10 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
+scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window, "_", sdpar)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {

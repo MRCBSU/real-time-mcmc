@@ -16,7 +16,7 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
     ## List the possible files in the directory
     vacc.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
-                                               pattern=glob2rx(paste("202", "immunisations SPIM", "csv", sep = "*")))
+                                               pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
                                     )
                           )
     ## Has a particular date's data been specified
@@ -116,6 +116,9 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+
+    ## Extract file from archive
+    input.loc <- unzip(input.loc)
 
     if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
     
@@ -350,6 +353,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
     rm(vacc.dat)
+    file.remove(input.loc)
     
 } else {
 
