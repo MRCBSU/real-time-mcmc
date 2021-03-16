@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -84,7 +84,10 @@ exclude.eldest.prev <- FALSE
 vacc.flag <- 1
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
+if (prev.flag) {
+	if (use.INLA.prev) scenario.name <- paste0("PrevINLA", prev.prior)
+	if (!use.INLA.prev) scenario.name <- paste0("Prev", prev.prior)
+}
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
@@ -151,7 +154,7 @@ if(gp.flag){
 ## Dates of prevalence data
 date.prev <- lubridate::ymd("20210308") # Set this to last date in dataset
 prev.cutoff.days <- 5
-days.between.prev <- 28
+days.between.prev <- 14
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?

@@ -12,7 +12,7 @@
 #SBATCH --qos=covid0
 #SBATCH --exclusive
 
-#SBATCH --array=0-3
+#SBATCH --array=0-2
 #SBATCH -p skylake
 
 
