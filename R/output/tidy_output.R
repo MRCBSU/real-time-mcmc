@@ -348,7 +348,7 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
   
 print('Saving results')
-save.objs <- c("infections", "cum_infections", "vacc.infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
+save.objs <- c("infections", "cum_infections", "vacc.infections", "deaths", "cum_deaths", "prevalence", "dth.dat", "noisy_deaths", "Rt",
      "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")
 save.exists <- save.objs[sapply(save.objs, exists)]
 save(list = save.exists,

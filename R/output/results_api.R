@@ -33,14 +33,17 @@ if (!exists("infections")) {
   }
   output.required <- file.path(out.dir, "output_matrices.RData")
   if (file.exists(output.required)) {
-    load(file.path(out.dir, "mcmc.RData"))
+	tmp_env <- new.env()
+    load(file.path(out.dir, "tmp.RData"), tmp_env)
     load(output.required)
     int_iter <- 0:(num.iterations - 1)
-    parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
-    outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+    parameter.iterations <- int_iter[(!((int_iter + 1 - tmp_env$burnin) %% tmp_env$thin.params)) & int_iter >= tmp_env$burnin]
+    outputs.iterations <- int_iter[(!((int_iter + 1 - tmp_env$burnin) %% tmp_env$thin.outputs)) & int_iter >= tmp_env$burnin]
     parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
     iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
     stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
+	rm(int_iter)
+	rm(tmp_env)
   } else {
     source(file.path(proj.dir, "R/output/tidy_output.R"))
   }
