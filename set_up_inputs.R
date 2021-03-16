@@ -198,8 +198,11 @@ prev.data <- list(lmeans = "NULL",
                   lsds = "NULL")
 if(prev.flag == 1){
     prev.data <- list(lmeans = prev.mean.files, lsds = prev.sd.files)
-    if(!all(sapply(prev.data, function(x) all(file.exists(x)))))
-        stop("One of the specified prevalence data files does not exist")
+	complete.data <- sapply(prev.data, function(x) all(file.exists(x)))
+    if(!all(complete.data)) {
+		print(prev.data[!complete.data])
+        stop("Above specified prevalence data files does not exist")
+	}
     if(is.null(end.prev)) end.prev <- set.end.date(end.prev, prev.data)
 }
 if(vacc.flag == 1){
