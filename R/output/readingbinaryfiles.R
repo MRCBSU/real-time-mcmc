@@ -110,7 +110,6 @@ if(exists("var.priors")){
           states[[intr]] <- readBin(state.files[[intr]], double(), n = nA * i.summary * 6) ## one each for S, E_1. E_2, I_1, I_2, p_lambda
       names(states) <- regions
     }
-  
   for(inti in 1:npar){
 	seek(coda.files[[inti]], -8, origin="end")
 	num.params <- readBin(coda.files[[inti]], "integer")

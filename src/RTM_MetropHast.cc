@@ -378,28 +378,31 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
 
       // Global
-      paramSet.blocks[0].calcProposal(paramSet, r);
-      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
-      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
-
-      // Local
-      paramSet.blocks[reg].calcProposal(paramSet, r);
-      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
-      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+      if(paramSet.blocks[0].values.size() > 0){
+	paramSet.blocks[0].calcProposal(paramSet, r);
+	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
+	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+      }
       
-/*
-      paramSet.calcProposals(r);
+      // Local
+      if(paramSet.blocks[reg].values.size() > 0){
+	paramSet.blocks[reg].calcProposal(paramSet, r);
+	paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
+	paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+      }
+      /*
+	paramSet.calcProposals(r);
 
-      paramSet.outputProposals();
-      // Calculate acceptance ratio
-      paramSet.calcAccept(country2, gmip, base_mix);
+	paramSet.outputProposals();
+	// Calculate acceptance ratio
+	paramSet.calcAccept(country2, gmip, base_mix);
 
-      // Accept/reject
-      paramSet.doAccept(r, country2, gmip);
-*/
+	// Accept/reject
+	paramSet.doAccept(r, country2, gmip);
+      */
 
-      // debug
-      paramSet.outputPars();
+      // // debug
+      // paramSet.outputPars();
       if (int_iter % 1000 == 0 && int_iter > 0)
       	paramSet.printAcceptRates(int_iter);
 
@@ -482,8 +485,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Output MCMC sampler progress reports
       if (int_progress_report < simulation_parameters.num_progress_reports) {
 	//if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-	  // This refers to the old random walk M-H adaptation
-	  // write_progress_report("adaptive_report", ...
+	// This refers to the old random walk M-H adaptation
+	// write_progress_report("adaptive_report", ...
 
 	if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
 	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
@@ -619,7 +622,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					    gmip,
 					    theta.gp_delay.distribution_function,
 					    theta.hosp_delay.distribution_function
-			    );
+					    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 
@@ -703,7 +706,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		    // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
 		    if(!theta_i->flag_any_child_nodes)
 		      prop_lfx = lfx;
-		      //likelihood_memcpy(prop_lfx, lfx);
+		    //likelihood_memcpy(prop_lfx, lfx);
 
 		  }
 
@@ -780,8 +783,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // UPDATE LIKELIHOOD POSTERIOR STATISTICS..
       if(int_iter >= simulation_parameters.burn_in)
-      {
-	lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
+	{
+	  lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
 	  lfx.sumsq_lfx += gsl_pow_2(lfx.total_lfx) / ((double) CHAIN_LENGTH);
 	  prop_lfx.bar_lfx = lfx.bar_lfx;
 	  prop_lfx.sumsq_lfx = lfx.sumsq_lfx;

@@ -25,7 +25,7 @@ rtm_hanson: $(RTM_HANSON_OBJS) $(HEADERS)
 	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hanson
 
 rtm_morricone: $(RTM_MORRICONE_OBJS) $(HEADERS)
-	$(CXX) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_morricone
+	$(CXX) $^ $(LDFLAGS) -lgomp $(LOADLIBES) $(LDLIBS) -o rtm_morricone
 
 rtm_hpc: $(RTM_HPC_OBJS) $(HEADERS)
 	icpc $^ -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hpc

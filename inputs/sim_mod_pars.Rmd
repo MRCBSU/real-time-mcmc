@@ -97,6 +97,8 @@ regression_link = 1;
 
 `r ifelse(rw.flag, "regression_design = m.design.txt;", "")`
 
+regional_param = true;
+
 } ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
 
 
@@ -117,6 +119,8 @@ regression_link = 1;
 time_breakpoints = `r paste(beta.breaks, collapse = ", ")`;
 
 region_breakpoints = true;
+
+regional_param = true;
 
 }  ## WILL NEED TO GIVE A FACTOR OF 1 IN THE FIRST COMPONENT AFTER THE INVERSE CANONICAL LINK TRANSFORMATION IS APPLIED.
 
@@ -155,6 +159,8 @@ proposal_variance = `r repeat.for.regions(0.000003)`;
 
 region_breakpoints = true;
 
+regional_param = true;
+
 }
 
 
@@ -167,6 +173,8 @@ prior_parameters = `r paste(rep(pars.nu, nr), collapse = ", ")`;
 proposal_variance = 0.000284;
 
 region_breakpoints = true;
+
+regional_param = true;
 
 }
 
