@@ -74,6 +74,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
+use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -147,15 +148,20 @@ if(gp.flag){
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
 
-## Get the date of the prevalence data
-num.prev.days <- 57
-prev.cutoff.days <- 5
-## Convert that to an analysis day number
+## Dates of prevalence data
 date.prev <- lubridate::ymd("20210308") # Set this to last date in dataset
+prev.cutoff.days <- 5
+days.between.prev <- 28
+## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
-first.prev.day <- prev.end.day - num.prev.days + 1 + prev.cutoff.days
-days.between.prev <- 7
+## Get the date of the prevalence data
+if (use.INLA.prev) {
+	first.prev.day <- ymd("2020-05-01") - start.date + 1
+} else {
+	num.prev.days <- 57
+	first.prev.day <- prev.end.day - num.prev.days + 1 + prev.cutoff.days
+}
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
@@ -186,7 +192,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210311" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210315" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21

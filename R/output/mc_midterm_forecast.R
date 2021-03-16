@@ -42,6 +42,7 @@ if(prev.flag && any(prev.data$lmeans == "NULL")){
 	## }
     for(r in 1:nr){
 	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste(prev.lik.days, collapse = "_"), "_", regions[r], "ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
+	if (use.INLA.prev) prev.file.prefix <- paste0(prev.file.prefix, "INLA_")
           prev.file.suffix <- paste0("logprev.txt")
       prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
       prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)

@@ -84,6 +84,7 @@ if(prev.flag){
 	} else {
 		prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
 	}
+	if (use.INLA.prev) prev.file.prefix <- paste0(prev.file.prefix, "INLA_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")

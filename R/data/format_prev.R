@@ -10,11 +10,12 @@
 ## command-line argument.
 if(!exists("prev.loc")){ ## Set to default format for the filename
     input.loc <- "data/raw/prevalence"
+	file_str <- ifelse(use.INLA.prev, "INLA_202*csv", "202*csv")
 	if (region.type == "ONS") input.loc <- file.path(input.loc, "ONS_regions")
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
-                                               pattern=glob2rx("202*csv"))
+                                               pattern=glob2rx(file_str))
                                     )
                           )
     ## Pick the most recently added
