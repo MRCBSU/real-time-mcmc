@@ -491,9 +491,6 @@ make.plots(cum_infections, by = "age")
 ### IFR
 
 ```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
-## ## Base R proved quicker than tidyr equivalents, to...
-## Aggregate infections over region
-## Aggegrate the two youngest age groups
 sum.up.and.merge <- function(inf){
 		 inf_by_age <- apply(inf, c("age", "date", "iteration"), sum)
 		 inf_by_age <- merge.youngest.age.groups(inf_by_age, idx = c("iteration", "date"))
@@ -502,7 +499,6 @@ sum.up.and.merge <- function(inf){
 		inf_by_age
 }
 
-```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
 ## ## Base R proved quicker than tidyr equivalents
 ## Aggregate infections over region
 inf_by_age <- apply(infections, c("age", "date", "iteration"), sum)
@@ -528,7 +524,6 @@ names(dimnames(ifr.tab)) <- name.order
 dimnames(ifr.tab)$age[1] <- "All ages"
 
 make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL, y.percent = TRUE)
-```
 
 ## Only look at IFR iterations for which the infections array has been evaluated
 ifr.tab <- extract(ifr, indices=list(parameter.to.outputs), dims="iteration")
@@ -579,7 +574,7 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
-make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
+make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
 ```
 
 ```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}

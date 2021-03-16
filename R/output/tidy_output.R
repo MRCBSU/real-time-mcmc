@@ -97,7 +97,7 @@ if(!exists("proj.dir")){
 }
 if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 load(file.path(out.dir, "mcmc.RData"))
-rm(dth.dat)
+#rm(dth.dat)
 if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
