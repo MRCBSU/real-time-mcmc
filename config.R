@@ -48,7 +48,7 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 25 ## From the current date, when to insert the most recent beta breakpoint.
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
@@ -73,7 +73,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -94,7 +94,7 @@ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderl
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
-contact.prior <- "viner"
+contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
@@ -152,7 +152,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210308") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210317") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 14
 ## Convert that to an analysis day number
@@ -195,7 +195,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210315" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210318" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
