@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210312"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210319"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -48,8 +48,8 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
-sdpar <- 1000
+time.to.last.breakpoint <- 25 ## From the current date, when to insert the most recent beta breakpoint.
+sdpar <- 100
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
@@ -74,8 +74,9 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
+num.prev.days <- 319
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -84,7 +85,7 @@ exclude.eldest.prev <- FALSE
 vacc.flag <- 1
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("Prev", prev.prior)
+if (prev.flag) scenario.name <- paste0("Prev", prev.prior, num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
@@ -117,10 +118,10 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window, "_", sdpar)
+scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -164,10 +165,9 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-num.prev.days <- 57
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210310")
+date.prev <- lubridate::ymd("20210317")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -211,4 +211,4 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 ## future.n <- (c(1.2, 2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5) * 10^6) * (55.98 / 66.65)
-future.n <- (c(2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5, 4.2) * 10^6) * (55.98 / 66.65)
+future.n <- (c(4.7, 3.6, 4.5, 2.8, 2.8, 2.8, 4.4, 3.7) * 10^6) * (55.98 / 66.65)
