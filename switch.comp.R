@@ -9,8 +9,8 @@ if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "real-time-mcmc-dev"
-out.repo <- "real-time-mcmc-tmp"
+in.repo <- "real-time-mcmc-dev-dev"
+out.repo <- "real-time-mcmc-dev"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

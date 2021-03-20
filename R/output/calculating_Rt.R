@@ -45,7 +45,6 @@ if(ncol(m) %% r != 0) {
   }
   names(M) <- names(M.mult) <- NULL
   pop.total <- all.pop[1, ];names(pop.total) <- regions
-  stop()
   for(reg in regions){
     ireg <- which(regions %in% reg)
     for(idir in 1:length(cm.bases)){

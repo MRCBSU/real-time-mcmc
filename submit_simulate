@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=4,10
+#SBATCH --array=1-3
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -64,32 +64,36 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-bp="IFR3bp_"
-if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
-    prev="NoPrev"
-    gap=""
-else
-    prev="PrevCevik"
-    gap="_prev7-5"
-fi
-if (( $SLURM_ARRAY_TASK_ID % 6 < 3 )); then
-    fixS="fixedSero_"
-else
-    fixS=""
-fi
-eff="Nick"
-if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-    geog="ONS"
-    days="60"
-elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-    geog="NHS"
-    days="28"
-else
-    geog="NHS"
-    days="60"
-fi
+# bp="IFR3bp"
+# if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+#     prev="NoPrev"
+#     gap=""
+# else
+#     prev="PrevCevik"
+#     gap="_prev7-5"
+# fi
+# if (( $SLURM_ARRAY_TASK_ID % 6 < 3 )); then
+#     cm="ons"
+# else
+#     cm="viner"
+# fi
+# eff="Nick"
+# if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+#     geog="ONS"
+#     days="60"
+# elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+#     geog="NHS"
+#     days="28"
+# else
+#     geog="NHS"
+#     days="60"
+# fi
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210305/${prev}_${fixS}${bp}${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210305_timeuse_household_deaths"
+# workdir="$SLURM_SUBMIT_DIR/model_runs/20210312/${prev}_cm4${cm}_${bp}_${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210312_timeuse_household_deaths"
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210312/NoPrev_cm4ons_IFR3bp_NHS28cutoff_18wk2Nick_matrices_20210312_timeuse_household_deaths"
+
+module load gcc/9 intel/compilers/2020.2
 
 echo -e $workdir
 
@@ -97,7 +101,7 @@ echo -e $workdir
 application="Rscript"
 
 #! Run options for the application:
-options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla R/output/SPIMask.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
