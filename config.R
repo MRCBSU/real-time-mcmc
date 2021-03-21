@@ -206,5 +206,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-## future.n <- (c(1.2, 2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5) * 10^6) * (55.98 / 66.65)
-future.n <- (c(2.4, 4.7, 3.6, 5.5, 4.9, 4.5, 4.5, 4.2) * 10^6) * (55.98 / 66.65)
+future.n <- (c(3.6, 4.5, 2.8, 2.8, 2.8, 4.4, 3.7) * 10^6) * (55.98 / 66.65)
