@@ -1,11 +1,12 @@
 load("tmp.RData")
 library(tidyverse)
 out.dir <- getwd()
-arg.index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-if (is.na(arg.index))
+## arg.index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+## if (is.na(arg.index))
     arg.index <- 1
 args <- commandArgs(trailingOnly = TRUE)
 projections_file <- args[arg.index]
+cat("File:", projections_file, "exists?", file.exists(projections_file), "\n")
 
 regions.total.population <- t(matrix(pop.input, nA, length(regions)))
 colnames(regions.total.population) <- age.labs

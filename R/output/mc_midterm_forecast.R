@@ -33,11 +33,11 @@ prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence output
 if(prev.flag && any(prev.data$lmeans == "NULL")){
     ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20210303")
+		date.prev <- ymd("20210317")
 		## Convert that to an analysis day number
-		prev.end.day <- 374
-		last.prev.day <- 374
-		first.prev.day <- 323
+		prev.end.day <- 388
+		last.prev.day <- 388
+		first.prev.day <- 75
 		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
 		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
