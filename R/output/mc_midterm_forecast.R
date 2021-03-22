@@ -27,25 +27,14 @@ mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
+if(prev.flag && any(prev.data$lmeans == "NULL")){
+	stop("No prev files specified")
+}
 prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
-    ## if (!exists("date.prev")) {
-		## Get the date of the prevalence data
-		date.prev <- ymd("20210303")
-		## Convert that to an analysis day number
-		prev.end.day <- 374
-		last.prev.day <- 374
-		first.prev.day <- 323
-		if(!exists("days.between.prev")) days.between.prev <- 7
-		## Default system for getting the days on which the likelihood will be calculated.
-		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
-	## }
     for(r in 1:nr){
-	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste(prev.lik.days, collapse = "_"), "_", regions[r], "ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
-	if (use.INLA.prev) prev.file.prefix <- paste0(prev.file.prefix, "INLA_")
-          prev.file.suffix <- paste0("logprev.txt")
-      prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
-      prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
+      prev.data$lmeans[r] <- file.path(data.dirs["prev"], "dummy_meanlogprev.txt")
+      prev.data$lsds[r] <- file.path(data.dirs["prev"], "dummy_sdlogprev.txt")
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
@@ -207,7 +196,7 @@ niter <- min(sapply(params, nrow))
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
 if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
-    exe <- "hpc"
+    exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-dev/rtm_", exe)), "\n")
