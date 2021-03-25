@@ -155,6 +155,7 @@ void updParamSet::insertAndRegister(updateable_model_parameter& inPar, int num_i
 
 // low/high only used for uniform
 double transform(double x, distribution_type dist, double low = 0, double high = 1) {
+  
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -174,6 +175,7 @@ double transform(double x, distribution_type dist, double low = 0, double high =
 }
 
 double invTransform(double x, distribution_type dist, double low = 0, double high = 1) {
+
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -204,7 +206,6 @@ void updParamSet::init(const string& dir) {
       }
     }
   }
-
 
   // Count non-constant components
   int globalSize = 0, localSize = 0;
@@ -310,12 +311,6 @@ void updParamSet::init(const string& dir) {
     }
 
     block.sigma *= 0.01;   // Scale
-
-    /*
-    if (debug && block.global)
-      cout << "mu: " << block.mu << block.sigma;
-    */
-    
     block.beta = 0;
   }
 }
@@ -366,39 +361,21 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
   // Assumes that the values vector is already up to date.
   // It is set on init, and set whenever proposal is accepted
   
-  // Covariance matrix
-  // After 1st 200 iters, sigma changes every iter, so no benefit to caching
-
-  if (debug) {
-    //if (global)
-    //  cout << "global beta " << exp(beta) << endl;
-    //else
-    //  cout << "local " << regionNum << ": expbeta " << exp(regbeta) << endl;
-    if (global) cout << "global ";
-    else cout << "local ";
-    cout << "beta " << beta << " expbeta " << exp(beta) << endl;
-  }
-  
+  // Covariance matrix. Sigma changes every iter, so no benefit to caching
   gslMatrix covar;
-  //if (global)
-    covar = sigma * exp(beta);
-    //else
-    //covar = sigma * exp(regbeta);
-
+  covar = sigma * exp(beta);
+  
+  // CCS
   if (debug) {
-    cout << "covar: " << setprecision(6) << covar << setprecision(4);
-    /*
+    // Examine eigenvalues
     gslMatrix covar2(covar);
     gslVector eval(covar2.nrows());
     gsl_eigen_symm_workspace* work = gsl_eigen_symm_alloc(covar2.nrows());
     // covar2 is overwitten
     gsl_eigen_symm(*covar2, *eval, work);
-    cout << "evals: " << eval << endl;
     gsl_eigen_symm_free(work);
-    */
   }
   
-
   // Transform
   gslVector transformed(values.size());
   for (int i = 0; i < values.size(); i++)
@@ -411,8 +388,12 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
     double rcond;
     gsl_vector *workv = gsl_vector_alloc(3*values.size());
     gsl_linalg_cholesky_rcond(*covar, &rcond, workv);
-    cout << "condition: " << 1/rcond << endl;
     gsl_vector_free(workv);
+    
+    cout << "Covar diag: ";
+    for (int i = 0; i < covar.nrows(); i++)
+      cout << covar[i][i] << " ";
+    cout << "\nCondition: " << 1/rcond << endl;
   }
   
   gsl_ran_multivariate_gaussian(rng, *transformed, *covar, *proposal);
@@ -420,16 +401,9 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng) {
   for (int i = 0; i < values.size(); i++)
     proposal[i] = invTransform(proposal[i], dist[i]);
   
-  if (debug) {
-/*    if (global)
-      cout << "global covar factor: " << exp(beta) << endl;
-      else
-      cout << "local covar factor: " << exp(regbeta) << endl;
-*/
-    //if (global) {
-      cout << "V: " << values << endl << "P: " << proposal << endl;
-      //}
-  }
+  if (debug)
+    cout << "V: " << values << endl << "P: " << proposal << endl;
+
 }
 
 double updParamBlock::regbeta = 0;
@@ -437,6 +411,7 @@ int updParamBlock::regacceptLastMove = 0;
 
 
 double jacobianFactor(double prop, double curr, distribution_type dist, double low = 0, double high = 1) {
+  
   switch(dist) {
   case cCONSTANT:
   case cNORMAL:
@@ -470,17 +445,16 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   else
     regacceptLastMove = 0;
 
-  // Check bounds
+  // Check bounds (when testing without log transform)
   /*
-  if (global) {
-    for (int i = 0; i < values.size(); i++) {
-      if (dist[i] == cGAMMA || dist[i] == cBETA)
-	if (proposal[i] < 0 || proposal[i] > 1) {
-	  cout << "bounds check triggered\n";
-	  exit(1);
-	  laccept = GSL_NEGINF;
-	  return;
-	}
+  for (int i = 0; i < values.size(); i++) {
+    if (dist[i] == cGAMMA || dist[i] == cBETA)
+      if (proposal[i] < 0 || proposal[i] > 1) {
+	cout << "bounds check failed\n";
+	//exit(1);
+	laccept = GSL_NEGINF;
+	return;
+      }
   }
   */
 
@@ -524,12 +498,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     }
   }
 
-  //if (iter >= 100000) {
-  //  cout << "Iter " << iter;
-  //  if (global) cout << " globl: ";
-  //  else cout << " local: ";
-  //  cout << "jcbn+prior " << laccept;
-  //}
+  if (debug)
+  cout << "prior dens " << laccept;
   
   if (laccept == GSL_NEGINF)
     return;
@@ -564,21 +534,32 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 
 	      // We haven't accepted, so the prior is the relevant proposal components
 
+	      // Difference in child density between proposal and current value
+	      // Caching no longer easy to do, and is inefficient if updating all
+	      // regional blocks per iter
+	      
 	      // WARNING WARNING TOFIX
-	      // Prior is mix of const and non-const, so can't just subset
-	      // the proposal vector
+	      // Proper way of setting the prior.
+	      // Mix of const and non-const, so can't just subset the proposal vector
+
+	      // Current value
+	      gslVector prevprior(2);
+	      prevprior[0] = par.values[0];
+	      prevprior[1] = values[0];
+	      
+	      child.log_prior_dens = 0;
+	      for (int i = 0; i < child.size; i++) {
+		child.log_prior_dens += R_univariate_prior_log_density(
+		    child.values[i],
+		    child.prior_distribution[i],
+		    *prevprior);
+	      }
+
+	      // Proposed value
 	      gslVector prior(2);
 	      prior[0] = par.values[0];
 	      prior[1] = proposal[0];
 
-	      // We need to search the proposal looking for the parent
-	      //int start = -1;
-	      //for (int i = 0; i < proposal.size(); i++)
-	      //  if (parIndex[i] == par.index)
-	      //    start = i;
-
-	      //gsl_vector_view prior = gsl_vector_subvector(*proposal, start, 2);
-	      
 	      for (int i = 0; i < child.size; i++) {
 		child.proposal_log_prior_dens += R_univariate_prior_log_density(
 		    child.values[i],
@@ -586,10 +567,9 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 		    *prior);
 	      }
 
+	      if (debug)
+	      cout << " child prev " << child.log_prior_dens << " curr " << child.proposal_log_prior_dens;
 	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
-
-	      //if (iter >= 100000)
-	      //  cout << " child prior " << child.proposal_log_prior_dens - child.log_prior_dens;
 	    }
 	  }
 	}
@@ -660,10 +640,8 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
 	
   laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
 
-  //if (iter >= 100000) {
-  //  cout << " lhood " << prop_lfx.total_lfx - paramSet.lfx.total_lfx;
-  //  cout << "; laccept: " << laccept << endl;
-  //}
+  if (debug)
+    cout << " curr lhood " << paramSet.lfx.total_lfx  << " prop " << prop_lfx.total_lfx << " accept " << laccept << endl;
 }
 
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
@@ -680,10 +658,10 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
   numProposed++;
 
   if (laccept > acceptTest) {
-    if (debug)
-      if (global) cout << "global accept\n";
-      else
-	cout << "local accept\n";
+
+    //if (debug)
+    //if (global) cout << "Global accept\n";
+    //else cout << "Local accept\n";
 
     numAccept++;
    
@@ -699,15 +677,21 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     // To calculate the adaptive delta, we swap these two, so proposal
     // temporarily holds the previous iteration's values.
     values.swapWith(proposal);
-    
-    // Save child log prior density
-    for (updParam& par : paramSet.params)
+
+    // TODO: Can only global nodes have children?
+    // TODO: Value no longer cached. Decide whether caching or recalculating is most efficient
+    /*    
+    if (global) {
+      // Save child log prior density
+      for (updParam& par : paramSet.params)
       if (par.flag_any_child_nodes)
 	for (int i = 0; i < par.flag_child_nodes.size(); i++)
 	  if (par.flag_child_nodes[i]) {
 	    updParam& child = paramSet[i];
 	    child.log_prior_dens = child.proposal_log_prior_dens;
 	  }
+    }
+    */
     
     paramSet.lfx = prop_lfx;
 
@@ -735,8 +719,10 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     }
   } else {
     // Reject proposal
-    if(debug) cout << "Prop reject\n";
-
+    // if (debug)
+    //if (global) cout << "Global reject\n";
+    //else cout << "Local reject\n";
+    
     // We need to reset the proposal so that adpative delta is calculated correctly 
     proposal = values;
     
@@ -771,10 +757,9 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
 void updParamBlock::adaptiveUpdate(int iter) {
 
-  // delta = proposed vals - curr vals, on the transformed scale
   gslVector delta(values.size());
   for (int i = 0; i < values.size(); i++) {
-    delta[i] = transform(proposal[i], dist[i]) - transform(values[i], dist[i]);
+    delta[i] = transform(values[i], dist[i]) - mu[i];
   }
 
   double betastart = beta;
@@ -786,6 +771,9 @@ void updParamBlock::adaptiveUpdate(int iter) {
     beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
   
   // else: beta for local blocks is calculated in calling function
+  for (int i = 0; i < mu.size(); i++)
+    mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);
+  
 
   gslMatrix deltaProd(delta.size(), delta.size());
     
@@ -793,26 +781,8 @@ void updParamBlock::adaptiveUpdate(int iter) {
     for (int j = 0; j < delta.size(); j++)
       deltaProd[i][j] = delta[i] * delta[j];
 
-  mu = (1 - eta) * mu + eta * delta;
+    
   sigma = (1 - eta) * sigma + eta * deltaProd;
-
-  
-  if(debug) {
-    cout << "------\n";
-    if (global)
-      cout << "Global: a " << acceptLastMove << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart << " beta " << beta << endl;
-    else
-      cout << "Locl " << regionNum << ": a " << updParamBlock::regacceptLastMove << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart << " beta " << beta << endl;
-//updParamBlock::regbeta;
-
-    cout << "P: " << proposal << endl << "V: " << values << endl;
-
-    //cout << " eta " << eta << " 1-eta " << 1-eta << " betastart " << betastart 
-      // cout << "delta " << delta << "; mu: " << mu << endl;
-    //cout << "deltaProd: " << deltaProd;
-    //cout << "sigma: " <<  sigma;
-  }
-  
 }
 
 

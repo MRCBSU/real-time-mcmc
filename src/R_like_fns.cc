@@ -70,7 +70,7 @@ double R_univariate_prior_log_density(const double& x,
       return gsl_sf_log(ldf);
     } else {
       ldf = (x - gsl_vector_get(params, 0)) / gsl_vector_get(params, 1);
-      return normlnorm - ((1/2) * ldf * ldf) - gsl_sf_log(gsl_vector_get(params, 1));
+      return normlnorm - ((0.5) * ldf * ldf) - gsl_sf_log(gsl_vector_get(params, 1));
     }
   case cHALFNORMAL :
     return gsl_sf_log(2 * gsl_ran_gaussian_pdf(x - gsl_vector_get(params, 0), gsl_vector_get(params, 1)));

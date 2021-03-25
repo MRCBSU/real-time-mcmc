@@ -5,7 +5,6 @@
 #include "string_fns.h"
 
 #include "RTM_updParams.h"
-#include "RTM_BlockUpdate.h"
 
 using namespace std;
 using std::string;
@@ -378,14 +377,21 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
 
       // Global
+      //cout << endl << int_iter << ": Global block ---------------------------\n";
       paramSet.blocks[0].calcProposal(paramSet, r);
       paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
       paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
-
+      if (int_iter > 199)
+	paramSet.blocks[0].adaptiveUpdate(int_iter);
+      
       // Local
+      //cout << endl << int_iter << ": Local block " << reg << " --------------------------\n";
       paramSet.blocks[reg].calcProposal(paramSet, r);
       paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+      if (int_iter > 199)
+	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+
       
 /*
       paramSet.calcProposals(r);
@@ -400,17 +406,19 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // debug
       paramSet.outputPars();
-      if (int_iter % 1000 == 0 && int_iter > 0)
+      if (int_iter % 10000 == 0 && int_iter > 0)
       	paramSet.printAcceptRates(int_iter);
 
 
       // Block adaptive
+/*
       if (int_iter > 199) {
 	//paramSet.adaptiveUpdate(int_iter);
 	paramSet.blocks[0].adaptiveUpdate(int_iter);
 	paramSet.blocks[reg].adaptiveUpdate(int_iter);
       }
-
+*/
+      
       // Update Posterior mean and sumsq on a per-parameter basis
       if (int_iter >= simulation_parameters.burn_in) {
 	for (updParam& par : paramSet.params) {
