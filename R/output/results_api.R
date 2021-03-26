@@ -36,7 +36,7 @@ if (!exists("infections")) {
 	tmp_env <- new.env()
     load(file.path(out.dir, "tmp.RData"), tmp_env)
     load(output.required)
-    int_iter <- 0:(num.iterations - 1)
+    int_iter <- 0:(tmp_env$num.iterations - 1)
     parameter.iterations <- int_iter[(!((int_iter + 1 - tmp_env$burnin) %% tmp_env$thin.params)) & int_iter >= tmp_env$burnin]
     outputs.iterations <- int_iter[(!((int_iter + 1 - tmp_env$burnin) %% tmp_env$thin.outputs)) & int_iter >= tmp_env$burnin]
     parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)

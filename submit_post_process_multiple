@@ -31,7 +31,7 @@
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
-#SBATCH --array=5
+#SBATCH --array=3,4
 
 #! sbatch directives end here (put any additional directives above this line)
 
