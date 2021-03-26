@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("2021-03-19"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-03-26"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -152,7 +152,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210317") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210322") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 14
 ## Convert that to an analysis day number
@@ -195,7 +195,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210318" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210324" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
@@ -206,4 +206,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(3.6, 4.5, 2.8, 2.8, 2.8, 4.4, 3.7) * 10^6) * (55.98 / 66.65)
+future.n <- (c(3, 3.3, 3, 4.7, 4.7, 4.3, 4.2) * 10^6) * (55.98 / 66.65)
