@@ -105,7 +105,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## Map our names for columns (LHS) to data column names (RHS)
     possible.col.names <- list(
         age = "age",
-        region = "region_of_residence",
+        region = c("region_of_residence", "Region_of_residence"),
         sdate = "vaccination_date",
         type = "product_display_type",
         dose = "string_dose_number")
