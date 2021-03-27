@@ -36,7 +36,7 @@ pos.part <- function(x){
     x
     }
 
-
+## options(warn=2)
 for(dt in (d0 + 1):d.end){
 
     ## Get denominator population sizes
@@ -78,7 +78,7 @@ for(dt in (d0 + 1):d.end){
         mutate(f = ifelse(exhausted, 0, f)) %>%
         mutate(vac1due = f * capacity) %>%
         mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
-    
+
     while(any(tmp2$exceed.f > 0 & !tmp2$exhausted)){
         
         idx <- which(tmp2$exceed.f > 0 & !tmp2$exhausted)
@@ -100,7 +100,6 @@ for(dt in (d0 + 1):d.end){
                    sdate = lubridate::as_date(dt)) %>%
             select(sdate, region, age.grp, dose, n, pPfizer, pop)
         )
-            
-            
+                        
 }
-    
+options(warn=0)
