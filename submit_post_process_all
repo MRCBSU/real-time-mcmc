@@ -10,8 +10,9 @@
 #SBATCH --mail-type=END
 #SBATCH --verbose
 #SBATCH --qos=covid0
+#SBATCH --mem=20G
 
-#SBATCH --array=0-3
+#SBATCH --array=0-1
 #SBATCH -p skylake-himem
 
 
