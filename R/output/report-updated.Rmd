@@ -454,7 +454,7 @@ deaths.growth.rates %>%
 
 ## Infections and deaths {.tabset}
 
-The blue lines is show when interventions have been introduced (lockdown on 23 Mar and the relaxation of measures on 11 May), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
+The blue lines is show the start and end of each national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
 ```{r eval=!is.null(prev.dat)&&!external, child='prev-report.Rmd'}
 ```
@@ -499,33 +499,6 @@ sum.up.and.merge <- function(inf){
 		dimnames(inf_by_age)$age <- dimnames(ifr)$age
 		inf_by_age
 }
-
-## ## Base R proved quicker than tidyr equivalents
-## Aggregate infections over region
-inf_by_age <- apply(infections, c("age", "date", "iteration"), sum)
-## Aggegrate the two youngest age groups
-inf_by_age <- merge.youngest.age.groups(inf_by_age, idx = c("iteration", "date"))
-names(dimnames(inf_by_age))[1] <- "age"; dimnames(inf_by_age)$age <- dimnames(ifr)$age
-## Only look at IFR iterations for which the infections array has been evaluated
-ifr.tab <- extract(ifr, indices=list(parameter.to.outputs), dims="iteration")
-## Calculate time-specific weighted-mean for the IFR, weighted by current age-profile of infections
-inf_by_age <- aperm(inf_by_age, names(dimnames(ifr.tab)))
-total_inf_by_age <- apply(inf_by_age, c("iteration", "date"), sum)
-ifr.all <- array(apply(inf_by_age * ifr.tab, "age", `/`, total_inf_by_age), dim = dim(ifr.tab)[c("iteration", "date", "age")])
-dimnames(ifr.all) <- list(iteration = dimnames(ifr.tab)$iteration, date = dimnames(ifr.tab)$date, age = dimnames(ifr.tab)$age)
-ifr.eng <- apply(ifr.all, c("iteration", "date"), sum)
-rm(inf_by_age, total_inf_by_age, ifr.all)
-
-## Join England to the rest of the IFR array.
-require(abind)
-name.order <- c("iteration", "date", "age")
-ifr.tab <- aperm(ifr.tab, name.order)
-ifr.tab <- abind(ifr.eng, ifr.tab, along = 3); rm(ifr.eng)
-names(dimnames(ifr.tab)) <- name.order
-dimnames(ifr.tab)$age[1] <- "All ages"
-
-make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL, y.percent = TRUE)
-
 ## Only look at IFR iterations for which the infections array has been evaluated
 ifr.tab <- extract(ifr, indices=list(parameter.to.outputs), dims="iteration")
 
@@ -551,7 +524,7 @@ ifr.tab <- abind(ifr.eng, ifr.tab, along = 3); rm(ifr.eng)
 names(dimnames(ifr.tab)) <- name.order
 dimnames(ifr.tab)$age[1] <- "All ages"
 
-make.plots(ifr.tab, by = "age", y.format = ".2%", combine.to.England = NULL)
+make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL)
 ```
 
 ### Prob $R_t > 1$

@@ -38,7 +38,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         x0 = ymd(20200323), 
         x1 = ymd(20200323), 
         line = list(color = "blue"),
-        hoverinfo = "Lockdown"
+        hoverinfo = "First national lockdown begins"
     ),
     list(
         type = "line", 
@@ -48,8 +48,48 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         x0 = ymd(20200511), 
         x1 = ymd(20200511), 
         line = list(color = "blue"),
-        hoverinfo = "Lockdown"
-    )
+        hoverinfo = "First national lockdown ends"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20201105), 
+        x1 = ymd(20201105), 
+        line = list(color = "blue"),
+        hoverinfo = "Second national lockdown begins"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20201203), 
+        x1 = ymd(20201203), 
+        line = list(color = "blue"),
+        hoverinfo = "Second national lockdown ends"
+	),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210105), 
+        x1 = ymd(20210105), 
+        line = list(color = "blue"),
+        hoverinfo = "Third national lockdown begins"
+	),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210308), 
+        x1 = ymd(20210308), 
+        line = list(color = "green"),
+        hoverinfo = "Step one of unlocking roadmap"
+	)
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150
