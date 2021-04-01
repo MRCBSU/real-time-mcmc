@@ -454,7 +454,7 @@ deaths.growth.rates %>%
 
 ## Infections and deaths {.tabset}
 
-The blue lines is show the start and end of each national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
+The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
 ```{r eval=!is.null(prev.dat)&&!external, child='prev-report.Rmd'}
 ```

@@ -31,56 +31,39 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         hoverinfo = "Today"
     ),
     list(
-        type = "line", 
+        type = "rect", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
         x0 = ymd(20200323), 
-        x1 = ymd(20200323), 
-        line = list(color = "blue"),
-        hoverinfo = "First national lockdown begins"
-    ),
-    list(
-        type = "line", 
-        y0 = 0, 
-        y1 = 1, 
-        yref = "paper",
-        x0 = ymd(20200511), 
         x1 = ymd(20200511), 
-        line = list(color = "blue"),
-        hoverinfo = "First national lockdown ends"
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "First national lockdown"
     ),
     list(
-        type = "line", 
+        type = "rect", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
         x0 = ymd(20201105), 
-        x1 = ymd(20201105), 
-        line = list(color = "blue"),
-        hoverinfo = "Second national lockdown begins"
+        x1 = ymd(20201202), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "Second national lockdown"
     ),
     list(
-        type = "line", 
-        y0 = 0, 
-        y1 = 1, 
-        yref = "paper",
-        x0 = ymd(20201203), 
-        x1 = ymd(20201203), 
-        line = list(color = "blue"),
-        hoverinfo = "Second national lockdown ends"
-	),
-    list(
-        type = "line", 
+        type = "rect", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
         x0 = ymd(20210105), 
-        x1 = ymd(20210105), 
-        line = list(color = "blue"),
-        hoverinfo = "Third national lockdown begins"
-	),
-    list(
+        x1 = ymd(20210308), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "Third national lockdown"
+    ),
+	list(
         type = "line", 
         y0 = 0, 
         y1 = 1, 
@@ -88,7 +71,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         x0 = ymd(20210308), 
         x1 = ymd(20210308), 
         line = list(color = "green"),
-        hoverinfo = "Step one of unlocking roadmap"
+        hoverinfo = "Step one of roadmap"
 	)
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
