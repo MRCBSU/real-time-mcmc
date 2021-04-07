@@ -367,58 +367,35 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (int_iter % 10000 == 0)
+      if (int_iter % 20000 == 0 && int_iter > 0)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
 
       // Update two blocks every iter: global block and one of the local blocks
-
       int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
 
       // Global
-      //cout << endl << int_iter << ": Global block ---------------------------\n";
       paramSet.blocks[0].calcProposal(paramSet, r);
-      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
       if (int_iter > 199)
 	paramSet.blocks[0].adaptiveUpdate(int_iter);
       
       // Local
-      //cout << endl << int_iter << ": Local block " << reg << " --------------------------\n";
       paramSet.blocks[reg].calcProposal(paramSet, r);
-      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, int_iter);
+      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
       if (int_iter > 199)
 	paramSet.blocks[reg].adaptiveUpdate(int_iter);
 
       
-/*
-      paramSet.calcProposals(r);
-
-      paramSet.outputProposals();
-      // Calculate acceptance ratio
-      paramSet.calcAccept(country2, gmip, base_mix);
-
-      // Accept/reject
-      paramSet.doAccept(r, country2, gmip);
-*/
-
-      // debug
-      paramSet.outputPars();
-      if (int_iter % 10000 == 0 && int_iter > 0)
-      	paramSet.printAcceptRates(int_iter);
-
-
-      // Block adaptive
-/*
-      if (int_iter > 199) {
-	//paramSet.adaptiveUpdate(int_iter);
-	paramSet.blocks[0].adaptiveUpdate(int_iter);
-	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+      if (debug) {
+	paramSet.outputPars();
+	if (int_iter % 10000 == 0 && int_iter > 0)
+	  paramSet.printAcceptRates(int_iter);
       }
-*/
-      
+ 
       // Update Posterior mean and sumsq on a per-parameter basis
       if (int_iter >= simulation_parameters.burn_in) {
 	for (updParam& par : paramSet.params) {
@@ -630,12 +607,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
-
-			  //cout << "Old llhood: " << prop_lfx.total_lfx << " " << lfx.total_lfx << endl;
-			  
 			}
 		    }
 		  }
+		  
 		  // dbl_A and dbl_U variables need to be defined to govern acceptance.
 		  double dbl_A = (log_accep < 0.0) ? log_accep : 0.0;
 		  double dbl_U = (log_accep < 0.0) ? gsl_sf_log(gsl_rng_uniform(r)) : -1.0;
@@ -661,7 +636,6 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			}
 		      else {
 			// MEMCPY THE LIKELIHOOD STRUCTURE
-			//likelihood_memcpy(lfx, prop_lfx);
 			lfx = prop_lfx;
 
 			for(int int_reg = 0; int_reg < nregions; int_reg++){
@@ -711,11 +685,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		    // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
 		    if(!theta_i->flag_any_child_nodes)
 		      prop_lfx = lfx;
-		      //likelihood_memcpy(prop_lfx, lfx);
 
 		  }
-
 		}
+
 	      // iterate the posterior_mean and posterior_sumsq members of the updateable_model_parameter structure regardless of whether the move is accepted or not
 	      if(int_iter >= simulation_parameters.burn_in)
 		{
@@ -819,9 +792,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       
     } // END FOR(int_iter < num_iterations)
 
-  
-  //likelihood_free(prop_lfx);
-  for(int int_i = 0; int_i < nregions; int_i++){
+    for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES
 

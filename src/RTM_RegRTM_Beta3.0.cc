@@ -113,7 +113,7 @@ int main(void){
   Region* country2 = new Region[global_fixedpars.l_num_regions];
 
   // Block pars: Having read the parameters, initialise the rest of the block structure
-  paramSet.init("pars");
+  paramSet.init();
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy

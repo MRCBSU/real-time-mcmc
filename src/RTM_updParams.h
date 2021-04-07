@@ -92,7 +92,7 @@ public:
   void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool local, int numRegions_);
 
   // Initialise blocks. Called once after all params created.
-  void init(const string& outdir);
+  void init(const string& outdir = "pars");
 
   // Return a view for the given parameter, i.e. a sub-vector
   // Warning: View is only valid as long as parameter exists, and is not moved etc
@@ -107,7 +107,7 @@ public:
   // Calculate new proposal vectors (sequential)
   void calcProposals(updParamSet& paramSet, gsl_rng *rng);
   // Calculate acceptance ratios (in parallel over blocks)
-  void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter);
+  void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
   // Accept or reject
   void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip);
   // Adapt MH distribution over time
@@ -172,7 +172,7 @@ public:
   double beta;
   static double regbeta;
   int acceptLastMove;
-  static int regacceptLastMove;  
+  static int regacceptLastMove;
 
   double laccept;   // Acceptance score
   int numAccept;    // Acceptance rate
@@ -196,7 +196,7 @@ public:
 
   // M-H methods
   void calcProposal(updParamSet& paramSet, gsl_rng *rng);
-  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, int iter);
+  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
   void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip);
   void adaptiveUpdate(int iter);
 };

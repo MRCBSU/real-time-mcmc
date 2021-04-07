@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <vector>
+#include <initializer_list>
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_vector.h>
@@ -23,6 +24,25 @@ public:
       gsl_vector_free(base);
   }
 
+  // Initializer list constructor
+  gslVector(std::initializer_list<double> list) {
+    base = gsl_vector_alloc(list.size());
+    int i = 0;
+    for (double element : list)
+      (*this)[i++] = element;
+  }
+
+  // Initializer list assignment
+  gslVector& operator=(std::initializer_list<double> list) {
+    if (base != nullptr)
+      gsl_vector_free(base);
+    base = gsl_vector_alloc(list.size());
+    int i = 0;
+    for (double element : list)
+      (*this)[i++] = element;
+    return *this;
+  }
+  
   // Copy constructor
   gslVector(const gslVector& obj)
     : base(nullptr) {
@@ -243,6 +263,25 @@ public:
       base = gsl_vector_int_alloc(obj->size);
       gsl_vector_int_memcpy(base, obj);
     }
+  }
+
+  // Initializer list constructor
+  gslVectorInt(std::initializer_list<int> list) {
+    base = gsl_vector_int_alloc(list.size());
+    int i = 0;
+    for (double element : list)
+      (*this)[i++] = element;
+  }
+
+  // Initializer list assignment
+  gslVectorInt& operator=(std::initializer_list<int> list) {
+    if (base != nullptr)
+      gsl_vector_int_free(base);
+    base = gsl_vector_int_alloc(list.size());
+    int i = 0;
+    for (double element : list)
+      (*this)[i++] = element;
+    return *this;
   }
 
   // Copy assignment
