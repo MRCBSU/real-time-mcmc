@@ -367,13 +367,13 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (int_iter % 20000 == 0 && int_iter > 0)
+      if (int_iter % 20000 == 0 && int_iter > 0 && debug)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
 
       // Update two blocks every iter: global block and one of the local blocks
-      int reg = gsl_rng_uniform_int(r, 7) + 1;	// Int in interval [1, 7]
+      int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
 
       // Global
       paramSet.blocks[0].calcProposal(paramSet, r);

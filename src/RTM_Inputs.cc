@@ -23,7 +23,7 @@ void input_filenames(
   filenames = fopen(IN_FILE, "r");
   if(filenames == NULL)
     { // IF rtm_input_files DOES NOT EXIST, THEN SET *ALL* INPUTS TO DEFAULT VALUES. USER IS ALERTED.
-      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.");
+      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.\n");
     }
   else
     {
