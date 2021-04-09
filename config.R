@@ -4,7 +4,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -152,7 +152,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210329") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210404") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 7
 ## Convert that to an analysis day number
