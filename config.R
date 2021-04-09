@@ -4,7 +4,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -105,7 +105,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -154,7 +154,7 @@ if(gp.flag){
 ## Dates of prevalence data
 date.prev <- lubridate::ymd("20210329") # Set this to last date in dataset
 prev.cutoff.days <- 5
-days.between.prev <- 14
+days.between.prev <- 7
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
 last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
@@ -187,7 +187,7 @@ out.dir <- file.path(proj.dir,
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
-use.previous.run.for.start <- TRUE
+use.previous.run.for.start <- F
 previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210319/PrevINLACevik_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev7_skip5Nick_matrices_20210319_timeuse_household_new_base_deaths/"
 iteration.number.to.start.from <- 6400
 
