@@ -17,10 +17,9 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=2
-#SBATCH --array=1
+#SBATCH --cpus-per-task=32
 #! How much wallclock time will be required?
-#SBATCH --time=1:00:00
+#SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -29,14 +28,17 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+#SBATCH --array=1-4
 
-#SBATCH -p skylake-himem
+#SBATCH -p skylake
 #SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201015_%a.out
-#SBATCH --error=process_model_runs_20201015_%a.err
+#SBATCH --output=simulate_model_runs_20201218_%a.out
+#SBATCH --error=simulate_model_runs_20201218_%a.err
+
+forecast_switch="spim_ask"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -58,55 +60,48 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
-if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
+
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-#SBATCH --output=model_runs_20210120regjobs_%a.out
-#SBATCH --error=model_runs_20210120regjobs_%a.err
+# bp="IFR3bp"
+# if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+#     prev="NoPrev"
+#     gap=""
+# else
+#     prev="PrevCevik"
+#     gap="_prev7-5"
+# fi
+# if (( $SLURM_ARRAY_TASK_ID % 6 < 3 )); then
+#     cm="ons"
+# else
+#     cm="viner"
+# fi
+# eff="Nick"
+# if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+#     geog="ONS"
+#     days="60"
+# elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+#     geog="NHS"
+#     days="28"
+# else
+#     geog="NHS"
+#     days="60"
+# fi
 
-# Navigate to the correct working directory
-bp="IFR3bp"
-enddays="25"
-if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-    geog="ONS"
-    days="60"
-elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-    geog="NHS"
-    days="60"
-else
-    geog="NHS"
-    days="28"
-fi
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
-    prev="NoPrev"
-    gap=""
-    pdays=""
-else
-    prev="Prev"
-    pdays="326"
-    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
-	gap="_prev7-5"
-    elif [ $SLURM_ARRAY_TASK_ID -lt 10 ]; then
-	gap="_prev14-5"
-    else
-	gap="_prev28-5"
-    fi
-fi
-cm="ons"
-eff="Nick"
+# workdir="$SLURM_SUBMIT_DIR/model_runs/20210312/${prev}_cm4${cm}_${bp}_${geog}${days}cutoff_18wk2${gap}${eff}_matrices_20210312_timeuse_household_deaths"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210326/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210326_timeuse_household_deaths"
-# workdir="$SLURM_SUBMIT_DIR/model_runs/20210326/NoPrev_cm4ons_IFR3bp_NHS28cutoff_25wk2Nick_matrices_20210326_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210326/Prev326_cm4ons_IFR3bp_NHS28cutoff_25wk2_prev7-5Nick_matrices_20210326_timeuse_household_deaths"
+
+module load gcc/9 intel/compilers/2020.2
 
 echo -e $workdir
 
 #! Full path to application executable: 
 application="Rscript"
 
-
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections_midterm.RData"
+options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -136,7 +131,7 @@ np=$[${numnodes}*${mpi_tasks_per_node}]
 
 # You can use any arbitrary set of Linux commands here
 
-CMD="$application $options"
+CMD="$application $options ${workdir}"
 
 # Or for example:
 # CMD="Rscript myScript.R"
@@ -146,23 +141,16 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
-cd $workdir
 
 JOBID=$SLURM_JOB_ID
 
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
-if [ $SLURM_JOB_NUM_NODES -gt 1 ]; then
-        echo "Running on nodes: $SLURM_JOB_NODELIST"
-else
-        echo "Running on node: `hostname`"
-fi
 
-echo "Current directory: `pwd`"
-echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
-echo -e "\nExecuting command:\n==================\n$CMD\n"
-
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
 eval $CMD
+# Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
@@ -178,7 +166,5 @@ eval $CMD
 # fi
 
 # echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks_per_node (OMP_NUM_THREADS=$OMP_NUM_THREADS)"
-
-# echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 # eval $CMD

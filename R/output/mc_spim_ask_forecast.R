@@ -6,37 +6,52 @@ require(parallel)
 require(knitr)
 
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
+setwd(out.dir)
+out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+Rscenario <- c(0.8, 1.1, 1.3, 1.5)[out.ind]
+## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
-## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-if (!is.na(out.dir)) setwd(out.dir)
-cat(getwd(), "\n")
-cat(out.dir, "\n")
+
 load("mcmc.RData")
 load("tmp.RData")
+
+Renv <- new.env()
+load("output_matrices.RData", envir = Renv)
+Rt <- Renv$Rt
+## Fix the iteration numbers that we're going to look at
+int_iter <- 0:(num.iterations - 1)
+## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
+parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
+outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
+stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
+iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
+outputs.for.Rt <- which(parameter.to.outputs %in% iterations.for.Rt)
+rm(Renv)
+
 source(file.path(Rfile.loc, "sim_func.R"))
-## ## mod_inputs.Rmd items that will change in the projections.
-## Number of weeks to forecast ahead
+
 nweeks.ahead <- 8
 
 counterfactual <- FALSE
 
-projections.basedir <- file.path(out.dir, "projections_MTP")
-## ## Enter dates at which it is anticipated that the contact model will change
-## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
-## ## Forecast projection
+projections.basedir <- file.path(out.dir, paste0("projections_MTP_R_", Rscenario))
+
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
 prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
+
 if(prev.flag && any(prev.data$lmeans == "NULL")){
     ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20210324")
+		date.prev <- ymd("20210317")
 		## Convert that to an analysis day number
-		prev.end.day <- 395
-		last.prev.day <- 395
+		prev.end.day <- 388
+		last.prev.day <- 388
 		first.prev.day <- 75
 		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
@@ -52,8 +67,6 @@ if(prev.flag && any(prev.data$lmeans == "NULL")){
 }
 ## ## Do the contract matrices that will be used in the projection exist on file and are they correct?
 overwrite.matrices <- FALSE
-
-## ## ----------------------------------------------------------
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
 if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7.18
@@ -86,7 +99,6 @@ combine.rtm.output <- function(x, strFld){
 if(!file.exists(projections.basedir))
     dir.create(projections.basedir)
 
-## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
@@ -160,10 +172,6 @@ num.threads <- 1
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
 
-## ## ## ------------------------------------------------------------
-
-## ## ## CHANGES TO VARIABLES BASED ON mod_pars.txt-LIKE SPECIFICATIONS
-
 ## Extend the breakpoints for the day of week effects
 if(gp.flag){
     require(Matrix)
@@ -181,15 +189,31 @@ if(gp.flag)
     symlink.design("icr.design.txt")
 if(rw.flag)
     symlink.design("m.design.txt")
-if(beta.rw.flag)
-    symlink.design("beta.design.txt")
 if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
 }
+## The matrix for the random-walks will need changing to account for an extra breakpoint
+## Place the new break-point now
+today.break <- ymd("20210329") - start.date + 1
+beta.breaks <- c(beta.breaks, today.break)
+beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
+    rbind(rep(1, nbetas)) %>%
+    cbind(c(rep(0, nbetas), 1))
+require(Matrix)
+beta.design <- lapply(1:nr, function(x) beta.block) %>%
+    bdiag() %>%
+    as.matrix()
+write_tsv(as.data.frame(beta.design), file.path(projections.basedir, "beta.design.txt"), col_names = FALSE)
 ## ## ## --------------------------------------------------------------
+
+## Subset the MCMC chain to look at only the iterations for which we have calculated an R value
+params <- lapply(params, function(x) x[iterations.for.Rt, , drop = FALSE])
+## Append a new beta to hit the target R value
+endRt <- Rt[, today.break, ]
+beta.new <- log(Rscenario / endRt)
 
 ## ## ## MAIN PROJECTION LOOP
 
@@ -200,9 +224,15 @@ if(vacc.flag) DNNI <- DNNI.files <- vector("list", nr)
 if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
 if(gp.flag) Cases <- Cases.files <- vector("list", nr)
 if(prev.flag) Prevs <- Prev.files <- vector("list", nr)
+params$log_beta_rw <- params$log_beta_rw %>%
+    array(dim = c(dim(params$log_beta_rw)[1], nbetas, nr)) %>%
+    abind(beta.new, along = 2) %>%
+    apply(1, as.vector) %>%
+    t()
+nbetas <- nbetas + 1
 
-## ## Get number of iterations
-niter <- min(sapply(params, nrow))
+## Get iteration indices
+niter <- length(iterations.for.Rt)
 
 ## ## For each iteration
 pct <- 0
@@ -212,6 +242,7 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-dev/rtm_", exe)), "\n")
+
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Sero <- lapply(xtmp, function(x) x$Sero)
@@ -233,7 +264,7 @@ melt.list <- function(xlist)
           along = 0)
 
 ## ## ## SAVE SOME OUTPUTS
-dim.list <- list(iteration = 1:niter,
+dim.list <- list(iteration = iterations.for.Rt,
                  age = age.labs,
                  date = start.date + 0:(ndays - 1),
                  region = regions
@@ -263,7 +294,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections_midterm.RData")
+save(list = save.list, file = paste0("projections_R", Rscenario, ".RData"))
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
