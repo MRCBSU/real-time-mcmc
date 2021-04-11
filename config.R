@@ -187,15 +187,15 @@ out.dir <- file.path(proj.dir,
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
-use.previous.run.for.start <- F
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210319/PrevINLACevik_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev7_skip5Nick_matrices_20210319_timeuse_household_new_base_deaths/"
+use.previous.run.for.start <- TRUE
+previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210326/PrevINLACevik_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14_skip5Nick_matrices_20210326_timeuse_household_new_base_deaths"
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210401" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210409" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
