@@ -265,7 +265,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             arrange(sdate) %>%
             group_by(age.grp) %>%
             summarise(sdate = sdate,
-                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
+                      value = pmin(n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n))), 1)
                       ) %>%
             replace_na(list(value = 0)) %>%
             ungroup() %>%
