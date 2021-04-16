@@ -294,8 +294,15 @@ value.eta.h <- 0.06729983
 pars.eta.h <- c(1.0, 0.2)
 
 ## Delay to death
-ddelay.mean <-15.0
+ddelay.mean <-15.0 + extra.time.to.death
 ddelay.sd <- 12.1
+if (extra.time.to.death == 5) {
+	ddelay.sd <- ddelay.sd + 4.7
+} else if (extra.time.to.death == 10) {
+	ddelay.sd <- ddelay.sd + 9.59
+} else if (extra.time.to.death != 0) {
+	stop("No entry for how much to increase ddelay.sd")
+}
 if(grepl("newOtoD", scenario.name, fixed = TRUE)){
     ddelay.mean <- 9.3
     ddelay.sd <- 9.7

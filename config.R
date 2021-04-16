@@ -108,6 +108,10 @@ if(flg.cutoff) {
 	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
+extra.time.to.death <- 0 #days
+if(extra.time.to.death != 0) {
+	scenario.name <- paste0(scenario.name, "_", extra.time.to.death, "ddaysExtra")
+}
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
@@ -172,7 +176,7 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_skip", prev.cutoff.days)
 
 
-## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
 efficacies <- "Nick" ## current values can be 'Nick' or 'SPIM'.
 scenario.name <- paste0(scenario.name, efficacies)
 
@@ -182,7 +186,7 @@ out.dir <- file.path(proj.dir,
                      date.data,
                      paste0(
                          scenario.name,
-                         "_matrices_", google.data.date, matrix.suffix,
+                         "_matrices_", google.data.date,
                          "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
