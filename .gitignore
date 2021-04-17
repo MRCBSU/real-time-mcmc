@@ -1,5 +1,3 @@
-rtm
-rtm_debug
 rtm_optim*
 rtm_hpc
 rtm_hpc2
@@ -29,3 +27,4 @@ Lombdardy*/**
 !base_matrices*.rds
 scratch/**
 .DS_Store
+*#
