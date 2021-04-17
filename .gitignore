@@ -27,3 +27,4 @@ Lombdardy*/**
 **.rds
 !base_matrices*.rds
 scratch/**
+.DS_Store

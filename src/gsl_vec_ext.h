@@ -12,7 +12,7 @@ using namespace std;
 using std::string;
 
 void gsl_vector_int_set_1ton(gsl_vector_int*, int start = 0);
-double gsl_vector_sum_elements(register const gsl_vector*);
+double gsl_vector_sum_elements(const gsl_vector*);
 void gsl_vector_subvector_memcpy(gsl_vector*, gsl_vector*, const size_t);
 void gsl_vector_sscanf(const string, gsl_vector*, const char* chr_delim = ",;");
 void gsl_vector_int_sscanf(const string, gsl_vector_int*, const char* chr_delim = ",;");

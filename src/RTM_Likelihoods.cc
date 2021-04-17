@@ -1,5 +1,6 @@
 #include "RTM_StructDefs.h"
 #include "RTM_FunctDefs.h"
+#include "RTM_updParams.h"
 #include "gsl_vec_ext.h"
 #include <cfloat>
 
@@ -342,6 +343,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   // AGGREGATE THE NUMBER_NEW_INFECTED MATRIX TO THE TIME STEPS USED BY THE REPORTING MODEL
   output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Number_New_Infected, l_NNI);
   if(Vaccination) output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Delta_Disease, l_Delta_Dis);
+  // ###################################
+  // ###################################
+  // ###################################
+  // CCS
+  else
+    gsl_matrix_memcpy(l_Delta_Dis, l_NNI);
   
   double dbl_isnan_check = gsl_matrix_max(l_NNI);
   if(isnan(dbl_isnan_check)){
@@ -688,6 +695,9 @@ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix* mat_data,
   return lfx;
 }
 
+
+
+
 void fn_log_likelihood(likelihood& llhood,
 		       Region* meta_region,
 		       int region,
@@ -698,8 +708,9 @@ void fn_log_likelihood(likelihood& llhood,
 		       bool flag_update_Viro_likelihood,
 		       bool flag_update_Sero_likelihood,
 		       bool flag_update_Prev_likelihood,
-		       global_model_instance_parameters gmip,
-		       globalModelParams gmp_delays)
+		       const global_model_instance_parameters &gmip,
+		       gslVector& gp_distribution_function,
+		       gslVector& hosp_distribution_function)
 {
   // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
   // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
@@ -776,8 +787,8 @@ void fn_log_likelihood(likelihood& llhood,
 	  gsl_matrix_free(weighted_positivity);  
 	} else // ** Just calculate the likelihood based on the already computed positivities
 	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
-	lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Sero_lfx, int_region));
-	gsl_vector_set(llhood.Sero_lfx, int_region, temp_log_likelihood);
+	lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Sero_lfx, int_region));
+	gsl_vector_set(*llhood.Sero_lfx, int_region, temp_log_likelihood);
 	gsl_matrix_free(test_positivity);
       }
 
@@ -801,8 +812,9 @@ void fn_log_likelihood(likelihood& llhood,
 		  }
 	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
 	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
-	      lfx_increment += (temp_log_likelihood - gsl_vector_get(llhood.Prev_lfx, int_region));
-	      gsl_vector_set(llhood.Prev_lfx, int_region, temp_log_likelihood);
+	      lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Prev_lfx, int_region));
+	      //if (debug) cout << int_region << " Prev prev " << gsl_vector_get(*llhood.Prev_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+	      gsl_vector_set(*llhood.Prev_lfx, int_region, temp_log_likelihood);
 	    }
 	  gsl_matrix_free(summed_prevalence);
 	}
@@ -825,7 +837,7 @@ void fn_log_likelihood(likelihood& llhood,
 				 gmip,
 				 gmip.l_GP_likelihood.upper,
 				 meta_region[int_region].population,
-				 gmp_delays.gp_delay.distribution_function,
+				 *gp_distribution_function,
 				 num_subthread_teams);
 	    }
 	
@@ -875,13 +887,13 @@ void fn_log_likelihood(likelihood& llhood,
 			perror("Unrecognised likelihood selected\n");
 			exit(2);
 		      }
-		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.GP_lfx, int_region));
-		      gsl_vector_set(llhood.GP_lfx, int_region, temp_log_likelihood);
+		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.GP_lfx, int_region));
+		      gsl_vector_set(*llhood.GP_lfx, int_region, temp_log_likelihood);
 		      gsl_matrix_free(mu_gp_counts);
 		    }
 		  else {
 		    lfx_sub_increment += GSL_NEGINF;
-		    gsl_vector_set(llhood.GP_lfx, int_region, GSL_NEGINF);
+		    gsl_vector_set(*llhood.GP_lfx, int_region, GSL_NEGINF);
 		  }
 		}
 	    }
@@ -914,8 +926,8 @@ void fn_log_likelihood(likelihood& llhood,
 	      } else
 		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
 
-	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.Viro_lfx, int_region));
-	      gsl_vector_set(llhood.Viro_lfx, int_region, temp_log_likelihood);
+	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Viro_lfx, int_region));
+	      gsl_vector_set(*llhood.Viro_lfx, int_region, temp_log_likelihood);
 	      
 	    }
 	  
@@ -935,7 +947,7 @@ void fn_log_likelihood(likelihood& llhood,
 			     gmip,
 			     gmip.l_Hosp_likelihood.upper,
 			     meta_region[int_region].population,
-			     gmp_delays.hosp_delay.distribution_function);
+			     *hosp_distribution_function);
 	  
 	  gsl_matrix* mu_hosp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size1,
 							meta_region[int_region].Hospitalisation_data->getDim2());
@@ -968,13 +980,18 @@ void fn_log_likelihood(likelihood& llhood,
 	      }
 	    } else temp_log_likelihood = GSL_NEGINF;
 	  
-	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(llhood.Hosp_lfx, int_region));
-	  gsl_vector_set(llhood.Hosp_lfx, int_region, temp_log_likelihood);
+	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Hosp_lfx, int_region));
+
+	  //if (debug) cout << int_region << " Hosp prev " << gsl_vector_get(*llhood.Hosp_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+
+	  gsl_vector_set(*llhood.Hosp_lfx, int_region, temp_log_likelihood);
+
+	  
 	  gsl_matrix_free(mu_hosp_counts);	  
 	}
       
       lfx_increment += lfx_sub_increment;
-      
+      //if (debug) cout << int_region << " end incr " << lfx_increment << endl;
     }
   
   llhood.total_lfx += lfx_increment;

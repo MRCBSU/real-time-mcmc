@@ -62,7 +62,7 @@ void mixing_model_memcpy(mixing_model &mix_dest, const mixing_model& mix_src)
     gsl_vector_memcpy(mix_dest.eval_dominant, mix_src.eval_dominant);
   if(mix_src.scalants != 0)
     gsl_vector_memcpy(mix_dest.scalants, mix_src.scalants);
-  for(register int i = 0; i <= mix_src.num_breakpoints; i++){
+  for(int i = 0; i <= mix_src.num_breakpoints; i++){
     gsl_matrix_memcpy(mix_dest.MIXMAT[i], mix_src.MIXMAT[i]);
     gsl_matrix_memcpy(mix_dest.MIXMAT_scaled[i], mix_src.MIXMAT_scaled[i]);
     gsl_matrix_int_memcpy(mix_dest.MIXMAT_param[i], mix_src.MIXMAT_param[i]);
@@ -104,7 +104,7 @@ int max_mm_param_int(const char *filename, const int nbreakpoints)
 {
 
   FILE* fl_filename;
-  register int i, max_int_param = 0, int_dummy;
+  int i, max_int_param = 0, int_dummy;
   gsl_matrix_int* tempmat = gsl_matrix_int_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
   char str_dummy[20];
 
@@ -131,10 +131,10 @@ int max_mm_param_int(const char *filename, const int nbreakpoints)
 void input_mixing_matrix_model(mixing_model &l_MIXMAT, const char* infile, const char* in_param_file)
 {
 
-  register FILE* age_mixing_matrix;
-  register FILE* age_mixing_matrix_param;
-  register char temp_string[25];
-  register int inti, temp_int;
+  FILE* age_mixing_matrix;
+  FILE* age_mixing_matrix_param;
+  char temp_string[25];
+  int inti, temp_int;
   int nbreakpoints;
   int num_scalants;
   double evalue; // dummy variable for storing unrequired dominant eigenvalues
@@ -193,15 +193,15 @@ void mixing_matrix_scale_and_normalisation(
 					   const bool evec_flag = true) // POPULATION PER AGE GROUP
 { 
  
-  register gsl_matrix* MIXMAT_dummy = gsl_matrix_alloc(l_MIXMOD_ADJUSTED2.MIXMAT[0]->size1, l_MIXMOD_ADJUSTED2.MIXMAT[0]->size2);
+  gsl_matrix* MIXMAT_dummy = gsl_matrix_alloc(l_MIXMOD_ADJUSTED2.MIXMAT[0]->size1, l_MIXMOD_ADJUSTED2.MIXMAT[0]->size2);
 
   // for each mixing matrix used
-  for(register int i = 0; i <= l_MIXMOD_ADJUSTED2.num_breakpoints; i++){
+  for(int i = 0; i <= l_MIXMOD_ADJUSTED2.num_breakpoints; i++){
 
     if(i == 0){ // TIME-0 NEXT GENERATION MATRIX
       gsl_matrix_memcpy(MIXMAT_dummy, l_MIXMOD_ADJUSTED2.MIXMAT_scaled[i]);
 
-      for (register int b = 0; b < l_MIXMOD_ADJUSTED2.MIXMAT[i]->size2; ++b)
+      for (int b = 0; b < l_MIXMOD_ADJUSTED2.MIXMAT[i]->size2; ++b)
 	{
 	  gsl_vector_view MIXMAT_dummy_col = gsl_matrix_column(MIXMAT_dummy, b);
 	  gsl_vector_mul(&MIXMAT_dummy_col.vector,

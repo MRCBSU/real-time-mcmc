@@ -4,6 +4,8 @@
 #include "gsl_vec_ext.h"
 #include "string_fns.h"
 
+#include "RTM_updParams.h"
+
 using namespace std;
 using std::string;
 
@@ -49,7 +51,7 @@ double univariate_prior_ratio(const updateable_model_parameter& theta,
 					      theta.prior_params[component]);
 
 }
-// //
+
 
 
 // ADAPT PROPOSAL VARIANCES //
@@ -114,6 +116,60 @@ void print_param_name(FILE* ifile, const string& param_name)
   fprintf(ifile, "\n");
 }
 
+
+void write_progress_report(const string& report_type, const int int_report_no, const int int_iter, const int chain_length,
+			   const updParamSet& paramSet,
+			   bool posterior_stats_flag, bool acceptance_flag, bool propvar_flag) {
+
+  // TODO convert to C++ ofstream
+  string filename(report_type);
+  filename += int_to_string(int_report_no);
+  FILE* ofile = fopen(filename.c_str(), "w");
+  double scale_val = ((double) chain_length) / ((double) int_iter);
+
+  for (const updParam& par : paramSet.params) {
+    if (par.flag_update) {
+
+      print_param_name(ofile, par.param_name);
+
+      if (posterior_stats_flag) {
+	gslVector post_mean = par.posterior_mean * scale_val;
+	gslVector post_sumsq = par.posterior_sumsq * scale_val;
+
+	gslVector sd(post_mean.size());
+	// Transform dynamically updated posterior mean/sumsq to
+	// posterior SD
+	for (int i = 0; i < sd.size(); i++) {
+	  sd[i] = -1 * (post_mean[i] * post_mean[i]) + post_sumsq[i];
+	  sd[i] = sqrt(sd[i]);
+	}
+	for(int i = 0; i < sd.size(); i++)
+	  fprintf(ofile, "posterior_mean%d = %f (%f)\n", i, post_mean[i], sd[i]);
+
+      }
+    }
+  }
+  
+  // Block acceptances
+  if (acceptance_flag) {
+    print_param_name(ofile, "acceptance rates"); 
+    fprintf(ofile, "acceptance_ratio_global = %f\n", paramSet.blocks[0].numAccept / (double) paramSet.blocks[0].numProposed);
+    for (int i = 1; i < paramSet.blocks.size(); i++) {
+      fprintf(ofile, "acceptance_ratio_local_%d = %f\n", i, paramSet.blocks[i].numAccept / (double) paramSet.blocks[i].numProposed);
+    }
+  }
+
+  // Proposal variances - these are now ignored
+
+  if(posterior_stats_flag) {
+    double mean = paramSet.lfx.bar_lfx * scale_val;
+    double sumsq = paramSet.lfx.sumsq_lfx * scale_val;
+    double sd = sumsq - mean*mean;
+    print_param_name(ofile, "likelihood");
+    fprintf(ofile, "lfx_bar = %f (%f)\n", mean, sqrt(sd));
+  }
+  fclose(ofile);
+}
 
 // ALL-PURPOSE REPORT FUNCTION //
 void write_progress_report(const string& report_type, const int& int_report_no, const int& int_iter, const int& chain_length,
@@ -191,15 +247,17 @@ void write_progress_report(const string& report_type, const int& int_report_no, 
 // FUNCTION TO BE CALLED FROM THE MAIN ROUTINE //
 void metrop_hast(const mcmcPars& simulation_parameters,
 		 globalModelParams& theta,
+		 updParamSet &paramSet,
 		 Region* state_country,
+		 Region* country2,
 		 likelihood& lfx,
 		 const global_model_instance_parameters& gmip,
 		 const mixing_model& base_mix,
 		 gsl_rng* r)
 {
 
-  register int int_iter = 0;
-  register int int_param = 0;
+  int int_iter = 0;
+  //int int_param = 0;
   gsl_vector_int* num_component_updates = gsl_vector_int_alloc(theta.size_param_list);
   gsl_vector_int* block_size = gsl_vector_int_alloc(theta.size_param_list);
   gsl_vector_int **a = new gsl_vector_int*[theta.size_param_list];
@@ -214,18 +272,28 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
   // Region
   Region* prop_country = new Region[nregions];
+
+#ifdef USE_OLD_CODE
   for(int int_reg = 0; int_reg < nregions; ++int_reg)
     {
       Region_alloc(prop_country[int_reg], state_country[int_reg]);
-
       Region_memcpy(prop_country[int_reg], state_country[int_reg], all_pos);
     }
+#else
+  for(int int_reg = 0; int_reg < nregions; ++int_reg) {
+    Region_alloc(prop_country[int_reg], country2[int_reg]);
+    Region_memcpy(prop_country[int_reg], country2[int_reg], all_pos);
+  }
+#endif
 
+  // Block copy
+  for (auto &block : paramSet.blocks) {
+    block.copyCountry(prop_country, nregions);
+  }
+  
   // Likelihood
-  likelihood prop_lfx;
-  likelihood_alloc(prop_lfx, gmip);
-  likelihood_memcpy(prop_lfx, lfx);
-  // //
+  likelihood prop_lfx(gmip);
+  prop_lfx = lfx;
 
   int maximum_block_size = simulation_parameters.maximum_block_size;
 
@@ -234,22 +302,22 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   ofstream output_coda_lfx("coda_lfx", ios::out|ios::trunc|ios::binary);
   ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
 
-  fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, state_country);
-  fstream_model_statistics_open(file_Delta_Dis, "Delta_Dis", gmip.l_num_regions, state_country);
+  fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, country2);
+  fstream_model_statistics_open(file_Delta_Dis, "Delta_Dis", gmip.l_num_regions, country2);
   if(simulation_parameters.oType == cMCMC)
     {
-      fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, state_country);
+      fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, country2);
       if(gmip.l_GP_consultation_flag){
-	fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, state_country);
-	fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, state_country);
+	fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, country2);
+	fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, country2);
       }
       if(gmip.l_Hospitalisation_flag) 
-	fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, state_country);
+	fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, country2);
       if(gmip.l_Prev_data_flag)
-	fstream_model_statistics_open(file_Prev, "Prev", gmip.l_num_regions, state_country);
+	fstream_model_statistics_open(file_Prev, "Prev", gmip.l_num_regions, country2);
     }
   if(simulation_parameters.oType == cSMC)
-    fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, state_country);
+    fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, country2);
 
   gsl_matrix** output_NNI = new gsl_matrix*[nregions];
   gsl_matrix** output_Delta_Dis = new gsl_matrix*[nregions];
@@ -267,7 +335,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // //
 
   // Determine block sizes for the various updates
-  for(int_param = 0; int_param < num_component_updates->size; int_param++)
+  for(int int_param = 0; int_param < num_component_updates->size; int_param++)
     {
 
       int theta_i_size = theta.param_list[int_param].param_value->size;
@@ -287,16 +355,142 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	gsl_vector_int_set_1ton(a[int_param]);
 
       // OPEN PARAMETER OUTPUT FILES...
-      string filename("coda_");
-      filename += theta.param_list[int_param].param_name;
-      if(theta.param_list[int_param].flag_update)
-	{output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);}
+      //string filename("coda_");
+      //filename += theta.param_list[int_param].param_name;
+      //if(theta.param_list[int_param].flag_update)
+      //  output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);
     }
 
+  for (int i = 0; i < paramSet.params.size(); i++) {
+    string filename("coda_");
+    filename += paramSet[i].param_name;
+    if(paramSet[i].flag_update)
+      output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
+  }
+  
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
+      if (int_iter % 1000 == 0 && int_iter > 0 && debug)
+	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
+      // Block update
+
+      // Update two blocks every iter: global block and one of the local blocks
+      int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+
+      // Global
+      paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+      if (int_iter > 199)
+	paramSet.blocks[0].adaptiveUpdate(int_iter);
+
+      // Local
+      paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
+      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+      if (int_iter > 199)
+	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+
+      
+      if (debug) {
+	paramSet.outputPars();
+	if (int_iter % 100 == 0 && int_iter > 0)
+	  paramSet.printAcceptRates(int_iter);
+      }
+ 
+      // Update Posterior mean and sumsq on a per-parameter basis
+      if (int_iter >= simulation_parameters.burn_in) {
+	for (updParam& par : paramSet.params) {
+	  // mean/subsq only defined if flag_update = true
+	  if (par.flag_update) {
+	    if (int_iter >= simulation_parameters.burn_in) {
+	      for (int i = 0; i < par.size; i++) {
+		par.posterior_mean[i] += par.values[i] / CHAIN_LENGTH;
+		par.posterior_sumsq[i] += gsl_pow_2(par.values[i]) / CHAIN_LENGTH;
+
+		if (!((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
+		  output_codas[par.index].write(reinterpret_cast<char const*>(par.values.ptr(i)), sizeof(double));
+		}
+	      }
+	    }
+	  }
+	}
+      }
+
+      // Output likelihood
+      if (int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
+	output_coda_lfx.write(reinterpret_cast<char const*>(&(paramSet.lfx.total_lfx)), sizeof(double));
+      }
+
+      // Output model statistics
+      if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_stats_every)) {
+	for (int reg = 0; reg < nregions; reg++) {
+	  model_statistics_aggregate(output_NNI[reg],
+				     output_Delta_Dis[reg],
+				     country2[reg].region_modstats, gmip.l_reporting_time_steps_per_day);
+	  
+	  if(simulation_parameters.oType == cMCMC) {	 
+	    for(int i = 0; i < output_NNI[reg]->size1; i++)
+	      for(int j = 0; j < output_NNI[reg]->size2; j++) {
+
+		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[reg], i, j)), sizeof(double));
+		file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[reg], i, j)), sizeof(double));
+		file_Sero[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_seropositivity, i, j)), sizeof(double));
+		
+		if(gmip.l_GP_consultation_flag) {
+		  file_GP[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_GP_Consultations, i, j)), sizeof(double));
+		  file_Viro[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_viropositivity, i, j)), sizeof(double));
+		}
+		if(gmip.l_Hospitalisation_flag)
+		  file_Hosp[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_Hospitalisations, i, j)), sizeof(double));
+		if(gmip.l_Prev_data_flag)
+		  file_Prev[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_prevalence, i, j)), sizeof(double));
+	      }
+	    
+	  } else if(simulation_parameters.oType == cSMC) {
+	    for(int i = 0; i < country2[reg].region_modstats.d_NNI->size1; i++)
+	      for(int j = 0; j < country2[reg].region_modstats.d_NNI->size2; j++)
+		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_NNI, i, j)), sizeof(double));
+	    country2[reg].region_modstats.d_end_state->write(file_state[reg]);
+	  }
+	}
+      }
+
+      // Update likelihood posterior statistics
+      if(int_iter >= simulation_parameters.burn_in) {
+	paramSet.lfx.bar_lfx += paramSet.lfx.total_lfx / ((double) CHAIN_LENGTH);
+	paramSet.lfx.sumsq_lfx += gsl_pow_2(paramSet.lfx.total_lfx) / ((double) CHAIN_LENGTH);
+
+	// TODO: Does it make more sense to copy the whole lfx object at the
+	// start of each iter?
+	for (updParamBlock& block : paramSet.blocks) {
+	  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
+	  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
+	}
+      }
+
+      // Output MCMC sampler progress reports
+      if (int_progress_report < simulation_parameters.num_progress_reports) {
+	//if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
+	  // This refers to the old random walk M-H adaptation
+	  // write_progress_report("adaptive_report", ...
+
+	if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
+	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+				paramSet, true, true, false);
+      }
+      
+      // This line disables progress reportes when the adaptive phase starts ?!
+      //if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
+	    
+      
+#ifdef USE_OLD_CODE
+
+      // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+      // Previous update of individual params one by one
+      
       // LOOP THROUGH EACH OF THE UPDATEABLE PARAMETERS
       for(int_param = 0; int_param < theta.size_param_list; int_param++)
 	{
@@ -415,13 +609,15 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					    theta_i->flag_Sero_likelihood,
 					    theta_i->flag_Prev_likelihood,
 					    gmip,
-					    theta);
+					    theta.gp_delay.distribution_function,
+					    theta.hosp_delay.distribution_function
+			    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
-
 			}
 		    }
 		  }
+		  
 		  // dbl_A and dbl_U variables need to be defined to govern acceptance.
 		  double dbl_A = (log_accep < 0.0) ? log_accep : 0.0;
 		  double dbl_U = (log_accep < 0.0) ? gsl_sf_log(gsl_rng_uniform(r)) : -1.0;
@@ -447,7 +643,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			}
 		      else {
 			// MEMCPY THE LIKELIHOOD STRUCTURE
-			likelihood_memcpy(lfx, prop_lfx);
+			lfx = prop_lfx;
 
 			for(int int_reg = 0; int_reg < nregions; int_reg++){
 			  // COPY ELEMENTS OF THE PROPOSAL REGION TO THE ACCEPTED REGION
@@ -495,11 +691,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 		    // COPY ELEMENTS OF THE PROPOSAL LIKELIHOOD TO THE MODEL LIKELIHOOD STRUCTURE OR!!! UPDATE CHILD NODES PRIOR DENSITY
 		    if(!theta_i->flag_any_child_nodes)
-		      likelihood_memcpy(prop_lfx, lfx);
+		      prop_lfx = lfx;
 
 		  }
-
 		}
+
 	      // iterate the posterior_mean and posterior_sumsq members of the updateable_model_parameter structure regardless of whether the move is accepted or not
 	      if(int_iter >= simulation_parameters.burn_in)
 		{
@@ -530,7 +726,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 	} // END FOR(int_param < size_param_list)
 
-	  // OUTPUT TO THE LIKELIHOOD CHAIN
+      
+      // OUTPUT TO THE LIKELIHOOD CHAIN
       if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every))
 	output_coda_lfx.write(reinterpret_cast<char const*>(&lfx.total_lfx), sizeof(double));
 
@@ -574,10 +771,11 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	    }
 	}
 
+
       // UPDATE LIKELIHOOD POSTERIOR STATISTICS..
       if(int_iter >= simulation_parameters.burn_in)
-	{
-	  lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
+      {
+	lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
 	  lfx.sumsq_lfx += gsl_pow_2(lfx.total_lfx) / ((double) CHAIN_LENGTH);
 	  prop_lfx.bar_lfx = lfx.bar_lfx;
 	  prop_lfx.sumsq_lfx = lfx.sumsq_lfx;
@@ -594,16 +792,19 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       }
       if(int_iter + 1 == simulation_parameters.adaptive_phase) int_progress_report = 0;
 
+	  
       // RESET COUNTERS WHERE NECESSARY - if start of a new adaptive phase
       // or the end of the burn-in
       if(((!((int_iter + 1) % simulation_parameters.adapt_every)) && (int_iter < simulation_parameters.adaptive_phase)) || ((int_iter + 1) == simulation_parameters.burn_in))
 	reset_counters(theta);
+
+#endif // USE_OLD_CODE
+
+
       
     } // END FOR(int_iter < num_iterations)
 
-
-  likelihood_free(prop_lfx);
-  for(int int_i = 0; int_i < nregions; int_i++){
+    for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
     gsl_matrix_free(output_Delta_Dis[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES
@@ -611,6 +812,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
     Region_free(prop_country[int_i], gmip);
   }
   delete [] prop_country;
+
+#ifdef USE_OLD_CODE  
   for(int_param = 0; int_param < theta.size_param_list; int_param++)
     {
       if(theta.param_list[int_param].flag_update)
@@ -623,6 +826,18 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       gsl_vector_int_free(a[int_param]);
       gsl_vector_int_free(b[int_param]);
     }
+#endif
+
+  for (int i = 0; i < paramSet.params.size(); i++)
+    if (paramSet[i].flag_update) {
+      
+      int iTemp = (int) ((CHAIN_LENGTH) / simulation_parameters.thin_output_every);
+      // There has to be a better way to get this value?
+      output_codas[i].write(reinterpret_cast<char const*>(&(paramSet[i].values.gsl()->size)), sizeof(int));
+      output_codas[i].write(reinterpret_cast<char const*>(&iTemp), sizeof(int));   // TERMINATE PARAMETER OUTPUT FILES - by adding dimensions.
+      output_codas[i].close();
+    }
+
   delete [] output_NNI;
   delete [] output_Delta_Dis;
   fstream_model_statistics_close(file_NNI, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days * (simulation_parameters.oType == cMCMC ? 1 : gmip.l_reporting_time_steps_per_day),
