@@ -108,7 +108,42 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
         pad.rows.at.end(ndays)
     }
 
+## Function to handle the unzipping of a large file - apparently R's unzip function is unreliable.
+decompress_file <- function(directory, file, .file_cache = FALSE) {
 
+    if (.file_cache == TRUE) {
+       print("decompression skipped")
+    } else {
+
+        ## Set working directory for decompression
+        ## simplifies unzip directory location behavior
+        wd <- getwd()
+        setwd(directory)
+
+        ## Run decompression
+        decompression <-
+            system2("unzip",
+                    args = c("-o", # include override flag
+                             gsub(" ", "\\\\ ", file)),
+                    stdout = TRUE)
+        
+        ## uncomment to delete archive once decompressed
+        file.remove(file) 
+
+        ## Reset working directory
+        setwd(wd); rm(wd)
+
+        ## Test for success criteria
+        ## change the search depending on 
+        ## your implementation
+        if (grepl("Warning message", tail(decompression, 1))) {
+            print(decompression)
+        }
+
+        return(gsub(".zip", ".csv", file.path(directory, file)))
+        
+    }
+}
 
 ## Substitute this into the names of the intended data file names
 vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
@@ -118,7 +153,8 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
     ## Extract file from archive
-    input.loc <- unzip(input.loc)
+    file.copy(input.loc, basename(input.loc))
+    input.loc <- decompress_file(".", basename(input.loc))
 
     if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
     
