@@ -143,7 +143,7 @@ public:
     return base;
   }
 
-  const double operator[](size_t idx) const {
+  double operator[](size_t idx) const {
     return gsl_vector_get(base, idx);
   }
   double& operator[](size_t idx) {
@@ -165,8 +165,8 @@ public:
       gsl_error("index out of range", __FILE__, __LINE__, GSL_EINVAL);
       throw std::invalid_argument("gslVector ptr(): Index out of range");
     }
-    return base->data + (idx * base->stride);
 #endif
+    return base->data + (idx * base->stride);
   }
     
   
@@ -365,7 +365,7 @@ public:
     return base;
   }
   
-  const int operator[](size_t idx) const {
+  int operator[](size_t idx) const {
     return gsl_vector_int_get(base, idx);
   }
   int& operator[](size_t idx) {
@@ -550,7 +550,7 @@ public:
       : mat(mat_), row(row_) { }
     
   public:
-    const double operator[](size_t col) const {
+    double operator[](size_t col) const {
       return gsl_matrix_get(mat, row, col);
     }
     double& operator[](size_t col) {

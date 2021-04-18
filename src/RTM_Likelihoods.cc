@@ -342,16 +342,13 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
   // AGGREGATE THE NUMBER_NEW_INFECTED MATRIX TO THE TIME STEPS USED BY THE REPORTING MODEL
   output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Number_New_Infected, l_NNI);
-  if(Vaccination) output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Delta_Disease, l_Delta_Dis);
-  // ###################################
-  // ###################################
-  // ###################################
-  // CCS
+  if(Vaccination)
+    output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Delta_Disease, l_Delta_Dis);
   else
     gsl_matrix_memcpy(l_Delta_Dis, l_NNI);
   
   double dbl_isnan_check = gsl_matrix_max(l_NNI);
-  if(isnan(dbl_isnan_check)){
+  if(std::isnan(dbl_isnan_check)){
     gsl_matrix_set_all(l_NNI, GSL_NEGINF);
     gsl_matrix_set_all(l_Seropositivity, -1.0);
   }

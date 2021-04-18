@@ -224,7 +224,8 @@ void regional_time_vector_parameter(gsl_vector* out_vec, const updParamSet &para
       //gsl_vector_int_scale(rescaled_temporal_breakpoints, time_steps_per_day);
 	rescaled_temporal_breakpoints *= time_steps_per_day;
       }
-      vec_breakpoint_cut(out_vec, *rescaled_temporal_breakpoints, intermediate_vec);
+    vec_breakpoint_cut(out_vec, *rescaled_temporal_breakpoints, intermediate_vec);
+    gsl_vector_free(intermediate_vec);
   }
 }
 

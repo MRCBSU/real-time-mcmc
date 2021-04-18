@@ -28,7 +28,7 @@ rtm_morricone: $(RTM_MORRICONE_OBJS) $(HEADERS)
 	$(CXX) -fopenmp $(RTM_MORRICONE_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_morricone
 
 rtm_hpc2: $(RTM_HPC_OBJS) $(HEADERS)
-	icpc $^ -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_hpc2
+	icpc $(RTM_HPC_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc2
 
 .PHONY: all
 all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2
@@ -60,4 +60,4 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
-	icpc -g -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<
+	icpc -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

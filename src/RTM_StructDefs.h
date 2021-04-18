@@ -227,6 +227,10 @@ struct Region{
   rtmData* Prevalence_data;
   rtmData* Vaccination_data;
   model_statistics region_modstats;
+
+  Region()
+  : GP_data(0), Hospitalisation_data(0), Death_data(0), Serology_data(0), Virology_data(0), Prevalence_data(0), Vaccination_data(0)
+    { }
 };
 
 void Region_memcpy(Region&, const Region&, flagclass&);
@@ -273,9 +277,11 @@ public:
   gslVector Prev_lfx;
 
   // Empty constructor necessary for updParamBlock
-  likelihood() { }
+  likelihood()
+    : total_lfx(0), bar_lfx(0), sumsq_lfx(0) { }
   
-  likelihood(const global_model_instance_parameters &gmip) {
+  likelihood(const global_model_instance_parameters &gmip)
+    : total_lfx(0), bar_lfx(0), sumsq_lfx(0) {
     int num_regions = gmip.l_num_regions;
     if (gmip.l_GP_consultation_flag)
       GP_lfx.allocZero(num_regions);

@@ -392,14 +392,13 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
       if (int_iter > 199)
 	paramSet.blocks[reg].adaptiveUpdate(int_iter);
-
-      
+     
       if (debug) {
 	paramSet.outputPars();
 	if (int_iter % 100 == 0 && int_iter > 0)
 	  paramSet.printAcceptRates(int_iter);
       }
- 
+      
       // Update Posterior mean and sumsq on a per-parameter basis
       if (int_iter >= simulation_parameters.burn_in) {
 	for (updParam& par : paramSet.params) {
@@ -418,7 +417,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	  }
 	}
       }
-
+      
       // Output likelihood
       if (int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
 	output_coda_lfx.write(reinterpret_cast<char const*>(&(paramSet.lfx.total_lfx)), sizeof(double));
@@ -457,7 +456,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	  }
 	}
       }
-
+      
       // Update likelihood posterior statistics
       if(int_iter >= simulation_parameters.burn_in) {
 	paramSet.lfx.bar_lfx += paramSet.lfx.total_lfx / ((double) CHAIN_LENGTH);
