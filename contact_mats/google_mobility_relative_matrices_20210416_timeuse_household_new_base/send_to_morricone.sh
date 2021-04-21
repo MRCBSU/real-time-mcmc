@@ -1,0 +1,3 @@
+rsync -ra --progress --include="**/" --include="**.html" --include="**.pdf" --exclude="**" ~/real-time-mcmc/model_runs/ morricone:/project/pandemic_flu/Wuhan_Coronavirus/Josh/model_runs
+rsync -ra --progress --include="**/" --include="**.pdf" --include="**.RData" --include="**.txt" --include="**.html" --exclude="**" ~/real-time-mcmc/model_runs/ morricone:/project/pandemic_flu/Wuhan_Coronavirus/Josh/model_runs
+#rsync -ra --progress --include="**/" --include="**.pdf" --include="**.RData" --include="**.txt" --include="**.html" --exclude="**" ~/RTM-bak/model_runs/ morricone:/project/pandemic_flu/Wuhan_Coronavirus/Josh/model_runs
