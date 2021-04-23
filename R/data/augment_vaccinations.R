@@ -4,13 +4,13 @@ vacc.guide <- tibble(wc = max((jab.dat %>% filter(n > 0))$sdate) + 1:(length(fut
 
 ## How much of each population can we expect to get the vaccine
 vacc.over75s <- 0.95
-vacc.over65s <- 0.85
+vacc.over65s <- 0.95
 care.workers <- 3.2e6 / sum(matrix(pop.input, nr, nA, byrow = TRUE)[, 4:6])
-vacc.under50s <- (0.85 * care.workers) + (0.75 * (1 - care.workers))
+vacc.under50s <- (0.95 * care.workers) + (0.9 * (1 - care.workers))
 pop.tmp <- pop.tmp <- read_csv(build.data.filepath(subdir = "population", "popn2018_all.csv")) %>%
     filter(Name == "ENGLAND")
 under.50s <- sum(pop.tmp[, 5 + 45:49]) / sum(pop.tmp[, 5 + 45:64])
-vacc.over50s <- (0.75 * under.50s) + (0.85 * (1 - under.50s))
+vacc.over50s <- (0.9 * under.50s) + (0.95 * (1 - under.50s))
 
 ## What are we getting in the current weeks
 xdist <- jab.dat %>%
@@ -36,9 +36,10 @@ pos.part <- function(x){
     x
     }
 
-
+## options(warn=2)
 for(dt in (d0 + 1):d.end){
 
+    ## stopifnot(as_date(dt) != as_date("20210531"))
     ## Get denominator population sizes
     ijab <- jab.dat %>% left_join(jab.dat %>%
                               filter(dose == "First") %>%
@@ -78,7 +79,7 @@ for(dt in (d0 + 1):d.end){
         mutate(f = ifelse(exhausted, 0, f)) %>%
         mutate(vac1due = f * capacity) %>%
         mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
-    
+
     while(any(tmp2$exceed.f > 0 & !tmp2$exhausted)){
         
         idx <- which(tmp2$exceed.f > 0 & !tmp2$exhausted)
@@ -100,7 +101,6 @@ for(dt in (d0 + 1):d.end){
                    sdate = lubridate::as_date(dt)) %>%
             select(sdate, region, age.grp, dose, n, pPfizer, pop)
         )
-            
-            
+                        
 }
-    
+options(warn=0)
