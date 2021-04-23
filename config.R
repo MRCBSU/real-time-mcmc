@@ -156,7 +156,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210414") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210419") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 14
 ## Convert that to an analysis day number
@@ -199,7 +199,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210412" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210419" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
@@ -210,4 +210,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3) * 10^6) * (55.98 / 66.65)
+future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
