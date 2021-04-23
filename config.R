@@ -156,7 +156,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210404") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210412") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 7
 ## Convert that to an analysis day number
