@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210409"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210423"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -74,9 +74,9 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 339
+num.prev.days <- 354
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -118,7 +118,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -167,7 +167,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210406")
+date.prev <- lubridate::ymd("20210421")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -182,7 +182,8 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev,
 ## if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
 
 ## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
-efficacies <- "Nick" ## current values can be 'Nick' or 'SPIM'.
+efficacies <- "Jamie" ## current values can be 'Nick', 'Jamie', or 'SPIM'.
+vac.design <- "cumulative" ## currently values can be 'cumulative' or 'incident'.
 scenario.name <- paste0(scenario.name, efficacies)
 
 ## ## Choose the name of the subdirectory in model_runs to use
@@ -210,4 +211,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
+future.n <- (c(4.7, 4.3, rep(4.4, 3), 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
