@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=2
-#SBATCH --array=1
+#SBATCH --array=1-6
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -68,36 +68,29 @@ if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
 # Navigate to the correct working directory
 bp="IFR3bp"
 enddays="25"
-if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-    geog="ONS"
-    days="60"
-elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-    geog="NHS"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
     days="60"
 else
-    geog="NHS"
     days="28"
 fi
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
     prev="NoPrev"
     gap=""
     pdays=""
 else
     prev="Prev"
-    pdays="326"
-    if [ $SLURM_ARRAY_TASK_ID -lt 7 ]; then
+    pdays="339"
+    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
 	gap="_prev7-5"
-    elif [ $SLURM_ARRAY_TASK_ID -lt 10 ]; then
-	gap="_prev14-5"
     else
-	gap="_prev28-5"
+	gap="_prev14-5"
     fi
 fi
+geog="NHS"
 cm="ons"
 eff="Nick"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210326/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210326_timeuse_household_deaths"
-# workdir="$SLURM_SUBMIT_DIR/model_runs/20210326/NoPrev_cm4ons_IFR3bp_NHS28cutoff_25wk2Nick_matrices_20210326_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210409/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210409_timeuse_household_deaths"
 
 echo -e $workdir
 
