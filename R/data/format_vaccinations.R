@@ -78,7 +78,6 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 
-
 ## Function to repeat the last row of a dataset until it pads out to the end of the series
 pad.rows.at.end <- function(df, nrows.full){
     if(nrow(df) < nrows.full){
@@ -224,23 +223,22 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## strPos <- c("+", "Positive", "positive")
     vacc.dat <- read_csv(input.loc,
                          col_types = vacc.cols)
-
+    cat("Got here2\n")
     vacc.dat <- vacc.dat %>%
         rename(!!!col.names) %>%
 	mutate(sdate = fuzzy_date_parse(sdate),
                age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
                )
-
+    cat("Got here3\n")
     ## Remove rows with missing key information
     n.vaccs <- nrow(vacc.dat)
     vacc.dat <- vacc.dat %>% filter(region != "Unknown",
                                     !is.na(type),
                                     !is.na(sdate),
                                     !is.na(dose),
-                                    !is.na(age.grp)) %>%
-        get.region()
+                                    !is.na(age.grp))
     n.vaccs.complete <- nrow(vacc.dat)
-    
+    cat("Got here4\n")
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
     
     ## ## ====== DATA ON FIRST VACCINATION
@@ -275,10 +273,18 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     names(vac1.files) <- names(vacn.files) <- regions
     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
     jab.dat <- vacc.dat %>%
-        group_by(sdate, region, age.grp, dose) %>%
+        group_by(sdate, ltla_code, region, age.grp, dose) %>%
         summarise(n = n(), pPfizer = sum(type == "Pfizer") / n()) %>%
         ungroup() %>%
         mutate(sdate = sdate + vacc.lag) %>%
+        get.region() %>%
+        select(-ltla_code)
+    rm(vacc.dat)
+    if(region.type == "ONS")
+        jab.dat <- jab.dat %>%
+            group_by(sdate, region, age.grp, dose) %>%
+            summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
+    jab.dat <- jab.dat %>%
         right_join(expand_grid(sdate = vac.dates,
                                region = regions,
                                age.grp = factor(age.labs, levels = age.labs, ordered = TRUE),
@@ -289,7 +295,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         arrange(sdate) %>%
         left_join(pdf.all) %>%
         rename(pop = count)
-    
+    cat("Got here5\n")
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
@@ -300,14 +306,30 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     for(reg in regions){
         
         region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
-        
+        cat("First stopifnot\n")
+        stopifnot(!is.na(region.dat))
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
 
         region.dat <- jab.dat %>%
@@ -330,14 +352,31 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                         names_from = age.grp,
                         values_from = value) %>%
             pad.rows.at.end(ndays)
-    
+        cat("Second stopifnot\n")
+        stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
         tmpFile <- vacn.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "Second", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else 
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
         vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
         
     }
@@ -388,7 +427,6 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## }
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
-    rm(vacc.dat)
     file.remove(input.loc)
     
 } else {
