@@ -72,6 +72,16 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         x1 = ymd(20210308), 
         line = list(color = "green"),
         hoverinfo = "Step one of roadmap"
+	),
+	list(
+        type = "line",
+        y0 = 0,
+        y1 = 1,
+        yref = "paper",
+        x0 = ymd(20210412),
+        x1 = ymd(20210412),
+        line = list(color = "green"),
+        hoverinfo = "Step two of roadmap"
 	)
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
