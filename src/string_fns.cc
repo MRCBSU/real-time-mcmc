@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "string_fns.h"
 
 using namespace std;
@@ -113,7 +115,7 @@ string dbl_to_string(const double x)
 {
   string out_string;
   stringstream i_to_str;
-  i_to_str << x;
+  i_to_str << std::fixed << x;
   i_to_str >> out_string;
   return out_string;
 }
