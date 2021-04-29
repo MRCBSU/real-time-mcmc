@@ -192,7 +192,7 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/jbb50/rds/hpc-work/real-time-mcmc/model_runs/20210416/PrevINLACevik_cm4ons_IFR3bp_NHS28cutoff_25wk2_prev14_skip5Nick_matrices_20210416_deaths"
+previous.run.to.use <- "/home/aa995/rds/rds-mrc-bsu/jbb50/for_angelos"
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
