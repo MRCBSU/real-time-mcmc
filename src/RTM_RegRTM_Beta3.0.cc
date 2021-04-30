@@ -138,17 +138,25 @@ int main(void){
   		       str_mcmc_parameter_defaults);
   
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
-  #ifdef USE_THREADS
-  omp_set_num_threads(sim_pars.max_num_threads);
+#ifdef USE_THREADS
+
+  // #########################
+  // On the HPC, having more threads than regions slows the code down
+  // Unsure why; possibly due to multi-threaded BLAS
+  
+  if (sim_pars.max_num_threads > global_fixedpars.l_num_regions)
+    omp_set_num_threads(global_fixedpars.l_num_regions);
+  else 
+    omp_set_num_threads(sim_pars.max_num_threads);
+  
   #endif
 
+  #ifdef USE_OLD_CODE
   // INITIALISE THE LIKELIHOOD STRUCTURE
   // likelihood_alloc(llhood, global_fixedpars);
   likelihood llhood(global_fixedpars);
 
-
   // MAKE AN INITIAL EVALUATION OF THE LIKELIHOOD
-#ifdef USE_OLD_CODE
   fn_log_likelihood(llhood, country, 0, true, true,
   		    global_fixedpars.l_GP_consultation_flag,
   		    global_fixedpars.l_Hospitalisation_flag,
@@ -161,8 +169,8 @@ int main(void){
     );
 #endif
 
-  likelihood block_llhood(global_fixedpars);
-  fn_log_likelihood(block_llhood, country2, 0, true, true, 
+  glikelihood block_llhood(global_fixedpars);
+  fn_log_likelihood_global(block_llhood, country2, -1, true, true, 
 		    true, //global_fixedpars.l_GP_consultation_flag,
 		    true, //global_fixedpars.l_Hospitalisation_flag,
 		    true, //global_fixedpars.l_Viro_data_flag,
@@ -173,8 +181,11 @@ int main(void){
 		    paramSet.hosp_delay.distribution_function
     );
 
-  for (auto& block : paramSet.blocks)
-    block.setLlhood(block_llhood);
+  //for (int r = 0; r < global_fixedpars.l_num_regions; r++)
+  //  block_llhood.total_lfx += block_llhood.region_lfx[r];
+  
+  //for (auto& block : paramSet.blocks)
+  //block.setLlhood(block_llhood);
   paramSet.lfx = block_llhood;
   
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES

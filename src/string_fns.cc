@@ -1,6 +1,5 @@
-#include <iomanip>
-
 #include "string_fns.h"
+#include <iomanip>
 
 using namespace std;
 using std::string;

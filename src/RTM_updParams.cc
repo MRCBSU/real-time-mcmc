@@ -438,26 +438,31 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter) 
 int updParamBlock::regacceptLastMove = 0;
 
 
+/*
 void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
   // #pragma omp parallel for
   for (auto &block : blocks)
     block.calcAccept(*this, country, gmip, base_mix);
 }
+*/
 
-
-void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, glikelihood& prop_lfx) {
 
   laccept = 0;
-  if (global)
+  //if (global)
     acceptLastMove = 0;
-  else
-    regacceptLastMove = 0;
+    //else
+    //regacceptLastMove = 0;
 
   // Get region
-  // TODO: Can we only copy one region for local blocks?
   flagclass update_flags;
-  for (int r = 0; r < paramSet.numRegions; r++) {
-    regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+  if (global)
+    for (int r = 0; r < paramSet.numRegions; r++) {
+      regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+    }
+  else {
+    // local
+    regional_model_params_memcpy(propCountry[regionNum].det_model_params, country[regionNum].det_model_params, update_flags);
   }
   
   // Prior densities for components in the block
@@ -618,23 +623,70 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   for (int i = 0; i < values.size(); i++)
     paramSet[parIndex[i]].values[parOffset[i]] = values[i];
 
-  // For at least one of the updated parameters, all of the flags are set to true
-  fn_log_likelihood(prop_lfx, propCountry, 0,
+  // Calculate lhood for global block
+  // Regional blocks done separately to allow loop to be paralleized
+
+  if (global) {
+
+    // For at least one of the updated parameters, all of the flags are set to true
+    fn_log_likelihood_global(prop_lfx, propCountry, -1,
 		    true, true, true, true, true, true, true, 
 		    gmip,
 		    paramSet.gp_delay.distribution_function,
 		    paramSet.hosp_delay.distribution_function
     );
-	
-  laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+
+    laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+  
+  }
 }
 
+void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& reg_lfx) {
+
+  //assert (! global);
+  
+  fn_log_likelihood_region(reg_lfx, propCountry, regionNum,
+			   true, true, true, true, true, true, true, 
+			   gmip,
+			   paramSet.gp_delay.distribution_function,
+			   paramSet.hosp_delay.distribution_function
+    );
+
+    laccept += reg_lfx.region_lfx - paramSet.lfx.rlik[regionNum].region_lfx;
+}
+
+
+
+/*
 void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
   for (auto & block : blocks)
     block.doAccept(rng, *this, country, numRegions, gmip);
 }
+*/
 
-void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip) {
+// TODO: Move to likelihood class
+/*
+void lfxRegionCopy(likelihood &dest, likelihood &src, const global_model_instance_parameters &gmip, int r) {
+
+  // TODO: Just create all vectors of length numRegions? Limited performance implication, neater code?
+  dest.region_lfx[r] = src.region_lfx[r];
+  if (gmip.l_GP_consultation_flag)
+    dest.GP_lfx[r] = src.GP_lfx[r];
+  if (gmip.l_Hospitalisation_flag)
+    dest.Hosp_lfx[r] = src.Hosp_lfx[r];
+  if (gmip.l_Deaths_flag)
+    dest.Deaths_lfx[r] = src.Deaths_lfx[r];
+  if (gmip.l_Sero_data_flag)
+    dest.Sero_lfx[r] = src.Sero_lfx[r];
+  if (gmip.l_Viro_data_flag)
+    dest.Viro_lfx[r] = src.Viro_lfx[r];
+  if (gmip.l_Prev_data_flag)
+    dest.Prev_lfx[r] = src.Prev_lfx[r];
+  
+}
+*/
+
+void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, glikelihood& prop_lfx) {
   
   double acceptTest = gsl_sf_log(gsl_rng_uniform(rng));
 
@@ -644,11 +696,13 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 
   if (laccept > acceptTest) {
     numAccept++;
+
+    //cout << "Accepted: " << laccept << "\n";
     
-    if (global)
-      acceptLastMove = 1;
-    else
-      regacceptLastMove = 1;
+    //if (global)
+    acceptLastMove = 1;
+    //else
+      //regacceptLastMove = 1;
 
     // Update the parameters
     for (int i = 0; i < values.size(); i++)
@@ -672,8 +726,20 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 	  }
     }
     */
+
+    // #################################
+    // Update local regions
     
-    paramSet.lfx = prop_lfx;
+    if (global)
+      paramSet.lfx = prop_lfx;
+    else {
+      //lfxRegionCopy(paramSet.lfx, prop_lfx, gmip, regionNum);
+      paramSet.lfx.rlik[regionNum] = prop_lfx.rlik[regionNum];
+      
+      // We've accepted, so the total likelihood increases by the regional increment
+      paramSet.lfx.total_lfx += prop_lfx.rlik[regionNum].region_lfx;
+      prop_lfx.total_lfx += prop_lfx.rlik[regionNum].region_lfx;
+    }
 
     if (global) {
       for (int r = 0; r < numRegions; r++) {
@@ -696,6 +762,8 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
     }
   } else {
     // Reject proposal
+
+    //cout << "Rejected: " << laccept << "\n";
     
     // We need to reset the proposal so that adpative delta is calculated correctly 
     proposal = values;
@@ -720,8 +788,12 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
 	true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
     }
 
-    // TODO do we need to do this?
-    prop_lfx = paramSet.lfx;
+    if (global)
+      prop_lfx = paramSet.lfx;
+    else {
+      //lfxRegionCopy(prop_lfx, paramSet.lfx, gmip, regionNum);
+      prop_lfx.rlik[regionNum] = paramSet.lfx.rlik[regionNum];
+    }
   }
 }
 
@@ -737,10 +809,10 @@ void updParamBlock::adaptiveUpdate(int iter) {
   double betastart = beta;
   
   double eta = pow(iter - 199 + 1, -0.6);
-  if (global)
+  //if (global)
     beta = beta + eta * (acceptLastMove - 0.234);
-  else
-    beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
+    //else
+    //beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
   
   for (int i = 0; i < mu.size(); i++)
     mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);

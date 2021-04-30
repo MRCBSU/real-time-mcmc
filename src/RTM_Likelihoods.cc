@@ -492,7 +492,7 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   gsl_matrix_set_zero(modelled_events);
 
   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
-#pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
+//#pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
   for (int k = 0; k < (max_days_data * in_gmip.l_reporting_time_steps_per_day); ++k)
     {  
       for (int j = 0; j < NUM_AGE_GROUPS; ++j)
@@ -694,8 +694,7 @@ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix* mat_data,
 
 
 
-
-void fn_log_likelihood(likelihood& llhood,
+void fn_log_likelihood_global(glikelihood& llhood,
 		       Region* meta_region,
 		       int region,
 		       bool flag_update_transmission_model,
@@ -707,26 +706,60 @@ void fn_log_likelihood(likelihood& llhood,
 		       bool flag_update_Prev_likelihood,
 		       const global_model_instance_parameters &gmip,
 		       gslVector& gp_distribution_function,
-		       gslVector& hosp_distribution_function)
-{
+		       gslVector& hosp_distribution_function) {
+
+
+  
   // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
   // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
-  int low_region = (region == 0) ? 0 : region;
-  int hi_region = (region == 0) ? gmip.l_num_regions : region + 1;
-  double temp_log_likelihood;
-  double lfx_increment = 0.0;
+  //int low_region = (region == -1) ? 0 : region;
+  //int hi_region = (region == -1) ? gmip.l_num_regions : region + 1;
+  //double temp_log_likelihood;
+  //double lfx_increment = 0.0;
 
-#ifdef USE_THREADS
-  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
-  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
-#else
-  int num_subthread_teams = 1;
-#endif
+//#ifdef USE_THREADS
+//  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
+//  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
+//#else
+//  int num_subthread_teams = 1;
+//#endif
 
-#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
-  for(int int_region = low_region; int_region < hi_region; int_region++)
-    {
+  
+
+//#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
+
+  double lfx_sum = 0;
+  
+#pragma omp parallel for default(shared) schedule(static) reduction(+:lfx_sum)
+  for(int int_region = 0; int_region < gmip.l_num_regions; int_region++) {
     
+    fn_log_likelihood_region(llhood.rlik[int_region], meta_region, int_region, flag_update_transmission_model, flag_update_reporting_model, flag_update_GP_likelihood, flag_update_Hosp_likelihood, flag_update_Viro_likelihood, flag_update_Sero_likelihood, flag_update_Prev_likelihood, gmip, gp_distribution_function, hosp_distribution_function);
+    
+    lfx_sum += llhood.rlik[int_region].region_lfx;
+  }
+  
+  llhood.total_lfx += lfx_sum;
+}
+
+
+void fn_log_likelihood_region(rlikelihood& llhood,
+			      Region* meta_region,
+			      int int_region,
+			      bool flag_update_transmission_model,
+			      bool flag_update_reporting_model,
+			      bool flag_update_GP_likelihood,
+			      bool flag_update_Hosp_likelihood,
+			      bool flag_update_Viro_likelihood,
+			      bool flag_update_Sero_likelihood,
+			      bool flag_update_Prev_likelihood,
+			      const global_model_instance_parameters &gmip,
+			      gslVector& gp_distribution_function,
+			      gslVector& hosp_distribution_function)  {
+
+  double lfx_region = 0;
+  double temp_log_likelihood = 0;
+  //double lfx_increment = 0;
+      
       // Does the transmission model need to be re-evaluated?
       // (Not necessary when updating parameters of the reporting model)
       if(flag_update_transmission_model)
@@ -784,8 +817,9 @@ void fn_log_likelihood(likelihood& llhood,
 	  gsl_matrix_free(weighted_positivity);  
 	} else // ** Just calculate the likelihood based on the already computed positivities
 	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
-	lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Sero_lfx, int_region));
-	gsl_vector_set(*llhood.Sero_lfx, int_region, temp_log_likelihood);
+	// CCS
+	lfx_region += (temp_log_likelihood - llhood.Sero_lfx);
+	llhood.Sero_lfx = temp_log_likelihood;
 	gsl_matrix_free(test_positivity);
       }
 
@@ -809,9 +843,10 @@ void fn_log_likelihood(likelihood& llhood,
 		  }
 	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
 	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
-	      lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Prev_lfx, int_region));
+	      // CCS
+	      lfx_region += (temp_log_likelihood - llhood.Prev_lfx);
 	      //if (debug) cout << int_region << " Prev prev " << gsl_vector_get(*llhood.Prev_lfx, int_region) << " curr " << temp_log_likelihood << endl;
-	      gsl_vector_set(*llhood.Prev_lfx, int_region, temp_log_likelihood);
+	      llhood.Prev_lfx = temp_log_likelihood;
 	    }
 	  gsl_matrix_free(summed_prevalence);
 	}
@@ -834,8 +869,7 @@ void fn_log_likelihood(likelihood& llhood,
 				 gmip,
 				 gmip.l_GP_likelihood.upper,
 				 meta_region[int_region].population,
-				 *gp_distribution_function,
-				 num_subthread_teams);
+				 *gp_distribution_function /*, num_subthread_teams */ );
 	    }
 	
 	  // ADD THE BACKGROUND AND CALCULATE THE UPDATED POSITIVITY
@@ -884,13 +918,13 @@ void fn_log_likelihood(likelihood& llhood,
 			perror("Unrecognised likelihood selected\n");
 			exit(2);
 		      }
-		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.GP_lfx, int_region));
-		      gsl_vector_set(*llhood.GP_lfx, int_region, temp_log_likelihood);
+		      lfx_sub_increment += (temp_log_likelihood - llhood.GP_lfx);
+		      llhood.GP_lfx = temp_log_likelihood;
 		      gsl_matrix_free(mu_gp_counts);
 		    }
 		  else {
 		    lfx_sub_increment += GSL_NEGINF;
-		    gsl_vector_set(*llhood.GP_lfx, int_region, GSL_NEGINF);
+		    llhood.GP_lfx = GSL_NEGINF;
 		  }
 		}
 	    }
@@ -923,8 +957,8 @@ void fn_log_likelihood(likelihood& llhood,
 	      } else
 		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
 
-	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Viro_lfx, int_region));
-	      gsl_vector_set(*llhood.Viro_lfx, int_region, temp_log_likelihood);
+	      lfx_sub_increment += (temp_log_likelihood - llhood.Viro_lfx);
+	      llhood.Viro_lfx = temp_log_likelihood;
 	      
 	    }
 	  
@@ -977,20 +1011,28 @@ void fn_log_likelihood(likelihood& llhood,
 	      }
 	    } else temp_log_likelihood = GSL_NEGINF;
 	  
-	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Hosp_lfx, int_region));
+	  lfx_sub_increment += (temp_log_likelihood - llhood.Hosp_lfx);
 
 	  //if (debug) cout << int_region << " Hosp prev " << gsl_vector_get(*llhood.Hosp_lfx, int_region) << " curr " << temp_log_likelihood << endl;
 
-	  gsl_vector_set(*llhood.Hosp_lfx, int_region, temp_log_likelihood);
+	  llhood.Hosp_lfx = temp_log_likelihood;
 
 	  
 	  gsl_matrix_free(mu_hosp_counts);	  
 	}
-      
-      lfx_increment += lfx_sub_increment;
+
+      lfx_region += lfx_sub_increment;
+
+      // Save the regional likelihood component for AMGS blocks
+      llhood.region_lfx = lfx_region;
+
+      //cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
+
+      //lfx_increment += lfx_region;
       //if (debug) cout << int_region << " end incr " << lfx_increment << endl;
-    }
+
+  //}
   
-  llhood.total_lfx += lfx_increment;
+  //llhood.total_lfx += lfx_increment;
   
 }

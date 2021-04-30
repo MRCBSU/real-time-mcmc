@@ -173,7 +173,7 @@ void write_progress_report(const string& report_type, const int int_report_no, c
 
 // ALL-PURPOSE REPORT FUNCTION //
 void write_progress_report(const string& report_type, const int& int_report_no, const int& int_iter, const int& chain_length,
-			   const globalModelParams& gmp, const likelihood& llhood,
+			   const globalModelParams& gmp, const glikelihood& llhood,
 			   bool posterior_stats_flag, bool acceptance_flag, bool propvar_flag)
 {
   string filename(report_type);
@@ -250,7 +250,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 updParamSet &paramSet,
 		 Region* state_country,
 		 Region* country2,
-		 likelihood& lfx,
+		 glikelihood& lfx,
 		 const global_model_instance_parameters& gmip,
 		 const mixing_model& base_mix,
 		 gsl_rng* r)
@@ -292,7 +292,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   }
   
   // Likelihood
-  likelihood prop_lfx(gmip);
+  glikelihood prop_lfx(gmip);
   prop_lfx = lfx;
 
   int maximum_block_size = simulation_parameters.maximum_block_size;
@@ -367,31 +367,42 @@ void metrop_hast(const mcmcPars& simulation_parameters,
     if(paramSet[i].flag_update)
       output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
   }
-  
+
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (int_iter % 1000 == 0 && int_iter > 0 && debug)
+      if (int_iter % 50000 == 0 && int_iter > 0 && true)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
 
       // Update two blocks every iter: global block and one of the local blocks
-      int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
-
+      //int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+      
       // Global
       paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
-      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);      
+      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
       if (int_iter > 199)
 	paramSet.blocks[0].adaptiveUpdate(int_iter);
-
+      
       // Local
-      paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
-      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
-      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
-      if (int_iter > 199)
-	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+      for (int reg = 1; reg <= nregions; reg++) {
+	paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+	paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+      }
+      
+#pragma omp parallel for default(shared) schedule(static)
+      for (int reg = 1; reg <= nregions; reg++) {
+	paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+      }
+
+      for (int reg = 1; reg <= nregions; reg++) {
+	paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
+	if (int_iter > 199)
+	  paramSet.blocks[reg].adaptiveUpdate(int_iter);
+       }
+      
      
       if (debug) {
 	paramSet.outputPars();
@@ -462,12 +473,15 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	paramSet.lfx.bar_lfx += paramSet.lfx.total_lfx / ((double) CHAIN_LENGTH);
 	paramSet.lfx.sumsq_lfx += gsl_pow_2(paramSet.lfx.total_lfx) / ((double) CHAIN_LENGTH);
 
+	prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
+	prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
+	
 	// TODO: Does it make more sense to copy the whole lfx object at the
 	// start of each iter?
-	for (updParamBlock& block : paramSet.blocks) {
-	  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
-	  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
-	}
+	//for (updParamBlock& block : paramSet.blocks) {
+	//  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
+	//  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
+	//}
       }
 
       // Output MCMC sampler progress reports
