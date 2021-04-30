@@ -24,29 +24,29 @@
 # Navigate to the correct working directory
 bp="IFR3bp"
 enddays="25"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
     days="60"
-else
+    geog="ONS"
+elif (( $SLURM_ARRAY_TASK_ID % 3 == 1)); then
     days="28"
+    geog="NHS"
+else
+    days="60"
+    geog="NHS"
 fi
-if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+if [ $SLURM_ARRAY_TASK_ID -lt 4 ]; then
     prev="NoPrev"
     gap=""
     pdays=""
 else
     prev="Prev"
-    pdays="339"
-    if [ $SLURM_ARRAY_TASK_ID -lt 5 ]; then
-	gap="_prev7-5"
-    else
-	gap="_prev14-5"
-    fi
+    pdays="354"
+    gap="_prev14-5"
 fi
-geog="NHS"
 cm="ons"
-eff="Nick"
+eff="Jamie"
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210409/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210409_timeuse_household_deaths"
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210423_timeuse_household_deaths"
 
 module load gcc/9 intel/compilers/2020.2
 

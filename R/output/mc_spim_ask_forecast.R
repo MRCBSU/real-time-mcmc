@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 setwd(out.dir)
 out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-Rscenario <- c(0.8, 1.1, 1.3, 1.5)[out.ind]
+Rscenario <- c(0.9, 1.2, 1.5, 1.8)[out.ind]
 ## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -194,10 +194,12 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
+    symlink.design("vac.pi1.design.txt")
+    symlink.design("vac.pin.design.txt")
 }
 ## The matrix for the random-walks will need changing to account for an extra breakpoint
 ## Place the new break-point now
-today.break <- ymd("20210329") - start.date + 1
+today.break <- ymd("20210517") - start.date + 1
 beta.breaks <- c(beta.breaks, today.break)
 beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
     rbind(rep(1, nbetas)) %>%
@@ -212,7 +214,7 @@ write_tsv(as.data.frame(beta.design), file.path(projections.basedir, "beta.desig
 ## Subset the MCMC chain to look at only the iterations for which we have calculated an R value
 params <- lapply(params, function(x) x[iterations.for.Rt, , drop = FALSE])
 ## Append a new beta to hit the target R value
-endRt <- Rt[, today.break, ]
+endRt <- Rt[, min(c(dim(Rt)[2], today.break)), ]
 beta.new <- log(Rscenario / endRt)
 
 ## ## ## MAIN PROJECTION LOOP

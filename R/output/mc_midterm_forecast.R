@@ -20,7 +20,8 @@ nweeks.ahead <- 8
 
 counterfactual <- FALSE
 
-projections.basedir <- file.path(out.dir, "projections_counter")
+projections.basename <- "projections_midterm"
+projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -193,6 +194,8 @@ if(beta.rw.flag)
 if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
+    symlink.design("vac.pi1.design.txt")
+    symlink.design("vac.pin.design.txt")
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
 }
@@ -270,7 +273,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections_counter.RData")
+save(list = save.list, file = paste0(projections.basename, ".RData"))
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)
