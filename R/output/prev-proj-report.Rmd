@@ -4,18 +4,18 @@
 dim.id <- which(names(dimnames(prevalence)) == "date")
 ndate.data <- lubridate::as_date(date.data) - start.date + 1
 prev_plot <- R.utils::extract(prevalence, indices = list(start.prev:ndate.data), dims = dim.id)
-if (!exists("prev.dat")) {
+if (!exists("prev.dat") || is.null(prev.dat)) {
   prev_scenario_name <- paste0("PrevINLACevik_cm4ons_IFR3bp_", region.type,
 	"60cutoff_25wk2_prev14_skip5Nick_matrices_20210423_deaths")
-  prev_tmp_path <- file.path(out.dir, "..", prev_scenario_name, "output_matrices.RData")
+  prev_dat_path <- file.path(out.dir, "..", prev_scenario_name, "output_matrices.RData")
   if (file.exists(prev_dat_path)) {
     prev_env <- new.env()
-    load(prev_tmp_path, env = prev_env)
+    load(prev_dat_path, env = prev_env)
     prev.dat <- prev_env$prev.dat
     rm(prev_env)
   }
 }
-if (exists("prev.dat")) {
+if (exists("prev.dat") || is.null(prev.dat)) {
   prev.dat.plot <- prev.dat %>%
     filter(lsd > 0) %>%
     mutate(value = exp(lmean), date = sample_date)
