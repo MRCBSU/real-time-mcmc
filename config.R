@@ -177,7 +177,8 @@ if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_
 
 
 if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
-efficacies <- "Nick" ## current values can be 'Nick' or 'SPIM'.
+efficacies <- "Jamie" ## current values can be 'Nick', 'Jamie', or 'SPIM'.
+vac.design <- "cumulative" ## currently values can be 'cumulative' or 'incident'.
 scenario.name <- paste0(scenario.name, efficacies)
 
 ## ## Choose the name of the subdirectory in model_runs to use
