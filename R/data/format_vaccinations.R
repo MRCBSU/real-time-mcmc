@@ -181,7 +181,8 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                                     !is.na(type),
                                     !is.na(sdate),
                                     !is.na(dose),
-                                    !is.na(age.grp))
+                                    !is.na(age.grp)) %>%
+        get.region()
     n.vaccs.complete <- nrow(vacc.dat)
     
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
@@ -218,18 +219,10 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     names(vac1.files) <- names(vacn.files) <- regions
     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
     jab.dat <- vacc.dat %>%
-        group_by(sdate, ltla_code, region, age.grp, dose) %>%
+        group_by(sdate, region, age.grp, dose) %>%
         summarise(n = n(), pPfizer = sum(type == "Pfizer") / n()) %>%
         ungroup() %>%
         mutate(sdate = sdate + vacc.lag) %>%
-        get.region() %>%
-        select(-ltla_code)
-    rm(vacc.dat)
-    if(region.type == "ONS")
-        jab.dat <- jab.dat %>%
-            group_by(sdate, region, age.grp, dose) %>%
-            summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
-    jab.dat <- jab.dat %>%
         right_join(expand_grid(sdate = vac.dates,
                                region = regions,
                                age.grp = factor(age.labs, levels = age.labs, ordered = TRUE),
