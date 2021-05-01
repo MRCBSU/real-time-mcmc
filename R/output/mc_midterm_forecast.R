@@ -20,7 +20,8 @@ nweeks.ahead <- 8
 
 counterfactual <- FALSE
 
-projections.basedir <- file.path(out.dir, "projections_MTP")
+projections.basename <- "projections_midterm"
+projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -33,10 +34,10 @@ prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence output
 if(prev.flag && any(prev.data$lmeans == "NULL")){
     ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-		date.prev <- ymd("20210317")
+		date.prev <- ymd("20210324")
 		## Convert that to an analysis day number
-		prev.end.day <- 388
-		last.prev.day <- 388
+		prev.end.day <- 395
+		last.prev.day <- 395
 		first.prev.day <- 75
 		if(!exists("days.between.prev")) days.between.prev <- 7
 		## Default system for getting the days on which the likelihood will be calculated.
@@ -57,6 +58,13 @@ overwrite.matrices <- FALSE
 
 ## ## mod_pars.Rmd specifications that will change - should only be breakpoints and design matrices
 if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7.18
+if(grepl("projections_counter", projections.basedir, fixed = TRUE))
+{
+    value.vac.alpha1 <- rep(0, length(value.vac.alpha1))
+    value.vac.alphan <- rep(0, length(value.vac.alpha2))
+    value.vac.pi1 <- rep(0, length(value.vac.pi1))
+    value.vac.pi2 <- rep(0, length(value.vac.pi2))
+}
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
 
@@ -186,6 +194,8 @@ if(beta.rw.flag)
 if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
+    symlink.design("vac.pi1.design.txt")
+    symlink.design("vac.pin.design.txt")
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
 }
@@ -263,7 +273,7 @@ if(prev.flag){
     save.list <- c(save.list, "prevalence")
     dimnames(prevalence) <- dim.list
 }
-save(list = save.list, file = "projections_midterm.RData")
+save(list = save.list, file = paste0(projections.basename, ".RData"))
 
 ## ## ## Housekeeping
 lapply(hosp.data, file.remove)

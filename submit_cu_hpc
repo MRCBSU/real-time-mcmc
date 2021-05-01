@@ -2,7 +2,7 @@
 #SBATCH -J trial_hpc_batch
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
+#SBATCH --cpus-per-task=9
 #SBATCH --time=72:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=4,5,7-9,11
+#SBATCH --array=2
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -22,44 +22,15 @@
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
 # Navigate to the correct working directory
-bp="IFR3bp"
-enddays="25"
-if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
-    prev="NoPrev"
-    gap=""
-    pdays=""
+
+
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths/projections_long_endpoint"
 else
-    prev="PrevCevik"
-    if [ $SLURM_ARRAY_TASK_ID -lt 9 ]; then
-	pdays="319"
-	if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	    gap="_prev7-5"
-	elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	    gap="_prev14-5"
-	else
-	    gap="_prev28-5"
-	fi
-    else
-	pdays="57"
-	if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	    gap="_prev7-5"
-	else
-	    gap="_prev14-5"
-	fi
-    fi
-fi
-cm="ons"
-eff="Nick"
-geog="NHS"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    days="60"
-else
-    days="28"
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/NoPrev_cm4ons_IFR3bp_ONS60cutoff_25wk2Jamie_matrices_20210423_timeuse_household_deaths"
 fi
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210319/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210319_timeuse_household_deaths"
-
-module load gcc/9 intel/compilers/2020.2
+module load gcc/9 intel/compilers/2019.4 gsl-2.4-intel-17.0.4-etauzbm
 
 echo $workdir
 

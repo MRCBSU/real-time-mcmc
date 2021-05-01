@@ -132,8 +132,8 @@ for(reg in regions){
     Vargt[[reg]] <- sapply(gt[[reg]], function(gx) sum(gx * (seq(delta.t, by = delta.t, length.out = length(gx))^2)))
     Vargt[[reg]] <- Vargt[[reg]] - (Egt[[reg]]^2)
 }
-              
 ################################################################
+
 print('Formatting time series')
 
 

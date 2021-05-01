@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1-12
+#SBATCH --array=1
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -61,55 +61,23 @@ module load pandoc                         # Need this to generate the STAN mode
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-bp="IFR3bp"
-enddays="25"
-if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
-    prev="NoPrev"
-    gap=""
-    pdays=""
+if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths/projections_long_endpoint"
+    #! Run options for the application:
+    options="--vanilla ../../../../PostProcess.R"
 else
-    prev="PrevCevik"
-    if [ $SLURM_ARRAY_TASK_ID -lt 9 ]; then
-	pdays="319"
-	if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	    gap="_prev7-5"
-	elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	    gap="_prev14-5"
-	else
-	    gap="_prev28-5"
-	fi
-    else
-	pdays="57"
-	if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	    gap="_prev7-5"
-	else
-	    gap="_prev14-5"
-	fi
-    fi
-    gap="_prev7-5"
-fi
-cm="ons"
-eff="Nick"
-geog="NHS"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    days="60"
-else
-    days="28"
+    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/NoPrev_cm4ons_IFR3bp_ONS60cutoff_25wk2Jamie_matrices_20210423_timeuse_household_deaths"
+    #! Run options for the application:
+    options="--vanilla ../../../PostProcess.R"
 fi
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210319/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210319_timeuse_household_deaths"
-
-module load gcc/9 intel/compilers/2020.2
+module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
 
 echo -e $workdir
 
 
 #! Full path to application executable: 
 application="Rscript"
-
-
-#! Run options for the application:
-options="--vanilla ../../../PostProcess.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:

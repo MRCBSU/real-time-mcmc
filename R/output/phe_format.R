@@ -21,7 +21,9 @@ thisFile <- function() {
 file.loc <- dirname(thisFile())
 proj.dir <- dirname(dirname(file.loc))
 if(!exists("out.dir")) out.dir <- getwd()
+out.dirx <- out.dir
 source(file.path(proj.dir, "R/output/results_api.R"))
+out.dir <- out.dirx; rm(out.dirx)
 
 create.spim.table <- function(data, name, by = NULL) {
   qprobs <- c(0.01, 0.05, 0.25, 0.75, 0.95, 0.99, 0.5)
