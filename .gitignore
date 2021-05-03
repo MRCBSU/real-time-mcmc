@@ -1,9 +1,11 @@
 rtm_optim*
 rtm_hpc
 rtm_hpc2
+rtm_debug
 **.swp
 **.swo
 build/**
+data/**
 outputs/**
 .vscode
 model_runs/**
