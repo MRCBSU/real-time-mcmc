@@ -15,7 +15,7 @@ if (!exists("prev.dat") || is.null(prev.dat)) {
     rm(prev_env)
   }
 }
-if (exists("prev.dat") || is.null(prev.dat)) {
+if (exists("prev.dat") && !is.null(prev.dat)) {
   prev.dat.plot <- prev.dat %>%
     filter(lsd > 0) %>%
     mutate(value = exp(lmean), date = sample_date)

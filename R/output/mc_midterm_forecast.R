@@ -176,6 +176,8 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
+    symlink.design("vac.pi1.design.txt")
+    symlink.design("vac.pin.design.txt")
 }
 ## ## ## --------------------------------------------------------------
 
@@ -195,7 +197,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51","aa995")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")

@@ -7,6 +7,10 @@ load(file.path(out.dir, projections_file))
 dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 ```
 
+```{r eval=exists("prevalence"), child='prev-proj-report.Rmd'}
+```
+
+
 ### Infection incidence {.tabset}
 
 #### By region
@@ -29,8 +33,5 @@ make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = 
 #### By age
 ```{r age-medterm-death}
 make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE, data = dth.dat)
-```
-
-```{r eval=exists("prevalence"), child='prev-proj-report.Rmd'}
 ```
 

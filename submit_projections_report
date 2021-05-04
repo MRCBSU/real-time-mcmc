@@ -17,8 +17,8 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --mem=20000
-#SBATCH --array=4,10
+#SBATCH --cpus-per-task=2
+#SBATCH --array=2
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -58,22 +58,15 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 module load pandoc                         # Need this to generate the STAN model code
-if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
+if [ "$(whoami)" == "aa995" ]; then module load R/3.6; fi
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 # Navigate to the correct working directory
-if [ $SLURM_ARRAY_TASK_ID -lt 4 ] || [[ $SLURM_ARRAY_TASK_ID -eq 9 ]]; then
-    prev="NoPrev"
-    gap=""
-    if [ $SLURM_ARRAY_TASK_ID -lt 2 ]; then
-	days="28"
-    else
-	days="60"
-    fi
-else
-    prev="PrevCevik"
+dirs=(*/)
+# echo ${dirs[SLURM_ARRAY_TASK_ID]}                                                                                                                                                                                                                                                                                                                                       
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
 
-echo -e $workdir
 
 #! Full path to application executable: 
 application="Rscript"
@@ -120,7 +113,6 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
-cd $workdir
 
 JOBID=$SLURM_JOB_ID
 

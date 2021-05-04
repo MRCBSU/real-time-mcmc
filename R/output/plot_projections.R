@@ -6,6 +6,7 @@ out.dir <- getwd()
     arg.index <- 1
 args <- commandArgs(trailingOnly = TRUE)
 projections_file <- args[arg.index]
+if(is.na(projections_file)) projections_file <- "projections_midterm.RData"
 
 regions.total.population <- t(matrix(pop.input, nA, length(regions)))
 colnames(regions.total.population) <- age.labs
