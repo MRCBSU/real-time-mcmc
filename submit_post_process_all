@@ -12,7 +12,8 @@
 #SBATCH --qos=covid0
 #SBATCH --mem=40G
 
-#SBATCH --array=5
+#SBATCH --array=0
+
 #SBATCH -p skylake-himem
 
 

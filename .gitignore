@@ -1,7 +1,6 @@
-rtm
-rtm_debug
 rtm_optim*
 rtm_hpc
+rtm_hpc2
 **.swp
 **.swo
 build/**
@@ -28,3 +27,5 @@ Lombdardy*/**
 !base_matrices*.rds
 contact_mats/*.txt
 scratch/**
+.DS_Store
+*#

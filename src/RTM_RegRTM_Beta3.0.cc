@@ -3,6 +3,8 @@
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
 
+#include "RTM_updParams.h"
+
 using namespace std;
 using std::string;
 
@@ -11,9 +13,10 @@ int main(void){
   global_model_instance_parameters global_fixedpars;
   globalModelParams global_modpars;
   mcmcPars sim_pars;
-  likelihood llhood;  
   struct tm *now;
   time_t tval;
+
+  updParamSet paramSet;
 
   // SET :"TIMER" RUNNING
   tval = time(NULL);
@@ -57,6 +60,7 @@ int main(void){
 
   // BELOW FUNCTION WILL ALLOC MEMORY TO GLOBAL_MODPARS, AND SET TO FILE SPECIFIED VALUES OR DEFAULTS
   read_global_model_parameters(global_modpars,
+			       paramSet,  // Also read into new param objects
   			       str_filename_modpars,
   			       str_global_model_parameters_members,
   			       str_global_model_parameters_initvals,
@@ -71,9 +75,12 @@ int main(void){
   			       global_fixedpars.l_reporting_time_steps_per_day);
   // //
 
+
+
   // GOING TO READ IN THE DATA FOR EACH REGION. SET UP A META-REGION
   Region* country = new Region[global_fixedpars.l_num_regions];
 
+  
   // BELOW ROUTINES WILL READ IN ALL THE DATA THAT WE'RE GOING TO USE
   // POLYMOD MATRICES ALSO TREATED AS DATA. THE POLYMOD "DATA" FILE
   // SHOULD BE SPECIFIED IN THE FILE NAMED str_filename_modpars
@@ -81,6 +88,8 @@ int main(void){
   // FIRST, WANT TO READ IN THE MIXING MODEL
   mixing_model mixmod_struct;
   read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs, global_fixedpars);
+
+#ifdef USE_OLD_CODE
 
   // ALLOCATE MEMORY TO REGIONAL SUBSTRUCTURES
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
@@ -98,25 +107,48 @@ int main(void){
   				 global_fixedpars, int_i, country[int_i].population,
   				 country[int_i].total_population, mixmod_struct, all_true);
 
+#endif
+
+
+  Region* country2 = new Region[global_fixedpars.l_num_regions];
+
+  // Block pars: Having read the parameters, initialise the rest of the block structure
+  paramSet.init();
+  
+  // Initialise region again for block code
+  // For now, easiest to re-read from file rather than work out how to deep copy
+  for (int i = 0; i < global_fixedpars.l_num_regions; i++)
+    Region_alloc(country2[i], global_fixedpars, mixmod_struct);
+  read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);
+  
+  flagclass block_all_true;
+  for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
+    block_regional_parameters(country2[int_i].det_model_params, paramSet, 
+  				 global_fixedpars, int_i, country2[int_i].population,
+  				 country2[int_i].total_population, mixmod_struct, block_all_true);
+
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
   string str_mcmc_parameter_names(MCMC_PARAMETER_NAMES);
   string str_mcmc_parameter_defaults(MCMC_PARAMETER_DEFAULT_VALUES);
-
+  
   read_mcmc_parameters(sim_pars,
   		       str_filename_inputs,
   		       str_mcmc_parameter_names,
   		       str_mcmc_parameter_defaults);
-
+  
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
   #ifdef USE_THREADS
   omp_set_num_threads(sim_pars.max_num_threads);
   #endif
 
   // INITIALISE THE LIKELIHOOD STRUCTURE
-  likelihood_alloc(llhood, global_fixedpars);
+  // likelihood_alloc(llhood, global_fixedpars);
+  likelihood llhood(global_fixedpars);
+
 
   // MAKE AN INITIAL EVALUATION OF THE LIKELIHOOD
+#ifdef USE_OLD_CODE
   fn_log_likelihood(llhood, country, 0, true, true,
   		    global_fixedpars.l_GP_consultation_flag,
   		    global_fixedpars.l_Hospitalisation_flag,
@@ -124,13 +156,34 @@ int main(void){
 		    global_fixedpars.l_Sero_data_flag,
 		    global_fixedpars.l_Prev_data_flag,
   		    global_fixedpars,
-  		    global_modpars);
+  		    global_modpars.gp_delay.distribution_function,
+		    global_modpars.hosp_delay.distribution_function
+    );
+#endif
 
+  likelihood block_llhood(global_fixedpars);
+  fn_log_likelihood(block_llhood, country2, 0, true, true, 
+		    true, //global_fixedpars.l_GP_consultation_flag,
+		    true, //global_fixedpars.l_Hospitalisation_flag,
+		    true, //global_fixedpars.l_Viro_data_flag,
+		    true, //global_fixedpars.l_Sero_data_flag,
+		    true, //global_fixedpars.l_Prev_data_flag,
+		    global_fixedpars,
+		    paramSet.gp_delay.distribution_function,
+		    paramSet.hosp_delay.distribution_function
+    );
+
+  for (auto& block : paramSet.blocks)
+    block.setLlhood(block_llhood);
+  paramSet.lfx = block_llhood;
+  
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES
   metrop_hast(sim_pars,
   	      global_modpars,
+	      paramSet,
   	      country,
-  	      llhood,
+	      country2,
+  	      block_llhood,
   	      global_fixedpars,
   	      mixmod_struct,
   	      sim_pars.r);
@@ -138,7 +191,7 @@ int main(void){
   ////////////////////////////////////////////////////////////////////////////////////////
 
   // FREE THE STRUCTURE CONTAINING THE LIKELIHOOD DETAILS
-  likelihood_free(llhood);
+  //likelihood_free(llhood);
 
   // FREE THE STRUCTURE CONTAINING THE MCMC SIMULATION PARAMETERS
   mcmcPars_free(sim_pars);
@@ -146,13 +199,15 @@ int main(void){
   // FREE THE MIXING MODEL STRUCTURE INTO WHICH THE MATRICES WERE INITIALLY READ
   mixing_model_free(mixmod_struct);
 
+#ifdef USE_OLD_CODE
   // FREE THE SUBSTRUCTURES WITHIN THE COUNTRY ARRAY
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     Region_free(country[int_i], global_fixedpars);
-
+  
   /// FREE THE COUNTRY ARRAY
   delete [] country;
-
+#endif
+  
   /// FREE STRUCTURES ALLOCATED AHEAD OF read_model_inputs CALL
   free_global_model_instance(global_fixedpars);
 

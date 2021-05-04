@@ -38,8 +38,11 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
+
 google.data.date <- format(ymd("2021-04-30"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
+#matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
+
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -49,6 +52,9 @@ ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 25 ## From the current date, when to insert the most recent beta breakpoint.
+sdpar <- 100
+
+
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
 ## What age groupings are being used?
@@ -76,6 +82,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 0
 use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
+num.prev.days <- 339
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -88,6 +95,8 @@ if (prev.flag) {
 	if (use.INLA.prev) scenario.name <- paste0("PrevINLA", prev.prior)
 	if (!use.INLA.prev) scenario.name <- paste0("Prev", prev.prior)
 }
+#if (prev.flag) scenario.name <- paste0("Prev", num.prev.days) #this come from merging with Colin's/Paul's stuff
+
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
@@ -155,6 +164,7 @@ if(gp.flag){
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
 
+
 ## Dates of prevalence data
 date.prev <- lubridate::ymd("20210426") # Set this to last date in dataset
 prev.cutoff.days <- 5
@@ -169,6 +179,7 @@ if (use.INLA.prev) {
 	num.prev.days <- 57
 	first.prev.day <- prev.end.day - num.prev.days + 1 + prev.cutoff.days
 }
+
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
@@ -211,4 +222,7 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
+
 future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
+#future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
+

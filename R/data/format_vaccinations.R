@@ -12,7 +12,27 @@ require(tidyverse)
 require(cubelyr)
 require(lubridate)
 if(!exists("vacc.loc")){ ## Set to default format for the filename
+#<<<<<<< HEAD
 	input.loc <- glue::glue("/data/covid-19/data-raw/dstl/{ymd(str.date.vacc)}/{str.date.vacc} immunisations SPIM.csv")
+#=======
+#    input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
+    ## List the possible files in the directory
+#    vacc.loc <- file.info(file.path(input.loc,
+#                                    list.files(path = input.loc,
+#                                               pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
+#                                    )
+#                          )
+    ## Has a particular date's data been specified
+#    rnames <- rownames(vacc.loc)
+#    if(exists("str.date.vacc")){
+#        input.loc <- rnames[grepl(str.date.vacc, rnames)]
+#    } else {
+        ## Pick up the most recently added
+#        input.loc <- rnames[which.max(vacc.loc$ctime)]
+        ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
+#        str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
+#    }
+#>>>>>>> COVID_vacc_amgs
 } else {
     if(is.null(vacc.loc)){
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
@@ -91,7 +111,42 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
         pad.rows.at.end(ndays)
     }
 
+## Function to handle the unzipping of a large file - apparently R's unzip function is unreliable.
+decompress_file <- function(directory, file, .file_cache = FALSE) {
 
+    if (.file_cache == TRUE) {
+       print("decompression skipped")
+    } else {
+
+        ## Set working directory for decompression
+        ## simplifies unzip directory location behavior
+        wd <- getwd()
+        setwd(directory)
+
+        ## Run decompression
+        decompression <-
+            system2("unzip",
+                    args = c("-o", # include override flag
+                             gsub(" ", "\\\\ ", file)),
+                    stdout = TRUE)
+        
+        ## uncomment to delete archive once decompressed
+        file.remove(file) 
+
+        ## Reset working directory
+        setwd(wd); rm(wd)
+
+        ## Test for success criteria
+        ## change the search depending on 
+        ## your implementation
+        if (grepl("Warning message", tail(decompression, 1))) {
+            print(decompression)
+        }
+
+        return(gsub(".zip", ".csv", file.path(directory, file)))
+        
+    }
+}
 
 ## Substitute this into the names of the intended data file names
 vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
@@ -99,6 +154,10 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+
+    ## Extract file from archive
+    file.copy(input.loc, basename(input.loc))
+    input.loc <- decompress_file(".", basename(input.loc))
 
     if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
     
@@ -363,6 +422,11 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## }
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
+#<<<<<<< HEAD
+#=======
+#    rm(vacc.dat)
+#    file.remove(input.loc)
+#>>>>>>> COVID_vacc_amgs
     
 } else {
 

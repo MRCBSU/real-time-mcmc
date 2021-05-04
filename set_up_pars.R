@@ -445,7 +445,7 @@ for(i in 1:(nbetas-1))
         beta.design[i,j] <- 0
 beta.design <- as.matrix(bdiag(lapply(1:nr, function(x) beta.design)))
 write_tsv(as.data.frame(beta.design), file.path(out.dir, "beta.design.txt"), col_names = FALSE)
-beta.rw.sd.pars <- c(1, 100)
+beta.rw.sd.pars <- c(1, sdpar)
 beta.rw.sd <- 0.151057317190954
 
 ## Serological test sensitivity and specificity

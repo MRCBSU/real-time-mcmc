@@ -28,7 +28,11 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0-5
+
+#SBATCH --array=0
+
+
+
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -51,6 +55,98 @@ module load pandoc                         # Need this to generate the STAN mode
 module load R/3.6
 module load gsl
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
+
+
+
+# Navigate to the correct working directory
+bp="IFR3bp"
+enddays="25"
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+    prev="NoPrev"
+    gap=""
+    pdays=""
+else
+    prev="PrevCevik"
+    if [ $SLURM_ARRAY_TASK_ID -lt 9 ]; then
+	pdays="319"
+	if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+	    gap="_prev7-5"
+	elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+	    gap="_prev14-5"
+	else
+	    gap="_prev28-5"
+	fi
+    else
+	pdays="57"
+	if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	    gap="_prev7-5"
+	else
+	    gap="_prev14-5"
+	fi
+    fi
+fi
+cm="ons"
+eff="Nick"
+geog="NHS"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    days="60"
+else
+    days="28"
+fi
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210319/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210319_timeuse_household_deaths"
+
+module load gcc/9 intel/compilers/2020.2
+
+echo -e $workdir
+
+#! Full path to application executable: 
+application="Rscript"
+
+#! Run options for the application:
+# options="--vanilla R/output/SPIMask.R"
+options="--vanilla R/output/mc_${forecast_switch}_forecast.R"
+
+# #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
+# #! safe value to no more than 16:
+# export OMP_NUM_THREADS=1
+# export R_PROFILE=$RMPI_RPROFILE
+
+#! Number of MPI tasks to be started by the application per node and in total (do not change):
+np=$[${numnodes}*${mpi_tasks_per_node}]
+
+# #! The following variables define a sensible pinning strategy for Intel MPI tasks
+
+# #! this should be suitable for both pure MPI and hybrid MPI/OpenMP jobs:
+# export I_MPI_PIN_DOMAIN=omp:compact # Domains are $OMP_NUM_THREADS cores in size
+# export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches/sockets
+# #! Notes:
+# #! 1. These variables influence Intel MPI only.
+# #! 2. Domains are non-overlapping sets of cores which map 1-1 to MPI tasks.
+# #! 3. I_MPI_PIN_PROCESSOR_LIST is ignored if I_MPI_PIN_DOMAIN is set.
+# #! 4. If MPI tasks perform better when sharing caches/sockets, try I_MPI_PIN_ORDER=compact.
+
+# # Get array ID
+# i=${SLURM_ARRAY_TASK_ID}
+
+#! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
+
+#! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
+
+# You can use any arbitrary set of Linux commands here
+
+CMD="$application $options ${workdir}"
+
+# Or for example:
+# CMD="Rscript myScript.R"
+
+
+###############################################################
+### You should not have to change anything below this line ####
+###############################################################
+
+
+
 JOBID=$SLURM_JOB_ID
 
 echo -e "JobID: $JOBID\n======"

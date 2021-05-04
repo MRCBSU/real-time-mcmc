@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -J hpc-test
+#SBATCH -A mrc-bsu-sl2-cpu
+#SBATCH -c 9
+#SBATCH -t 10:0:0
+
+#SBATCH -p skylake
+
+module load gcc/9 intel/compilers/2019.4 gsl-2.4-intel-17.0.4-etauzbm
+
+../../../rtm_hpc

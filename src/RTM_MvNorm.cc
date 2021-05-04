@@ -106,6 +106,35 @@ double mvnorm::ld_mvnorm_ratio(const gsl_vector* in_x1, const gsl_vector* in_x2)
   return (ld_mvnorm_nonnorm(in_x1) - ld_mvnorm_nonnorm(in_x2));
 }
 
+mvnorm::mvnorm(const mvnorm &in)
+    : log_cov_det(in.log_cov_det),
+      mean(nullptr),
+      covariance_inverse(nullptr) {
+    if (in.mean != nullptr) {
+	gsl_vector_alloc(in.mean->size);
+	gsl_vector_memcpy(mean, in.mean);
+    }
+    if (in.covariance_inverse != nullptr) {
+	gsl_matrix_alloc(in.covariance_inverse->size1, in.covariance_inverse->size2);
+	gsl_matrix_memcpy(covariance_inverse, in.covariance_inverse);
+    }
+}
+
+mvnorm& mvnorm::operator=(const mvnorm &in) {
+    if (this != &in) {
+	log_cov_det = in.log_cov_det;
+	if (in.mean != nullptr) {
+	    gsl_vector_alloc(in.mean->size);
+	    gsl_vector_memcpy(mean, in.mean);
+	}
+	if (in.covariance_inverse != nullptr) {
+	    gsl_matrix_alloc(in.covariance_inverse->size1, in.covariance_inverse->size2);
+	    gsl_matrix_memcpy(covariance_inverse, in.covariance_inverse);
+	}
+    }
+    return *this;
+}
+
 mvnorm::~mvnorm()
 {
   if(mean != 0)

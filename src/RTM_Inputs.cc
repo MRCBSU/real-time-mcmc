@@ -3,6 +3,8 @@
 #include "gsl_vec_ext.h"
 #include "gsl_mat_ext.h"
 
+#include "RTM_updParams.h"
+
 using namespace std;
 using std::string;
 
@@ -21,7 +23,7 @@ void input_filenames(
   filenames = fopen(IN_FILE, "r");
   if(filenames == NULL)
     { // IF rtm_input_files DOES NOT EXIST, THEN SET *ALL* INPUTS TO DEFAULT VALUES. USER IS ALERTED.
-      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.");
+      printf("Warning: rtm_input_files.txt not found. Default filenames to be searched for throughout.\n");
     }
   else
     {
@@ -57,10 +59,10 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
   // ITERATE THROUGH THESE INSTANCES
   string str_replace;
-  register int i_var_start = 0, i_var_end = 0, i_var_mark;
-  register int i_val_start = 0, i_val_end, i_val_mark;
-  register double dbl_var;
-  register string str_var;
+  int i_var_start = 0, i_var_end = 0, i_var_mark;
+  int i_val_start = 0, i_val_end, i_val_mark;
+  double dbl_var;
+  string str_var;
 
   for(;
       i_var_end != string::npos;
@@ -112,7 +114,7 @@ void read_variable_value(const string str_varnames, string& str_var_values, char
 
 
 
-void read_mcmc_parameters(register mcmcPars &mcmc_pars,
+void read_mcmc_parameters(mcmcPars &mcmc_pars,
 			  char* source_file,
 			  const string str_varnames,
 			  string& str_vardefaults)
@@ -144,7 +146,7 @@ void read_mcmc_parameters(register mcmcPars &mcmc_pars,
 
 }
 
-void read_global_fixed_parameters(register global_model_instance_parameters& fixed_pars,
+void read_global_fixed_parameters(global_model_instance_parameters& fixed_pars,
 				  char* source_file,
 				  const string str_varnames,
 				  string& str_vardefaults)
@@ -334,8 +336,8 @@ int cut_out_parameter(string& out_substring, const string file_content, const ch
   return num_strings;
 }
 
-void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
-				     int& parameter_dimension,
+// parameter_dimension is output variable is modified
+gsl_vector_int* alloc_and_set_breakpoint_vector(int& parameter_dimension,
 				     const string str_source,
 				     const string str_property_name,
 				     const int pos_in_source,
@@ -346,6 +348,8 @@ void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
   // set to default value
   string temp_string("false");
 
+  gsl_vector_int *breakpoints;
+    
   // read in the variable set value if one exists
   if(pos_in_source != string::npos)
       read_string_from_instruct(temp_string, str_property_name, str_source);
@@ -355,23 +359,24 @@ void alloc_and_set_breakpoint_vector(gsl_vector_int*& vector_of_breakpoints,
       // if there are breakpoints, then we should have a true value or a numeric vector
       if(temp_string.compare("true") == 0){
 	// FULL VARIATION IN THE PARAMETER
-	vector_of_breakpoints = gsl_vector_int_alloc(default_size - 1);
-	gsl_vector_int_set_seq(vector_of_breakpoints);
+	breakpoints = gsl_vector_int_alloc(default_size - 1);
+	gsl_vector_int_set_seq(breakpoints);
       } else if(flag_alternate_variation) {
 	// THERE SHOULD BE A VECTOR OF VALUES TO READ IN
 	// FIRST, GET THE NUMBER OF DISTINCT TIME INTERVALS
 	// AND ALLOCATE MEMORY TO THE VECTOR
-	vector_of_breakpoints = gsl_vector_int_alloc(count_delims_in_string(temp_string, ",") + 1);
+	breakpoints = gsl_vector_int_alloc(count_delims_in_string(temp_string, ",") + 1);
 	// ASSIGN THE READ VALUES INTO THE VECTOR
-	gsl_vector_int_sscanf(temp_string, vector_of_breakpoints);
+	gsl_vector_int_sscanf(temp_string, breakpoints);
       }
-      parameter_dimension = vector_of_breakpoints->size + 1;
+      parameter_dimension = breakpoints->size + 1;
     }
   else 
     {
-      vector_of_breakpoints = 0;
+      breakpoints = 0;
       parameter_dimension = 1;
     }
+  return breakpoints;
 }
 
 
@@ -391,10 +396,7 @@ void read_param_regression(regression_def& reg_def,
   int reg_pos = str_source.find("region_breakpoints");
   int time_pos = str_source.find("time_breakpoints");
   int age_pos = str_source.find("age_breakpoints");
-
-  reg_def.region_breakpoints = reg_def.time_breakpoints = reg_def.age_breakpoints = 0;
-  reg_def.design_matrix = 0;
-
+  
   if(((age_pos != string::npos) || (time_pos != string::npos)) || (reg_pos != string::npos))
     {
       // WE HAVE SOME FORM OF VARIATION
@@ -403,11 +405,11 @@ void read_param_regression(regression_def& reg_def,
 	reg_def.regression_link = (link_function) read_int("regression_link", str_source);
       else reg_def.regression_link = cIDENTITY;
 
-      alloc_and_set_breakpoint_vector(reg_def.region_breakpoints, dim_r, str_source, "region_breakpoints", reg_pos, num_regions, false);
+      reg_def.region_breakpoints = alloc_and_set_breakpoint_vector(dim_r, str_source, "region_breakpoints", reg_pos, num_regions, false);
 
-      alloc_and_set_breakpoint_vector(reg_def.time_breakpoints, dim_t, str_source, "time_breakpoints", time_pos, num_days, true);
+      reg_def.time_breakpoints = alloc_and_set_breakpoint_vector(dim_t, str_source, "time_breakpoints", time_pos, num_days, true);
 
-      alloc_and_set_breakpoint_vector(reg_def.age_breakpoints, dim_a, str_source, "age_breakpoints", age_pos, num_ages, true);
+      reg_def.age_breakpoints = alloc_and_set_breakpoint_vector(dim_a, str_source, "age_breakpoints", age_pos, num_ages, true);
 
 
       // THE DESIGN MATRIX...
@@ -426,15 +428,15 @@ void read_param_regression(regression_def& reg_def,
 	read_string_from_instruct(str_filename, "regression_design", str_source);
 	FILE* design_file = fopen(str_filename.c_str(), "r");
 
-	gsl_matrix_fscanf(design_file, reg_def.design_matrix);
+	gsl_matrix_fscanf(design_file, *reg_def.design_matrix);
 
 	fclose(design_file);
 
       } else if(str_source.find("regression_design") != string::npos) // READ IN THE MATRIX AS A VECTOR
-	read_gsl_matrix(reg_def.design_matrix, "regression_design", str_source);
+	read_gsl_matrix(*reg_def.design_matrix, "regression_design", str_source);
 
       else // DEFAULT, SET THE MATRIX TO THE IDENTITY (EVEN IF A RECTANGULAR MATRIX)
-	gsl_matrix_set_identity(reg_def.design_matrix);
+	gsl_matrix_set_identity(*reg_def.design_matrix);
 
     }
 
@@ -445,13 +447,15 @@ void read_param_regression(regression_def& reg_def,
 
 /////////// READ IN A PARAMETER STRUCTURE
 void read_modpar(updateable_model_parameter& modpar,
+		 updParamSet &paramSet,
 		 const char* param_name,
 		 const string in_string,
 		 const double default_value,
 		 const string likelihood_flags,
 		 const int num_regions,
 		 const int num_days,
-		 const int num_ages)
+		 const int num_ages,
+		 const int num_instances)   // CCS
 {
 
   string var_string, var_var_string;
@@ -507,7 +511,7 @@ void read_modpar(updateable_model_parameter& modpar,
 	string tempstring;
 	read_string_from_instruct(tempstring, "prior_hyper", var_string);
 	modpar.flag_hyperprior = ((tempstring.compare("") == 0) || (atoi(tempstring.c_str()) <= 0)) ? false : true; // NOTE THE DEFAULT IS TO ASSUME THAT THE PRIOR IS NOT A HYPERPRIOR
-
+	
 	// ERROR IF HYPERPRIOR IS SPECIFIED FOR A MULTIVARIATE PARAMETER
 	if(modpar.flag_hyperprior && (gsl_vector_int_get(modpar.prior_distribution, 0) == (int) cMVNORMAL)){
 	  perror("Multivariate normal hyperparameters specified\n");
@@ -555,6 +559,7 @@ void read_modpar(updateable_model_parameter& modpar,
 
 	modpar.number_accepted_moves = gsl_vector_int_alloc(var_dimension);
 	modpar.number_proposed_moves = gsl_vector_int_alloc(var_dimension);
+	
 	gsl_vector_int_set_zero(modpar.number_accepted_moves);
 	gsl_vector_int_set_zero(modpar.number_proposed_moves);
 
@@ -571,7 +576,7 @@ void read_modpar(updateable_model_parameter& modpar,
 
   
   } else { // THE STRING IS NOT FOUND
-
+    
     /// SET EQUAL TO THE DEFAULT (TIME AND AGE INVARIANT VALUE)
     modpar.param_value = gsl_vector_alloc(1);
     modpar.prior_distribution = gsl_vector_int_alloc(1);
@@ -584,7 +589,102 @@ void read_modpar(updateable_model_parameter& modpar,
   // ESTABLISH THE MAPS FROM THE PARAMETER VALUES TO THE VALUES PASSED TO THE REGIONAL STRUCTURES
   read_param_regression(modpar.map_to_regional, param_name, modpar.param_value->size, var_string, num_regions, num_days, num_ages);
 
+
+  // CCS
+  // We need to pass num_instances to this function to enable the copy of
+  // flag_child_nodes. Remove if/when this creation is refactored.
+  // num_instances is the number of params defined in the input file
+  // (TODO: Is there a bug where this is less than the total number of params?)
+  // True = local param, false = global
+  bool regional = ( var_string.find("regional_param") != string::npos );
+  
+  paramSet.insertAndRegister(modpar, num_instances, regional, num_regions);
+  
 }
+
+
+// WARNING: Uses param_value of param, which is not (currently) updated
+// Safe as this runs at input time only
+
+/////// INITIALISE PRIOR DENSITIES
+void initialise_prior_density(updParamSet &paramSet,
+			      updParam& modpar,
+			      double (*prior_density_fn)(const double&, const distribution_type&, const gsl_vector*))
+{
+
+  std::vector<distribution_type> prior_distributions;
+
+  if(modpar.flag_hyperprior)
+    prior_distributions.assign(modpar.size, modpar.prior_distribution[0]);
+  else
+    prior_distributions = modpar.prior_distribution;
+
+  modpar.log_prior_dens = 0;
+
+  // CHECK THE PRIOR IS NOT MULTIVARIATE
+  if(prior_distributions[0] != (int) cMVNORMAL)
+    {
+      for(int int_marker = 0; int_marker < modpar.size; int_marker++)
+	// Test for existance of prior
+	if (modpar.prior_params[int_marker].size() > 0) {
+	  modpar.log_prior_dens +=
+	    prior_density_fn(modpar.values[int_marker],
+			     (distribution_type) prior_distributions[int_marker],
+			     *modpar.prior_params[int_marker]);
+	} else if( modpar.parents[int_marker] >= 0) {
+	  // Get prior params from parent parameter instead
+	  // TODO: Can we be sure we don't need a region number here
+
+	  // Can't use lookupValue to retrieve parent values as blocks haven't
+	  // been constructed yet, but we can use init_value
+	  modpar.log_prior_dens +=
+	    prior_density_fn(modpar.values[int_marker],
+			     (distribution_type) prior_distributions[int_marker],
+			     *paramSet[modpar.parents[int_marker]].values);
+	}
+    }
+  else
+    {
+      // SET UP THE MULTIVARIATE NORMAL MEAN AND COVARIANCE STRUCTURES
+      gsl_vector* mv_mean = gsl_vector_alloc(modpar.size);
+      gsl_matrix* mv_covar = gsl_matrix_alloc(modpar.size, modpar.size);
+      
+      // TODO: Do we need to test for no prior?
+      for(int int_marker = 0; int_marker < modpar.size; int_marker++)
+      {
+	if (modpar.prior_params.size() > 0) {
+	  gsl_vector_set(mv_mean, int_marker, modpar.prior_params[int_marker][0]);
+	  gsl_vector_view mv_covar_subrow = gsl_vector_subvector(*modpar.prior_params[int_marker], 1, modpar.prior_params[int_marker].size() - 1);
+	  gsl_matrix_set_row(mv_covar, int_marker, &mv_covar_subrow.vector);
+	} else if (modpar.parents[int_marker] >= 0) {
+	  
+	  gsl_vector* parentVals = *paramSet[modpar.parents[int_marker]].values;
+	  gsl_vector_set(mv_mean, int_marker, gsl_vector_get(parentVals, 0));
+
+	  gsl_vector_const_view subrow = gsl_vector_const_subvector(parentVals, 1, parentVals->size - 1);
+	  gsl_matrix_set_row(mv_covar, int_marker, &subrow.vector);
+	}
+	// TODO: ELSE
+      }
+      
+
+      // TRANSFER THIS DATA INTO THE MVNORM CLASS HELD IN THE UPDATEABLE_MODEL_PARAMETERS STRUCTURE
+      modpar.prior_multivariate_norm = new mvnorm(mv_mean, mv_covar);
+
+      // EVALUATE THE LOG-DENSITY
+      if(modpar.flag_hyperprior)
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm(*modpar.values);
+      else
+	modpar.log_prior_dens = (*modpar.prior_multivariate_norm).ld_mvnorm_nonnorm(*modpar.values);
+
+      // FREE ANY MEMORY ALLOCATED
+      gsl_vector_free(mv_mean);
+      gsl_matrix_free(mv_covar);
+    }
+  
+
+}
+
 
 
 /////// INITIALISE PRIOR DENSITIES
@@ -641,11 +741,76 @@ void initialise_prior_density(updateable_model_parameter& modpar,
 }
 
 
+// Node links for new block structure
+void node_links(updParamSet& paramSet,
+		const string& str_param_input)
+{
+
+  int inti, intj;
+  int int_delim_position = 0;
+  string temp_param, temp_prior_param;
+  
+  // FOR EACH PARAMETER, i
+  for(inti = 0; inti < paramSet.numPars(); inti++) {
+
+    auto &par = paramSet[inti];
+    
+    par.flag_any_child_nodes = false;
+    
+    for(intj = 0; intj < paramSet.numPars(); intj++) {
+      
+      //FOR ALL OTHER PARAMETERS, j
+      if(inti != intj){
+
+	auto &child = paramSet[intj];
+	
+	// NO PARAMETERS ARE HYPERPARAMETERS BY DEFAULT, SO NEEDS TO BE SPECIFIED IN FILE.
+	// CHECK THE VARIABLE APPEARS IN THE FILE
+	// STORE THE VARIABLE STRING
+	int num_strings = cut_out_parameter(temp_param, str_param_input, child.param_name.c_str());
+	
+	if(num_strings > 0)
+	{
+	  
+	  // FIND THE PRIOR_PARAMS VALUE
+	  read_string_from_instruct(temp_prior_param, "prior_parameters", temp_param);
+	  
+	  // IS THE TRIMMED STRING EQUAL TO THE NAME OF PARAMETER i
+	  // TRIM FIRST AND LAST CHARACTERS (i.e. QUOTATION MARKS)
+	  temp_prior_param.erase(0, 1);
+	  temp_prior_param.erase(FN_MAX(temp_prior_param.length(), 1) - 1, 1);
+	  
+	  if(temp_prior_param.compare(par.param_name) == 0){
+
+	    // PARAMETER j IS A CHILD NODE OF PARAMETER i
+	    // SET PRIOR_PARAMS OF j TO BE A POINTER TO PARAM_VALUES OF i
+	    for(int intk = 0; intk < child.size; intk++){
+	      if(child.prior_distribution[1] != (int) cCONSTANT)
+		//child.prior_params[intk] = par.init_value;
+
+		// We can't save a pointer here, as the param_value vector
+		// is no longer used. Instead, we save the parent indexes to
+		// be checked later
+		child.prior_params[intk].eraseRealloc(0);
+		child.parents[intk] = inti;
+	    }
+	    par.flag_child_nodes[intj] = true;
+	    par.flag_any_child_nodes = true;
+	  }
+	}
+      }
+    }
+  }
+}
+
+
+
+
 void node_links(globalModelParams& in_pars,
 		const string str_param_input)
 {
 
-  register int inti, intj;
+  int inti, intj;
   int int_delim_position = 0;
   string temp_param, temp_prior_param;
 
@@ -687,6 +852,7 @@ void node_links(globalModelParams& in_pars,
 		  }
 		  in_pars.param_list[inti].flag_child_nodes[intj] = true;
 		  in_pars.param_list[inti].flag_any_child_nodes = true;
+		  //cout << "setting child for param " << in_pars.param_list[inti].param_name << endl;
 		}
 	      }
 	  }
@@ -723,15 +889,15 @@ void calculate_fixed_distribution_function(infection_to_data_delay& itdd, double
   for(int int_i = 0; int_i < (int_k0 - 1); int_i++)
     {
 
-      gsl_vector_set(itdd.distribution_function,
+      gsl_vector_set(*itdd.distribution_function,
 		     int_i,
 		     gsl_cdf_gamma_P(((double) int_i + 1) * delta_t, itdd.overall_delay.gamma_shape, itdd.overall_delay.gamma_scale) - cumulative_probability);
 
-      cumulative_probability += gsl_vector_get(itdd.distribution_function, int_i);
+      cumulative_probability += gsl_vector_get(*itdd.distribution_function, int_i);
 
     }
 
-  gsl_vector_set(itdd.distribution_function,
+  gsl_vector_set(*itdd.distribution_function,
 		 int_k0 - 1,
 		 1.0 - cumulative_probability); // TRUNCATE THE DISTRIBUTION AT GREATER THAN (int_k0 - 1) DAYS
 
@@ -765,6 +931,7 @@ void load_delays(st_delay& out_delay, const string str_name, const double mean, 
   /////////// ASSIGNS INITIAL VALUES
 
 void read_global_model_parameters(globalModelParams& in_pars,
+				  updParamSet &paramSet,
 				  const char* source_file,
 				  const string str_var_names,
 				  const string& str_var_initvals,
@@ -812,14 +979,17 @@ void read_global_model_parameters(globalModelParams& in_pars,
     string str_param_flags = read_from_delim_string<string>(str_var_likflags, ":", int_delim_flag_position);
 
     // POPULATE THE STRUCTURE
-    read_modpar(in_pars.param_list[inti], str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages);
+    read_modpar(in_pars.param_list[inti], paramSet, str_param_name.c_str(), str_source, dbl_param_val, str_param_flags, num_regions, num_days, num_ages, num_instances);
 
   }
 
   // LINK PARENT AND CHILD NODES
   node_links(in_pars, str_source);
 
-  for(inti = 0; inti < num_instances; inti++)
+  node_links(paramSet, str_source);
+
+  
+   for(inti = 0; inti < num_instances; inti++)
     // CALCULATE INITIAL PRIOR DENSITY - BUT FIRST CHECK THAT THE NODE IS STOCHASTIC
     if(in_pars.param_list[inti].flag_update)
       {
@@ -828,6 +998,13 @@ void read_global_model_parameters(globalModelParams& in_pars,
 	else
 	  initialise_prior_density(in_pars.param_list[inti], R_univariate_prior_log_density_nonnorm);
       }
+
+   for (auto &par : paramSet.params)
+     if (par.flag_update)
+       if (par.flag_hyperprior)
+	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density);
+       else
+	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density_nonnorm);
 
 
   // NOW TO READ IN THE PARAMETERS OF THE DELAY DISTRIBUTIONS
@@ -878,9 +1055,18 @@ void read_global_model_parameters(globalModelParams& in_pars,
     }
 
   // ALLOCATE THE NECESSARY MEMORY TO THE AGGREGATED DELAY STRUCTURE
-  infection_to_data_delay_alloc(in_pars.gp_delay, gp_delay_counter, 0);
-  infection_to_data_delay_alloc(in_pars.hosp_delay, hosp_delay_counter, 0);
-  infection_to_data_delay_alloc(in_pars.death_delay, death_delay_counter, 0);
+  in_pars.gp_delay.setSize(gp_delay_counter, 0);
+  in_pars.hosp_delay.setSize(hosp_delay_counter, 0);
+  in_pars.death_delay.setSize(death_delay_counter, 0);
+
+  // CCS
+  paramSet.gp_delay.setSize(gp_delay_counter, 0);
+  paramSet.hosp_delay.setSize(hosp_delay_counter, 0);
+  paramSet.death_delay.setSize(death_delay_counter, 0);
+  
+  //infection_to_data_delay_alloc(in_pars.gp_delay, gp_delay_counter, 0);
+  //infection_to_data_delay_alloc(in_pars.hosp_delay, hosp_delay_counter, 0);
+  //infection_to_data_delay_alloc(in_pars.death_delay, death_delay_counter, 0);
 
   // COPY THE ELEMENTS OF temp_delay INTO THE AGGREGATED DELAY STRUCTUES
   for(inti = gp_delay_counter = hosp_delay_counter = death_delay_counter = 0;
@@ -888,15 +1074,21 @@ void read_global_model_parameters(globalModelParams& in_pars,
       inti++)
     {
       if((bool) atoi((str_param_flags[inti].substr(0, 1)).c_str())){
-	st_delay_memcpy(in_pars.gp_delay.component_delays[gp_delay_counter], temp_delay[inti]);
+	//st_delay_memcpy(in_pars.gp_delay.component_delays[gp_delay_counter], temp_delay[inti]);
+	in_pars.gp_delay.component_delays[gp_delay_counter] = temp_delay[inti];
+	paramSet.gp_delay.component_delays[gp_delay_counter] = temp_delay[inti];
 	gp_delay_counter++;
       }
       if((bool) atoi((str_param_flags[inti].substr(1, 1)).c_str())){
-	st_delay_memcpy(in_pars.hosp_delay.component_delays[hosp_delay_counter], temp_delay[inti]);
+	// st_delay_memcpy(in_pars.hosp_delay.component_delays[hosp_delay_counter], temp_delay[inti]);
+	in_pars.hosp_delay.component_delays[hosp_delay_counter] = temp_delay[inti];
+	paramSet.hosp_delay.component_delays[hosp_delay_counter] = temp_delay[inti];
 	hosp_delay_counter++;
       }
       if((bool) atoi((str_param_flags[inti].substr(2, 1)).c_str())){
-	st_delay_memcpy(in_pars.death_delay.component_delays[death_delay_counter], temp_delay[inti]);
+	//st_delay_memcpy(in_pars.death_delay.component_delays[death_delay_counter], temp_delay[inti]);
+	in_pars.death_delay.component_delays[death_delay_counter] = temp_delay[inti];
+	paramSet.death_delay.component_delays[death_delay_counter] = temp_delay[inti];
 	death_delay_counter++;
       }
 
@@ -911,11 +1103,20 @@ void read_global_model_parameters(globalModelParams& in_pars,
   aggregate_delays(in_pars.hosp_delay);
   aggregate_delays(in_pars.death_delay);
 
+  aggregate_delays(paramSet.gp_delay);
+  aggregate_delays(paramSet.hosp_delay);
+  aggregate_delays(paramSet.death_delay);
+
   // CALCULATE THE DISTRIBUTION FUNCTION FOR THE AGGREGATED DELAYS
   calculate_fixed_distribution_function(in_pars.gp_delay, 1.0 / reporting_time_steps_per_day);
   calculate_fixed_distribution_function(in_pars.hosp_delay, 1.0 / reporting_time_steps_per_day);
   calculate_fixed_distribution_function(in_pars.death_delay, 1.0 / reporting_time_steps_per_day);
 
+  calculate_fixed_distribution_function(paramSet.gp_delay, 1.0 / reporting_time_steps_per_day);
+  calculate_fixed_distribution_function(paramSet.hosp_delay, 1.0 / reporting_time_steps_per_day);
+  calculate_fixed_distribution_function(paramSet.death_delay, 1.0 / reporting_time_steps_per_day);
+
+  
 }
 
 int param_list_index(const globalModelParams src_gmp, string target_name)
@@ -938,7 +1139,7 @@ void data_matrices_fscanf(const string& infilestring,
 			  const int col_skip,
 			  const int row_skip)
 { //NEEDS SOME ERROR HANDLING IN HERE.
-  register int inti, intj;
+  int inti, intj;
   char str_row_date[25];
   double dbl_dummy;
 
@@ -969,7 +1170,7 @@ void data_int_matrices_fscanf(string infilestring,
 			  const int col_skip = 0,
 			  const int row_skip = 0)
 { //NEEDS SOME ERROR HANDLING IN HERE.
-  register int inti, intj;
+  int inti, intj;
   char str_row_date[25];
   double dbl_dummy;
 
@@ -1245,7 +1446,7 @@ void read_mixmod_structure_inputs(mixing_model& base_mm, const string str_input_
     }
 
   // FIRSTLY NEED TO KNOW HOW MANY TEMPORAL BREAKPOINTS THERE ARE - THIS SHOULD ALLOCATE THE MEMORY TO THE BREAKPOINT COMPONENT.
-  alloc_and_set_breakpoint_vector(base_mm.breakpoints,
+  base_mm.breakpoints = alloc_and_set_breakpoint_vector(
 				  base_mm.num_breakpoints,
 				  str_var,
 				  "time_breakpoints",

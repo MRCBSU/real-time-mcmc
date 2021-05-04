@@ -18,7 +18,11 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=2
-#SBATCH --array=2
+
+#SBATCH --array=0
+
+
+
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -68,12 +72,53 @@ cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
 
 
+# Navigate to the correct working directory
+bp="IFR3bp"
+enddays="25"
+if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
+    prev="NoPrev"
+    gap=""
+    pdays=""
+else
+    prev="PrevCevik"
+    if [ $SLURM_ARRAY_TASK_ID -lt 9 ]; then
+	pdays="319"
+	if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
+	    gap="_prev7-5"
+	elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
+	    gap="_prev14-5"
+	else
+	    gap="_prev28-5"
+	fi
+    else
+	pdays="57"
+	if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+	    gap="_prev7-5"
+	else
+	    gap="_prev14-5"
+	fi
+    fi
+fi
+cm="ons"
+eff="Nick"
+geog="NHS"
+if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
+    days="60"
+else
+    days="28"
+fi
+
+workdir="$SLURM_SUBMIT_DIR/model_runs/20210319/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210319_timeuse_household_deaths"
+
+echo -e $workdir
+
+
 #! Full path to application executable: 
 application="Rscript"
 
 
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections_midterm.RData"
+options="../../../R/output/plot_projections.R projections_*RData"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:

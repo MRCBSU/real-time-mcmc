@@ -3,14 +3,15 @@ setup.env <- new.env()
 load("tmp.RData", envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
-in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
+in.root <- "/rds/user/aa995/hpc-work/real-time-mcmc"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
+if(Sys.info()["user"]=="aa995")   out.root <- "/home/aa995/rds/hpc-work"
 
 ## Change location of repo
 in.repo <- "real-time-mcmc-dev"
-out.repo <- "real-time-mcmc-tmp"
+out.repo <- "real-time-mcmc-dev"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

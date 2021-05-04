@@ -15,7 +15,11 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
+#<<<<<<< HEAD
                                                pattern=glob2rx(file_str))
+#=======
+#                                               pattern=glob2rx(paste("202", num.prev.days, tolower(region.type), "csv", sep = "*"#)))
+#>>>>>>> COVID_vacc_amgs
                                     )
                           )
     ## Pick the most recently added

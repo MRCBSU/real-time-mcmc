@@ -9,6 +9,8 @@ out.dir <- commandArgs(trailingOnly = TRUE)[1]
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 if (!is.na(out.dir)) setwd(out.dir)
+cat(getwd(), "\n")
+cat(out.dir, "\n")
 load("mcmc.RData")
 load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
@@ -32,6 +34,21 @@ if(prev.flag && any(prev.data$lmeans == "NULL")){
 }
 prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
+#This HEAD up to COVID_vacc_amgs was the suggestion from Colin's/Paul's branch but seems that my/Josh's version is proper to use.
+#<<<<<<< HEAD
+#=======
+    ## if (!exists("date.prev")) {
+		## Get the date of the prevalence data
+#		date.prev <- ymd("20210317")
+		## Convert that to an analysis day number
+#		prev.end.day <- 388
+#		last.prev.day <- 388
+#		first.prev.day <- 75
+#		if(!exists("days.between.prev")) days.between.prev <- 7
+		## Default system for getting the days on which the likelihood will be calculated.
+#		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+	## }
+#>>>>>>> COVID_vacc_amgs
     for(r in 1:nr){
       prev.data$lmeans[r] <- file.path(data.dirs["prev"], "dummy_meanlogprev.txt")
       prev.data$lsds[r] <- file.path(data.dirs["prev"], "dummy_sdlogprev.txt")
@@ -197,6 +214,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
+
 if(Sys.info()["user"] %in% c("jbb50", "pjb51","aa995")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
