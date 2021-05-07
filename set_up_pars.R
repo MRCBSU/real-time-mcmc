@@ -424,7 +424,9 @@ beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
 if(length(beta.rw.vals) > nbetas*nr)
     beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
-beta.rw.vals[static.zero.beta.locs] <- 0
+beta.dist <- rep(4, length(beta.rw.vals))
+beta.dist[static.zero.beta.locs] <- 1
+#beta.rw.vals[static.zero.beta.locs] <- 0#comment out this and add the two lines above due to movement from srw to amgs
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
