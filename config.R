@@ -79,7 +79,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 num.prev.days <- 339
@@ -223,6 +223,6 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
-future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
+#future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
-
+future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2, 1.9) * 10^6) *(55.98/66.65)

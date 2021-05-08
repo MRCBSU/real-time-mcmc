@@ -29,7 +29,7 @@ Rfile.loc <- file.path(file.loc, "R/output")
 if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
 }
-stop()
+#stop()
 render(
 	file.path(Rfile.loc, 'report-updated.Rmd'),
 	html_document(pandoc_args = "--self-contained"),
