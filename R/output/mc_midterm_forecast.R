@@ -16,11 +16,11 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <- 8
+nweeks.ahead <-9 
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_midterm"
+projections.basename <- "projections_counter"
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
@@ -221,8 +221,10 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
-cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-dev/rtm_", exe)), "\n")
+cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-amgs/rtm_", exe)), "\n")
+## proj.dir <- gsub("amgs", "dev", proj.dir, fixed = TRUE)
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
+## proj.dir <- gsub("dev", "amgs", proj.dir, fixed = TRUE)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Sero <- lapply(xtmp, function(x) x$Sero)
 if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)

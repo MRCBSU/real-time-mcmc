@@ -9,7 +9,7 @@ if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "real-time-mcmc-amgs"
+in.repo <- "real-time-mcmc"
 out.repo <- "real-time-mcmc-amgs"
 
 ## Change location of output directory
@@ -21,18 +21,18 @@ var.list <- eapply(setup.env, typeof)
 vbl.names <- names(var.list)[unlist(var.list) == "character"]
 
 ## Within the specified environment...
-## with(setup.env, {
-##     for(vars in vbl.names){
-##         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
-##         assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
-##         assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
-##     }
-## })
-## ## Added exception for prev.data
-## setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
-##     gsub(in.root, out.root, x, fixed = TRUE))
-## setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
-##     gsub(in.repo, out.repo, x, fixed = TRUE))
+with(setup.env, {
+    for(vars in vbl.names){
+        assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
+        assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
+        assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
+    }
+})
+## Added exception for prev.data
+setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
+    gsub(in.root, out.root, x, fixed = TRUE))
+setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
+    gsub(in.repo, out.repo, x, fixed = TRUE))
 setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
     gsub(in.base, out.base, x, fixed = TRUE))
 

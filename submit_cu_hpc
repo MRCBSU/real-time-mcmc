@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=2
+#SBATCH --array=0
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -21,23 +21,15 @@
 #SBATCH --output=model_runs_20210120regjobs_%a.out
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
-# Navigate to the correct working directory
-
-
-if [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths/projections_long_endpoint"
-else
-    workdir="$SLURM_SUBMIT_DIR/model_runs/20210423/NoPrev_cm4ons_IFR3bp_ONS60cutoff_25wk2Jamie_matrices_20210423_timeuse_household_deaths"
-fi
-
 module load gcc/9 intel/compilers/2019.4 gsl-2.4-intel-17.0.4-etauzbm
 
-echo $workdir
-
-cd $workdir
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
 
 if [ -f "posterior_report10" ]; then
     echo "existing output found"
 else
   ../../../rtm_hpc2
+  # sbatch ../../../submit_post_process_correct_dir
 fi

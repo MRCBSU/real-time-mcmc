@@ -380,19 +380,23 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
 
       // Global
-      paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
-      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
-      if (int_iter > 199)
-	paramSet.blocks[0].adaptiveUpdate(int_iter);
+      if(paramSet.blocks[0].size() > 0){
+	paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
+	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+	if (int_iter > 199)
+	  paramSet.blocks[0].adaptiveUpdate(int_iter);
+      }
 
       // Local
-      paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
-      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
-      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
-      if (int_iter > 199)
-	paramSet.blocks[reg].adaptiveUpdate(int_iter);
-     
+      if(paramSet.blocks[reg].size() > 0){
+	paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+	paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
+	paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
+	if (int_iter > 199)
+	  paramSet.blocks[reg].adaptiveUpdate(int_iter);
+      }
+
       if (debug) {
 	paramSet.outputPars();
 	if (int_iter % 100 == 0 && int_iter > 0)
@@ -422,7 +426,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
 	output_coda_lfx.write(reinterpret_cast<char const*>(&(paramSet.lfx.total_lfx)), sizeof(double));
       }
-
+    
       // Output model statistics
       if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_stats_every)) {
 	for (int reg = 0; reg < nregions; reg++) {
