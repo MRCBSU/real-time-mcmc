@@ -97,7 +97,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
         group_by(age.grp, pop) %>%
         summarise(sdate, n, n.cum = cumsum(n)) %>%
         mutate(pop = max(pop, n.cum + 1)) %>%
-        mutate(value = n / (pop - dplyr::lag(n.cum))) %>% ## Calculating the fraction of the denominator population still at risk.
+        mutate(value = zapsmall(n / (pop - dplyr::lag(n.cum)))) %>% ## Calculating the fraction of the denominator population still at risk.
         replace_na(list(value = 0)) %>%
         ungroup() %>%
         mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 

@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210430"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210507"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -74,9 +74,9 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 361
+num.prev.days <- 368
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -167,7 +167,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210428")
+date.prev <- lubridate::ymd("20210504")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -211,4 +211,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(3.9, 2.3, 3.6, 3.5, 3.4, 4.5, 4.3, 3.3, 2.0, 2.0) * 10^6) * (55.98 / 66.65)
+future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
