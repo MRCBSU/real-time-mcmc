@@ -244,14 +244,29 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     for(reg in regions){
         
         region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
-        
+        stopifnot(!is.na(region.dat))
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
 
         region.dat <- jab.dat %>%
@@ -274,14 +289,30 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                         names_from = age.grp,
                         values_from = value) %>%
             pad.rows.at.end(ndays)
-    
+        stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
         tmpFile <- vacn.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
             write_tsv(tmpFile,
                       col_names = FALSE)
 
-        tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "Second", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else 
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
         vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
         
     }
@@ -332,7 +363,6 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## }
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
-    rm(vacc.dat)
     
 } else {
 
