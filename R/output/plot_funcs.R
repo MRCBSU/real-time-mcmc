@@ -31,25 +31,48 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         hoverinfo = "Today"
     ),
     list(
-        type = "line", 
+        type = "rect", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
         x0 = ymd(20200323), 
-        x1 = ymd(20200323), 
-        line = list(color = "blue"),
-        hoverinfo = "Lockdown"
+        x1 = ymd(20200511), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "First national lockdown"
     ),
     list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20201105), 
+        x1 = ymd(20201202), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "Second national lockdown"
+    ),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210105), 
+        x1 = ymd(20210308), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "Third national lockdown"
+    ),
+	list(
         type = "line", 
         y0 = 0, 
         y1 = 1, 
         yref = "paper",
-        x0 = ymd(20200511), 
-        x1 = ymd(20200511), 
-        line = list(color = "blue"),
-        hoverinfo = "Lockdown"
-    )
+        x0 = ymd(20210308), 
+        x1 = ymd(20210308), 
+        line = list(color = "green"),
+        hoverinfo = "Step one of roadmap"
+	)
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150
@@ -64,7 +87,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
                        y.format = ".3s}", combine.to.England = sum.all,
                        combine.data.to.England = sum.all.data,
                        project.forwards = !(is.null(data) && external), x.label = "",
-                       denoms = NULL) {
+                       denoms = NULL, y.percent = FALSE) {
 
   if (is.null(combine.to.England)) {
     Eng_projection <- Eng_data <- NULL
@@ -106,6 +129,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
       add_lines(y = ~`0.5`, color = I("black"), text = ~`0.5_prop`,
                 hovertemplate = paste0("%{x}: %{y:", y.format, "<extra>Median</extra>")) %>%
       layout(xaxis = list(title = x.label))
+    if (y.percent) plot <- plot %>% layout(yaxis = list(tickformat = "%"))
     if (is.null(data)) {
       return(plot)
     } else {
