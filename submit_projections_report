@@ -17,8 +17,8 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=2
-#SBATCH --array=4,6,8
+#SBATCH --cpus-per-task=3
+#SBATCH --array=5
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -77,7 +77,7 @@ application="Rscript"
 
 
 #! Run options for the application:
-options="../../../R/output/plot_projections.R projections_*RData"
+options="../../../R/output/plot_projections.R projections_midterm.RData"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
