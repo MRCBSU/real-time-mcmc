@@ -18,15 +18,17 @@ iters.keep <- sample.int(length(dimnames(mid.env$deaths)[["iteration"]]), 1000)
 
 deaths.vac <- thin.outs(mid.env$deaths)
 infecs.vac <- thin.outs(mid.env$infections)
+preval.vac <- thin.outs(mid.env$prevalence)
 
 rm(mid.env)
 
 load(proj2, envir = cou.env)
 
-deaths.no.vac <- thin.out(cou.env$deaths)
-infecs.no.vac <- thin.out(cou.env$infections)
+deaths.no.vac <- thin.outs(cou.env$deaths)
+infecs.no.vac <- thin.outs(cou.env$infections)
+preval.no.vac <- thin.outs(cou.env$prevalence)
 
 rm(cou.env)
 
-save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, file = "deaths_comparison_prev.RData")
+save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, file = "deaths_comparison_prev.RData")
 ## estimate total deaths saved is 201 (164-251)!!

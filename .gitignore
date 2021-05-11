@@ -13,7 +13,6 @@ model_runs/**
 Emulation/**
 spi-forecasts/**
 sitrep_outputs/**
-**/spim*
 **~
 **zip
 Report_structure*
