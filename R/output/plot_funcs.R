@@ -63,7 +63,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 		opacity = 0.15,
         hoverinfo = "Third national lockdown"
     ),
-	list(
+    list(
         type = "line", 
         y0 = 0, 
         y1 = 1, 
@@ -72,7 +72,60 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         x1 = ymd(20210308), 
         line = list(color = "green"),
         hoverinfo = "Step one of roadmap"
-	)
+	),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210308), 
+        x1 = ymd(20210329), 
+		fillcolor = "black",
+		opacity = 0.12,
+        hoverinfo = "Third national lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210329), 
+        x1 = ymd(20210329), 
+        line = list(color = "green"),
+        hoverinfo = "Step one of roadmap"
+	),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210329), 
+        x1 = ymd(20210412), 
+		fillcolor = "black",
+		opacity = 0.09,
+        hoverinfo = "Third national lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210412), 
+        x1 = ymd(20210412), 
+        line = list(color = "green"),
+        hoverinfo = "Step two of roadmap"
+	),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210412), 
+        x1 = ymd(20210517), 
+		fillcolor = "black",
+		opacity = 0.06,
+        hoverinfo = "Third national lockdown"
+    )
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150
