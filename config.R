@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-google.data.date <- format(ymd("2021-05-07"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-05-14"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
 
@@ -166,7 +166,7 @@ if(gp.flag){
 
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210502") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210510") # Set this to last date in dataset
 prev.cutoff.days <- 5
 days.between.prev <- 14
 ## Convert that to an analysis day number
@@ -211,7 +211,7 @@ threads.per.regions <- 2
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210506" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210513" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
