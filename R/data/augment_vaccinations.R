@@ -41,8 +41,6 @@ cat("Got here 6\n")
 for(dt in (d0 + 1):d.end){
 
     ## cat("Date", dt, "\n")
-    ## if(dt == 18778) stop()
-    ## stopifnot(as_date(dt) != as_date("20210531"))
     ## Get denominator population sizes
     ijab <- jab.dat %>% left_join(jab.dat %>%
                               filter(dose == "First") %>%
