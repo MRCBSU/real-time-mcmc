@@ -65,13 +65,15 @@ get.aggregated.quantiles <- function(data, by, quantiles) {
 }
 
 get.infection.weighted.Rt <- function(R, infection, pars.to.out){
-    inf_by_region <- apply(infection, c("iteration", "date", "region"), sum)[pars.to.out, , ]
+    inf_by_region <- apply(infection, c("iteration", "date", "region"), sum)[pars.to.out, , , drop = FALSE]
     Rt <- aperm(R, names(dimnames(inf_by_region)))
     stopifnot(all.equal(dim(Rt), dim(inf_by_region), check.names = FALSE))
     weighted_Rt_sum <- apply(inf_by_region * Rt, c("iteration", "date"), sum)
     inf_by_day <- apply(inf_by_region, c("iteration", "date"), sum)
     stopifnot(all.equal(dim(weighted_Rt_sum), dim(inf_by_day)))
-    weighted_Rt_sum / inf_by_day
+    R.out <- weighted_Rt_sum / inf_by_day
+    ## names(dimnames(R.out)) <- names(dimnames(R))
+    R.out
 }
 
 add.quantiles <- function(data, by, quantiles) {

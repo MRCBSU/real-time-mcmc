@@ -105,6 +105,10 @@ updParam::updParam(updateable_model_parameter &in, const int num_instances, bool
     flag_child_nodes[i] = in.flag_child_nodes[i];
 }
 
+// Number of parameter components within update block
+int updParamBlock::size() const {
+  return values.size();
+}
 
 // Defaults. Incomplete
 updParam updParamSet::defaultParam(std::string &name) {
@@ -825,6 +829,8 @@ void updParamBlock::adaptiveUpdate(int iter) {
     
   sigma = (1 - eta) * sigma + eta * deltaProd;
 }
+
+
 
 
 void updParamSet::adaptiveUpdate(int iter) {

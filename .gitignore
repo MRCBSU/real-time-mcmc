@@ -2,9 +2,12 @@ rtm_debug
 rtm_optim*
 rtm_hpc
 rtm_hpc2
+rtm_debug
+rtm_morricone
 **.swp
 **.swo
 build/**
+data/**
 outputs/**
 .vscode
 model_runs/**
@@ -12,7 +15,6 @@ model_runs/**
 Emulation/**
 spi-forecasts/**
 sitrep_outputs/**
-**/spim*
 **~
 **zip
 Report_structure*
@@ -29,3 +31,4 @@ Lombdardy*/**
 scratch/**
 .DS_Store
 *#
+BSU_website_plots/**

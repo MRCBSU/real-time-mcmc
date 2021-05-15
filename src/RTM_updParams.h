@@ -177,6 +177,9 @@ public:
   double laccept;   // Acceptance score
   int numAccept;    // Acceptance rate
   int numProposed;
+
+  // Extract the number of components in block
+  int size() const;
   
   //likelihood lfx;
   //likelihood prop_lfx;
@@ -216,7 +219,7 @@ public:
   int regionSize;     // For local params, num components per region
 	              // Warning: *Not* number of components per proposal block
   bool global;	// True if global param, false if local
-
+  
   // Prior params: Vector of length number of components.
   std::vector<gslVector> prior_params;
   // If prior is separate parameter, prior_params[i].size() == 0 and the index of

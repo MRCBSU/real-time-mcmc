@@ -40,6 +40,8 @@ vac.effec.bp <- 1:(length(vac.dates) - 1)
 ## Efficacy against disease from one vaccine dose
 if(efficacies == "Nick"){
     value.vac.alpha1 <- c(0.80, 0.50)
+} else if(efficacies == "Jamie"){
+    value.vac.alpha1 <- rep(3/7,2)
 } else {
     value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 }
@@ -52,6 +54,8 @@ vacc.alpha.bps <- TRUE
 ## Efficacy against disease from second/nth vaccine dose
 if(efficacies == "Nick"){
     value.vac.alpha2 <- c(0.95, 0.70)
+} else if(efficacies == "Jamie"){
+    value.vac.alpha2 <- c(2/3,6/7)
 } else {
     value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 }
@@ -63,23 +67,32 @@ write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"),
 ## Efficacy against disease from one vaccine dose
 if(efficacies == "Nick"){
     value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
+} else if(efficacies == "Jamie"){
+    value.vac.pi1 <- c(0.65, 0.65)
 } else {
     value.vac.pi1 <- 0.48
 }
 prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
 prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
-vacc.pi.bps <- FALSE
+if(efficacies == "Jamie")
+    write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
+vacc.pi.bps <- (efficacies == "Jamie")
 
-## Efficacy against disease from one vaccine dose
+## Efficacy against disease from two vaccine doses
 if(efficacies == "Nick"){
     value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
+} else if(efficacies == "Jamie"){
+    value.vac.pi2 <- c(0.85, 0.65)
 } else {
     value.vac.pi2 <- 0.6
 }
 prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
+if(efficacies == "Jamie")
+    write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
+vacc.pi.bps <- (efficacies == "Jamie")
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
@@ -402,6 +415,8 @@ beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
 if(length(beta.rw.vals) > nbetas*nr)
     beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
+beta.dist <- rep(4, length(beta.rw.vals))
+beta.dist[static.zero.beta.locs] <- 1
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)

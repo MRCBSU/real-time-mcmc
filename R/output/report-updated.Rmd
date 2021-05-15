@@ -13,6 +13,7 @@ output:
 if (!exists("external")) external = T
 external.bak <- external
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+knitr::opts_chunk$set(error=TRUE)
 
 suppressMessages(library(knitr))
 suppressMessages(library(DT))
@@ -35,6 +36,7 @@ if (external && exists("dth.dat") && !is.null(dth.dat)) {
 }
 if (!exists("prev.dat")) prev.dat <- NULL
 external <- external.bak
+extract <- R.utils::extract
 
 ```
 
@@ -69,6 +71,7 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
     * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the March 23rd lockdown measures.
     * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
     * Data from the Department for Education describing the proportion of children currently attending school.
+6. Daily data on the numbers of people getting immunised by age-group and region. These data are derived from the National Immunisation Management Service (NIMS). These data includes all COVID-19 immunisations administered at hospital hubs, local immunisation service sites such as GP practices, and dedicated immunisation centres.
 
 
 ## Epidemic summary {.tabset}
@@ -327,6 +330,36 @@ add.England <- function(data) {
 
 today.int <- as.integer(ymd(date.data))
 wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
+require(abind)
+calc.infec.growth.rate <- function(R,gt,infecs) {
+  ## To get a gt for England, just taking the mean of the other regions. In practice there is no regional heterogeneity. Would need more careful though if regional differences introduced.
+  gt <- do.call(cbind, gt) %>% cbind(apply((.), 1, mean))
+  rt <- R %>%
+     get.infection.weighted.Rt(infecs, which(parameter.to.outputs %in% iterations.for.Rt)) %>%
+     abind(R, along = 3, use.dnns = TRUE) %>%
+     as.tbl_cube(met_name = "value") %>%
+     as_tibble() %>%
+     mutate(region = ifelse(region == "", "England", region))
+  dimnames(gt)[[1]] <- unique(rt$iteration)
+  dimnames(gt)[[2]][dim(gt)[2]] <- "England"
+  names(dimnames(gt)) <- c("iteration", "region")
+  gt <- gt %>%
+     as.tbl_cube(met_name = "genTime") %>%
+     as_tibble()
+  rt %>%
+     left_join(gt) %>%
+     mutate(growth = log(value) / genTime) %>%
+     group_by(date, region) %>%
+     summarise(Median = median(growth),
+              `95% CrI (lower)` = quantile(growth, 0.025),
+              `95% CrI (upper)` = quantile(growth, 0.975)
+              ) %>%
+    arrange(match(region, c("England", regions))) %>%
+    mutate(Region = str_replace_all(region, "_", " ")) %>%
+    select(Region, everything()) %>%
+    ungroup() %>%
+    select(-region,-date)   
+}
 calc.growth.rate <- function(data) {
   data <- data %>%
     aperm(c("date", "region", "iteration", "age")) %>%
@@ -363,7 +396,11 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-infections.growth.rates <- calc.growth.rate(infections)
+## infections.growth.rates <- calc.growth.rate(infections)
+if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
+infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
+						Egt,
+						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
@@ -451,9 +488,9 @@ deaths.growth.rates %>%
 
 ## Infections and deaths {.tabset}
 
-The blue lines is show when interventions have been introduced (lockdown on 23 Mar and the relaxation of measures on 11 May), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
+The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
-```{r eval=!is.null(prev.dat), child='prev-report.Rmd'}
+```{r eval=!is.null(prev.dat)&&!external, child='prev-report.Rmd'}
 ```
 
 ```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
@@ -526,7 +563,7 @@ ifr.tab <- abind(ifr.eng, ifr.tab, along = 3); rm(ifr.eng)
 names(dimnames(ifr.tab)) <- name.order
 dimnames(ifr.tab)$age[1] <- "All ages"
 
-make.plots(ifr.tab, by = "age", y.format = ".2%", combine.to.England = NULL)
+make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL)
 ```
 
 ### Prob $R_t > 1$
@@ -550,7 +587,7 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
-make.plots(Rt, by = "region", y.format = ".2f", combine.to.England = NULL)
+make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
 ```
 
 ```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
