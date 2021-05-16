@@ -350,9 +350,9 @@ for(i in 1:nm){
     contact.pars[, i, ] <- prior.list$lock
     if((contact.model == 4) & (i %in% c(1, 4)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model == 5) & (i %in% c(1, 5)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(1, 5)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model == 5) & (i %in% c(2, 6)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(2, 6)))
         contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
 }
 ## if(nm > 1){
@@ -371,14 +371,13 @@ if(contact.model == 4)
     contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 3, 4, 4)]))
 if(contact.model == 5)
     contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 2, 3, 4, 4, 4)]))
+if(contact.model == 6)
+    contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 2, 2, 2, 3, 4, 4, 4, 4, 4)]))
 ## contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
 contact.reduction <- rep(-0.1, length(contact.proposal))
 zero.contact.elements <- 1 + ((nm+1)*(0:(nr-1)))
 contact.reduction[zero.contact.elements] <- 0
 contact.proposal[zero.contact.elements] <- 0
-if (nr == 7) {
-  contact.reduction[contact.reduction != 0] <- c(-0.0341814316217191, -0.603623169409033, 0.0539584598346591, 0.163593712131155, -0.703814518195703, -0.550731233431052, 0.0504542512327084, -0.420094076795744, 0.204225185679588, -0.324308107735709, -0.434259090524466, 0.380906862841831, -0.196723716378284, -0.0485712125740307, 0.667651849590346, 0.0768011654865117, -0.237594065172005, 0.369835713299122, -0.021905891919917, -0.20964475571682, 0.445364908401734)
-}
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
 if(rw.flag){
