@@ -132,6 +132,7 @@ prev.cols <- do.call(cols, prev.col.args)
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
 ## strPos <- c("+", "Positive", "positive")
+cat("Reading prevalence from", input.loc, "\n")
 prev.dat <- read_csv(input.loc,
                      col_types = prev.cols) %>%
     rename(!!!col.names) %>%
