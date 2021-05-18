@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -99,14 +99,14 @@ if(use.previous.run.for.start){
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
     } else if(region.type == "ONS"){
         if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
     }
 }
 iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
-contact.model <- 6
+contact.model <- 4
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
