@@ -76,7 +76,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 375
+num.prev.days <- 382
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -99,14 +99,14 @@ if(use.previous.run.for.start){
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
     } else if(region.type == "ONS"){
         if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
     }
 }
 iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
-contact.model <- 4
+contact.model <- 6
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
@@ -167,7 +167,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210512")
+date.prev <- lubridate::ymd("20210519")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
