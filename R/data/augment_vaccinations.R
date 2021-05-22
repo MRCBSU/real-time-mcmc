@@ -69,7 +69,7 @@ for(dt in (d0 + 1):d.end){
         select(sdate, region, age.grp, dose, n, pPfizer, pop)
     
     capacity <- max(0, capacity - sum(vacs.due$n))
-    
+    cat("Got here 6:", dt, "\n")
     ## Which priority groups are now fully immunised subject to uptake.
     tmp2 <- NULL
     options(warn=2)
