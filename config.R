@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210514"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210521"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -99,14 +99,14 @@ if(use.previous.run.for.start){
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
     } else if(region.type == "ONS"){
         if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210520", "Prev382_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
     }
 }
 iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
-contact.model <- 6
+contact.model <- 4
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
@@ -211,4 +211,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(3.6, 3.6, 3.5, 4.5, 4.4, 3.0, 2.0, 1.9, 2.0) * 10^6) * (55.98 / 66.65)
+future.n <- (c(3.8, 4.5, 4.4, 4.5, 3.1, 2.3, 2, 1.7, 1.7) * 10^6) * (55.98 / 66.65)
