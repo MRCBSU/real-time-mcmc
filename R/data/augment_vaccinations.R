@@ -84,8 +84,10 @@ for(dt in (d0 + 1):d.end){
                 ## mutate(f = f + ifelse(lead(exhausted, default = FALSE), lead(f, default = 0), 0)) %>%
                 mutate(f = ifelse(exhausted, 0, f)) %>%
                 mutate(cumsum.f = cumsum(f))
-            idx <- max(which(tmp2.reg$f != 0))
-            tmp2.reg$f[idx] <- tmp2.reg$f[idx] + tmp2.reg$sum.f[idx] - tmp2.reg$cumsum.f[idx]
+            if(!all(tmp2.reg$f == 0)){ ## i.e. is there anyone left to vaccinate?
+                idx <- max(which(tmp2.reg$f != 0))
+                tmp2.reg$f[idx] <- tmp2.reg$f[idx] + tmp2.reg$sum.f[idx] - tmp2.reg$cumsum.f[idx]
+            }
             tmp2.reg <- tmp2.reg %>% mutate(vac1due = f * capacity) %>%
                 mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
             

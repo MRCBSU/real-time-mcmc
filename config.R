@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -95,8 +95,8 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210507", "Prev368_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210507_timeuse_household_deaths")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210517", "Prev375_cm4ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210517", "Prev375_cm4ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
     } else if(region.type == "ONS"){
         if(prev.flag)
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20210520", "Prev382_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths")
@@ -106,7 +106,7 @@ if(use.previous.run.for.start){
 iteration.number.to.start.from <- 6400
 
 ## Give the run a name to identify the configuration
-contact.model <- 4
+contact.model <- 6
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
@@ -118,7 +118,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
