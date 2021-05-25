@@ -20,7 +20,7 @@ nweeks.ahead <-9
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_midterm"
+projections.basename <- "projections_counter"
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
@@ -114,7 +114,9 @@ cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              file.path(proj.dir,
+                        "contact_mats",
+                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
               )
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1
