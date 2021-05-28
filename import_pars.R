@@ -11,7 +11,7 @@ value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
 if (prev.flag && prev.env$prev.flag) value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
 ## value.pgp GP stream not currently used
 contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
-if(contact.model == 6) { contact.reduction <- rep(contact.reduction, 2); contact.reduction[zero.contact.elements] <- 0 }
+## if(contact.model == 6) { contact.reduction <- rep(contact.reduction, 2); contact.reduction[zero.contact.elements] <- 0 }
 beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
 beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
 if(nrow(beta.rw.vals) > nbetas)
