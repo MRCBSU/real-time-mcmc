@@ -118,7 +118,9 @@ cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              file.path(proj.dir,
+                        "contact_mats",
+                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
               )
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1

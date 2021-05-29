@@ -1,3 +1,6 @@
+## MEDIUM-TERM PROJECTIONS CURRENTLY ONLY GO FORWARD FROM THE DAY OF THE ANALYSIS
+## IF SOME PORTION OF THE PAST IS GOING TO BE REQUIRED, THEN SOME FILTERS IN THE MTP SECTION WILL NEED TO BE CHANGED
+## INCLUDING IN THE FUNCTION trim_forecast_days
 require(dplyr)
 require(tidyr)
 require(tidyverse)
@@ -7,7 +10,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.4
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, "deaths/ons", "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -36,9 +39,10 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
-projections.file <- "projections_midterm.RData"
-scen.text <- "MTP"
-save.text <- "MTP"
+projections.file <- "projections_R1.2.RData"
+scen.text <- "MTP R1.2"
+save.text <- "MTP_R_1.2"
+mtp.filter.date <- lubridate::ymd("20210517") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 8
@@ -378,7 +382,7 @@ if(nowcast.flag){
 
 trim_forecast_days <- function(arrIn){
     nd <- 1:((nweeks.midterm + 1) * 7)
-    nds <- as.integer(end.hosp) + nd
+    nds <- as.integer(min(mtp.filter.day.no-1, end.hosp)) + nd
     arrOut <- extract(arrIn, indices = list(nds[nds <= length(dimnames(arrIn)$date)]), dims = "date", drop = FALSE)
     arrOut <- apply(arrOut, c("region", "date", "iteration"), function(x) c(x[1] + x[2], x[-(1:2)]))
     names(dimnames(arrOut))[1] <- "age"
@@ -387,7 +391,7 @@ trim_forecast_days <- function(arrIn){
 
 ### MEDIUM-TERM FORECASTING ###
 if(med.term.flag){
-    
+    mtp.filter.day.no <- mtp.filter.date - start.date + 1
     fl.proj <- file.path(out.dir, projections.file)
     if(!file.exists(fl.proj))
         stop("Missing projections file")
@@ -410,7 +414,7 @@ if(med.term.flag){
     } else tbl_aproj <- NULL
     
     tbl_midterm_forecast <- bind_rows(tbl_proj, tbl_dproj, tbl_aproj) %>%
-        filter(date > ymd(date.data)) %>%
+        filter(date >= mtp.filter.date) %>%
         mutate(
             `ModelType` = "Deaths",
             `Creation Day` = day(CreationDate),
