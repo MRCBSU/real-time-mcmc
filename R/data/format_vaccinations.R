@@ -288,16 +288,33 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## sampled.jabs <- bind_cols(sampled.jabs, tmp.samples)
     
     ## sampled.jabs <- sampled.jabs %>% pivot_longer(cols = -(1:2), names_to = "Region", values_to = "Jabs") %>% right_join(expand.grid(date = lubridate::ymd("20200217"):lubridate::ymd("20210117"), Region = colnames(merged_wide)[-(1:3)], Age.Grp = unique(merged_wide$Age.Grp)) %>% as.data.frame %>% mutate(`date` = lubridate::as_date(`date`))) %>% replace_na(list(Jabs = 0)) %>% arrange(date)
+
+    ## Function for aggregating vaccination data
+    agg.vac.linelist <- function(data)
+        data %>%
+            group_by(sdate, ltla_code, region, age.grp, dose) %>%
+            summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
+            ungroup()
+    
     names(vac1.files) <- names(vacn.files) <- regions
     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
-    jab.dat <- vacc.dat %>%
-        group_by(sdate, ltla_code, region, age.grp, dose) %>%
-        summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
-        ungroup() %>%
+    ## vacc.dat is now so big that we need to break it in two for the first step here
+    ntot <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% arrange(sdate)
+    dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
+    jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
+    jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
+    rm(vacc.dat)
+    jab.dat1 <- agg.vac.linelist(jab.dat1)
+    jab.dat2 <- agg.vac.linelist(jab.dat2)
+
+    jab.dat <- bind_rows(jab.dat1, jab.dat2)
+    rm(jab.dat1, jab.dat2)
+    
+    jab.dat <- jab.dat %>%
         mutate(sdate = sdate + vacc.lag) %>%
         get.region() %>%
         select(-ltla_code)
-    rm(vacc.dat)
     ## if(region.type == "ONS")
     
     jab.dat <- jab.dat %>%

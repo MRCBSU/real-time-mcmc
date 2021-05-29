@@ -462,20 +462,9 @@ sspec.prop <- 0.077976
 if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
 if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
 
-if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))
+if(use.previous.run.for.start) {
+    previous.loc <- previous.run.to.use[1]
+    source(file.path(proj.dir, "import_pars.R"))
+}
 
-stopifnot(all(!is.na(beta.rw.vals)))
-stopifnot(length(beta.rw.vals) == nbetas*nr)
-stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
-stopifnot(all(!is.na(beta.rw.props)))
-stopifnot(length(beta.rw.props) == nbetas*nr)
-stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
-stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
-stopifnot(length(contact.dist) == length(contact.proposal))
-stopifnot(length(contact.reduction) == length(contact.proposal))
-stopifnot(contact.reduction[zero.contact.elements] == 0)
-stopifnot(contact.proposal[zero.contact.elements] == 0)
-stopifnot(contact.proposal[-zero.contact.elements] != 0)
-stopifnot(all(!is.na(contact.reduction)))
-stopifnot(all(!is.na(contact.proposal)))
-stopifnot(all(!is.na(contact.dist)))
+source(file.path(proj.dir, "par_check.R"))

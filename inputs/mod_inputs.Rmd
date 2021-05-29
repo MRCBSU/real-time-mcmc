@@ -175,6 +175,6 @@ prop_var_shrinkage   0.9
 
 maximum_block_size   9
 
-random_seed	     82
+random_seed	     `r sample.int(999999, 1)`
 
 max_threads	     `r num.threads`
