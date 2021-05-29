@@ -180,6 +180,7 @@ int main(void){
 		    paramSet.gp_delay.distribution_function,
 		    paramSet.hosp_delay.distribution_function
     );
+cout << "Initial llhood: " << block_llhood.total_lfx << endl;
 
   //for (int r = 0; r < global_fixedpars.l_num_regions; r++)
   //  block_llhood.total_lfx += block_llhood.region_lfx[r];

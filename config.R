@@ -4,7 +4,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -79,7 +79,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 use.INLA.prev <- TRUE
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 num.prev.days <- 339
@@ -114,7 +114,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 extra.time.to.death <- 0 #days
@@ -204,7 +204,7 @@ if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/aa995/rds/rds-mrc-bsu/jbb50/for_angelos_NHS"
+previous.run.to.use <- "/home/aa995/rds/rds-mrc-bsu/jbb50/for_angelos"
 iteration.number.to.start.from <- 6400
 
 threads.per.regions <- 2
@@ -225,4 +225,5 @@ if(vacc.flag){
 
 #future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
-future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2, 1.9) * 10^6) *(55.98/66.65)
+#future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2, 1.9) * 10^6) *(55.98/66.65)
+future.n <- (c(3.6, 3.6, 3.5, 4.5, 4.4, 3.0, 2.0, 1.9,2.0) * 10^6) *(55.98/66.65)

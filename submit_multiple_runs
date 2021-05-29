@@ -3,7 +3,7 @@
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --time=24:00:00
+#SBATCH --time=12:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -22,4 +22,4 @@ dirs=(*/)
 cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
 ../../../rtm_hpc2
-sbatch ../../../submit_post_process_correct_dir
+
