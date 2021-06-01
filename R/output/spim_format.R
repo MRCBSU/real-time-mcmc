@@ -10,7 +10,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.4
 med.term.flag <- TRUE
-nowcast.flag <- FALSE
+nowcast.flag <- TRUE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, "deaths/ons", "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -39,13 +39,13 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
-projections.file <- "projections_R1.2.RData"
-scen.text <- "MTP R1.2"
-save.text <- "MTP_R_1.2"
-mtp.filter.date <- lubridate::ymd("20210517") ## ymd(date.data)
+projections.file <- "projections_R1.8.RData"
+scen.text <- "MTP R1.8"
+save.text <- "MTP_R_1.8"
+mtp.filter.date <- lubridate::ymd("20210522") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
-nweeks.midterm <- 8
+nweeks.midterm <- 9
 
 create.spim.table <- function(data, name, by = NULL) {
   qprobs <- seq(from = 0.05, to = 0.95, by = 0.05)
@@ -283,6 +283,7 @@ calc.infec.growth.rate <- function(R,gt,infecs) {
 }
 
 if(nowcast.flag){
+    stop()
     ## deaths.growth.rates <- calc.growth.rate(deaths)
     infecs.growth.rates <- calc.infec.growth.rate(Rt, Egt, infections)
     infecs.dbl.times <- infecs.growth.rates %>%
