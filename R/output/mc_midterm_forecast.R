@@ -224,9 +224,7 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-amgs/rtm_", exe)), "\n")
-## proj.dir <- gsub("amgs", "dev", proj.dir, fixed = TRUE)
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
-## proj.dir <- gsub("dev", "amgs", proj.dir, fixed = TRUE)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Sero <- lapply(xtmp, function(x) x$Sero)
 if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
