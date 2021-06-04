@@ -40,7 +40,7 @@ sero.end.date <- ymd(20200522)
 
 
 
-google.data.date <- format(ymd("2021-05-14"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-06-04"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
 
@@ -190,10 +190,10 @@ if(gp.flag){
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
 
-<<<<<<< HEAD
+
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210510") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210531") # Set this to last date in dataset
 #prev.cutoff.days <- 5
 =======
 ## Get the date of the prevalence data
@@ -255,7 +255,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210513" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210604" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 vacc.lag <- 21
@@ -266,7 +266,7 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-<<<<<<< HEAD
+
 
 #future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
