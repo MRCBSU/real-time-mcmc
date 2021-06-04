@@ -81,7 +81,6 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 
-
 ## Function to repeat the last row of a dataset until it pads out to the end of the series
 pad.rows.at.end <- function(df, nrows.full){
     if(nrow(df) < nrows.full){
@@ -101,7 +100,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
         group_by(age.grp, pop) %>%
         summarise(sdate, n, n.cum = cumsum(n)) %>%
         mutate(pop = max(pop, n.cum + 1)) %>%
-        mutate(value = n / (pop - dplyr::lag(n.cum))) %>% ## Calculating the fraction of the denominator population still at risk.
+        mutate(value = zapsmall(n / (pop - dplyr::lag(n.cum)))) %>% ## Calculating the fraction of the denominator population still at risk.
         replace_na(list(value = 0)) %>%
         ungroup() %>%
         mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 
@@ -156,9 +155,11 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
     ## Extract file from archive
-    file.copy(input.loc, basename(input.loc))
-    input.loc <- decompress_file(".", basename(input.loc))
-
+    if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
+        file.copy(input.loc, file.path("data", basename(input.loc)))
+        input.loc <- decompress_file("data", basename(input.loc))
+    } else input.loc <- gsub(".zip", ".csv", file.path("data", basename(input.loc)))
+    
     if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
     
     ## Map our names for columns (LHS) to data column names (RHS)
@@ -167,7 +168,8 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         region = c("region_of_residence", "Region_of_residence"),
         sdate = "vaccination_date",
         type = "product_display_type",
-        dose = "string_dose_number")
+        dose = "string_dose_number",
+        ltla_code = "ltla_code")
     input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
     is.valid.col.name <- function(name) {name %in% input.col.names}
     first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
@@ -220,30 +222,33 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     vacc.col.args[[col.names[["region"]]]] <- col_character()
     vacc.col.args[[col.names[["dose"]]]] <- col_character()
     vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="")
+    vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
     vacc.cols <- do.call(cols, vacc.col.args)
 
     ## Reading in the data ##
     print(paste("Reading from", input.loc))
     ## strPos <- c("+", "Positive", "positive")
     vacc.dat <- read_csv(input.loc,
-                         col_types = vacc.cols)
-
+                         col_types = vacc.cols) %>%
+        select(!!(names(vacc.cols$cols)))
+    cat("Got here2\n")
     vacc.dat <- vacc.dat %>%
-        rename(!!!col.names) %>%
+        rename(!!!col.names)
+    cat("Got here 2a\n")
+    vacc.dat <- vacc.dat %>%
 	mutate(sdate = fuzzy_date_parse(sdate),
                age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
                )
-
+    cat("Got here3\n")
     ## Remove rows with missing key information
     n.vaccs <- nrow(vacc.dat)
     vacc.dat <- vacc.dat %>% filter(region != "Unknown",
                                     !is.na(type),
                                     !is.na(sdate),
                                     !is.na(dose),
-                                    !is.na(age.grp)) %>%
-        get.region()
+                                    !is.na(age.grp))
     n.vaccs.complete <- nrow(vacc.dat)
-    
+    cat("Got here4\n")
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
     
     ## ## ====== DATA ON FIRST VACCINATION
@@ -278,10 +283,18 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     names(vac1.files) <- names(vacn.files) <- regions
     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
     jab.dat <- vacc.dat %>%
-        group_by(sdate, region, age.grp, dose) %>%
+        group_by(sdate, ltla_code, region, age.grp, dose) %>%
         summarise(n = n(), pPfizer = sum(type == "Pfizer") / n()) %>%
         ungroup() %>%
         mutate(sdate = sdate + vacc.lag) %>%
+        get.region() %>%
+        select(-ltla_code)
+    rm(vacc.dat)
+    ## if(region.type == "ONS")
+    jab.dat <- jab.dat %>%
+        group_by(sdate, region, age.grp, dose) %>%
+        summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
+    jab.dat <- jab.dat %>%
         right_join(expand_grid(sdate = vac.dates,
                                region = regions,
                                age.grp = factor(age.labs, levels = age.labs, ordered = TRUE),
@@ -292,7 +305,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         arrange(sdate) %>%
         left_join(pdf.all) %>%
         rename(pop = count)
-    
+    cat("Got here5\n")
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
@@ -301,9 +314,15 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
 
     for(reg in regions){
-        
         region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
+
+
+
+        cat("First stopifnot\n")
         stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
+        stopifnot(all(region.dat[, -1] <= 2))
+
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
@@ -348,8 +367,15 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                         names_from = age.grp,
                         values_from = value) %>%
             pad.rows.at.end(ndays)
+
+
+
+
+        cat("Second stopifnot\n")
         stopifnot(!is.na(region.dat))
         stopifnot(all(region.dat[, -1] >= 0))
+        stopifnot(all(region.dat[, -1] <= 2))
+
         tmpFile <- vacn.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
         region.dat %>%
@@ -422,11 +448,15 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## }
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
-#<<<<<<< HEAD
+
+
 #=======
 #    rm(vacc.dat)
 #    file.remove(input.loc)
-#>>>>>>> COVID_vacc_amgs
+
+
+    ## file.remove(file.path("data", basename(input.loc)))
+
     
 } else {
 

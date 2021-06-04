@@ -330,6 +330,36 @@ add.England <- function(data) {
 
 today.int <- as.integer(ymd(date.data))
 wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
+require(abind)
+calc.infec.growth.rate <- function(R,gt,infecs) {
+  ## To get a gt for England, just taking the mean of the other regions. In practice there is no regional heterogeneity. Would need more careful though if regional differences introduced.
+  gt <- do.call(cbind, gt) %>% cbind(apply((.), 1, mean))
+  rt <- R %>%
+     get.infection.weighted.Rt(infecs, which(parameter.to.outputs %in% iterations.for.Rt)) %>%
+     abind(R, along = 3, use.dnns = TRUE) %>%
+     as.tbl_cube(met_name = "value") %>%
+     as_tibble() %>%
+     mutate(region = ifelse(region == "", "England", region))
+  dimnames(gt)[[1]] <- unique(rt$iteration)
+  dimnames(gt)[[2]][dim(gt)[2]] <- "England"
+  names(dimnames(gt)) <- c("iteration", "region")
+  gt <- gt %>%
+     as.tbl_cube(met_name = "genTime") %>%
+     as_tibble()
+  rt %>%
+     left_join(gt) %>%
+     mutate(growth = log(value) / genTime) %>%
+     group_by(date, region) %>%
+     summarise(Median = median(growth),
+              `95% CrI (lower)` = quantile(growth, 0.025),
+              `95% CrI (upper)` = quantile(growth, 0.975)
+              ) %>%
+    arrange(match(region, c("England", regions))) %>%
+    mutate(Region = str_replace_all(region, "_", " ")) %>%
+    select(Region, everything()) %>%
+    ungroup() %>%
+    select(-region,-date)   
+}
 calc.growth.rate <- function(data) {
   data <- data %>%
     aperm(c("date", "region", "iteration", "age")) %>%
@@ -366,7 +396,11 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-infections.growth.rates <- calc.growth.rate(infections)
+## infections.growth.rates <- calc.growth.rate(infections)
+if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
+infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
+						Egt,
+						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
@@ -549,6 +583,15 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 ### $R_t$
 ```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
 make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
+
+
+```
+
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
+```
+
+```{r eval=(!external & as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
+
 ```
 
 

@@ -51,6 +51,20 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 		fillcolor = "black",
 		opacity = 0.15,
         hoverinfo = "Second national lockdown"
+
+
+    ),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210105), 
+        x1 = ymd(20210308), 
+		fillcolor = "black",
+		opacity = 0.15,
+        hoverinfo = "Third national lockdown"
+
     ),
     list(
         type = "rect", 
@@ -73,16 +87,72 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
         line = list(color = "green"),
         hoverinfo = "Step one of roadmap"
 	),
-	list(
-        type = "line",
-        y0 = 0,
-        y1 = 1,
+
+
+
+
+
+
+
+
+
+
+
+
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
         yref = "paper",
-        x0 = ymd(20210412),
-        x1 = ymd(20210412),
+        x0 = ymd(20210308), 
+        x1 = ymd(20210329), 
+		fillcolor = "black",
+		opacity = 0.12,
+        hoverinfo = "Third national lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210329), 
+        x1 = ymd(20210329), 
+        line = list(color = "green"),
+        hoverinfo = "Step one of roadmap"
+	),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210329), 
+        x1 = ymd(20210412), 
+		fillcolor = "black",
+		opacity = 0.09,
+        hoverinfo = "Third national lockdown"
+    ),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210412), 
+        x1 = ymd(20210412), 
         line = list(color = "green"),
         hoverinfo = "Step two of roadmap"
-	)
+	),
+    list(
+        type = "rect", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210412), 
+        x1 = ymd(20210517), 
+		fillcolor = "black",
+		opacity = 0.06,
+        hoverinfo = "Third national lockdown"
+    )
+>>>>>>> origin/COVID_vacc_amgs_merged
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150

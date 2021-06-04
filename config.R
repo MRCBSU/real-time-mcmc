@@ -39,9 +39,14 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
+
 google.data.date <- format(ymd("2021-05-14"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
+
+
+#google.data.date <- format(ymd("20210507"), format = "%Y%m%d")
+#matrix.suffix <- "_timeuse_household"
 
 
 ## Number of days to run the simulation for.
@@ -80,9 +85,12 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 0
+
 use.INLA.prev <- TRUE
+
+
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 339
+num.prev.days <- 368
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -100,6 +108,24 @@ if (prev.flag) {
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
+
+
+=======
+### Is there a previous MCMC from which we can take some initial values?
+#use.previous.run.for.start <- TRUE
+#if(use.previous.run.for.start){
+#    if(region.type == "NHS"){
+#        if(prev.flag)
+#            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+#        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+#    } else if(region.type == "ONS"){
+#        if(prev.flag)
+#            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+#        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+#    }
+#}
+#iteration.number.to.start.from <- 6400
+
 
 ## Give the run a name to identify the configuration
 contact.model <- 4
@@ -164,10 +190,20 @@ if(gp.flag){
     pgp.prior.diffuse <- FALSE
 } else case.positivity <- FALSE
 
+<<<<<<< HEAD
 
 ## Dates of prevalence data
 date.prev <- lubridate::ymd("20210510") # Set this to last date in dataset
-prev.cutoff.days <- 5
+#prev.cutoff.days <- 5
+=======
+## Get the date of the prevalence data
+prev.cutoff.days <- 2
+## Convert that to an analysis day number
+#date.prev <- lubridate::ymd("20210504")
+#prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
+first.prev.day <- prev.end.day - num.prev.days + 1
+
 days.between.prev <- 14
 ## Convert that to an analysis day number
 prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
@@ -187,7 +223,11 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_skip", prev.cutoff.days)
 
 
+
 if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+
+## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
+
 efficacies <- "Jamie" ## current values can be 'Nick', 'Jamie', or 'SPIM'.
 vac.design <- "cumulative" ## currently values can be 'cumulative' or 'incident'.
 scenario.name <- paste0(scenario.name, efficacies)
@@ -203,11 +243,15 @@ out.dir <- file.path(proj.dir,
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
+
 use.previous.run.for.start <- TRUE
 previous.run.to.use <- "/home/aa995/rds/rds-mrc-bsu/jbb50/for_angelos"
 iteration.number.to.start.from <- 6400
 
-threads.per.regions <- 2
+#threads.per.regions <- 2
+
+threads.per.regions <- 1
+
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
@@ -222,8 +266,12 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
+<<<<<<< HEAD
 
 #future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2, 1.9) * 10^6) *(55.98/66.65)
-future.n <- (c(3.6, 3.6, 3.5, 4.5, 4.4, 3.0, 2.0, 1.9,2.0) * 10^6) *(55.98/66.65)
+#future.n <- (c(3.6, 3.6, 3.5, 4.5, 4.4, 3.0, 2.0, 1.9,2.0) * 10^6) *(55.98/66.65)
+
+future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
+
