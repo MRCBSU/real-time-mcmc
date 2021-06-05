@@ -258,28 +258,28 @@ regional_param = true;
 
 prop_susceptible = { param_value = 1.0;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 }
 
 
 prop_HI_32_to_HI_8 = {	param_value = 1.0;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 }
 
 
 prop_symptomatic = { param_value = 1.0;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 }
 
 
 prop_case_to_hosp = { param_value = `r paste(value.ifr, collapse = ", ")`;
 
-prior_distributions = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
+prior_distribution = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
 
 prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
 
@@ -298,21 +298,21 @@ proposal_variance = `r paste(var.ifr, collapse = ", ")`;
 
 prop_case_to_death = { param_value = 0.01;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 }
 
 
 background_GP = { param_value = 0.0;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 }
 
 
 day_of_week_effects = { param_value = `r ifelse(gp.flag, paste(pars.dow, collapse = ", "), 1)`;
 
-prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
+prior_distribution = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
 
 `r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
 
@@ -328,21 +328,21 @@ prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), col
 
 test_sensitivity = { param_value = 1;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
 test_specificity = { param_value = 1;
 
-prior_distributions = 1;
+prior_distribution = 1;
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
 sero_test_sensitivity = { param_value = `r sero.sens`;
 
-prior_distributions = `r ssens.prior.dist`;
+prior_distribution = `r ssens.prior.dist`;
 
 prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
 
@@ -353,7 +353,7 @@ proposal_variance = `r paste(ssens.prop, collapse = ", ")`;
 
 sero_test_specificity = { param_value = `r sero.spec`;
 
-prior_distributions = `r sspec.prior.dist`;
+prior_distribution = `r sspec.prior.dist`;
 
 prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
 

@@ -182,11 +182,11 @@ int main(void){
     );
 cout << "Initial llhood: " << block_llhood.total_lfx << endl;
 
-  //for (int r = 0; r < global_fixedpars.l_num_regions; r++)
+  // for (int r = 0; r < global_fixedpars.l_num_regions; r++)
   //  block_llhood.total_lfx += block_llhood.region_lfx[r];
   
-  //for (auto& block : paramSet.blocks)
-  //block.setLlhood(block_llhood);
+  // for (auto& block : paramSet.blocks)
+  // block.setLlhood(block_llhood);
   paramSet.lfx = block_llhood;
   
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES

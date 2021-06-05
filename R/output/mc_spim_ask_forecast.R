@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 setwd(out.dir)
 out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-Rscenario <- c(0.9, 1.2, 1.5, 1.8)[out.ind]
+Rscenario <- c(1.2, 1.5, 1.8, 2.1)[out.ind]
 ## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -32,7 +32,7 @@ rm(Renv)
 
 source(file.path(Rfile.loc, "sim_func.R"))
 
-nweeks.ahead <- 8
+nweeks.ahead <- 9
 
 counterfactual <- FALSE
 
@@ -118,7 +118,9 @@ cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
+              file.path(proj.dir,
+                        "contact_mats",
+                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
               )
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1
@@ -199,7 +201,7 @@ if(vacc.flag){
 }
 ## The matrix for the random-walks will need changing to account for an extra breakpoint
 ## Place the new break-point now
-today.break <- ymd("20210517") - start.date + 1
+today.break <- ymd("20210621") - start.date + 1
 beta.breaks <- c(beta.breaks, today.break)
 beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
     rbind(rep(1, nbetas)) %>%

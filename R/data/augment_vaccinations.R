@@ -43,9 +43,12 @@ for(dt in (d0 + 1):d.end){
 
 
     ## cat("Date", dt, "\n")
-    ## if(dt == 18778) stop()
 
-    ## stopifnot(as_date(dt) != as_date("20210531"))
+
+
+
+
+
     ## Get denominator population sizes
     ijab <- jab.dat %>% left_join(jab.dat %>%
                               filter(dose == "First") %>%
@@ -74,7 +77,7 @@ for(dt in (d0 + 1):d.end){
         select(sdate, region, age.grp, dose, n, pPfizer, pop)
     
     capacity <- max(0, capacity - sum(vacs.due$n))
-    
+    cat("Got here 6:", dt, "\n")
     ## Which priority groups are now fully immunised subject to uptake.
     tmp2 <- NULL
     options(warn=2)
@@ -89,8 +92,10 @@ for(dt in (d0 + 1):d.end){
                 ## mutate(f = f + ifelse(lead(exhausted, default = FALSE), lead(f, default = 0), 0)) %>%
                 mutate(f = ifelse(exhausted, 0, f)) %>%
                 mutate(cumsum.f = cumsum(f))
-            idx <- max(which(tmp2.reg$f != 0))
-            tmp2.reg$f[idx] <- tmp2.reg$f[idx] + tmp2.reg$sum.f[idx] - tmp2.reg$cumsum.f[idx]
+            if(!all(tmp2.reg$f == 0)){ ## i.e. is there anyone left to vaccinate?
+                idx <- max(which(tmp2.reg$f != 0))
+                tmp2.reg$f[idx] <- tmp2.reg$f[idx] + tmp2.reg$sum.f[idx] - tmp2.reg$cumsum.f[idx]
+            }
             tmp2.reg <- tmp2.reg %>% mutate(vac1due = f * capacity) %>%
                 mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
             

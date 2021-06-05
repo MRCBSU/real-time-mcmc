@@ -245,11 +245,31 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     
     region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
     
-    tmpFile <- vac1.files[reg]
-    dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
-    region.dat %>%
-      write_tsv(tmpFile,
-                col_names = FALSE)
+
+#    tmpFile <- vac1.files[reg]
+#    dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+#    region.dat %>%
+#      write_tsv(tmpFile,
+#                col_names = FALSE)
+
+    ## Map our names for columns (LHS) to data column names (RHS)
+    possible.col.names <- list(
+        age = "age",
+        region = c("region_of_residence", "Region_of_residence"),
+        sdate = "vaccination_date",
+        type = "product_display_type",
+        dose = c("string_dose_number", "dose_number"),
+        ltla_code = "ltla_code")
+    input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+    is.valid.col.name <- function(name) {name %in% input.col.names}
+    first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
+    col.names <- lapply(possible.col.names, first.valid.col.name)
+    invalid.col.names <- sapply(col.names, is.null)
+    if (any(invalid.col.names)) {
+	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+	stop(paste("No valid column name for:", names.invalid.cols))
+    }
+
     
     tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
     v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
@@ -281,8 +301,265 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
       write_tsv(tmpFile,
                 col_names = FALSE)
     
-    tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
-    vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
+
+#    tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.da#tes), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+#    vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
+
+    ## Which columns are we interested in?
+    vacc.col.args <- list()
+    vacc.col.args[[col.names[["type"]]]] <- col_character()
+    vacc.col.args[[col.names[["age"]]]] <- col_double()
+    vacc.col.args[[col.names[["region"]]]] <- col_character()
+    vacc.col.args[[col.names[["dose"]]]] <- col_character()
+    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
+    vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
+    vacc.cols <- do.call(cols, vacc.col.args)
+
+    ## Reading in the data ##
+    print(paste("Reading from", input.loc))
+    ## strPos <- c("+", "Positive", "positive")
+    vacc.dat <- read_csv(input.loc,
+                         col_types = vacc.cols) %>%
+        select(!!(names(vacc.cols$cols)))
+    cat("Got here2\n")
+    vacc.dat <- vacc.dat %>%
+        rename(!!!col.names)
+    if(region.type == "NHS" & !("London" %in% vacc.dat$region))
+    {
+        reg.lookup <- read_csv(file.path("data", "population", "nhs_region_lookup.csv")) %>%
+            select(NHSERApr19CD, NHSERApr19NM) %>%
+            rename(region = NHSERApr19CD, region.nm = NHSERApr19NM) %>%
+            unique()
+        vacc.dat <- vacc.dat %>%
+            left_join(reg.lookup) %>%
+            select(-region) %>%
+            rename(region = region.nm)
+        rm(reg.lookup)
+    }
+    cat("Got here 2a\n")
+    vacc.dat <- vacc.dat %>%
+	mutate(sdate = fuzzy_date_parse(sdate),
+               age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
+               )
+    cat("Got here3\n")
+    ## Remove rows with missing key information
+    n.vaccs <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% filter(region != "Unknown",
+                                    !is.na(type),
+                                    !is.na(sdate),
+                                    !is.na(dose),
+                                    !is.na(age.grp))
+    n.vaccs.complete <- nrow(vacc.dat)
+    cat("Got here4\n")
+    ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
+    
+    ## ## ====== DATA ON FIRST VACCINATION
+    
+    ## vaccs <- rbind(r.even(269, 20), r.even(11760, 20), r.even(9327, 10), r.even(5746, 5), r.even(5681, 5), r.even(4153, 5), r.even(1361, 5), r.even(583, 5), r.even(386, 5), r.even(14424, 1))
+    ## vaccs <- cbind(vaccs, rbind(r.even(1352, 20), r.even(45379, 20), r.even(36858, 10), r.even(23132, 5), r.even(23686, 5), r.even(17056, 5), r.even(6733, 5), r.even(4228, 5), r.even(7299, 5), r.even(395103, 1)))
+    ## vaccs <- cbind(vaccs, rbind(r.even(2202, 20), r.even(75231, 20), r.even(60873, 10), r.even(37872, 5), r.even(38787, 5), r.even(27809, 5), r.even(11101, 5), r.even(7071, 5), r.even(13338, 5), r.even(543397, 1)))
+    ## vaccs <- cbind(vaccs, rbind(r.even(3563, 20), r.even(124955, 20), r.even(97479, 10), r.even(59808, 5), r.even(60157, 5), r.even(43763, 5), r.even(18352, 5), r.even(13783, 5), r.even(32634, 5), r.even(670040, 1)))
+    ## dimnames(vaccs) <- list(ages = 0:80, date = lubridate::as_date(c("20201213","20201220","20201227","20210103")))
+    
+    ## vaccs <- vaccs %>% as.tbl_cube(met_name = "jabs") %>% as_tibble() %>% mutate(date = lubridate::as_date(date), Age.Grp = cut(ages, breaks = c(0, 1, 5, 15, 25, 45, 65, 75, Inf), right = FALSE, ordered_result = T)) %>% group_by(Age.Grp, date) %>% summarise(jabs = sum(jabs))
+    
+    ## probs <- c(8942, 4969, 13188, 5172, 7416, 7709, 6218)
+    ## probs <- rbind(probs, c(70593, 59141, 112177, 78726, 71914, 92577, 75194), c(86555, 80364, 152828, 145645, 106357, 143259, 101894), c(112616, 115341, 211936, 201823, 144815, 195125, 141767))
+    ## dimnames(probs) <- list(date = lubridate::as_date(c("20201213","20201220","20201227","20210103")), region = regions)
+    ## probs <- apply(probs, 1, function(x) x / sum(x))
+    ## probs <- probs %>% as.tbl_cube(met_name = "propn") %>% as_tibble() %>% mutate(date = lubridate::as_date(date))
+    
+    ## merged <- vaccs %>% left_join(probs)
+    ## merged_wide <- pivot_wider(merged, id_cols = 1:3, names_from = region, values_from = propn)
+    
+    ## tmp.samples <- NULL
+    ## for(i in 1:nrow(merged_wide))
+    ##     tmp.samples <- cbind(tmp.samples, rmultinom(1, merged_wide[i, ]$jabs, c(merged_wide[i, ]$East_of_England, merged_wide[i, ]$London, merged_wide[i, ]$Midlands, merged_wide[i, ]$North_East, merged_wide[i, ]$North_West, merged_wide[i, ]$South_East, merged_wide[i, ]$South_West)))
+    ## rownames(tmp.samples) <- colnames(merged_wide)[-(1:3)]
+    ## sampled.jabs <- merged_wide[, 1:2]
+    ## tmp.samples <- as.data.frame(t(tmp.samples))
+    ## sampled.jabs <- bind_cols(sampled.jabs, tmp.samples)
+    
+    ## sampled.jabs <- sampled.jabs %>% pivot_longer(cols = -(1:2), names_to = "Region", values_to = "Jabs") %>% right_join(expand.grid(date = lubridate::ymd("20200217"):lubridate::ymd("20210117"), Region = colnames(merged_wide)[-(1:3)], Age.Grp = unique(merged_wide$Age.Grp)) %>% as.data.frame %>% mutate(`date` = lubridate::as_date(`date`))) %>% replace_na(list(Jabs = 0)) %>% arrange(date)
+
+    ## Function for aggregating vaccination data
+    agg.vac.linelist <- function(data)
+        data %>%
+            group_by(sdate, ltla_code, region, age.grp, dose) %>%
+            summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
+            ungroup()
+    
+    names(vac1.files) <- names(vacn.files) <- regions
+    vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
+    ## vacc.dat is now so big that we need to break it in two for the first step here
+    ntot <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% arrange(sdate)
+    dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
+    jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
+    jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
+    rm(vacc.dat)
+    jab.dat1 <- agg.vac.linelist(jab.dat1)
+    jab.dat2 <- agg.vac.linelist(jab.dat2)
+
+    jab.dat <- bind_rows(jab.dat1, jab.dat2)
+    rm(jab.dat1, jab.dat2)
+    
+    jab.dat <- jab.dat %>%
+        mutate(sdate = sdate + vacc.lag) %>%
+        get.region() %>%
+        select(-ltla_code)
+    ## if(region.type == "ONS")
+    
+    jab.dat <- jab.dat %>%
+        group_by(sdate, region, age.grp, dose) %>%
+        summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
+    jab.dat <- jab.dat %>%
+        right_join(expand_grid(sdate = vac.dates,
+                               region = regions,
+                               age.grp = factor(age.labs, levels = age.labs, ordered = TRUE),
+                               dose = c("First", "Second")),
+                   by = c("sdate", "region", "age.grp", "dose")
+                   ) %>%
+        replace_na(list(n = 0, pPfizer = 1)) %>% ## What to fill in the columns where there are no data
+        arrange(sdate) %>%
+        left_join(pdf.all) %>%
+        rename(pop = count)
+    cat("Got here5\n")
+    ## Will need to extract some design matrices for vaccine efficacy also
+    v1.design <- NULL
+    vn.design <- NULL
+
+    ## Following code will extrapolate the vaccination programme out into the future.
+    source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
+
+    for(reg in regions){
+        region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
+        cat("First stopifnot\n")
+        stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
+        stopifnot(all(region.dat[, -1] <= 2))
+        tmpFile <- vac1.files[reg]
+        dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+        region.dat %>%
+            write_tsv(tmpFile,
+                      col_names = FALSE)
+
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
+        v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
+
+        region.dat <- jab.dat %>%
+            filter(region == reg, dose == "Second") %>%
+            left_join(jab.dat %>%
+                      filter(region == reg, dose == "First") %>%
+                      arrange(sdate) %>%
+                      group_by(region, age.grp) %>%
+                      summarise(sdate = sdate, sum.first = cumsum(n))
+                      ) %>%
+            arrange(sdate) %>%
+            group_by(age.grp) %>%
+            summarise(sdate = sdate,
+                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
+                      ) %>%
+            replace_na(list(value = 0)) %>%
+            ungroup() %>%
+            mutate(value = 2 * (1 - sqrt(1 - value))) %>%   ## This line transforms the data from a fraction to a rate
+            pivot_wider(id_cols = sdate,
+                        names_from = age.grp,
+                        values_from = value) %>%
+            pad.rows.at.end(ndays)
+        cat("Second stopifnot\n")
+        stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
+        stopifnot(all(region.dat[, -1] <= 2))
+        tmpFile <- vacn.files[reg]
+        dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+        region.dat %>%
+            write_tsv(tmpFile,
+                      col_names = FALSE)
+
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "Second", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else 
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "Second", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
+        vn.design <- rbind(vn.design, cbind(tmp.design, 1 - tmp.design))
+        
+    }
+    
+    ## ## ====== DATA ON SECOND VACCINATION
+    
+    ## vaccs <- rbind(r.even(0, 20), r.even(0, 20), r.even(0, 10), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 1))
+    ## vaccs <- cbind(vaccs, rbind(r.even(0, 20), r.even(0, 20), r.even(0, 10), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 1)))
+    ## vaccs <- cbind(vaccs, rbind(r.even(0, 20), r.even(0, 20), r.even(0, 10), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 5), r.even(0, 1)))
+    ## vaccs <- cbind(vaccs, rbind(r.even(81, 20), r.even(3700, 20), r.even(3125, 10), r.even(1951, 5), r.even(1876, 5), r.even(1311, 5), r.even(476, 5), r.even(240, 5), r.even(153, 5), r.even(6156, 1)))
+    ## dimnames(vaccs) <- list(ages = 0:80, date = lubridate::as_date(c("20201213","20201220","20201227","20210103")))
+    
+    ## vaccs <- vaccs %>% as.tbl_cube(met_name = "jabs") %>% as_tibble() %>% mutate(date = lubridate::as_date(date), Age.Grp = cut(ages, breaks = c(0, 1, 5, 15, 25, 45, 65, 75, Inf), right = FALSE, ordered_result = T)) %>% group_by(Age.Grp, date) %>% summarise(jabs = sum(jabs))
+    
+    ## probs <- rep(1, 7)
+    ## probs <- rbind(probs, rep(1, 7), rep(1,7), c(3710, 1102, 4165, 1102, 4501, 2408, 2041))
+    ## dimnames(probs) <- list(date = lubridate::as_date(c("20201213","20201220","20201227","20210103")), region = regions)
+    ## probs <- apply(probs, 1, function(x) x / sum(x))
+    ## probs <- probs %>% as.tbl_cube(met_name = "propn") %>% as_tibble() %>% mutate(date = lubridate::as_date(date))
+    
+    ## merged <- vaccs %>% left_join(probs)
+    ## merged_wide <- pivot_wider(merged, id_cols = 1:3, names_from = region, values_from = propn)
+    
+    ## tmp.samples <- NULL
+    ## for(i in 1:nrow(merged_wide))
+    ##     tmp.samples <- cbind(tmp.samples, rmultinom(1, merged_wide[i, ]$jabs, c(merged_wide[i, ]$East_of_England, merged_wide[i, ]$London, merged_wide[i, ]$Midlands, merged_wide[i, ]$North_East, merged_wide[i, ]$North_West, merged_wide[i, ]$South_East, merged_wide[i, ]$South_West)))
+    ## rownames(tmp.samples) <- colnames(merged_wide)[-(1:3)]
+    ## sampled.jabs <- merged_wide[, 1:2]
+    ## tmp.samples <- as.data.frame(t(tmp.samples))
+    ## sampled.jabs <- bind_cols(sampled.jabs, tmp.samples)
+    
+    ## sampled.jabs <- sampled.jabs %>% pivot_longer(cols = -(1:2), names_to = "Region", values_to = "Jabs") %>% right_join(expand.grid(date = lubridate::ymd("20200217"):lubridate::ymd("20210117"), Region = colnames(merged_wide)[-(1:3)], Age.Grp = unique(merged_wide$Age.Grp)) %>% as.data.frame %>% mutate(`date` = lubridate::as_date(`date`))) %>% replace_na(list(Jabs = 0)) %>% arrange(date)
+    
+    ## vacc2.files <- paste0(file.path(getwd(), "data", "RTM_format", "NHS", "vaccination", "dummy_dose2_"), regions, ".txt")
+    ## names(vacc2.files) <- regions
+    
+    ## for(reg in regions){
+    ##     region.dat <- pivot_wider(sampled.jabs %>% filter(Region == reg),
+    ##                               id_cols = 2,
+    ##                               names_from = Age.Grp,
+    ##                               values_from = Jabs)
+    ##     tmpFile <- vacc2.files[reg]
+    ##     dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+        
+    ##     region.dat %>%
+    ##         write_tsv(tmpFile,
+    ##                   col_names = FALSE)
+    ## }
+
+    save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
+    ## file.remove(file.path("data", basename(input.loc)))
+
     
   }
   

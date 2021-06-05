@@ -18,7 +18,11 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=3
-#SBATCH --array=5
+
+
+
+
+#SBATCH --array=0-5
 
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
@@ -122,10 +126,10 @@ CMD="$application $options"
 ### You should not have to change anything below this line ####
 ###############################################################
 
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/COVID_vacc_amgs_merged
+
+
+
 JOBID=$SLURM_JOB_ID
 
 echo -e "JobID: $JOBID\n======"
