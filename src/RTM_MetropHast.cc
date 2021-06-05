@@ -377,13 +377,13 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Block update
 
       // Update two blocks every iter: global block and one of the local blocks
-      //int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+      // int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
       
       // Global
 
       if(paramSet.blocks[0].size() > 0){
 	paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);      
+	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
 	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
 	if (int_iter > 199)
 	  paramSet.blocks[0].adaptiveUpdate(int_iter);
@@ -482,10 +482,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	
 	// TODO: Does it make more sense to copy the whole lfx object at the
 	// start of each iter?
-	//for (updParamBlock& block : paramSet.blocks) {
+	// for (updParamBlock& block : paramSet.blocks) {
 	//  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
 	//  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
-	//}
+	// }
       }
 
       // Output MCMC sampler progress reports

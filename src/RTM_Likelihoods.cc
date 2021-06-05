@@ -492,7 +492,7 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   gsl_matrix_set_zero(modelled_events);
 
   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
-//#pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
+  // #pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
   for (int k = 0; k < (max_days_data * in_gmip.l_reporting_time_steps_per_day); ++k)
     {  
       for (int j = 0; j < NUM_AGE_GROUPS; ++j)
@@ -712,21 +712,21 @@ void fn_log_likelihood_global(glikelihood& llhood,
   
   // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
   // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
-  //int low_region = (region == -1) ? 0 : region;
-  //int hi_region = (region == -1) ? gmip.l_num_regions : region + 1;
-  //double temp_log_likelihood;
-  //double lfx_increment = 0.0;
+  // int low_region = (region == -1) ? 0 : region;
+  // int hi_region = (region == -1) ? gmip.l_num_regions : region + 1;
+  // double temp_log_likelihood;
+  // double lfx_increment = 0.0;
 
-//#ifdef USE_THREADS
-//  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
-//  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
-//#else
-//  int num_subthread_teams = 1;
-//#endif
+  // #ifdef USE_THREADS
+  //  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
+  //  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
+  // #else
+  //  int num_subthread_teams = 1;
+  // #endif
 
   
 
-//#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
+  // #pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
 
   double lfx_sum = 0;
   
@@ -1026,13 +1026,13 @@ void fn_log_likelihood_region(rlikelihood& llhood,
       // Save the regional likelihood component for AMGS blocks
       llhood.region_lfx = lfx_region;
 
-      //cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
+      // cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
 
-      //lfx_increment += lfx_region;
-      //if (debug) cout << int_region << " end incr " << lfx_increment << endl;
+      // lfx_increment += lfx_region;
+      // if (debug) cout << int_region << " end incr " << lfx_increment << endl;
 
-  //}
+  // }
   
-  //llhood.total_lfx += lfx_increment;
+  // llhood.total_lfx += lfx_increment;
   
 }

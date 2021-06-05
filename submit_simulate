@@ -67,7 +67,7 @@ module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-workdir="Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2"
+# workdir="Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2"
 echo $workdir
 
 #! Full path to application executable: 

@@ -153,8 +153,8 @@ cm.mults <- cm.mults[mult.order+1]
 num.iterations <- 3240000
 burnin <- 324000
 adaptive.phase <- burnin / 2
-thin.outputs <- 900	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 450 # After how many iterations to output each set of parameters
+thin.outputs <- 900 ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 450 ## After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 

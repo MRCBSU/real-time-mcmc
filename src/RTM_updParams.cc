@@ -701,12 +701,12 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
   if (laccept > acceptTest) {
     numAccept++;
 
-    //cout << "Accepted: " << laccept << "\n";
+    // cout << "Accepted: " << laccept << "\n";
     
-    //if (global)
+    // if (global)
     acceptLastMove = 1;
-    //else
-      //regacceptLastMove = 1;
+    // else
+      // regacceptLastMove = 1;
 
     // Update the parameters
     for (int i = 0; i < values.size(); i++)
@@ -813,10 +813,10 @@ void updParamBlock::adaptiveUpdate(int iter) {
   double betastart = beta;
   
   double eta = pow(iter - 199 + 1, -0.6);
-  //if (global)
-    beta = beta + eta * (acceptLastMove - 0.234);
-    //else
-    //beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
+  // if (global)
+  beta = beta + eta * (acceptLastMove - 0.234);
+    // else
+    // beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
   
   for (int i = 0; i < mu.size(); i++)
     mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);

@@ -181,11 +181,11 @@ int main(void){
 		    paramSet.hosp_delay.distribution_function
     );
 
-  //for (int r = 0; r < global_fixedpars.l_num_regions; r++)
+  // for (int r = 0; r < global_fixedpars.l_num_regions; r++)
   //  block_llhood.total_lfx += block_llhood.region_lfx[r];
   
-  //for (auto& block : paramSet.blocks)
-  //block.setLlhood(block_llhood);
+  // for (auto& block : paramSet.blocks)
+  // block.setLlhood(block_llhood);
   paramSet.lfx = block_llhood;
   
   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES

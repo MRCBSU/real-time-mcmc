@@ -181,14 +181,14 @@ public:
   // Extract the number of components in block
   int size() const;
   
-  //likelihood lfx;
-  //likelihood prop_lfx;
+  // likelihood lfx;
+  // likelihood prop_lfx;
 
   // Initialise likelihood
-  //void setLlhood(likelihood& l) {
-    //lfx = l;
-    //prop_lfx = l;  // Sets vector sizes of prop_lfx
-  //}
+  // void setLlhood(likelihood& l) {
+    // lfx = l;
+    // prop_lfx = l;  // Sets vector sizes of prop_lfx
+  // }
   double childProposalDensity;
   double childCurrentDensity;
   

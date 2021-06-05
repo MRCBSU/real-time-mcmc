@@ -1,0 +1,2176 @@
+diff --git a/R/data/format_prev.R b/R/data/format_prev.R
+index ede48215..587dde8d 100644
+--- a/R/data/format_prev.R
++++ b/R/data/format_prev.R
+@@ -132,6 +132,7 @@ prev.cols <- do.call(cols, prev.col.args)
+ ## Reading in the data ##
+ print(paste("Reading from", input.loc))
+ ## strPos <- c("+", "Positive", "positive")
++cat("Reading prevalence from", input.loc, "\n")
+ prev.dat <- read_csv(input.loc,
+                      col_types = prev.cols) %>%
+     rename(!!!col.names) %>%
+diff --git a/R/data/format_vaccinations.R b/R/data/format_vaccinations.R
+index e32760d1..c40fc925 100644
+--- a/R/data/format_vaccinations.R
++++ b/R/data/format_vaccinations.R
+@@ -165,7 +165,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+         region = c("region_of_residence", "Region_of_residence"),
+         sdate = "vaccination_date",
+         type = "product_display_type",
+-        dose = "string_dose_number",
++        dose = c("string_dose_number", "dose_number"),
+         ltla_code = "ltla_code")
+     input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+     is.valid.col.name <- function(name) {name %in% input.col.names}
+@@ -218,7 +218,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+     vacc.col.args[[col.names[["age"]]]] <- col_double()
+     vacc.col.args[[col.names[["region"]]]] <- col_character()
+     vacc.col.args[[col.names[["dose"]]]] <- col_character()
+-    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="")
++    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
+     vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
+     vacc.cols <- do.call(cols, vacc.col.args)
+ 
+@@ -231,6 +231,18 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+     cat("Got here2\n")
+     vacc.dat <- vacc.dat %>%
+         rename(!!!col.names)
++    if(region.type == "NHS" & !("London" %in% vacc.dat$region))
++    {
++        reg.lookup <- read_csv(file.path("data", "population", "nhs_region_lookup.csv")) %>%
++            select(NHSERApr19CD, NHSERApr19NM) %>%
++            rename(region = NHSERApr19CD, region.nm = NHSERApr19NM) %>%
++            unique()
++        vacc.dat <- vacc.dat %>%
++            left_join(reg.lookup) %>%
++            select(-region) %>%
++            rename(region = region.nm)
++        rm(reg.lookup)
++    }
+     cat("Got here 2a\n")
+     vacc.dat <- vacc.dat %>%
+ 	mutate(sdate = fuzzy_date_parse(sdate),
+@@ -276,18 +288,35 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
+     ## sampled.jabs <- bind_cols(sampled.jabs, tmp.samples)
+     
+     ## sampled.jabs <- sampled.jabs %>% pivot_longer(cols = -(1:2), names_to = "Region", values_to = "Jabs") %>% right_join(expand.grid(date = lubridate::ymd("20200217"):lubridate::ymd("20210117"), Region = colnames(merged_wide)[-(1:3)], Age.Grp = unique(merged_wide$Age.Grp)) %>% as.data.frame %>% mutate(`date` = lubridate::as_date(`date`))) %>% replace_na(list(Jabs = 0)) %>% arrange(date)
++
++    ## Function for aggregating vaccination data
++    agg.vac.linelist <- function(data)
++        data %>%
++            group_by(sdate, ltla_code, region, age.grp, dose) %>%
++            summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
++            ungroup()
+     
+     names(vac1.files) <- names(vacn.files) <- regions
+     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
+-    jab.dat <- vacc.dat %>%
+-        group_by(sdate, ltla_code, region, age.grp, dose) %>%
+-        summarise(n = n(), pPfizer = sum(type == "Pfizer") / n()) %>%
+-        ungroup() %>%
++    ## vacc.dat is now so big that we need to break it in two for the first step here
++    ntot <- nrow(vacc.dat)
++    vacc.dat <- vacc.dat %>% arrange(sdate)
++    dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
++    jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
++    jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
++    rm(vacc.dat)
++    jab.dat1 <- agg.vac.linelist(jab.dat1)
++    jab.dat2 <- agg.vac.linelist(jab.dat2)
++
++    jab.dat <- bind_rows(jab.dat1, jab.dat2)
++    rm(jab.dat1, jab.dat2)
++    
++    jab.dat <- jab.dat %>%
+         mutate(sdate = sdate + vacc.lag) %>%
+         get.region() %>%
+         select(-ltla_code)
+-    rm(vacc.dat)
+     ## if(region.type == "ONS")
++    
+     jab.dat <- jab.dat %>%
+         group_by(sdate, region, age.grp, dose) %>%
+         summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
+diff --git a/R/output/chain_comparison.R b/R/output/chain_comparison.R
+new file mode 100644
+index 00000000..452d68bd
+--- /dev/null
++++ b/R/output/chain_comparison.R
+@@ -0,0 +1,313 @@
++require(tidyverse)
++require(lubridate)
++require(rmarkdown)
++require(knitr)
++require(abind)
++require(parallel)
++
++thisFile <- function() {
++        cmdArgs <- commandArgs(trailingOnly = FALSE)
++        needle <- "--file="
++        match <- grep(needle, cmdArgs)
++        if (length(match) > 0) {
++                # Rscript
++                return(normalizePath(sub(needle, "", cmdArgs[match])))
++        } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
++                # We're in RStudio
++                return(rstudioapi::getSourceEditorContext()$path)
++        } else {
++                # 'source'd via R console
++                return(normalizePath(sys.frames()[[1]]$ofile))
++        }
++}
++Rfile.loc <- dirname(thisFile())
++source(file.path(Rfile.loc, "drw.R"))
++
++colcode.fl <- "./Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths"
++oldcode.fl <- "./Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2"
++
++## load("mcmc.RData")
++load(file.path(colcode.fl, "tmp.RData"))
++out.dir <- target.dir <- getwd()
++## results.dir <- out.dir
++## source(file.path(Rfile.loc, "tracePlots.R"))
++## source("sim_func.R")
++
++QUANTILES <- c(0.025, 0.5, 0.975)
++## sanmitra.fl <- "/scratch/sanmitra/covid19/results/Sanmitra_chain.csv"
++
++## ## mod_inputs.Rmd items that will change in the projections.
++
++## ## ## FUNCTION DEFINITIONS
++repeat.last.row <- function(real.fl, dummy.fl){
++    tmpdata <- read_tsv(real.fl, col_names = FALSE)
++    dummy.fl <- file.path(out.dir, "projections", paste0(dummy.fl, ".txt"))
++    tmpdata <- bind_rows(tmpdata,
++                         tmpdata[rep(nrow(tmpdata), ndays - nrow(tmpdata)), ]) %>%
++            mutate(Date = start.date - 1 + (1:ndays)) %>%
++            select(-X1) %>%
++        select(Date, everything()) %>%
++            write_tsv(dummy.fl, col_names = FALSE)
++    return(dummy.fl)
++}
++symlink.design <- function(design)
++    file.symlink(file.path(out.dir, design), "projections")
++## ## Compile a forecast output
++combine.rtm.output <- function(x, strFld){
++    oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
++    oList <- do.call(abind, args = list(oList, along = 0))
++    
++    }
++
++## ## ## --------------------
++
++## if(!file.exists(file.path(out.dir, "projections")))
++##     dir.create(file.path(out.dir, "projections"))
++
++## MCMC control
++## num.iterations <- 1
++## thin.params <- 1
++## thin.outputs <- 1
++## adaptive.phase <- 0
++## burnin <- 0
++## num.threads <- 1
++
++## ## Adjust for moved file location
++## old.str <- "real-time-mcmc-old"
++## new.str <- "real-time-mcmc"
++## replace.loc <- function(var)
++##     gsub(old.str, new.str, var, fixed = TRUE)
++## old.repo <- "/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc-old/"
++## new.repo <- gsub(old.str, new.str, old.repo)
++
++## cm.bases <- gsub(new.repo, old.repo, cm.bases)
++## inputs.template.loc <- replace.loc(inputs.template.loc)
++## proj.dir <- replace.loc(proj.dir)
++## hosp.data <- replace.loc(hosp.data)
++## sero.data <- lapply(sero.data, replace.loc)
++
++## The mod_inputs.txt file wont change with each projections so can render it now
++## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = plain_document())
++## knit(inputs.template.loc, output = file.path(out.dir, "projections", "mod_inputs.txt"))
++## ## ## ------------------------------------------------------------
++
++## ## ## CHANGES TO VARIABLES BASED ON mod_pars.txt-LIKE SPECIFICATIONS
++
++## ## Copy to projection directory other design matrices
++## if(!exists("single.ifr")) single.ifr <- TRUE
++## if(gp.flag)
++##     symlink.design("icr.design.txt")
++## if(rw.flag)
++##     symlink.design("m.design.txt")
++## if(beta.rw.flag)
++##     symlink.design("beta.design.txt")
++## if(!single.ifr)
++##     symlink.design("ifr.design.txt")
++## if(vacc.flag){
++##     symlink.design("vac.alpha1.design.txt")
++##     symlink.design("vac.alphan.design.txt")
++##     symlink.design("vac.pi1.design.txt")
++##     symlink.design("vac.pin.design.txt")
++## }
++
++## ## ## --------------------------------------------------------------
++
++## ## ## MAIN PROJECTION LOOP
++new.params <- new.env()
++load(file.path(colcode.fl, "mcmc.RData"), envir = new.params)
++params <- new.params$params
++
++## ## Get number of iterations
++niter <- min(sapply(params, nrow))
++
++## ## For each iteration
++## paul.lfx <- mclapply(1:niter, sim_rtm, mcmc = params, mc.cores = detectCores() - 1)
++## paul.lfx <- unlist(paul.lfx)
++paul.lfx <- new.params$lfx
++
++paul.lrw <- mclapply(1:niter, drw, pars = params, nc = 2, mc.cores = detectCores() - 1)
++paul.lrw <- unlist(paul.lrw)
++## ## ## Load in Sanmitra's posteriors
++## sanmitra.chain <- read_csv(sanmitra.fl, col_names = FALSE)
++## names(sanmitra.chain) <- c("infectious_period",
++##                            "sero_test_sensitivity",
++##                            "sero_test_specificity",
++##                            "hosp_negbin_overdispersion",
++##                            paste0("prop_case_to_hosp", 1:ncol(params$prop_case_to_hosp)),
++##                            "log_beta_rw_sd",
++##                            "exponential_growth_rate1",
++##                            "log_p_lambda_01",
++##                            paste0("contact_parameters", 2:4),
++##                            paste0("log_beta_rw", 2:17),
++##                            "exponential_growth_rate2",
++##                            "log_p_lambda_02",
++##                            paste0("contact_parameters", 6:8),
++##                            paste0("log_beta_rw", 19:34),
++##                            "exponential_growth_rate3",
++##                            "log_p_lambda_03",
++##                            paste0("contact_parameters", 10:12),
++##                            paste0("log_beta_rw", 36:51),
++##                            "exponential_growth_rate4",
++##                            "log_p_lambda_04",
++##                            paste0("contact_parameters", 14:16),
++##                            paste0("log_beta_rw", 53:68),
++##                            "exponential_growth_rate5",
++##                            "log_p_lambda_05",
++##                            paste0("contact_parameters", 18:20),
++##                            paste0("log_beta_rw", 70:85),
++##                            "exponential_growth_rate6",
++##                            "log_p_lambda_06",
++##                            paste0("contact_parameters", 22:24),
++##                            paste0("log_beta_rw", 87:102),
++##                            "exponential_growth_rate7",
++##                            "log_p_lambda_07",
++##                            paste0("contact_parameters", 26:28),
++##                            paste0("log_beta_rw", 104:119))
++## sanmitra.chain <- sanmitra.chain %>%
++##     mutate(contact_parameters1 = 0,
++##            contact_parameters5 = 0,
++##            contact_parameters9 = 0,
++##            contact_parameters13 = 0,
++##            contact_parameters17 = 0,
++##            contact_parameters21 = 0,
++##            contact_parameters25 = 0,
++##            log_beta_rw1 = 0,
++##            log_beta_rw18 = 0,
++##            log_beta_rw35 = 0,
++##            log_beta_rw52 = 0,
++##            log_beta_rw69 = 0,
++##            log_beta_rw86 = 0,
++##            log_beta_rw103 = 0)
++
++## sg.params <- list(hosp_negbin_overdispersion = sanmitra.chain %>% select(starts_with("hosp_negbin_overdispersion")),
++##                   infectious_period = sanmitra.chain %>% select(starts_with("infectious_period")),
++##                   contact_parameters = sanmitra.chain %>% select(starts_with("contact_parameters")),
++##                   exponential_growth_rate = sanmitra.chain %>% select(starts_with("exponential_growth_rate")),
++##                   log_p_lambda_0 = sanmitra.chain %>% select(starts_with("log_p_lambda_0")),
++##                   prop_case_to_hosp = sanmitra.chain %>% select(starts_with("prop_case_to_hosp")),
++##                   sero_test_sensitivity = sanmitra.chain %>% select(starts_with("sero_test_sensitivity")),
++##                   sero_test_specificity = sanmitra.chain %>% select(starts_with("sero_test_specificity")),
++##                   log_beta_rw = sanmitra.chain %>% select(-ends_with("sd")) %>% select(starts_with("log_beta_rw")),
++##                   log_beta_rw_sd = sanmitra.chain %>% select(starts_with("log_beta_rw_sd"))
++##                   )
++
++## tmp.names <- names(sg.params)
++## sg.params <- sapply(names(sg.params), function(x){ if(ncol(sg.params[[x]])>1){
++##                                                        return(sg.params[[x]] %>% select(paste0(x, 1:ncol(.))))
++##                                                        } else { return(sg.params[[x]]) } }, USE.NAMES = TRUE)
++
++old.params <- new.env()
++load(file.path(oldcode.fl, "mcmc.RData"), envir = old.params)
++oldcode.params <- old.params$params
++
++## oldcode.lfx <- mclapply(1:niter, sim_rtm, mcmc = oldcode.params, mc.cores = detectCores() - 1)
++## oldcode.lfx <- unlist(oldcode.lfx)
++oldcode.lfx <- old.params$lfx
++
++oldcode.lrw <- mclapply(1:niter, drw, pars = oldcode.params, nc = 2, mc.cores = detectCores() - 1)
++oldcode.lrw <- unlist(oldcode.lrw)
++
++## sg.lfx <- mclapply(1:nrow(sanmitra.chain), sim_rtm, mcmc = sg.params, proj.dir = old.repo, mc.cores = detectCores() - 1)
++## sg.lfx <- unlist(sg.lfx)
++
++## sg.lrw <- mclapply(1:nrow(sanmitra.chain), drw, pars = sg.params, nc = 1, mc.cores = detectCores() - 1)
++## sg.lrw <- unlist(sg.lrw)
++
++## sg.total.lfx <- sg.lfx + sg.lrw
++paul.total.lfx <- paul.lfx + paul.lrw
++oldcode.total.lfx <- oldcode.lfx + oldcode.lrw
++
++## names(NNI) <- regions
++## if(dths.flag) names(Deaths) <- regions
++## if(cases.flag) names(Cases) <- regions
++## ## ## --------------------
++
++melt.list <- function(xlist)
++    abind(lapply(xlist,
++                 abind,
++                 along = 3),
++          along = 0)
++
++## ## ## SAVE SOME OUTPUTS
++dim.list <- list(region = regions,
++                 age = age.labs,
++                 date = start.date + 0:(ndays - 1),
++                 iteration = seq(2, niter, by = 2)
++                 )
++## infections <- melt.list(NNI);rm(NNI)
++## save.list <- "infections"
++## dimnames(infections) <- dim.list
++
++## if(hosp.flag) {
++##     deaths <- melt.list(Deaths);rm(Deaths)
++##     save.list <- c(save.list, "deaths")
++##     dimnames(deaths) <- dim.list
++##     }
++## if(gp.flag){
++##     cases <- melt.list(Cases);rm(Cases)
++##     save.list <- c(save.list, "cases")
++##     dimnames(cases) <- dim.list
++## }
++## save(list = save.list, file = file.path(sanmitra.dir, "projections.RData"))
++
++require(ggplot2)
++## require(hrbrthemes)
++
++data.p <- data.frame(likelihood = as.vector(paul.lfx), rw = paul.lrw, total = as.vector(paul.lfx) + paul.lrw, code = "chain1", iteration = 1:length(paul.lrw))
++data.s <- data.frame(likelihood = as.vector(oldcode.lfx), rw = oldcode.lrw, total = as.vector(oldcode.lfx) + oldcode.lrw, code = "chain2", iteration = 1:length(oldcode.lrw))
++
++df.lik.test <- bind_rows(data.p, data.s) %>% pivot_longer(-c(iteration, code), names_to = "type")
++
++
++glfx <- df.lik.test %>% ## filter(iteration > 3240) %>%
++    ggplot(aes(x=value, after_stat(density), fill = code)) +
++    geom_histogram(color="#e9ecef", alpha=0.6, position = "identity") +
++    scale_fill_manual(values=c("#69b3a2", "#404080")) +
++    theme_minimal() +
++    labs(fill="") +
++    facet_wrap(~type, scales = "free") ##  +
++    ## facet_grid(rows=vars(code), cols=vars(type), scales = "free")
++
++ggsave(file.path(colcode.fl, "likelihood_histograms_check.pdf"), glfx, height = 7, width = 12)
++
++## #### DO THEY RECUR BASED ON THE NEW CODE
++## ## ## For each iteration
++## render(gsub(old.str, new.str, inputs.template.loc),output_dir = file.path(out.dir, "projections"), output_format = plain_document)
++
++## paul.lfx <- list(old = paul.lfx, new = mclapply(1:niter, sim_rtm, mcmc = params, proj.dir = new.repo, mc.cores = detectCores() - 1))
++
++## paul.lfx$new <- unlist(paul.lfx$new)
++
++## paul.lrw <- mclapply(1:niter, drw, pars = params, nc = 2, mc.cores = detectCores() - 1)
++## paul.lrw <- unlist(paul.lrw)
++
++## sg.lfx <- list(old = sg.lfx, new = mclapply(1:nrow(sanmitra.chain), sim_rtm, mcmc = sg.params, proj.dir = new.repo, mc.cores = detectCores() - 1))
++## sg.lfx$new <- unlist(sg.lfx$new)
++
++## sg.lrw <- list(old = sg.lrw, new = mclapply(1:nrow(sanmitra.chain), drw, pars = sg.params, nc = 1, mc.cores = detectCores() - 1))
++## sg.lrw <- unlist(sg.lrw$new)
++rwd <- data.frame(density = c(paul.lrw, oldcode.lrw),
++                  iter = c(seq(new.params$burnin + new.params$thin.params, new.params$num.iterations, by = new.params$thin.params),
++                           seq(old.params$burnin + old.params$thin.params, old.params$num.iterations, by = old.params$thin.params)),
++                  run = c(rep("chain1", length(paul.lrw)), rep("chain2", length(oldcode.lrw)))
++                  )
++
++gv <- (rwd %>% ## filter(iter > 450000) %>%
++    ggplot(aes(x=iter, y=density, color=run, group=run)) +
++    geom_line() +
++    facet_wrap(~run) +
++    theme_minimal() +
++    scale_colour_manual(values=c("#69b3a2", "#404080")) +
++    ggtitle("Random-walk density comparison")) %>%
++    ggsave(filename=file.path(colcode.fl, "densitycheck.pdf"), width = 12, height = 10)
++
++gchain <- df.lik.test %>% filter(type == "likelihood") %>%
++    ggplot(aes(x=iteration, y=value, group=code, color=code)) +
++    geom_line() +
++    ## facet_wrap(~code) +
++    theme_minimal() +
++    scale_colour_manual(values=c("#69b3a2", "#404080")) +
++    ggtitle("Likelihood traces")
++
++ggsave(filename=file.path(colcode.fl, "lfx.trace.pdf"), plot=gchain, width = 12, height = 10)
++    
+diff --git a/R/output/drw.R b/R/output/drw.R
+new file mode 100644
+index 00000000..f1e24ced
+--- /dev/null
++++ b/R/output/drw.R
+@@ -0,0 +1,13 @@
++drw <- function(iter, pars, nc = 1){
++
++    ## Extract the iteration
++    parsx <- lapply(pars, function(x) x[iter, ])
++
++    ## Extract the parameters required to evaluate the random-walk density
++    beta <- parsx$log_beta_rw
++    sigma <- parsx$log_beta_rw_sd[nc]
++    beta <- beta[beta != 0]
++
++    sum(dnorm(beta, sd = sigma, log = TRUE))
++
++}
+diff --git a/R/output/mc_midterm_forecast.R b/R/output/mc_midterm_forecast.R
+index c864dda4..aeb64ee8 100644
+--- a/R/output/mc_midterm_forecast.R
++++ b/R/output/mc_midterm_forecast.R
+@@ -20,7 +20,7 @@ nweeks.ahead <-9
+ 
+ counterfactual <- FALSE
+ 
+-projections.basename <- "projections_midterm"
++projections.basename <- "projections_counter"
+ projections.basedir <- file.path(out.dir, projections.basename)
+ ## ## Enter dates at which it is anticipated that the contact model will change
+ ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
+@@ -114,7 +114,9 @@ cm.lockdown <- c(cm.lockdown,
+                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+ ## Get the new contract matrix modifiers to use
+ cm.mults <- c(cm.mults,
+-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
++              file.path(proj.dir,
++                        "contact_mats",
++                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
+               )
+ if(counterfactual){
+     cm.dates <- start.date + cm.breaks - 1
+@@ -222,9 +224,7 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
+ } else exe <- Sys.info()["nodename"]
+ cat("rtm.exe = ", exe, "\n")
+ cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-amgs/rtm_", exe)), "\n")
+-## proj.dir <- gsub("amgs", "dev", proj.dir, fixed = TRUE)
+ xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
+-## proj.dir <- gsub("dev", "amgs", proj.dir, fixed = TRUE)
+ NNI <- lapply(xtmp, function(x) x$NNI)
+ Sero <- lapply(xtmp, function(x) x$Sero)
+ if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
+diff --git a/R/output/mc_spim_ask_forecast.R b/R/output/mc_spim_ask_forecast.R
+index 1a6d1fc4..7e28fc1c 100644
+--- a/R/output/mc_spim_ask_forecast.R
++++ b/R/output/mc_spim_ask_forecast.R
+@@ -8,7 +8,7 @@ require(knitr)
+ out.dir <- commandArgs(trailingOnly = TRUE)[1]
+ setwd(out.dir)
+ out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+-Rscenario <- c(0.9, 1.2, 1.5, 1.8)[out.ind]
++Rscenario <- c(1.2, 1.5, 1.8, 2.1)[out.ind]
+ ## Rscenario <- 0.8
+ QUANTILES <- c(0.025, 0.5, 0.975)
+ 
+@@ -32,7 +32,7 @@ rm(Renv)
+ 
+ source(file.path(Rfile.loc, "sim_func.R"))
+ 
+-nweeks.ahead <- 8
++nweeks.ahead <- 9
+ 
+ counterfactual <- FALSE
+ 
+@@ -118,7 +118,9 @@ cm.lockdown <- c(cm.lockdown,
+                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
+ ## Get the new contract matrix modifiers to use
+ cm.mults <- c(cm.mults,
+-              file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod", contact.model, "levels", mult.order, ".txt"))
++              file.path(proj.dir,
++                        "contact_mats",
++                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
+               )
+ if(counterfactual){
+     cm.dates <- start.date + cm.breaks - 1
+@@ -199,7 +201,7 @@ if(vacc.flag){
+ }
+ ## The matrix for the random-walks will need changing to account for an extra breakpoint
+ ## Place the new break-point now
+-today.break <- ymd("20210517") - start.date + 1
++today.break <- ymd("20210621") - start.date + 1
+ beta.breaks <- c(beta.breaks, today.break)
+ beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
+     rbind(rep(1, nbetas)) %>%
+diff --git a/R/output/spim_format.R b/R/output/spim_format.R
+index 75006847..8f289ada 100755
+--- a/R/output/spim_format.R
++++ b/R/output/spim_format.R
+@@ -1,3 +1,6 @@
++## MEDIUM-TERM PROJECTIONS CURRENTLY ONLY GO FORWARD FROM THE DAY OF THE ANALYSIS
++## IF SOME PORTION OF THE PAST IS GOING TO BE REQUIRED, THEN SOME FILTERS IN THE MTP SECTION WILL NEED TO BE CHANGED
++## INCLUDING IN THE FUNCTION trim_forecast_days
+ require(dplyr)
+ require(tidyr)
+ require(tidyverse)
+@@ -36,12 +39,13 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
+ load(file.path(out.dir, "forSPI.RData"))
+ out.dir <- getwd()
+ proj.dir <- dirname(dirname(dirname(out.dir)))
+-projections.file <- "projections_midterm.RData"
+-scen.text <- "MTP"
+-save.text <- "MTP"
++projections.file <- "projections_R1.8.RData"
++scen.text <- "MTP R1.8"
++save.text <- "MTP_R_1.8"
++mtp.filter.date <- lubridate::ymd("20210522") ## ymd(date.data)
+ dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
+ if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
+-nweeks.midterm <- 8
++nweeks.midterm <- 9
+ 
+ create.spim.table <- function(data, name, by = NULL) {
+   qprobs <- seq(from = 0.05, to = 0.95, by = 0.05)
+@@ -279,6 +283,7 @@ calc.infec.growth.rate <- function(R,gt,infecs) {
+ }
+ 
+ if(nowcast.flag){
++    stop()
+     ## deaths.growth.rates <- calc.growth.rate(deaths)
+     infecs.growth.rates <- calc.infec.growth.rate(Rt, Egt, infections)
+     infecs.dbl.times <- infecs.growth.rates %>%
+@@ -378,7 +383,7 @@ if(nowcast.flag){
+ 
+ trim_forecast_days <- function(arrIn){
+     nd <- 1:((nweeks.midterm + 1) * 7)
+-    nds <- as.integer(end.hosp) + nd
++    nds <- as.integer(min(mtp.filter.day.no-1, end.hosp)) + nd
+     arrOut <- extract(arrIn, indices = list(nds[nds <= length(dimnames(arrIn)$date)]), dims = "date", drop = FALSE)
+     arrOut <- apply(arrOut, c("region", "date", "iteration"), function(x) c(x[1] + x[2], x[-(1:2)]))
+     names(dimnames(arrOut))[1] <- "age"
+@@ -387,7 +392,7 @@ trim_forecast_days <- function(arrIn){
+ 
+ ### MEDIUM-TERM FORECASTING ###
+ if(med.term.flag){
+-    
++    mtp.filter.day.no <- mtp.filter.date - start.date + 1
+     fl.proj <- file.path(out.dir, projections.file)
+     if(!file.exists(fl.proj))
+         stop("Missing projections file")
+@@ -410,7 +415,7 @@ if(med.term.flag){
+     } else tbl_aproj <- NULL
+     
+     tbl_midterm_forecast <- bind_rows(tbl_proj, tbl_dproj, tbl_aproj) %>%
+-        filter(date > ymd(date.data)) %>%
++        filter(date >= mtp.filter.date) %>%
+         mutate(
+             `ModelType` = "Deaths",
+             `Creation Day` = day(CreationDate),
+diff --git a/R/output/updates.Rmd b/R/output/updates.Rmd
+index 4648c635..067e085c 100644
+--- a/R/output/updates.Rmd
++++ b/R/output/updates.Rmd
+@@ -2,33 +2,32 @@
+ 
+ #### Model and report changes
+ 
++1. The model now accounts for a different susceptibility to infection in each adult age group (no prior information is used); and for the under-15s, (using prior information from [Viner et al, 2020](https://jamanetwork.com/journals/jamapediatrics/fullarticle/2771181), which estimates children to be less likely to acquire infection when in contact with an infectious individual).
+ 1. The model has the ability to incorporate estimates of community prevalence, by region and age group, from the Office of National Statistics COVID-19 Infection Survey (see Data Sources for details). These are included weekly since the outset of the Survey in May 2020 for the age groups >4 years to inform trends in incidence that are too recent to be captured by the data on deaths.
+ 2. The model now accounts for the ongoing immunisation programme, stratifying the population of people still susceptible to infection with the virus according to their immunisation status (unimmunised/1 dose/2 doses). We use data on the daily proportions of the population getting immunised to inform this splitting of the population, assuming that it takes three weeks for vaccine-derived immunity to develop .
+ 1. The geographical definition has been changed from the seven NHS regions ([map](https://www.arcgis.com/sharing/rest/content/items/e4dd34a2d07b43088e17ed73e1bd3357/data)) to the nine regions typically used in government ([map](https://www.arcgis.com/sharing/rest/content/items/738566d958834b70a809dc72a154eaf9/data)). This new spatial definition more appropriately reflects the existing regional heterogeneity.
+ 4. Using observations of improved survival in hospitalised COVID-19 patients, we have allowed the probability of dying following infection with SARS-CoV2 (the infection-fatality rate, IFR) to gradually change over the course of June 2020, with a decrease being estimated. More recently, the Kent variant of the virus has gradually become the predominant virus strain and we accordingly allow for a change in the IFR over the period in which the relative prevalence of this strain has been growing.
+ 5. The ‘Epidemic summary’ now only reports the current value for the IFR by age. To visualise how this has changed over time in our model, see the IFR tab in the ‘Infections and Deaths’ section of the report. The quantity that is now plotted under this tab is the probability of dying if infected, taking into account the impact of the immunisation programme.
+-1. The modelling now accounts for a different susceptibility to infection in the under-15s, using information from literature ([Viner et al, 2020](https://jamanetwork.com/journals/jamapediatrics/fullarticle/2771181)) suggesting that children less likely to acquire infection when in contact with an infectious individual.
+ 
+ 
+ #### Updated findings
+ 
+-1. The current estimate of the daily number of new infections occurring each day across England is 3,840 (2,510--5,9430, 95% credible interval).
+-1. The daily infection rate is estimated to be the highest in London (GL) with 783, new daily infections, corresponding to 9 per 100,000 population per day. All other regions have 6--7 new infections per 100k population with the exception of the North West where incidence appears low. Note these regional estimates are highly uncertain and that a substantial proportion of these daily infections will be asymptomatic.
+-1. We predict that the number of deaths occurring daily is likely to remain low with a forecast for the period around the 28th May suggesting that there will be between 9 and 35 deaths per day.
+-1. The probability of Rt exceeding 1 is 70% and 67% in the South West (SW) and GL respectively; 59% in both the East of England (EE) and South East (SE); around 30% in the West and East Midlands (WM and EM), North East (NE) and Yorkshire and Humber (YH); and less than 5% in the NW.
+-1. The growth rate for England remains at 0.01 (-0.01--0.03, 95% credible interval) per day. This means that, nationally, the number of infections is likely to be increasing, although there is considerable uncertainty and heterogeneity across regions, with negative growth in many, the NW in particular.
+-1. London, followed by the WM and the NE, have the highest attack rates, that is the proportions of the regional populations who have ever been infected, with 32%, 21% and 20% respectively. The SW continues to have the lowest attack rate at 10%. These constitute a big downward revision from our previous published report, particularly so for the NW.
++1. The current estimate of the daily number of new infections occurring each day across England is 5,350 (3,920–-7,160, 95% credible interval). Though infection incidence is currently estimated to be increasing, this represents a small upward revision of our most recent estimate.
++1. The daily infection rate is estimated to be the highest in the North East (NE) with 619 new daily infections, corresponding to 23 per 100,000 population per day. The South West (SW) is the second highest with 797 infections (14 per 100,000). All other regions have 10 new infections per 100k population or less, with incidence in the North West appearing to be particularly low (2 infections per 100,000). Note that currently these regional estimates are particularly uncertain and that a substantial proportion of these daily infections will be asymptomatic.
++1. We predict that the number of deaths occurring daily is likely to remain low but also likely to start increasing. For the 11h June we forecast between 25 and 67 daily deaths. 
++1. The probability of Rt exceeding 1 is 84% and 83% in the NE and SW respectively; around 60% in the East of England (EE) and both East and West Midlands (EM & WM); 30--40% in the London (GL), South East (SE) and Yorkshire and Humber (YH) regions; and 5% in the NW.
++1. The growth rate for England remains at 0.01 (0.00-–0.02, 95% credible interval) per day. This means that, nationally, the number of infections is likely to be increasing, although there is considerable uncertainty and heterogeneity across regions, with negative growth in many, the NW in particular.
++1. London, followed by the NE and the WM, has the highest attack rates, that is the proportions of the regional populations who have ever been infected, with 27%, 23% and 22% respectively. The SW continues to have the lowest attack rate at 12%. The attack rate in London constitutes a 5% downward revision from our previous published report.
+ 1. Note that the deaths data used are only very weakly informative on Rt over the last two weeks and are thankfully becoming increasingly sparse. Therefore, the estimate for current incidence, Rt and the forecast of daily numbers of deaths are likely to be subject to some revision.
+ 
+ 
+ #### Interpretation
+ 
+-The plots of the estimated Rt in the most recent weeks are heavily influenced by the effects of the reopening of schools following the Easter holidays and the gradual relaxation of pandemic mitigation measures. Going forward, however, as restrictions continue to be relaxed, we anticipate Rt to remain stable. The Rt for four regions have central estimates just above 1 (EE, GL, SE, SW), although these estimates are uncertain. At current levels of incidence, these values of Rt are not a particular concern, though they do require careful monitoring.
++The plots of the estimated Rt in the most recent weeks show reasonably stable values  despite the gradual relaxation of pandemic mitigation measures. Going forward, an increase is anticipated in the coming days, a consequence of the ongoing relaxation of restrictions, before a transient drop over the school half-term week. The Rt for five regions have central estimates just above 1 (EE, EM, NE, , SW, WM), although these estimates are uncertain. At current levels of incidence, these values of Rt are not a particular concern, though they do require careful monitoring.
+ 
+-The incidence of deaths has continued to fall more sharply than predicted by the model and is anticipated to continue to fall for the coming three weeks, despite the number of new infections, as the Rt values indicate, remaining flat in almost all regions.
++The incidence of deaths has continued to fall more sharply than predicted by the model, which predicts that there will be a gradual rise over the coming few weeks.
+ 
+-The plot of the infection fatality rate (IFR) presents age-specific probabilities of death given infection. It shows an increasing mortality risk from September onwards in all ages until the immunisation programme begins to have an impact in late January. From the end of January we estimate a decreasing IFR in all adult age groups, but most steeply in the older ages. This drop measures the benefits of immunisation against death over and above the benefits against infection. Specifically, there is an estimated fall to a still-high 15% in the over-75s and 0.35% overall. The overall impact of the immunisation programme can be seen more clearly in the ‘All Ages’ plot, where the precipitous decline in IFR since late January is a product of this efficacy against death but also of the increasing proportion of infections in young people as older age groups are immunised and become protected against infection. The impact of the second immunisation doses becoming widespread will begin to affect this quantity over the coming weeks.
++The plot of the infection fatality rate (IFR) presents age-specific probabilities of death given infection. It shows an increasing mortality risk from September onwards in all ages until the immunisation programme begins to have an impact in late January. From the end of January we estimate a decreasing IFR in all adult age groups, but most steeply in the older ages. This drop measures the benefits of immunisation against death over and above the benefits against infection. Specifically, there is an estimated fall to a still-high 7% in the over-75s and 0.3% overall. The overall impact of the immunisation programme can be seen more clearly in the ‘All Ages’ plot, where the precipitous decline in IFR since late January is a product of this efficacy against death but also of the increasing proportion of infections in young people; older age groups are immunised and become protected against infection. The impact of the second immunisation doses (initially in the 45-64) becoming widespread will begin to affect this quantity over the coming weeks.
+ 
+-Estimates of cumulative infection are low in comparison to some earlier reports. This is due to the inclusion of the prevalence data, which appear to have the effect of reducing the number of infections. Nowhere is this more true than in the North West, where estimates of attack rate have fallen to 17%. London remains the region with the largest levels of cumulative infection to date.
+-
+-Other indicators (e.g. hospital bed prevalence, reported new cases) continue to suggest a declining epidemic. Prevalence of infection, as estimated by the ONS Community Infections Survey is now around 0.10% in England with some regional heterogeneity. It is hoped that these trends continue, enabling the continued progressive relaxation of pandemic mitigation measures in line with the government’s roadmap to opening society. We will continue to monitor the situation closely.
++Estimates of cumulative infection are low in comparison to some earlier reports. This is due to the inclusion of the prevalence data, which appear to have the effect of reducing the number of infections. Nowhere is this more true than in the North West, where estimates of attack rate have fallen to 18%. London remains the region with the largest levels of cumulative infection to date.
++Other indicators (e.g. hospital bed prevalence, reported new cases) are now beginning to suggest a resurgent epidemic, largely due to the increasing presence of the B.1.617 strain. Prevalence of infection, as estimated by the ONS Community Infections Survey is under 0.10% in England with some regional heterogeneity. Given the low prevalence, the increasing transmission is not an immediate concern, but the presence of a rapidly spreading new strain does provide some alarm. We will continue to monitor the situation closely.
+diff --git a/R/output/vac.comparison.R b/R/output/vac.comparison.R
+index 6f4e38f9..d49de383 100644
+--- a/R/output/vac.comparison.R
++++ b/R/output/vac.comparison.R
+@@ -19,6 +19,7 @@ iters.keep <- sample.int(length(dimnames(mid.env$deaths)[["iteration"]]), 1000)
+ deaths.vac <- thin.outs(mid.env$deaths)
+ infecs.vac <- thin.outs(mid.env$infections)
+ preval.vac <- thin.outs(mid.env$prevalence)
++severe.vac <- thin.outs(mid.env$vacc.infections)
+ 
+ rm(mid.env)
+ 
+@@ -27,8 +28,9 @@ load(proj2, envir = cou.env)
+ deaths.no.vac <- thin.outs(cou.env$deaths)
+ infecs.no.vac <- thin.outs(cou.env$infections)
+ preval.no.vac <- thin.outs(cou.env$prevalence)
++severe.no.vac <- thin.outs(cou.env$vacc.infections)
+ 
+ rm(cou.env)
+ 
+-save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, file = "deaths_comparison_prev.RData")
++save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, severe.vac, severe.no.vac, file = "deaths_comparison_prev.RData")
+ ## estimate total deaths saved is 201 (164-251)!!
+diff --git a/config.R b/config.R
+index 6fffb0f8..0a25d8cb 100644
+--- a/config.R
++++ b/config.R
+@@ -5,7 +5,7 @@ library(lubridate)
+ library(tidyr)
+ 
+ # Either ONS or NHS
+-region.type <- "ONS"
++region.type <- "NHS"
+ 
+ args <- commandArgs(trailingOnly = TRUE)
+ if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+@@ -38,7 +38,7 @@ if (args[2] == "All")  {
+ serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
+ sero.end.date <- ymd(20200522)
+ 
+-google.data.date <- format(ymd("20210507"), format = "%Y%m%d")
++google.data.date <- format(ymd("20210528"), format = "%Y%m%d")
+ matrix.suffix <- "_timeuse_household"
+ 
+ ## Number of days to run the simulation for.
+@@ -74,9 +74,9 @@ gp.flag <- 0	# 0 = off, 1 = on
+ ## The 'hosp' stream in the code is linked to death data
+ hosp.flag <- 1					# 0 = off, 1 = on
+ ## Do we want to include prevalence estimates from community surveys in the model?
+-prev.flag <- 0
++prev.flag <- 1
+ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
+-num.prev.days <- 368
++num.prev.days <- 389
+ ## Shall we fix the serological testing specificity and sensitivty?
+ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
+ exclude.eldest.prev <- FALSE
+@@ -90,23 +90,8 @@ if (!prev.flag) scenario.name <- "NoPrev"
+ if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
+ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
+ 
+-## Is there a previous MCMC from which we can take some initial values?
+-use.previous.run.for.start <- TRUE
+-if(use.previous.run.for.start){
+-    if(region.type == "NHS"){
+-        if(prev.flag)
+-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+-    } else if(region.type == "ONS"){
+-        if(prev.flag)
+-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
+-    }
+-}
+-iteration.number.to.start.from <- 6400
+-
+ ## Give the run a name to identify the configuration
+-contact.model <- 4
++contact.model <- 6
+ contact.prior <- "ons"
+ ## if (contact.model != 4)
+     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
+@@ -118,7 +103,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
+ flg.confirmed <- (data.desc != "all")
+ flg.cutoff <- TRUE
+ if(flg.cutoff) {
+-	str.cutoff <- "60"
++	str.cutoff <- "28"
+ 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
+ }
+ scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
+@@ -135,6 +120,25 @@ if (data.desc == "all") {
+ 	stop("Unknown data description")
+ }
+ 
++## Is there a previous MCMC from which we can take some initial values?
++use.previous.run.for.start <- TRUE
++if(use.previous.run.for.start){
++    if(region.type == "NHS"){
++        if(str.cutoff == "28")
++            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
++                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
++                                             )
++        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
++                                                                                     "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
++                                              )
++    } else if(region.type == "ONS")
++        previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
++                                                                                              "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
++                                         )
++}
++iteration.number.to.start.from <- 6400
++
++## From where will the various datasets be sourced?
+ data.dirs <- file.path(proj.dir,
+                        paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
+                        )
+@@ -167,7 +171,7 @@ if(gp.flag){
+ ## Get the date of the prevalence data
+ prev.cutoff.days <- 2
+ ## Convert that to an analysis day number
+-date.prev <- lubridate::ymd("20210504")
++date.prev <- lubridate::ymd("20210526")
+ prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+ last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
+ first.prev.day <- prev.end.day - num.prev.days + 1
+@@ -211,4 +215,4 @@ if(vacc.flag){
+ }
+ ## How many vaccinations can we expect in the coming weeks
+ ## - this is mostly set for the benefit of projections rather than model fitting.
+-future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
++future.n <- (c(4.3, 4.1, 4.3, 2.4, rep(2, 5)) * 10^6) * (55.98 / 66.65)
+diff --git a/current_scale_lst.rds b/current_scale_lst.rds
+new file mode 100644
+index 00000000..797b6d2b
+Binary files /dev/null and b/current_scale_lst.rds differ
+diff --git a/import_pars.R b/import_pars.R
+index ee57589c..19c2006d 100644
+--- a/import_pars.R
++++ b/import_pars.R
+@@ -1,16 +1,17 @@
+ prev.env <- new.env()
+-load.from <- file.path(previous.run.to.use, "tmp.RData")
++load.from <- file.path(previous.loc, "tmp.RData")
+ load(load.from, env = prev.env)
+-load.from <- file.path(previous.run.to.use, "mcmc.RData")
++load.from <- file.path(previous.loc, "mcmc.RData")
+ load(load.from, env = prev.env)
+ prev.params <- prev.env$params
+ 
+ value.eta.h <- prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
+-#value.dl <- latent period value is fixed
++## value.dl <- latent period value is fixed
+ value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
+ if (prev.flag && prev.env$prev.flag) value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
+-#value.pgp GP stream not currently used
++## value.pgp GP stream not currently used
+ contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
++## if(contact.model == 6) { contact.reduction <- rep(contact.reduction, 2); contact.reduction[zero.contact.elements] <- 0 }
+ beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
+ beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
+ if(nrow(beta.rw.vals) > nbetas)
+@@ -25,7 +26,7 @@ if(length(value.ifr) > ncol(prev.params$prop_case_to_hosp)){
+     value.ifr <- c(prev.params$prop_case_to_hosp[iteration.number.to.start.from, ],
+                    value.ifr[(ncol(prev.params$prop_case_to_hosp) + 1):length(value.ifr)])
+ } else value.ifr <- prev.params$prop_case_to_hosp[iteration.number.to.start.from, ]
+-#pars.dow Ignoring for now
++## pars.dow Ignoring for now
+ if (!fix.sero.test.spec.sens && !prev.env$fix.sero.test.spec.sens) {
+   sero.sens <- prev.params$sero_test_sensitivity[iteration.number.to.start.from,]
+   sero.spec <- prev.params$sero_test_specificity[iteration.number.to.start.from,]
+diff --git a/inputs/mod_inputs.Rmd b/inputs/mod_inputs.Rmd
+index 8c986d0b..5d85ebe2 100644
+--- a/inputs/mod_inputs.Rmd
++++ b/inputs/mod_inputs.Rmd
+@@ -175,6 +175,6 @@ prop_var_shrinkage   0.9
+ 
+ maximum_block_size   9
+ 
+-random_seed	     82
++random_seed	     `r sample.int(999999, 1)`
+ 
+ max_threads	     `r num.threads`
+diff --git a/inputs/mod_pars.Rmd b/inputs/mod_pars.Rmd
+index 1d9a648f..b459c8eb 100644
+--- a/inputs/mod_pars.Rmd
++++ b/inputs/mod_pars.Rmd
+@@ -258,28 +258,28 @@ regional_param = true;
+ 
+ prop_susceptible = { param_value = 1.0;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ }
+ 
+ 
+ prop_HI_32_to_HI_8 = {	param_value = 1.0;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ }
+ 
+ 
+ prop_symptomatic = { param_value = 1.0;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ }
+ 
+ 
+ prop_case_to_hosp = { param_value = `r paste(value.ifr, collapse = ", ")`;
+ 
+-prior_distributions = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
++prior_distribution = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
+ 
+ prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
+ 
+@@ -298,21 +298,21 @@ proposal_variance = `r paste(var.ifr, collapse = ", ")`;
+ 
+ prop_case_to_death = { param_value = 0.01;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ }
+ 
+ 
+ background_GP = { param_value = 0.0;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ }
+ 
+ 
+ day_of_week_effects = { param_value = `r ifelse(gp.flag, paste(pars.dow, collapse = ", "), 1)`;
+ 
+-prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
++prior_distribution = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
+ 
+ `r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
+ 
+@@ -328,21 +328,21 @@ prior_distributions = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), col
+ 
+ test_sensitivity = { param_value = 1;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ } ## CODE CURRENTLY IGNORES ANY VARIATION
+ 
+ 
+ test_specificity = { param_value = 1;
+ 
+-prior_distributions = 1;
++prior_distribution = 1;
+ 
+ } ## CODE CURRENTLY IGNORES ANY VARIATION
+ 
+ 
+ sero_test_sensitivity = { param_value = `r sero.sens`;
+ 
+-prior_distributions = `r ssens.prior.dist`;
++prior_distribution = `r ssens.prior.dist`;
+ 
+ prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
+ 
+@@ -353,7 +353,7 @@ proposal_variance = `r paste(ssens.prop, collapse = ", ")`;
+ 
+ sero_test_specificity = { param_value = `r sero.spec`;
+ 
+-prior_distributions = `r sspec.prior.dist`;
++prior_distribution = `r sspec.prior.dist`;
+ 
+ prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
+ 
+diff --git a/par_check.R b/par_check.R
+new file mode 100644
+index 00000000..997aecd4
+--- /dev/null
++++ b/par_check.R
+@@ -0,0 +1,15 @@
++stopifnot(all(!is.na(beta.rw.vals)))
++stopifnot(length(beta.rw.vals) == nbetas*nr)
++stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
++stopifnot(all(!is.na(beta.rw.props)))
++stopifnot(length(beta.rw.props) == nbetas*nr)
++stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
++stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
++stopifnot(length(contact.dist) == length(contact.proposal))
++stopifnot(length(contact.reduction) == length(contact.proposal))
++stopifnot(contact.reduction[zero.contact.elements] == 0)
++stopifnot(contact.proposal[zero.contact.elements] == 0)
++stopifnot(contact.proposal[-zero.contact.elements] != 0)
++stopifnot(all(!is.na(contact.reduction)))
++stopifnot(all(!is.na(contact.proposal)))
++stopifnot(all(!is.na(contact.dist)))
+diff --git a/run.R b/run.R
+index 53d7586d..b8321bc4 100644
+--- a/run.R
++++ b/run.R
+@@ -129,13 +129,33 @@ if(compile.code) {
+     system("make rtm_optim")
+ }
+ 
+-## Run the code
++## Set up a requisite number of chains
+ startwd <- getwd()
+ setwd(out.dir)
+ if(exists("outpp"))
+     rm(outpp)
+ save.image("tmp.RData")
++out.dir.orig <- out.dir
++if(use.previous.run.for.start & length(previous.run.to.use) > 1){
++    nchains <- length(previous.run.to.use)
++    for(ichain in 2:nchains){
++        new.dir <- paste0(out.dir, "_chain", ichain)
++        if(dir.exists(new.dir))
++            unlink(new.dir, recursive = TRUE)
++        R.utils::copyDirectory(out.dir, new.dir)
++        previous.loc <- previous.run.to.use[ichain]
++        source(file.path(proj.dir, "import_pars.R"))
++        source(file.path(proj.dir, "par_check.R"))
++        knit(input = pars.template.loc, output = file.path(new.dir, "mod_pars.txt"))
++        knit(input = inputs.template.loc, output = file.path(new.dir, "mod_inputs.txt"))
++        out.dir <- new.dir
++        setwd(out.dir)
++        save.image("tmp.RData")
++        out.dir <- out.dir.orig
++        }
++    }
+ 
++setwd(out.dir)
+ if(run.code){
+     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
+ 	 system("chmod a-w coda* NNI* posterior* adaptive*")
+diff --git a/set_up_inputs.R b/set_up_inputs.R
+index ddcbf04a..c7fdfb9a 100644
+--- a/set_up_inputs.R
++++ b/set_up_inputs.R
+@@ -128,7 +128,21 @@ if(contact.model == 1){
+                  rep(y[1], (nA - 5) * nA), ## adults except the very elderly
+                  rep(y[4], nA)), nA, nA, byrow = TRUE)
+         })
+-    }
++} else if(contact.model == 6){ ## Each age group has a unique susceptibility
++    cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_modAllLevels", 0:9, ".txt"))
++    mult.order <- c(0, rep(1, length(cm.breaks)))
++    mult.mat <- lapply(unique(mult.order), function(x){
++        y <- ((nA-2)*x) + (0:(nA - 3))
++        matrix(c(rep(y[2], 3 * nA), ## kids
++                 rep(y[3], nA), ## 15-24
++                 rep(y[1], nA), ## 25-44 (base age-group)
++                 rep(y[4], nA), ## 45-64
++                 rep(y[5], nA), ## 65-74
++                 rep(y[6], nA)), ## 75+
++               nA, nA, byrow = TRUE)
++        })
++}
++
+ if(!all(file.exists(cm.mults)))
+     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
+                                        cm.mults[i],
+@@ -139,8 +153,8 @@ cm.mults <- cm.mults[mult.order+1]
+ num.iterations <- 3240000
+ burnin <- 324000
+ adaptive.phase <- burnin / 2
+-thin.outputs <- 900 	# After how many iterations to output each set of NNI, deaths etc.
+-thin.params <- 450  # After how many iterations to output each set of parameters
++thin.outputs <- 900	# After how many iterations to output each set of NNI, deaths etc.
++thin.params <- 450 # After how many iterations to output each set of parameters
+ stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
+ 
+ 
+diff --git a/set_up_pars.R b/set_up_pars.R
+index 3f79252d..ebfd067c 100644
+--- a/set_up_pars.R
++++ b/set_up_pars.R
+@@ -350,9 +350,9 @@ for(i in 1:nm){
+     contact.pars[, i, ] <- prior.list$lock
+     if((contact.model == 4) & (i %in% c(1, 4)))
+         contact.pars[, i, ] <- prior.list[[contact.prior]]
+-    if((contact.model == 5) & (i %in% c(1, 5)))
++    if((contact.model %in% c(5, 6)) & (i %in% c(1, 5)))
+         contact.pars[, i, ] <- prior.list[[contact.prior]]
+-    if((contact.model == 5) & (i %in% c(2, 6)))
++    if((contact.model %in% c(5, 6)) & (i %in% c(2, 6)))
+         contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
+ }
+ ## if(nm > 1){
+@@ -371,14 +371,13 @@ if(contact.model == 4)
+     contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 3, 4, 4)]))
+ if(contact.model == 5)
+     contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 2, 3, 4, 4, 4)]))
++if(contact.model == 6)
++    contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 2, 2, 2, 3, 4, 4, 4, 4, 4)]))
+ ## contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
+ contact.reduction <- rep(-0.1, length(contact.proposal))
+ zero.contact.elements <- 1 + ((nm+1)*(0:(nr-1)))
+ contact.reduction[zero.contact.elements] <- 0
+ contact.proposal[zero.contact.elements] <- 0
+-if (nr == 7) {
+-  contact.reduction[contact.reduction != 0] <- c(-0.0341814316217191, -0.603623169409033, 0.0539584598346591, 0.163593712131155, -0.703814518195703, -0.550731233431052, 0.0504542512327084, -0.420094076795744, 0.204225185679588, -0.324308107735709, -0.434259090524466, 0.380906862841831, -0.196723716378284, -0.0485712125740307, 0.667651849590346, 0.0768011654865117, -0.237594065172005, 0.369835713299122, -0.021905891919917, -0.20964475571682, 0.445364908401734)
+-}
+ contact.link <- as.integer(any(contact.dist == 4))
+ require(Matrix)
+ if(rw.flag){
+@@ -463,20 +462,9 @@ sspec.prop <- 0.077976
+ if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
+ if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
+ 
+-if(use.previous.run.for.start) source(file.path(proj.dir, "import_pars.R"))
++if(use.previous.run.for.start) {
++    previous.loc <- previous.run.to.use[1]
++    source(file.path(proj.dir, "import_pars.R"))
++}
+ 
+-stopifnot(all(!is.na(beta.rw.vals)))
+-stopifnot(length(beta.rw.vals) == nbetas*nr)
+-stopifnot(all(beta.rw.vals[static.zero.beta.locs] == 0))
+-stopifnot(all(!is.na(beta.rw.props)))
+-stopifnot(length(beta.rw.props) == nbetas*nr)
+-stopifnot(all(beta.rw.props[static.zero.beta.locs] == 0))
+-stopifnot(all(beta.rw.props[-static.zero.beta.locs] > 0))
+-stopifnot(length(contact.dist) == length(contact.proposal))
+-stopifnot(length(contact.reduction) == length(contact.proposal))
+-stopifnot(contact.reduction[zero.contact.elements] == 0)
+-stopifnot(contact.proposal[zero.contact.elements] == 0)
+-stopifnot(contact.proposal[-zero.contact.elements] != 0)
+-stopifnot(all(!is.na(contact.reduction)))
+-stopifnot(all(!is.na(contact.proposal)))
+-stopifnot(all(!is.na(contact.dist)))
++source(file.path(proj.dir, "par_check.R"))
+diff --git a/src/RTM_FunctDefs.h b/src/RTM_FunctDefs.h
+index 312fd876..6dc1b22e 100644
+--- a/src/RTM_FunctDefs.h
++++ b/src/RTM_FunctDefs.h
+@@ -44,9 +44,7 @@ void mixing_matrix_parameterise(mixing_model&);
+ // FUNCTIONS IN RTM_Likelihoods.cc
+ //void block_log_likelihood(likelihood& llhood, Region* meta_region, int region, bool flag_update_transmission_model, bool flag_update_reporting_model, bool flag_update_GP_likelihood, bool flag_update_Hosp_likelihood, bool flag_update_Viro_likelihood, bool flag_update_Sero_likelihood, bool flag_update_Prev_likelihood, const global_model_instance_parameters &gmip, updParamSet &pars, bool inBlock = false);
+ 
+-void fn_log_likelihood_global(glikelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
+-		       const global_model_instance_parameters &, gslVector&, gslVector&);
+-void fn_log_likelihood_region(rlikelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
++void fn_log_likelihood(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
+ 		       const global_model_instance_parameters &, gslVector&, gslVector&);
+ void output_per_selected_period(const int&, const gsl_matrix*, gsl_matrix*);
+ double fn_log_lik_positivity(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
+@@ -55,6 +53,6 @@ double fn_log_lik_negbindata(const gsl_matrix*, const gsl_matrix*, const gsl_mat
+ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
+ 
+ // FUNCTIONS IN RTM_MetropHast.cc
+-void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, Region*, glikelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
++void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
+ 
+ #endif
+diff --git a/src/RTM_Likelihoods.cc b/src/RTM_Likelihoods.cc
+index 1a744fb0..d4df5c8f 100644
+--- a/src/RTM_Likelihoods.cc
++++ b/src/RTM_Likelihoods.cc
+@@ -259,7 +259,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
+ 	    gsl_matrix_set(l_SV1, t + 1, a, (gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)) * Vaccination->getCount(nday, a) / timestepsperday) +
+ 			   gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * (1 - Vaccination->getDenom(nday, a) / timestepsperday));
+ 
+-	    gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)) * Vaccination->getDenom(nday, a) / timestepsperday) +
++	    gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * Vaccination->getDenom(nday, a) / timestepsperday) +
+ 			   gsl_matrix_get(l_SVn, t, a) * (1 - (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)));
+   
+ 	  }
+@@ -492,7 +492,7 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
+   gsl_matrix_set_zero(modelled_events);
+ 
+   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
+-//#pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
++#pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
+   for (int k = 0; k < (max_days_data * in_gmip.l_reporting_time_steps_per_day); ++k)
+     {  
+       for (int j = 0; j < NUM_AGE_GROUPS; ++j)
+@@ -694,7 +694,8 @@ double fn_log_lik_loggaussian_fixedsd(const gsl_matrix* mat_data,
+ 
+ 
+ 
+-void fn_log_likelihood_global(glikelihood& llhood,
++
++void fn_log_likelihood(likelihood& llhood,
+ 		       Region* meta_region,
+ 		       int region,
+ 		       bool flag_update_transmission_model,
+@@ -706,60 +707,26 @@ void fn_log_likelihood_global(glikelihood& llhood,
+ 		       bool flag_update_Prev_likelihood,
+ 		       const global_model_instance_parameters &gmip,
+ 		       gslVector& gp_distribution_function,
+-		       gslVector& hosp_distribution_function) {
+-
+-
+-  
++		       gslVector& hosp_distribution_function)
++{
+   // PASSING A VALUE OF 0 FOR THE ARGUMENT region EVALUATES THE
+   // SPECIFIED COMPONENTS OF THE LIKELIHOOD OVER ALL REGIONS
+-  //int low_region = (region == -1) ? 0 : region;
+-  //int hi_region = (region == -1) ? gmip.l_num_regions : region + 1;
+-  //double temp_log_likelihood;
+-  //double lfx_increment = 0.0;
+-
+-//#ifdef USE_THREADS
+-//  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
+-//  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
+-//#else
+-//  int num_subthread_teams = 1;
+-//#endif
+-
+-  
+-
+-//#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
+-
+-  double lfx_sum = 0;
+-  
+-#pragma omp parallel for default(shared) schedule(static) reduction(+:lfx_sum)
+-  for(int int_region = 0; int_region < gmip.l_num_regions; int_region++) {
+-    
+-    fn_log_likelihood_region(llhood.rlik[int_region], meta_region, int_region, flag_update_transmission_model, flag_update_reporting_model, flag_update_GP_likelihood, flag_update_Hosp_likelihood, flag_update_Viro_likelihood, flag_update_Sero_likelihood, flag_update_Prev_likelihood, gmip, gp_distribution_function, hosp_distribution_function);
++  int low_region = (region == 0) ? 0 : region;
++  int hi_region = (region == 0) ? gmip.l_num_regions : region + 1;
++  double temp_log_likelihood;
++  double lfx_increment = 0.0;
++
++#ifdef USE_THREADS
++  int num_parallel_regions = FN_MIN(omp_get_num_procs(), hi_region - low_region);
++  int num_subthread_teams = ceil(((double) omp_get_num_procs()) / ((double) num_parallel_regions));
++#else
++  int num_subthread_teams = 1;
++#endif
++
++#pragma omp parallel for private(temp_log_likelihood) default(shared) num_threads(num_parallel_regions) schedule(static) reduction(+:lfx_increment)
++  for(int int_region = low_region; int_region < hi_region; int_region++)
++    {
+     
+-    lfx_sum += llhood.rlik[int_region].region_lfx;
+-  }
+-  
+-  llhood.total_lfx += lfx_sum;
+-}
+-
+-
+-void fn_log_likelihood_region(rlikelihood& llhood,
+-			      Region* meta_region,
+-			      int int_region,
+-			      bool flag_update_transmission_model,
+-			      bool flag_update_reporting_model,
+-			      bool flag_update_GP_likelihood,
+-			      bool flag_update_Hosp_likelihood,
+-			      bool flag_update_Viro_likelihood,
+-			      bool flag_update_Sero_likelihood,
+-			      bool flag_update_Prev_likelihood,
+-			      const global_model_instance_parameters &gmip,
+-			      gslVector& gp_distribution_function,
+-			      gslVector& hosp_distribution_function)  {
+-
+-  double lfx_region = 0;
+-  double temp_log_likelihood = 0;
+-  //double lfx_increment = 0;
+-      
+       // Does the transmission model need to be re-evaluated?
+       // (Not necessary when updating parameters of the reporting model)
+       if(flag_update_transmission_model)
+@@ -817,9 +784,8 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 	  gsl_matrix_free(weighted_positivity);  
+ 	} else // ** Just calculate the likelihood based on the already computed positivities
+ 	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
+-	// CCS
+-	lfx_region += (temp_log_likelihood - llhood.Sero_lfx);
+-	llhood.Sero_lfx = temp_log_likelihood;
++	lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Sero_lfx, int_region));
++	gsl_vector_set(*llhood.Sero_lfx, int_region, temp_log_likelihood);
+ 	gsl_matrix_free(test_positivity);
+       }
+ 
+@@ -843,10 +809,9 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 		  }
+ 	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
+ 	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
+-	      // CCS
+-	      lfx_region += (temp_log_likelihood - llhood.Prev_lfx);
++	      lfx_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Prev_lfx, int_region));
+ 	      //if (debug) cout << int_region << " Prev prev " << gsl_vector_get(*llhood.Prev_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+-	      llhood.Prev_lfx = temp_log_likelihood;
++	      gsl_vector_set(*llhood.Prev_lfx, int_region, temp_log_likelihood);
+ 	    }
+ 	  gsl_matrix_free(summed_prevalence);
+ 	}
+@@ -869,7 +834,8 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 				 gmip,
+ 				 gmip.l_GP_likelihood.upper,
+ 				 meta_region[int_region].population,
+-				 *gp_distribution_function /*, num_subthread_teams */ );
++				 *gp_distribution_function,
++				 num_subthread_teams);
+ 	    }
+ 	
+ 	  // ADD THE BACKGROUND AND CALCULATE THE UPDATED POSITIVITY
+@@ -918,13 +884,13 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 			perror("Unrecognised likelihood selected\n");
+ 			exit(2);
+ 		      }
+-		      lfx_sub_increment += (temp_log_likelihood - llhood.GP_lfx);
+-		      llhood.GP_lfx = temp_log_likelihood;
++		      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.GP_lfx, int_region));
++		      gsl_vector_set(*llhood.GP_lfx, int_region, temp_log_likelihood);
+ 		      gsl_matrix_free(mu_gp_counts);
+ 		    }
+ 		  else {
+ 		    lfx_sub_increment += GSL_NEGINF;
+-		    llhood.GP_lfx = GSL_NEGINF;
++		    gsl_vector_set(*llhood.GP_lfx, int_region, GSL_NEGINF);
+ 		  }
+ 		}
+ 	    }
+@@ -957,8 +923,8 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 	      } else
+ 		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
+ 
+-	      lfx_sub_increment += (temp_log_likelihood - llhood.Viro_lfx);
+-	      llhood.Viro_lfx = temp_log_likelihood;
++	      lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Viro_lfx, int_region));
++	      gsl_vector_set(*llhood.Viro_lfx, int_region, temp_log_likelihood);
+ 	      
+ 	    }
+ 	  
+@@ -1011,28 +977,20 @@ void fn_log_likelihood_region(rlikelihood& llhood,
+ 	      }
+ 	    } else temp_log_likelihood = GSL_NEGINF;
+ 	  
+-	  lfx_sub_increment += (temp_log_likelihood - llhood.Hosp_lfx);
++	  lfx_sub_increment += (temp_log_likelihood - gsl_vector_get(*llhood.Hosp_lfx, int_region));
+ 
+ 	  //if (debug) cout << int_region << " Hosp prev " << gsl_vector_get(*llhood.Hosp_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+ 
+-	  llhood.Hosp_lfx = temp_log_likelihood;
++	  gsl_vector_set(*llhood.Hosp_lfx, int_region, temp_log_likelihood);
+ 
+ 	  
+ 	  gsl_matrix_free(mu_hosp_counts);	  
+ 	}
+-
+-      lfx_region += lfx_sub_increment;
+-
+-      // Save the regional likelihood component for AMGS blocks
+-      llhood.region_lfx = lfx_region;
+-
+-      //cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
+-
+-      //lfx_increment += lfx_region;
++      
++      lfx_increment += lfx_sub_increment;
+       //if (debug) cout << int_region << " end incr " << lfx_increment << endl;
+-
+-  //}
++    }
+   
+-  //llhood.total_lfx += lfx_increment;
++  llhood.total_lfx += lfx_increment;
+   
+ }
+diff --git a/src/RTM_MetropHast.cc b/src/RTM_MetropHast.cc
+index 25904758..e0e36794 100644
+--- a/src/RTM_MetropHast.cc
++++ b/src/RTM_MetropHast.cc
+@@ -173,7 +173,7 @@ void write_progress_report(const string& report_type, const int int_report_no, c
+ 
+ // ALL-PURPOSE REPORT FUNCTION //
+ void write_progress_report(const string& report_type, const int& int_report_no, const int& int_iter, const int& chain_length,
+-			   const globalModelParams& gmp, const glikelihood& llhood,
++			   const globalModelParams& gmp, const likelihood& llhood,
+ 			   bool posterior_stats_flag, bool acceptance_flag, bool propvar_flag)
+ {
+   string filename(report_type);
+@@ -250,7 +250,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
+ 		 updParamSet &paramSet,
+ 		 Region* state_country,
+ 		 Region* country2,
+-		 glikelihood& lfx,
++		 likelihood& lfx,
+ 		 const global_model_instance_parameters& gmip,
+ 		 const mixing_model& base_mix,
+ 		 gsl_rng* r)
+@@ -292,7 +292,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
+   }
+   
+   // Likelihood
+-  glikelihood prop_lfx(gmip);
++  likelihood prop_lfx(gmip);
+   prop_lfx = lfx;
+ 
+   int maximum_block_size = simulation_parameters.maximum_block_size;
+@@ -367,45 +367,34 @@ void metrop_hast(const mcmcPars& simulation_parameters,
+     if(paramSet[i].flag_update)
+       output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
+   }
+-
++  
+   // Central Loop //
+   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
+     {
+-      if (int_iter % 50000 == 0 && int_iter > 0 && true)
++      if (int_iter % 1000 == 0 && int_iter > 0 && debug)
+ 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
+ 
+       // Block update
+ 
+       // Update two blocks every iter: global block and one of the local blocks
+-      //int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+-      
+-      // Global
++      int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+ 
++      // Global
+       if(paramSet.blocks[0].size() > 0){
+ 	paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+-	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);      
+-	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
++	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix);
++	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip);
+ 	if (int_iter > 199)
+ 	  paramSet.blocks[0].adaptiveUpdate(int_iter);
+       }
+-      // Local
+-      if(paramSet.blocks[1].size() > 0){
+-	for (int reg = 1; reg <= nregions; reg++) {
+-	  paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+-	  paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+-	}
+-      }
+-#pragma omp parallel for default(shared) schedule(static) if(paramSet.blocks[1].size() > 0)
+-      for (int reg = 1; reg <= nregions; reg++) {
+-	paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+-      }
+ 
+-      if(paramSet.blocks[1].size() > 0){
+-	for (int reg = 1; reg <= nregions; reg++) {
+-	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
+-	  if (int_iter > 199)
++      // Local
++      if(paramSet.blocks[reg].size() > 0){
++	paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
++	paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix);
++	paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip);
++	if (int_iter > 199)
+ 	  paramSet.blocks[reg].adaptiveUpdate(int_iter);
+-	}
+       }
+ 
+       if (debug) {
+@@ -477,15 +466,12 @@ void metrop_hast(const mcmcPars& simulation_parameters,
+ 	paramSet.lfx.bar_lfx += paramSet.lfx.total_lfx / ((double) CHAIN_LENGTH);
+ 	paramSet.lfx.sumsq_lfx += gsl_pow_2(paramSet.lfx.total_lfx) / ((double) CHAIN_LENGTH);
+ 
+-	prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
+-	prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
+-	
+ 	// TODO: Does it make more sense to copy the whole lfx object at the
+ 	// start of each iter?
+-	//for (updParamBlock& block : paramSet.blocks) {
+-	//  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
+-	//  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
+-	//}
++	for (updParamBlock& block : paramSet.blocks) {
++	  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
++	  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
++	}
+       }
+ 
+       // Output MCMC sampler progress reports
+diff --git a/src/RTM_RegRTM_Beta3.0.cc b/src/RTM_RegRTM_Beta3.0.cc
+index fb5c207d..191b0fcf 100644
+--- a/src/RTM_RegRTM_Beta3.0.cc
++++ b/src/RTM_RegRTM_Beta3.0.cc
+@@ -138,25 +138,17 @@ int main(void){
+   		       str_mcmc_parameter_defaults);
+   
+   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
+-#ifdef USE_THREADS
+-
+-  // #########################
+-  // On the HPC, having more threads than regions slows the code down
+-  // Unsure why; possibly due to multi-threaded BLAS
+-  
+-  if (sim_pars.max_num_threads > global_fixedpars.l_num_regions)
+-    omp_set_num_threads(global_fixedpars.l_num_regions);
+-  else 
+-    omp_set_num_threads(sim_pars.max_num_threads);
+-  
++  #ifdef USE_THREADS
++  omp_set_num_threads(sim_pars.max_num_threads);
+   #endif
+ 
+-  #ifdef USE_OLD_CODE
+   // INITIALISE THE LIKELIHOOD STRUCTURE
+   // likelihood_alloc(llhood, global_fixedpars);
+   likelihood llhood(global_fixedpars);
+ 
++
+   // MAKE AN INITIAL EVALUATION OF THE LIKELIHOOD
++#ifdef USE_OLD_CODE
+   fn_log_likelihood(llhood, country, 0, true, true,
+   		    global_fixedpars.l_GP_consultation_flag,
+   		    global_fixedpars.l_Hospitalisation_flag,
+@@ -169,8 +161,8 @@ int main(void){
+     );
+ #endif
+ 
+-  glikelihood block_llhood(global_fixedpars);
+-  fn_log_likelihood_global(block_llhood, country2, -1, true, true, 
++  likelihood block_llhood(global_fixedpars);
++  fn_log_likelihood(block_llhood, country2, 0, true, true, 
+ 		    true, //global_fixedpars.l_GP_consultation_flag,
+ 		    true, //global_fixedpars.l_Hospitalisation_flag,
+ 		    true, //global_fixedpars.l_Viro_data_flag,
+@@ -181,11 +173,8 @@ int main(void){
+ 		    paramSet.hosp_delay.distribution_function
+     );
+ 
+-  //for (int r = 0; r < global_fixedpars.l_num_regions; r++)
+-  //  block_llhood.total_lfx += block_llhood.region_lfx[r];
+-  
+-  //for (auto& block : paramSet.blocks)
+-  //block.setLlhood(block_llhood);
++  for (auto& block : paramSet.blocks)
++    block.setLlhood(block_llhood);
+   paramSet.lfx = block_llhood;
+   
+   // RUN THE METROPOLIS-HASTINGS SAMPLER AND SEND OUTPUT TO FILES
+diff --git a/src/RTM_StructDefs.h b/src/RTM_StructDefs.h
+index 20b5d8ea..633b4a19 100644
+--- a/src/RTM_StructDefs.h
++++ b/src/RTM_StructDefs.h
+@@ -263,47 +263,12 @@ void mcmcPars_free(mcmcPars&);
+ 
+ // LIKELIHOOD STRUCTURE
+ 
+-
+-
+-class rlikelihood {
+-public:
+-  double region_lfx;
+-  double GP_lfx;
+-  double Hosp_lfx;
+-  double Deaths_lfx;
+-  double Sero_lfx;
+-  double Viro_lfx;
+-  double Prev_lfx;
+-
+-  rlikelihood()
+-    : region_lfx(0), GP_lfx(0), Hosp_lfx(0), Deaths_lfx(0),
+-      Sero_lfx(0), Viro_lfx(0), Prev_lfx(0) { }
+-};
+-
+-class glikelihood {
+-public:
+-  double total_lfx;
+-  double bar_lfx;
+-  double sumsq_lfx;
+-
+-  std::vector<rlikelihood> rlik;
+-
+-  glikelihood()
+-    : total_lfx(0), bar_lfx(0), sumsq_lfx(0) { }
+-
+-  glikelihood(const global_model_instance_parameters &gmip)
+-    : total_lfx(0), bar_lfx(0), sumsq_lfx(0),
+-      rlik(gmip.l_num_regions) { }
+-};
+-
+-/*
+ // CCS: Rewritten as a class to remove need for manual memory management
+ class likelihood {
+ public:
+   double total_lfx;
+   double bar_lfx;
+   double sumsq_lfx;
+-  gslVector region_lfx;
+   gslVector GP_lfx;
+   gslVector Hosp_lfx;
+   gslVector Deaths_lfx;
+@@ -318,7 +283,6 @@ public:
+   likelihood(const global_model_instance_parameters &gmip)
+     : total_lfx(0), bar_lfx(0), sumsq_lfx(0) {
+     int num_regions = gmip.l_num_regions;
+-    region_lfx.allocZero(num_regions);
+     if (gmip.l_GP_consultation_flag)
+       GP_lfx.allocZero(num_regions);
+     if (gmip.l_Hospitalisation_flag)
+@@ -333,7 +297,7 @@ public:
+       Prev_lfx.allocZero(num_regions);
+   }
+ };
+-*/
++
+ //void likelihood_alloc(likelihood&, const global_model_instance_parameters);
+ //void likelihood_free(likelihood&);
+ //void likelihood_memcpy(likelihood&, const likelihood&);
+diff --git a/src/RTM_updParams.cc b/src/RTM_updParams.cc
+index d5d4bba0..7225cecc 100644
+--- a/src/RTM_updParams.cc
++++ b/src/RTM_updParams.cc
+@@ -442,31 +442,26 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter)
+ int updParamBlock::regacceptLastMove = 0;
+ 
+ 
+-/*
+ void updParamSet::calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+   // #pragma omp parallel for
+   for (auto &block : blocks)
+     block.calcAccept(*this, country, gmip, base_mix);
+ }
+-*/
+ 
+-void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, glikelihood& prop_lfx) {
++
++void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix) {
+ 
+   laccept = 0;
+-  //if (global)
++  if (global)
+     acceptLastMove = 0;
+-    //else
+-    //regacceptLastMove = 0;
++  else
++    regacceptLastMove = 0;
+ 
+   // Get region
++  // TODO: Can we only copy one region for local blocks?
+   flagclass update_flags;
+-  if (global)
+-    for (int r = 0; r < paramSet.numRegions; r++) {
+-      regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+-    }
+-  else {
+-    // local
+-    regional_model_params_memcpy(propCountry[regionNum].det_model_params, country[regionNum].det_model_params, update_flags);
++  for (int r = 0; r < paramSet.numRegions; r++) {
++    regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+   }
+   
+   // Prior densities for components in the block
+@@ -627,70 +622,23 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
+   for (int i = 0; i < values.size(); i++)
+     paramSet[parIndex[i]].values[parOffset[i]] = values[i];
+ 
+-  // Calculate lhood for global block
+-  // Regional blocks done separately to allow loop to be paralleized
+-
+-  if (global) {
+-
+-    // For at least one of the updated parameters, all of the flags are set to true
+-    fn_log_likelihood_global(prop_lfx, propCountry, -1,
++  // For at least one of the updated parameters, all of the flags are set to true
++  fn_log_likelihood(prop_lfx, propCountry, 0,
+ 		    true, true, true, true, true, true, true, 
+ 		    gmip,
+ 		    paramSet.gp_delay.distribution_function,
+ 		    paramSet.hosp_delay.distribution_function
+     );
+-
+-    laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+-  
+-  }
+-}
+-
+-void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& reg_lfx) {
+-
+-  //assert (! global);
+-  
+-  fn_log_likelihood_region(reg_lfx, propCountry, regionNum,
+-			   true, true, true, true, true, true, true, 
+-			   gmip,
+-			   paramSet.gp_delay.distribution_function,
+-			   paramSet.hosp_delay.distribution_function
+-    );
+-
+-    laccept += reg_lfx.region_lfx - paramSet.lfx.rlik[regionNum].region_lfx;
++	
++  laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+ }
+ 
+-
+-
+-/*
+ void updParamSet::doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip) {
+   for (auto & block : blocks)
+     block.doAccept(rng, *this, country, numRegions, gmip);
+ }
+-*/
+-
+-// TODO: Move to likelihood class
+-/*
+-void lfxRegionCopy(likelihood &dest, likelihood &src, const global_model_instance_parameters &gmip, int r) {
+-
+-  // TODO: Just create all vectors of length numRegions? Limited performance implication, neater code?
+-  dest.region_lfx[r] = src.region_lfx[r];
+-  if (gmip.l_GP_consultation_flag)
+-    dest.GP_lfx[r] = src.GP_lfx[r];
+-  if (gmip.l_Hospitalisation_flag)
+-    dest.Hosp_lfx[r] = src.Hosp_lfx[r];
+-  if (gmip.l_Deaths_flag)
+-    dest.Deaths_lfx[r] = src.Deaths_lfx[r];
+-  if (gmip.l_Sero_data_flag)
+-    dest.Sero_lfx[r] = src.Sero_lfx[r];
+-  if (gmip.l_Viro_data_flag)
+-    dest.Viro_lfx[r] = src.Viro_lfx[r];
+-  if (gmip.l_Prev_data_flag)
+-    dest.Prev_lfx[r] = src.Prev_lfx[r];
+-  
+-}
+-*/
+ 
+-void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, glikelihood& prop_lfx) {
++void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip) {
+   
+   double acceptTest = gsl_sf_log(gsl_rng_uniform(rng));
+ 
+@@ -700,13 +648,11 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
+ 
+   if (laccept > acceptTest) {
+     numAccept++;
+-
+-    //cout << "Accepted: " << laccept << "\n";
+     
+-    //if (global)
+-    acceptLastMove = 1;
+-    //else
+-      //regacceptLastMove = 1;
++    if (global)
++      acceptLastMove = 1;
++    else
++      regacceptLastMove = 1;
+ 
+     // Update the parameters
+     for (int i = 0; i < values.size(); i++)
+@@ -730,20 +676,8 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
+ 	  }
+     }
+     */
+-
+-    // #################################
+-    // Update local regions
+     
+-    if (global)
+-      paramSet.lfx = prop_lfx;
+-    else {
+-      //lfxRegionCopy(paramSet.lfx, prop_lfx, gmip, regionNum);
+-      paramSet.lfx.rlik[regionNum] = prop_lfx.rlik[regionNum];
+-      
+-      // We've accepted, so the total likelihood increases by the regional increment
+-      paramSet.lfx.total_lfx += prop_lfx.rlik[regionNum].region_lfx;
+-      prop_lfx.total_lfx += prop_lfx.rlik[regionNum].region_lfx;
+-    }
++    paramSet.lfx = prop_lfx;
+ 
+     if (global) {
+       for (int r = 0; r < numRegions; r++) {
+@@ -766,8 +700,6 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
+     }
+   } else {
+     // Reject proposal
+-
+-    //cout << "Rejected: " << laccept << "\n";
+     
+     // We need to reset the proposal so that adpative delta is calculated correctly 
+     proposal = values;
+@@ -792,12 +724,8 @@ void updParamBlock::doAccept(gsl_rng *rng, updParamSet& paramSet, Region* countr
+ 	true, gmip.l_Viro_data_flag, gmip.l_Prev_data_flag);
+     }
+ 
+-    if (global)
+-      prop_lfx = paramSet.lfx;
+-    else {
+-      //lfxRegionCopy(prop_lfx, paramSet.lfx, gmip, regionNum);
+-      prop_lfx.rlik[regionNum] = paramSet.lfx.rlik[regionNum];
+-    }
++    // TODO do we need to do this?
++    prop_lfx = paramSet.lfx;
+   }
+ }
+ 
+@@ -813,10 +741,10 @@ void updParamBlock::adaptiveUpdate(int iter) {
+   double betastart = beta;
+   
+   double eta = pow(iter - 199 + 1, -0.6);
+-  //if (global)
++  if (global)
+     beta = beta + eta * (acceptLastMove - 0.234);
+-    //else
+-    //beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
++  else
++    beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
+   
+   for (int i = 0; i < mu.size(); i++)
+     mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);
+diff --git a/src/RTM_updParams.h b/src/RTM_updParams.h
+index 83f7a8d0..84a57509 100644
+--- a/src/RTM_updParams.h
++++ b/src/RTM_updParams.h
+@@ -77,7 +77,7 @@ public:
+   infection_to_data_delay hosp_delay;
+   infection_to_data_delay death_delay;
+ 
+-  glikelihood lfx;
++  likelihood lfx;
+   
+   int numRegions;
+   
+@@ -182,13 +182,13 @@ public:
+   int size() const;
+   
+   //likelihood lfx;
+-  //likelihood prop_lfx;
++  likelihood prop_lfx;
+ 
+   // Initialise likelihood
+-  //void setLlhood(likelihood& l) {
++  void setLlhood(likelihood& l) {
+     //lfx = l;
+-    //prop_lfx = l;  // Sets vector sizes of prop_lfx
+-  //}
++    prop_lfx = l;  // Sets vector sizes of prop_lfx
++  }
+   double childProposalDensity;
+   double childCurrentDensity;
+   
+@@ -199,9 +199,8 @@ public:
+ 
+   // M-H methods
+   void calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter);
+-  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, glikelihood& prop_lfx);
+-  void calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& prop_lfx);
+-  void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, glikelihood& prop_lfx);
++  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
++  void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip);
+   void adaptiveUpdate(int iter);
+ };
+ 
+diff --git a/submit_post_process b/submit_post_process
+index 404ced6d..4c20e04b 100644
+--- a/submit_post_process
++++ b/submit_post_process
+@@ -19,7 +19,7 @@
+ #! How many CPUs will each task require
+ #SBATCH --cpus-per-task=4
+ #! How much wallclock time will be required?
+-#SBATCH --time=1:00:00
++#SBATCH --time=1:30:00
+ #! What types of email messages do you wish to receive?
+ #SBATCH --mail-type=FAIL
+ #SBATCH --mail-type=TIME_LIMIT
+@@ -28,7 +28,7 @@
+ #! interrupted by node failure or system downtime):
+ #SBATCH --no-requeue
+ #SBATCH --verbose
+-#SBATCH --array=0-5
++#SBATCH --array=4
+ 
+ #SBATCH -p skylake-himem
+ #SBATCH --qos=covid0
+diff --git a/submit_projections_report b/submit_projections_report
+index 80ad7887..37d55394 100644
+--- a/submit_projections_report
++++ b/submit_projections_report
+@@ -18,7 +18,7 @@
+ #SBATCH --ntasks=1
+ #! How many CPUs will each task require
+ #SBATCH --cpus-per-task=3
+-#SBATCH --array=5
++#SBATCH --array=0-5
+ #! How much wallclock time will be required?
+ #SBATCH --time=1:00:00
+ #! What types of email messages do you wish to receive?
+diff --git a/submit_purcell.txt b/submit_purcell.txt
+new file mode 100755
+index 00000000..5b5e2ac6
+--- /dev/null
++++ b/submit_purcell.txt
+@@ -0,0 +1,120 @@
++#!/bin/bash
++
++## Example SLURM script for BSU purcell jobs
++
++## Section 1: SLURM Commands
++
++## All SLURM commands must be placed at the start of the file
++## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
++
++## Enter a short name for the job, to be shown in SLURM output
++#SBATCH -J RTM_20200909
++
++## Enter the wall-clock time limit for for your jobs.
++## If jobs reach this limit they are automatically killed.
++#SBATCH --time=40:00:00
++
++## For single-core jobs, this number should be '1'. 
++## If your job has built-in parallelism, eg using OpenMP or 
++## R's foreach() and doParallel(), increase this number as desired.
++## The maximum value is 64.
++#SBATCH --cpus-per-task=14
++
++## Each task is allocated 16120M. 
++## If this is insufficient, uncomment and edit this line.
++## #SBATCH --mem=24G
++
++## The system can send emails when your job starts and stops.
++## Values include BEGIN, END, ALL, and TIME_LIMIT_80 and TIME_LIMIT_90 
++## (reaching 80% or 90% of time limit.) Specify ARRAY_TASKS to receive
++## a separate mail for each task. Multiple values can be given, separated by a comma.
++#SBATCH --mail-type=ALL
++
++## Array jobs:
++## Can be an arbitrary list of comma-separated ranges, eg 1-5,10-15,20-25
++## The %nn is optional, and restricts SLURM to running nn jobs simultaneously.
++## #SBATCH --array=1-100%50
++#SBATCH --array=1-5
++
++#! sbatch directives end here (put any additional directives above this line)
++#SBATCH --output=model_run_20200909_rw_sero%A_%a.out
++#SBATCH --error=model_run_20200909_rw_sero%A_%a.err
++
++
++##  - - - - - - - - - - - - - -
++
++## Section 2: Modules
++
++# All scripts should include the first three lines.
++
++module purge                          # Removes all modules still loaded
++module load default-login             # REQUIRED - loads the basic environment
++
++#! Insert additional module load commands after this line if needed:
++
++## - - - - - - - - - - -
++
++## Section 3: Run your application
++
++# Navigate to the correct working directory
++workdir="$SLURM_SUBMIT_DIR/model_runs/20200909/base_varSens"
++if [ $SLURM_ARRAY_TASK_ID -lt 4 ]
++then
++    workdir="${workdir}_pillar2"
++fi
++if [ $SLURM_ARRAY_TASK_ID -gt 1 -a $SLURM_ARRAY_TASK_ID -lt 5]
++then
++    workdir="${workdir}_ifr"
++fi
++# workdir="${workdir}Sens"
++# if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
++# then
++#     workdir="${workdir}_newSerology"
++# fi
++# workdir="${workdir}6day_matrices_20200814_deaths"
++# elif [ $SLURM_ARRAY_TASK_ID == 4 ]
++# then
++#     workdir="${workdir}/base_newContacts_newSero_altSens6day_matrices_20200717_deaths/"
++# fi
++workdir="${workdir}6day_matrices_20200904_deaths"
++if [ $SLURM_ARRAY_TASK_ID -lt 4 ]
++then
++    workdir="${workdir}_with_linelist"
++fi
++if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
++then
++    workdir="${workdir}_symptoms"
++fi
++
++echo -e $workdir
++
++# You can use any arbitrary set of Linux commands here
++
++CMD="../../../rtm_optim"
++
++# Or for example:
++# CMD="Rscript myScript.R"
++
++
++###############################################################
++### You should not have to change anything below this line ####
++###############################################################
++
++cd $workdir
++echo -e "Changed directory to `pwd`.\n"
++
++JOBID=$SLURM_JOB_ID
++
++echo -e "JobID: $JOBID\n======"
++echo "Time: `date`"
++if [ $SLURM_JOB_NUM_NODES -gt 1 ]; then
++        echo "Running on nodes: $SLURM_JOB_NODELIST"
++else
++        echo "Running on node: `hostname`"
++fi
++
++echo "Current directory: `pwd`"
++echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
++echo -e "\nExecuting command:\n==================\n$CMD\n"
++
++eval $CMD
+diff --git a/submit_purcell2.txt b/submit_purcell2.txt
+new file mode 100755
+index 00000000..5b5e2ac6
+--- /dev/null
++++ b/submit_purcell2.txt
+@@ -0,0 +1,120 @@
++#!/bin/bash
++
++## Example SLURM script for BSU purcell jobs
++
++## Section 1: SLURM Commands
++
++## All SLURM commands must be placed at the start of the file
++## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
++
++## Enter a short name for the job, to be shown in SLURM output
++#SBATCH -J RTM_20200909
++
++## Enter the wall-clock time limit for for your jobs.
++## If jobs reach this limit they are automatically killed.
++#SBATCH --time=40:00:00
++
++## For single-core jobs, this number should be '1'. 
++## If your job has built-in parallelism, eg using OpenMP or 
++## R's foreach() and doParallel(), increase this number as desired.
++## The maximum value is 64.
++#SBATCH --cpus-per-task=14
++
++## Each task is allocated 16120M. 
++## If this is insufficient, uncomment and edit this line.
++## #SBATCH --mem=24G
++
++## The system can send emails when your job starts and stops.
++## Values include BEGIN, END, ALL, and TIME_LIMIT_80 and TIME_LIMIT_90 
++## (reaching 80% or 90% of time limit.) Specify ARRAY_TASKS to receive
++## a separate mail for each task. Multiple values can be given, separated by a comma.
++#SBATCH --mail-type=ALL
++
++## Array jobs:
++## Can be an arbitrary list of comma-separated ranges, eg 1-5,10-15,20-25
++## The %nn is optional, and restricts SLURM to running nn jobs simultaneously.
++## #SBATCH --array=1-100%50
++#SBATCH --array=1-5
++
++#! sbatch directives end here (put any additional directives above this line)
++#SBATCH --output=model_run_20200909_rw_sero%A_%a.out
++#SBATCH --error=model_run_20200909_rw_sero%A_%a.err
++
++
++##  - - - - - - - - - - - - - -
++
++## Section 2: Modules
++
++# All scripts should include the first three lines.
++
++module purge                          # Removes all modules still loaded
++module load default-login             # REQUIRED - loads the basic environment
++
++#! Insert additional module load commands after this line if needed:
++
++## - - - - - - - - - - -
++
++## Section 3: Run your application
++
++# Navigate to the correct working directory
++workdir="$SLURM_SUBMIT_DIR/model_runs/20200909/base_varSens"
++if [ $SLURM_ARRAY_TASK_ID -lt 4 ]
++then
++    workdir="${workdir}_pillar2"
++fi
++if [ $SLURM_ARRAY_TASK_ID -gt 1 -a $SLURM_ARRAY_TASK_ID -lt 5]
++then
++    workdir="${workdir}_ifr"
++fi
++# workdir="${workdir}Sens"
++# if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
++# then
++#     workdir="${workdir}_newSerology"
++# fi
++# workdir="${workdir}6day_matrices_20200814_deaths"
++# elif [ $SLURM_ARRAY_TASK_ID == 4 ]
++# then
++#     workdir="${workdir}/base_newContacts_newSero_altSens6day_matrices_20200717_deaths/"
++# fi
++workdir="${workdir}6day_matrices_20200904_deaths"
++if [ $SLURM_ARRAY_TASK_ID -lt 4 ]
++then
++    workdir="${workdir}_with_linelist"
++fi
++if [ $SLURM_ARRAY_TASK_ID -lt 3 ]
++then
++    workdir="${workdir}_symptoms"
++fi
++
++echo -e $workdir
++
++# You can use any arbitrary set of Linux commands here
++
++CMD="../../../rtm_optim"
++
++# Or for example:
++# CMD="Rscript myScript.R"
++
++
++###############################################################
++### You should not have to change anything below this line ####
++###############################################################
++
++cd $workdir
++echo -e "Changed directory to `pwd`.\n"
++
++JOBID=$SLURM_JOB_ID
++
++echo -e "JobID: $JOBID\n======"
++echo "Time: `date`"
++if [ $SLURM_JOB_NUM_NODES -gt 1 ]; then
++        echo "Running on nodes: $SLURM_JOB_NODELIST"
++else
++        echo "Running on node: `hostname`"
++fi
++
++echo "Current directory: `pwd`"
++echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
++echo -e "\nExecuting command:\n==================\n$CMD\n"
++
++eval $CMD
+diff --git a/submit_simulate b/submit_simulate
+index 4e561c73..bd71a005 100644
+--- a/submit_simulate
++++ b/submit_simulate
+@@ -28,7 +28,7 @@
+ #! interrupted by node failure or system downtime):
+ #SBATCH --no-requeue
+ #SBATCH --verbose
+-#SBATCH --array=5
++#SBATCH --array=1-4
+ 
+ #SBATCH -p skylake
+ #SBATCH --qos=covid0
+@@ -38,7 +38,7 @@
+ #SBATCH --output=simulate_model_runs_20201218_%a.out
+ #SBATCH --error=simulate_model_runs_20201218_%a.err
+ 
+-forecast_switch="midterm"
++forecast_switch="spim_ask"
+ 
+ #! Notes:
+ #! Charging is determined by node number*walltime. Allocation is in entire nodes.
+@@ -67,8 +67,7 @@ module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
+ # # Navigate to the correct working directory
+ dirs=(*/)
+ workdir=${dirs[SLURM_ARRAY_TASK_ID]}
+-# workdir="./"
+-
++workdir="Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2"
+ echo $workdir
+ 
+ #! Full path to application executable: 
+diff --git a/switch.comp.R b/switch.comp.R
+index bd652d89..2be49717 100644
+--- a/switch.comp.R
++++ b/switch.comp.R
+@@ -13,8 +13,8 @@ in.repo <- "real-time-mcmc"
+ out.repo <- "real-time-mcmc-amgs"
+ 
+ ## Change location of output directory
+-in.base <- "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths"
+-out.base <- file.path("Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths", "projections_long_endpoint")
++in.base <- "chain2_chain2"
++out.base <- "chain2"
+ 
+ ## Get all variable names
+ var.list <- eapply(setup.env, typeof)
+diff --git a/tmp.R b/tmp.R
+new file mode 100644
+index 00000000..5358797b
+--- /dev/null
++++ b/tmp.R
+@@ -0,0 +1,69 @@
++suppressMessages(extract <- R.utils::extract)
++require(tidyverse)
++
++load("mcmc.RData")
++load("output_matrices.RData")
++load("projections_midterm.RData")
++
++## get the right number of iterations
++int_iter <- 0:(num.iterations - 1)
++## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
++parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
++## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
++outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
++parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
++
++## dNNI <- extract(vacc.infections, indices = list(parameter.to.outputs), dims = "iteration") %>%
++##     extract(indices = list(1:ndays), dims = "date")
++## dNNI <- lapply(regions, function(reg) extract(dNNI, "region" = reg, drop = TRUE) %>%
++##                                       aperm(c("age", "date", "iteration")))
++## DNNI.files <- vector("list", r)
++## for(intr in 1:r){
++##     DNNI.files[[intr]] <- file(paste0("Delta_Dis_", regions[intr]), "wb")
++##     writeBin(as.vector(dNNI[[intr]]), DNNI.files[[intr]], double())
++##     close(DNNI.files[[intr]])
++## }
++
++## NNI <- extract(infections, indices = list(parameter.to.outputs), dims = "iteration") %>%
++##     extract(indices = list(1:ndays), dims = "date")
++## NNI <- lapply(regions, function(reg) extract(NNI, "region" = reg, drop = TRUE) %>%
++##                                       aperm(c("age", "date", "iteration")))
++## NNI.files <- vector("list", r)
++## for(intr in 1:r){
++##     NNI.files[[intr]] <- file(paste0("NNI_", regions[intr]), "wb")
++##     writeBin(as.vector(NNI[[intr]]), NNI.files[[intr]], double())
++##     close(NNI.files[[intr]])
++## }
++
++## Deaths <- extract(deaths, indices = list(parameter.to.outputs), dims = "iteration") %>%
++##     extract(indices = list(1:ndays), dims = "date")
++## Deaths <- lapply(regions, function(reg) extract(Deaths, "region" = reg, drop = TRUE) %>%
++##                                       aperm(c("age", "date", "iteration")))
++## Deaths.files <- vector("list", r)
++## for(intr in 1:r){
++##     Deaths.files[[intr]] <- file(paste0("Hosp_", regions[intr]), "wb")
++##     writeBin(as.vector(Deaths[[intr]]), Deaths.files[[intr]], double())
++##     close(Deaths.files[[intr]])
++## }
++
++## Prevalence <- extract(prevalence, indices = list(parameter.to.outputs), dims = "iteration") %>%
++##     extract(indices = list(1:ndays), dims = "date")
++## Prevalence <- lapply(regions, function(reg) extract(Prevalence, "region" = reg, drop = TRUE) %>%
++##                                       aperm(c("age", "date", "iteration")))
++## Prevalence.files <- vector("list", r)
++## for(intr in 1:r){
++##     Prevalence.files[[intr]] <- file(paste0("Prev_", regions[intr]), "wb")
++##     writeBin(as.vector(Prevalence[[intr]]), Prevalence.files[[intr]], double())
++##     close(Prevalence.files[[intr]])
++## }
++
++Sero <- extract(seropos, indices = list(parameter.to.outputs), dims = "iteration") %>%
++    extract(indices = list(1:ndays), dims = "date")
++Sero <- lapply(regions, function(reg) extract(Sero, "region" = reg, drop = TRUE) %>%
++                                      aperm(c("age", "date", "iteration")))
++Sero.files <- vector("list", r)
++for(intr in 1:r){
++    Sero.files[[intr]] <- file(paste0("Sero2_", regions[intr]), "wb")
++    writeBin(as.vector(Sero[[intr]]), Sero.files[[intr]], double())
++    close(Sero.files[[intr]])
++}

@@ -1,6 +1,3 @@
-## MEDIUM-TERM PROJECTIONS CURRENTLY ONLY GO FORWARD FROM THE DAY OF THE ANALYSIS
-## IF SOME PORTION OF THE PAST IS GOING TO BE REQUIRED, THEN SOME FILTERS IN THE MTP SECTION WILL NEED TO BE CHANGED
-## INCLUDING IN THE FUNCTION trim_forecast_days
 require(dplyr)
 require(tidyr)
 require(tidyverse)
@@ -283,7 +280,6 @@ calc.infec.growth.rate <- function(R,gt,infecs) {
 }
 
 if(nowcast.flag){
-    stop()
     ## deaths.growth.rates <- calc.growth.rate(deaths)
     infecs.growth.rates <- calc.infec.growth.rate(Rt, Egt, infections)
     infecs.dbl.times <- infecs.growth.rates %>%
