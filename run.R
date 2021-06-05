@@ -117,6 +117,10 @@ if(format.inputs){
   if(prev.flag){
       source(file.path(proj.dir, "R", "data", "format_prev.R"))
   }
+  if(react.flag){
+      stop() ## Maybe wise to eventually move this after the vaccination data (once written)
+      source(file.path(proj.dir, "R", "data", "format_react.R"))
+  }
   if(vacc.flag){
       source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
   }

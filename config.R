@@ -81,6 +81,10 @@ num.prev.days <- 389
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
 
+## Any inputs here for processing REACT infection prevalence data
+react.flag <- 1
+react.rounds <- 11
+
 ## Any inputs here for the vaccination data (or even if there is any)
 vacc.flag <- 1
 
@@ -125,15 +129,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "28")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
-                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
+                                                                                   "Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
-                                                                                     "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
+                                                                                    "Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
-                                                                                              "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
+                                                                               "Prev389_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths")
                                          )
 }
 iteration.number.to.start.from <- 6400
