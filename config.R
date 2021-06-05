@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210507"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210528"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -74,9 +74,9 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## The 'hosp' stream in the code is linked to death data
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 368
+num.prev.days <- 389
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -90,23 +90,8 @@ if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
-## Is there a previous MCMC from which we can take some initial values?
-use.previous.run.for.start <- TRUE
-if(use.previous.run.for.start){
-    if(region.type == "NHS"){
-        if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
-    } else if(region.type == "ONS"){
-        if(prev.flag)
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210423", "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths")
-    }
-}
-iteration.number.to.start.from <- 6400
-
 ## Give the run a name to identify the configuration
-contact.model <- 4
+contact.model <- 6
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
@@ -118,7 +103,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -135,6 +120,25 @@ if (data.desc == "all") {
 	stop("Unknown data description")
 }
 
+## Is there a previous MCMC from which we can take some initial values?
+use.previous.run.for.start <- TRUE
+if(use.previous.run.for.start){
+    if(region.type == "NHS"){
+        if(str.cutoff == "28")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+                                             )
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+                                                                                     "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+                                              )
+    } else if(region.type == "ONS")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
+                                                                                              "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
+                                         )
+}
+iteration.number.to.start.from <- 6400
+
+## From where will the various datasets be sourced?
 data.dirs <- file.path(proj.dir,
                        paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
                        )
@@ -167,7 +171,7 @@ if(gp.flag){
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210504")
+date.prev <- lubridate::ymd("20210526")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -211,4 +215,4 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
+future.n <- (c(4.3, 4.1, 4.3, 2.4, rep(2, 5)) * 10^6) * (55.98 / 66.65)

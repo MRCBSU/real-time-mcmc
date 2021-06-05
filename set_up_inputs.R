@@ -128,7 +128,21 @@ if(contact.model == 1){
                  rep(y[1], (nA - 5) * nA), ## adults except the very elderly
                  rep(y[4], nA)), nA, nA, byrow = TRUE)
         })
-    }
+} else if(contact.model == 6){ ## Each age group has a unique susceptibility
+    cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_modAllLevels", 0:9, ".txt"))
+    mult.order <- c(0, rep(1, length(cm.breaks)))
+    mult.mat <- lapply(unique(mult.order), function(x){
+        y <- ((nA-2)*x) + (0:(nA - 3))
+        matrix(c(rep(y[2], 3 * nA), ## kids
+                 rep(y[3], nA), ## 15-24
+                 rep(y[1], nA), ## 25-44 (base age-group)
+                 rep(y[4], nA), ## 45-64
+                 rep(y[5], nA), ## 65-74
+                 rep(y[6], nA)), ## 75+
+               nA, nA, byrow = TRUE)
+        })
+}
+
 if(!all(file.exists(cm.mults)))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
                                        cm.mults[i],
@@ -139,8 +153,8 @@ cm.mults <- cm.mults[mult.order+1]
 num.iterations <- 3240000
 burnin <- 324000
 adaptive.phase <- burnin / 2
-thin.outputs <- 900 	# After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 450  # After how many iterations to output each set of parameters
+thin.outputs <- 900	# After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 450 # After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 

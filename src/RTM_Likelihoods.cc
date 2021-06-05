@@ -259,7 +259,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	    gsl_matrix_set(l_SV1, t + 1, a, (gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)) * Vaccination->getCount(nday, a) / timestepsperday) +
 			   gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * (1 - Vaccination->getDenom(nday, a) / timestepsperday));
 
-	    gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)) * Vaccination->getDenom(nday, a) / timestepsperday) +
+	    gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * Vaccination->getDenom(nday, a) / timestepsperday) +
 			   gsl_matrix_get(l_SVn, t, a) * (1 - (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)));
   
 	  }

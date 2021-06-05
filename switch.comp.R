@@ -13,8 +13,8 @@ in.repo <- "real-time-mcmc"
 out.repo <- "real-time-mcmc-amgs"
 
 ## Change location of output directory
-in.base <- "Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths"
-out.base <- file.path("Prev354_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210423_timeuse_household_deaths", "projections_long_endpoint")
+in.base <- "chain2_chain2"
+out.base <- "chain2"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

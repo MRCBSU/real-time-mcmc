@@ -129,13 +129,33 @@ if(compile.code) {
     system("make rtm_optim")
 }
 
-## Run the code
+## Set up a requisite number of chains
 startwd <- getwd()
 setwd(out.dir)
 if(exists("outpp"))
     rm(outpp)
 save.image("tmp.RData")
+out.dir.orig <- out.dir
+if(use.previous.run.for.start & length(previous.run.to.use) > 1){
+    nchains <- length(previous.run.to.use)
+    for(ichain in 2:nchains){
+        new.dir <- paste0(out.dir, "_chain", ichain)
+        if(dir.exists(new.dir))
+            unlink(new.dir, recursive = TRUE)
+        R.utils::copyDirectory(out.dir, new.dir)
+        previous.loc <- previous.run.to.use[ichain]
+        source(file.path(proj.dir, "import_pars.R"))
+        source(file.path(proj.dir, "par_check.R"))
+        knit(input = pars.template.loc, output = file.path(new.dir, "mod_pars.txt"))
+        knit(input = inputs.template.loc, output = file.path(new.dir, "mod_inputs.txt"))
+        out.dir <- new.dir
+        setwd(out.dir)
+        save.image("tmp.RData")
+        out.dir <- out.dir.orig
+        }
+    }
 
+setwd(out.dir)
 if(run.code){
     system(file.path(proj.dir, "rtm_optim"), intern = TRUE)
 	 system("chmod a-w coda* NNI* posterior* adaptive*")

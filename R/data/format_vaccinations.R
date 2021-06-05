@@ -165,7 +165,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         region = c("region_of_residence", "Region_of_residence"),
         sdate = "vaccination_date",
         type = "product_display_type",
-        dose = "string_dose_number",
+        dose = c("string_dose_number", "dose_number"),
         ltla_code = "ltla_code")
     input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
     is.valid.col.name <- function(name) {name %in% input.col.names}
@@ -218,7 +218,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     vacc.col.args[[col.names[["age"]]]] <- col_double()
     vacc.col.args[[col.names[["region"]]]] <- col_character()
     vacc.col.args[[col.names[["dose"]]]] <- col_character()
-    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="")
+    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
     vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
     vacc.cols <- do.call(cols, vacc.col.args)
 
@@ -231,6 +231,18 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     cat("Got here2\n")
     vacc.dat <- vacc.dat %>%
         rename(!!!col.names)
+    if(region.type == "NHS" & !("London" %in% vacc.dat$region))
+    {
+        reg.lookup <- read_csv(file.path("data", "population", "nhs_region_lookup.csv")) %>%
+            select(NHSERApr19CD, NHSERApr19NM) %>%
+            rename(region = NHSERApr19CD, region.nm = NHSERApr19NM) %>%
+            unique()
+        vacc.dat <- vacc.dat %>%
+            left_join(reg.lookup) %>%
+            select(-region) %>%
+            rename(region = region.nm)
+        rm(reg.lookup)
+    }
     cat("Got here 2a\n")
     vacc.dat <- vacc.dat %>%
 	mutate(sdate = fuzzy_date_parse(sdate),
@@ -276,18 +288,35 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## sampled.jabs <- bind_cols(sampled.jabs, tmp.samples)
     
     ## sampled.jabs <- sampled.jabs %>% pivot_longer(cols = -(1:2), names_to = "Region", values_to = "Jabs") %>% right_join(expand.grid(date = lubridate::ymd("20200217"):lubridate::ymd("20210117"), Region = colnames(merged_wide)[-(1:3)], Age.Grp = unique(merged_wide$Age.Grp)) %>% as.data.frame %>% mutate(`date` = lubridate::as_date(`date`))) %>% replace_na(list(Jabs = 0)) %>% arrange(date)
+
+    ## Function for aggregating vaccination data
+    agg.vac.linelist <- function(data)
+        data %>%
+            group_by(sdate, ltla_code, region, age.grp, dose) %>%
+            summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
+            ungroup()
     
     names(vac1.files) <- names(vacn.files) <- regions
     vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
-    jab.dat <- vacc.dat %>%
-        group_by(sdate, ltla_code, region, age.grp, dose) %>%
-        summarise(n = n(), pPfizer = sum(type == "Pfizer") / n()) %>%
-        ungroup() %>%
+    ## vacc.dat is now so big that we need to break it in two for the first step here
+    ntot <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% arrange(sdate)
+    dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
+    jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
+    jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
+    rm(vacc.dat)
+    jab.dat1 <- agg.vac.linelist(jab.dat1)
+    jab.dat2 <- agg.vac.linelist(jab.dat2)
+
+    jab.dat <- bind_rows(jab.dat1, jab.dat2)
+    rm(jab.dat1, jab.dat2)
+    
+    jab.dat <- jab.dat %>%
         mutate(sdate = sdate + vacc.lag) %>%
         get.region() %>%
         select(-ltla_code)
-    rm(vacc.dat)
     ## if(region.type == "ONS")
+    
     jab.dat <- jab.dat %>%
         group_by(sdate, region, age.grp, dose) %>%
         summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
