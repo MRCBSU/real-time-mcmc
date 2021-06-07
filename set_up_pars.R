@@ -204,7 +204,7 @@ if(single.ifr){
         pars.ifr[14] <- 112
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
-        pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters
+        pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
         ## gradients from Brian's Co-CIN analysis
         grad.samp <- cbind(
         (logit(rbeta(1000000, 23/4.625,977/4.625))-logit(rbeta(1000000, 13.5, 39*13.5))) / 30, ## 0-44

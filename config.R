@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -98,7 +98,7 @@ contact.prior <- "ons"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "3bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
@@ -125,15 +125,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
-                                                                                   "Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
+                                                                                   "Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
-                                                                                    "Prev389_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210604", c("Prev396_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths",
+                                                                                    "Prev396_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210528", c("Prev389_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths",
-                                                                               "Prev389_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210604", c("Prev396_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths",
+                                                                               "Prev396_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2")
                                          )
 }
 iteration.number.to.start.from <- 6400
@@ -170,16 +170,17 @@ if(gp.flag){
 
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
+prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 date.prev <- lubridate::ymd("20210602")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
-last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
+last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
 days.between.prev <- 14
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
-if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-5")
+if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-", prev.days.to.lose)
 
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 ## lag.last.beta <- 24 - 7
@@ -205,7 +206,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-## str.date.vacc <- "20210226" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210606" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
