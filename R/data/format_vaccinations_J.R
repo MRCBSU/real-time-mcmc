@@ -11,26 +11,8 @@
 require(tidyverse)
 require(cubelyr)
 require(lubridate)
-
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-  input.loc <- "/data/covid-19/data-raw/dstl/2021-06-11"
-  ## input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
-  ## List the possible files in the directory
-  vacc.loc <- file.info(file.path(input.loc,
-                                  list.files(path = input.loc,
-                                             pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
-  )
-  )
-  ## Has a particular date's data been specified
-  rnames <- rownames(vacc.loc)
-  if(exists("str.date.vacc")){
-    input.loc <- rnames[grepl(str.date.vacc, rnames)]
-  } else {
-    ## Pick up the most recently added
-    input.loc <- rnames[which.max(vacc.loc$ctime)]
-    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
-    str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
-  }
+  input.loc <- glue::glue("/data/covid-19/data-raw/dstl/{ymd(str.date.vacc)}/{str.date.vacc} immunisations SPIM.csv")
 } else {
   if(is.null(vacc.loc)){
     input.loc <- commandArgs(trailingOnly = TRUE)[1]
@@ -41,7 +23,6 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
 }
 
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
 
 ## Define an age-grouping
 if(!exists("age.agg")){
@@ -80,6 +61,7 @@ if(!exists("file.loc")){
   source(file.path(proj.dir, "config.R"))
 }
 
+
 ## Function to repeat the last row of a dataset until it pads out to the end of the series
 pad.rows.at.end <- function(df, nrows.full){
   if(nrow(df) < nrows.full){
@@ -99,7 +81,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
     group_by(age.grp, pop) %>%
     summarise(sdate, n, n.cum = cumsum(n)) %>%
     mutate(pop = max(pop, n.cum + 1)) %>%
-    mutate(value = zapsmall(n / (pop - dplyr::lag(n.cum)))) %>% ## Calculating the fraction of the denominator population still at risk.
+    mutate(value = n / (pop - dplyr::lag(n.cum))) %>% ## Calculating the fraction of the denominator population still at risk.
     replace_na(list(value = 0)) %>%
     ungroup() %>%
     mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 
@@ -109,42 +91,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
     pad.rows.at.end(ndays)
 }
 
-## Function to handle the unzipping of a large file - apparently R's unzip function is unreliable.
-decompress_file <- function(directory, file, .file_cache = FALSE) {
-  
-  if (.file_cache == TRUE) {
-    print("decompression skipped")
-  } else {
-    
-    ## Set working directory for decompression
-    ## simplifies unzip directory location behavior
-    wd <- getwd()
-    setwd(directory)
-    
-    ## Run decompression
-    decompression <-
-      system2("unzip",
-              args = c("-o", # include override flag
-                       gsub(" ", "\\\\ ", file)),
-              stdout = TRUE)
-    
-    ## uncomment to delete archive once decompressed
-    file.remove(file) 
-    
-    ## Reset working directory
-    setwd(wd); rm(wd)
-    
-    ## Test for success criteria
-    ## change the search depending on 
-    ## your implementation
-    if (grepl("Warning message", tail(decompression, 1))) {
-      print(decompression)
-    }
-    
-    return(gsub(".zip", ".csv", file.path(directory, file)))
-    
-  }
-}
+
 
 ## Substitute this into the names of the intended data file names
 vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
@@ -153,22 +100,17 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
   
-  ## Extract file from archive
-  if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
-    file.copy(input.loc, file.path("data", basename(input.loc)))
-    input.loc <- decompress_file("data", basename(input.loc))
-  } else input.loc <- gsub(".zip", ".csv", file.path("data", basename(input.loc)))
-  
   if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
   
   ## Map our names for columns (LHS) to data column names (RHS)
   possible.col.names <- list(
+    type= "product_display_type",
     age = "age",
     region = c("region_of_residence", "Region_of_residence"),
     sdate = "vaccination_date",
-    type = "product_display_type",
-    dose = c("string_dose_number", "dose_number"),
-    ltla_code = "ltla_code")
+            dose = c("string_dose_number", "dose_number"),
+        ltla_code = "ltla_code")
+
   input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
   is.valid.col.name <- function(name) {name %in% input.col.names}
   first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
@@ -215,51 +157,40 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
   }
   
   ## Which columns are we interested in?
-  vacc.col.args <- list()
-  vacc.col.args[[col.names[["type"]]]] <- col_character()
-  vacc.col.args[[col.names[["age"]]]] <- col_double()
-  vacc.col.args[[col.names[["region"]]]] <- col_character()
-  vacc.col.args[[col.names[["dose"]]]] <- col_character()
-  vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
-  vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
-  vacc.cols <- do.call(cols, vacc.col.args)
-  
+ 
+ 
+    vacc.col.args <- list()
+    vacc.col.args[[col.names[["type"]]]] <- col_character()
+    vacc.col.args[[col.names[["age"]]]] <- col_double()
+    vacc.col.args[[col.names[["region"]]]] <- col_character()
+    vacc.col.args[[col.names[["dose"]]]] <- col_character()
+    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
+    vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
+    vacc.cols <- do.call(cols, vacc.col.args)
+
+    
   ## Reading in the data ##
   print(paste("Reading from", input.loc))
   ## strPos <- c("+", "Positive", "positive")
   vacc.dat <- read_csv(input.loc,
-                       col_types = vacc.cols) %>%
-    select(!!(names(vacc.cols$cols)))
-  cat("Got here2\n")
+                       col_types = vacc.cols)
+  
   vacc.dat <- vacc.dat %>%
-    rename(!!!col.names)
-  if(region.type == "NHS" & !("London" %in% vacc.dat$region))
-  {
-    reg.lookup <- read_csv(file.path("data", "population", "nhs_region_lookup.csv")) %>%
-      select(NHSERApr19CD, NHSERApr19NM) %>%
-      rename(region = NHSERApr19CD, region.nm = NHSERApr19NM) %>%
-      unique()
-    vacc.dat <- vacc.dat %>%
-      left_join(reg.lookup) %>%
-      select(-region) %>%
-      rename(region = region.nm)
-    rm(reg.lookup)
-  }
-  cat("Got here 2a\n")
-  vacc.dat <- vacc.dat %>%
+    rename(!!!col.names) %>%
     mutate(sdate = fuzzy_date_parse(sdate),
            age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
     )
-  cat("Got here3\n")
+  
   ## Remove rows with missing key information
   n.vaccs <- nrow(vacc.dat)
   vacc.dat <- vacc.dat %>% filter(region != "Unknown",
                                   !is.na(type),
                                   !is.na(sdate),
                                   !is.na(dose),
-                                  !is.na(age.grp))
+                                  !is.na(age.grp)) %>%
+    get.region()
   n.vaccs.complete <- nrow(vacc.dat)
-  cat("Got here4\n")
+  
   ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
   
   ## ## ====== DATA ON FIRST VACCINATION
@@ -469,7 +400,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
   ## }
   
   save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
-  ## file.remove(file.path("data", basename(input.loc)))
+  rm(vacc.dat)
   
 } else {
   

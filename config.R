@@ -4,7 +4,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -134,7 +134,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 extra.time.to.death <- 0 #days
@@ -156,22 +156,22 @@ if (data.desc == "all") {
 }
 
 ## Is there a previous MCMC from which we can take some initial values?
-use.previous.run.for.start <- TRUE
-if(use.previous.run.for.start){
-    if(region.type == "NHS"){
-        if(str.cutoff == "28")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
-                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
-                                             )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
-                                                                                     "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
-                                              )
-    } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
-                                                                                              "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
-                                         )
-}
-iteration.number.to.start.from <- 6400
+#use.previous.run.for.start <- TRUE
+#if(use.previous.run.for.start){
+#    if(region.type == "NHS"){
+#        if(str.cutoff == "28")
+#            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+#                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+#                                             )
+#        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+ #                                                                                    "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_#matrices_20210521_timeuse_household_deaths_chain2")
+#                                              )
+ #   } else if(region.type == "ONS")
+ #       previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
+  #                                                                                            "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
+ #                                        )
+#}
+#iteration.number.to.start.from <- 6400
 
 ## From where will the various datasets be sourced?
 data.dirs <- file.path(proj.dir,
@@ -213,10 +213,7 @@ date.prev <- lubridate::ymd("20210607") # Set this to last date in dataset
 prev.cutoff.days <- 2
 ## Convert that to an analysis day number
 
-
-
-
-date.prev <- lubridate::ymd("20210531")
+date.prev <- lubridate::ymd("20210607")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 
 last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?

@@ -25,7 +25,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- FALSE
+format.inputs <- TRUE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -125,7 +125,7 @@ if(format.inputs){
       source(file.path(proj.dir, "R", "data", "format_prev.R"))
   }
   if(vacc.flag){
-      source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+      source(file.path(proj.dir, "R", "data", "format_vaccinations_J.R"))
   } 
 } else if (vacc.flag) {
   load(vacc.rdata)
