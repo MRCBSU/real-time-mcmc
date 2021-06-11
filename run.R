@@ -16,7 +16,8 @@ thisFile <- function() {
 }
 
 ## Where are various directories?
-file.loc <- dirname(thisFile())
+#file.loc <- dirname(thisFile())
+file.loc = "~/real-time-mcmc"
 proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
