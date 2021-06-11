@@ -1,3 +1,4 @@
+
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
   rows.to.add <- num - length(vec) / nr
@@ -240,7 +241,8 @@ if(single.ifr){
         TA$age.grad[TA$age <= 4] <- 4
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
         if(bp.flag){ ## Expand the actual breakpoints and tweak the design
-            tbreaks2 <- tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*min(tbreaks.ifr)) - 1
+            if(!exists("tbreaks.interval")) tbreaks.interval <- min(tbreaks.ifr)
+            tbreaks2 <- round(tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*tbreaks.interval) - 1)
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
             reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
             for(per in 1:num.bp){

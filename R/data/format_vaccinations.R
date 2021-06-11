@@ -306,7 +306,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
     jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
     jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
-    rm(vacc.dat)
+    rm(vacc.dat, dat.sep)
     jab.dat1 <- agg.vac.linelist(jab.dat1)
     jab.dat2 <- agg.vac.linelist(jab.dat2)
 
@@ -329,8 +329,10 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                                dose = c("First", "Second")),
                    by = c("sdate", "region", "age.grp", "dose")
                    ) %>%
-        replace_na(list(n = 0, pPfizer = 1)) %>% ## What to fill in the columns where there are no data
-        arrange(sdate) %>%
+        replace_na(list(n = 0, pPfizer = 1))  ## What to fill in the columns where there are no data
+    gc() ## Enforce garbage collection, would appear to be necessary.
+    jab.dat <- jab.dat %>% arrange(sdate)
+    jab.dat <- jab.dat %>%
         left_join(pdf.all) %>%
         rename(pop = count)
     cat("Got here5\n")

@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -99,7 +99,8 @@ contact.prior <- "ons"
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
-scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
+tbreaks.interval <- 365.25 / 4
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "_quart")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
@@ -132,8 +133,8 @@ if(use.previous.run.for.start){
                                                                                     "Prev396_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210604", c("Prev396_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths",
-                                                                               "Prev396_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210606", c("Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths",
+                                                                               "Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2")
                                          )
 }
 iteration.number.to.start.from <- 6400
@@ -206,8 +207,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210606" ## Optional: if not specified will take the most recent data file.
-
+## str.date.vacc <- "20210606" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
