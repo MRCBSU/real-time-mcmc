@@ -32,7 +32,7 @@ rm(Renv)
 
 source(file.path(Rfile.loc, "sim_func.R"))
 
-nweeks.ahead <- 9
+nweeks.ahead <- 11
 
 counterfactual <- FALSE
 
