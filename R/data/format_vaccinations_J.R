@@ -172,14 +172,28 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
   ## Reading in the data ##
   print(paste("Reading from", input.loc))
   ## strPos <- c("+", "Positive", "positive")
+  #vacc.dat <- read_csv(input.loc,col_types = vacc.cols)#Josh
+  
   vacc.dat <- read_csv(input.loc,
-                       col_types = vacc.cols)
+                       col_types = vacc.cols) %>%
+    select(!!(names(vacc.cols$cols)))                      #Paul
+  cat("Got here2\n")
+  vacc.dat <- vacc.dat %>%
+    rename(!!!col.names)
+  
+  
   
   vacc.dat <- vacc.dat %>%
-    rename(!!!col.names) %>%
-    mutate(sdate = fuzzy_date_parse(sdate),
+    mutate(sdate = fuzzy_date_parse(sdate),                         #Paul
            age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
     )
+  cat("Got here3\n")
+  
+  #vacc.dat <- vacc.dat %>%
+  #  rename(!!!col.names) %>%
+  #  mutate(sdate = fuzzy_date_parse(sdate),                  #Josh
+  #         age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
+  #  )
   
   ## Remove rows with missing key information
   n.vaccs <- nrow(vacc.dat)
