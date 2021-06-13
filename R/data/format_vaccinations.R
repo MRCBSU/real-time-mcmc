@@ -13,8 +13,8 @@ require(cubelyr)
 require(lubridate)
 
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-    input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
-    ## input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
+    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
+    input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
     ## List the possible files in the directory
     vacc.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
@@ -247,9 +247,10 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     }
     cat("Got here 2a\n")
     vacc.dat <- vacc.dat %>%
-	mutate(sdate = fuzzy_date_parse(sdate),
-               age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T)
-               )
+	mutate(sdate = fuzzy_date_parse(sdate))
+    cat("Got here 2b\n")
+    vacc.dat <- vacc.dat %>%
+        mutate(age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
     cat("Got here3\n")
     ## Remove rows with missing key information
     n.vaccs <- nrow(vacc.dat)
@@ -307,6 +308,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
     jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
     rm(vacc.dat, dat.sep)
+    gc()
     jab.dat1 <- agg.vac.linelist(jab.dat1)
     jab.dat2 <- agg.vac.linelist(jab.dat2)
 
