@@ -19,10 +19,10 @@
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=3
 
-
-
-
 #SBATCH --array=0-5
+
+
+
 
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00

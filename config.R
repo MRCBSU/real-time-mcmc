@@ -7,7 +7,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -39,9 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-
-
-google.data.date <- format(ymd("2021-06-11"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-06-18"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
 
@@ -52,6 +50,7 @@ matrix.suffix <- "_timeuse_household_new_base"
 
 #google.data.date <- format(ymd("20210528"), format = "%Y%m%d")
 #matrix.suffix <- "_timeuse_household"
+
 
 
 ## Number of days to run the simulation for.
@@ -99,7 +98,7 @@ use.INLA.prev <- TRUE
 
 
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 389
+num.prev.days <- 403
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -130,7 +129,12 @@ contact.prior <- "ons"
 single.ifr <- FALSE
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
-scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
+
+#scenario.name <- paste0(scenario.name, "_IFR", ifr.mod)
+
+
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
+
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
@@ -156,22 +160,27 @@ if (data.desc == "all") {
 }
 
 ## Is there a previous MCMC from which we can take some initial values?
-#use.previous.run.for.start <- TRUE
-#if(use.previous.run.for.start){
-#    if(region.type == "NHS"){
-#        if(str.cutoff == "28")
-#            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
-#                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
-#                                             )
-#        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
- #                                                                                    "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_#matrices_20210521_timeuse_household_deaths_chain2")
-#                                              )
- #   } else if(region.type == "ONS")
- #       previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
-  #                                                                                            "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
- #                                        )
-#}
-#iteration.number.to.start.from <- 6400
+
+use.previous.run.for.start <- TRUE
+if(use.previous.run.for.start){
+    if(region.type == "NHS"){
+        if(str.cutoff == "28")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+                                                                                   "Prev382_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+                                             )
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210524", c("Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths",
+                                                                                     "Prev382_cm6ons_IFR3bp_NHS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths_chain2")
+                                              )
+    } else if(region.type == "ONS")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", c("20210520", "20210521"), c("Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514_timeuse_household_deaths",
+                                                                                              "Prev382_cm6ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210521_timeuse_household_deaths")
+                                         )
+}
+iteration.number.to.start.from <- 6400
+
+
+
+
 
 ## From where will the various datasets be sourced?
 data.dirs <- file.path(proj.dir,
@@ -206,17 +215,20 @@ if(gp.flag){
 
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210607") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210614") # Set this to last date in dataset
 #prev.cutoff.days <- 5
 
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
+prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20210607")
+
+last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
+date.prev <- lubridate::ymd("20210609")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 
-last.prev.day <- prev.end.day - 5 ## Which is the last date that we will actually use in the likelihood?
+
 first.prev.day <- prev.end.day - num.prev.days + 1
 
 days.between.prev <- 14
@@ -234,8 +246,12 @@ if (use.INLA.prev) {
 
 ## Default system for getting the days on which the likelihood will be calculated.
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
+
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev)
 if(prev.flag && prev.cutoff.days != 0) scenario.name <- paste0(scenario.name, "_skip", prev.cutoff.days)
+
+#if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-", prev.days.to.lose)
+
 
 
 
@@ -270,8 +286,12 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210611" #date.data ## Optional: if not specified will take the most recent data file.
+
+str.date.vacc <- "20210618" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
+
+
+
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -284,10 +304,12 @@ if(vacc.flag){
 
 
 
+
 #future.n <- (c(4.7, 4.3, 4.4, 4.4, 4.4, 3.9, 4.3, 3.8) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.6, 2.8, 4.7, 4.0, 4.4, 4.5, 4.5, 4.3) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2, 1.9) * 10^6) *(55.98/66.65)
 #future.n <- (c(3.6, 3.6, 3.5, 4.5, 4.4, 3.0, 2.0, 1.9,2.0) * 10^6) *(55.98/66.65)
 #future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
-future.n <- (c(4.3, 4.1, 4.3, 2.4, rep(2, 5)) * 10^6) * (55.98 / 66.65)
-
+#future.n <- (c(4.3, 4.1, 4.3, 2.4, rep(2, 5)) * 10^6) * (55.98 / 66.65)
+#future.n <- (c(4.4, 3, 1.8, 1.9, 1.9, 1.8, 1.8, c(2.4, 4)) * 10^6) * (55.98 / 66.65)
+future.n  <- (c(2.5, 2.0, 1.6, 1.6, 1.5, 1.4, 2.0, c(2.0, 4)) * 10^6) * (55.98 / 66.65) 

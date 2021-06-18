@@ -28,10 +28,8 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+#SBATCH --array=1
 
-
-
-#SBATCH --array=1-4
 
 
 #SBATCH -p skylake
@@ -42,10 +40,14 @@
 #SBATCH --output=simulate_model_runs_20201127_%a.out
 #SBATCH --error=simulate_model_runs_20201127_%a.err
 
-<<<<<<< HEAD
+
+
 forecast_switch="midterm"
 
-#forecast_switch="spim_ask"
+
+
+
+
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -119,11 +121,18 @@ module load gcc/9 intel/compilers/2020.2
 echo -e $workdir
 #=======Following 5 lines suggested by Paul's merge
 # # Navigate to the correct working directory
-#dirs=(*/)
-#workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-# workdir="Prev389_cm6ons_IFR3bp_NHS28cutoff_25wk2_prev14-5Jamie_matrices_20210528_timeuse_household_deaths_chain2"
-#echo $workdir
-#>>>>>>> origin/COVID_vacc_amgs_merged
+
+
+
+
+
+
+
+dirs=(*/)
+workdir=${dirs[SLURM_ARRAY_TASK_ID]}
+workdir="Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths"
+echo $workdir
+
 
 #! Full path to application executable: 
 application="Rscript"

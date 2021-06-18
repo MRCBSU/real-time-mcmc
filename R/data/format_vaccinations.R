@@ -13,7 +13,7 @@ require(cubelyr)
 require(lubridate)
 
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-  input.loc <- "/data/covid-19/data-raw/dstl/2021-06-11"
+  input.loc <- "/data/covid-19/data-raw/dstl/2021-06-18"
   ## input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
   ## List the possible files in the directory
   vacc.loc <- file.info(file.path(input.loc,
@@ -141,14 +141,89 @@ decompress_file <- function(directory, file, .file_cache = FALSE) {
       print(decompression)
     }
     
-    return(gsub(".zip", ".csv", file.path(directory, file)))
+
+#    return(gsub(".zip", ".csv", file.path(directory, file)))
+
+    ## Which columns are we interested in?
+    vacc.col.args <- list()
+    vacc.col.args[[col.names[["type"]]]] <- col_character()
+    vacc.col.args[[col.names[["age"]]]] <- col_double()
+    vacc.col.args[[col.names[["region"]]]] <- col_character()
+    vacc.col.args[[col.names[["dose"]]]] <- col_character()
+    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
+    vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
+    vacc.cols <- do.call(cols, vacc.col.args)
+
+    ## Reading in the data ##
+    print(paste("Reading from", input.loc))
+    ## strPos <- c("+", "Positive", "positive")
+    vacc.dat <- read_csv(input.loc,
+                         col_types = vacc.cols) %>%
+        select(!!(names(vacc.cols$cols)))
+    cat("Got here2\n")
+    vacc.dat <- vacc.dat %>%
+        rename(!!!col.names)
+    if(region.type == "NHS" & !("London" %in% vacc.dat$region))
+    {
+        reg.lookup <- read_csv(file.path("data", "population", "nhs_region_lookup.csv")) %>%
+            select(NHSERApr19CD, NHSERApr19NM) %>%
+            rename(region = NHSERApr19CD, region.nm = NHSERApr19NM) %>%
+            unique()
+        vacc.dat <- vacc.dat %>%
+            left_join(reg.lookup) %>%
+            select(-region) %>%
+            rename(region = region.nm)
+        rm(reg.lookup)
+    }
+    cat("Got here 2a\n")
+    vacc.dat <- vacc.dat %>%
+	mutate(sdate = fuzzy_date_parse(sdate))
+    cat("Got here 2b\n")
+    vacc.dat <- vacc.dat %>%
+        mutate(age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
+    cat("Got here3\n")
+    ## Remove rows with missing key information
+    n.vaccs <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% filter(region != "Unknown",
+                                    !is.na(type),
+                                    !is.na(sdate),
+                                    !is.na(dose),
+                                    !is.na(age.grp))
+    n.vaccs.complete <- nrow(vacc.dat)
+    cat("Got here4\n")
+    ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
+    
+    ## ## ====== DATA ON FIRST VACCINATION
+
     
   }
 }
 
+
 ## Substitute this into the names of the intended data file names
-vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
-vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+#vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
+#vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+
+    ## Function for aggregating vaccination data
+    agg.vac.linelist <- function(data)
+        data %>%
+            group_by(sdate, ltla_code, region, age.grp, dose) %>%
+            summarise(n = n(), pPfizer = sum(type %in% c("Pfizer", "Moderna", "PF", "MD")) / n()) %>%
+            ungroup()
+    
+    names(vac1.files) <- names(vacn.files) <- regions
+    vac.dates <- as_date(earliest.date:(max(vacc.dat$sdate) + vacc.lag))
+    ## vacc.dat is now so big that we need to break it in two for the first step here
+    ntot <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% arrange(sdate)
+    dat.sep <- (vacc.dat %>% pull(sdate))[floor(ntot) / 2]
+    jab.dat1 <- vacc.dat %>% filter(sdate <= dat.sep)
+    jab.dat2 <- vacc.dat %>% filter(sdate > dat.sep)
+    rm(vacc.dat, dat.sep)
+    gc()
+    jab.dat1 <- agg.vac.linelist(jab.dat1)
+    jab.dat2 <- agg.vac.linelist(jab.dat2)
+
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
@@ -355,15 +430,86 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
       write_tsv(tmpFile,
                 col_names = FALSE)
     
-    if(vac.design == "cumulative"){
-      tmp.design <- as.vector(
-        as.matrix(
-          pivot_wider(jab.dat %>%
-                        filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
-                        arrange(sdate) %>%
-                        group_by(age.grp, pop) %>%
-                        summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
-                      id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+
+#    if(vac.design == "cumulative"){
+#      tmp.design <- as.vector(
+#        as.matrix(
+#          pivot_wider(jab.dat %>%
+#                        filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
+#                        arrange(sdate) %>%
+#                        group_by(age.grp, pop) %>%
+#                        summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+#                      id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+
+    jab.dat <- jab.dat %>%
+        group_by(sdate, region, age.grp, dose) %>%
+        summarise(pPfizer = weighted.mean(pPfizer, n), n = sum(n))
+    jab.dat <- jab.dat %>%
+        right_join(expand_grid(sdate = vac.dates,
+                               region = regions,
+                               age.grp = factor(age.labs, levels = age.labs, ordered = TRUE),
+                               dose = c("First", "Second")),
+                   by = c("sdate", "region", "age.grp", "dose")
+                   ) %>%
+        replace_na(list(n = 0, pPfizer = 1))  ## What to fill in the columns where there are no data
+    gc() ## Enforce garbage collection, would appear to be necessary.
+    jab.dat <- jab.dat %>% arrange(sdate)
+    jab.dat <- jab.dat %>%
+        left_join(pdf.all) %>%
+        rename(pop = count)
+    cat("Got here5\n")
+    ## Will need to extract some design matrices for vaccine efficacy also
+    v1.design <- NULL
+    vn.design <- NULL
+
+    ## Following code will extrapolate the vaccination programme out into the future.
+    source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
+
+    for(reg in regions){
+        region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
+        cat("First stopifnot\n")
+        stopifnot(!is.na(region.dat))
+        stopifnot(all(region.dat[, -1] >= 0))
+        stopifnot(all(region.dat[, -1] <= 2))
+        tmpFile <- vac1.files[reg]
+        dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
+        region.dat %>%
+            write_tsv(tmpFile,
+                      col_names = FALSE)
+
+        if(vac.design == "cumulative"){
+            tmp.design <- as.vector(
+                as.matrix(
+                    pivot_wider(jab.dat %>%
+                                filter(region == reg, dose == "First", sdate %in% vac.dates) %>%
+                                arrange(sdate) %>%
+                                group_by(age.grp, pop) %>%
+                                summarise(pPfizer.wt = ifelse(cumsum(n) == 0, 1, cumsum(n * pPfizer) / cumsum(n)), sdate = sdate),
+                                id_cols = age.grp, names_from = sdate, values_from = pPfizer.wt) %>%
+                    ungroup() %>%
+                    select(-age.grp)
+                )
+            )
+        } else
+            tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
+        
+        v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
+
+        region.dat <- jab.dat %>%
+            filter(region == reg, dose == "Second") %>%
+            left_join(jab.dat %>%
+                      filter(region == reg, dose == "First") %>%
+                      arrange(sdate) %>%
+                      group_by(region, age.grp) %>%
+                      summarise(sdate = sdate, sum.first = cumsum(n))
+                      ) %>%
+            arrange(sdate) %>%
+            group_by(age.grp) %>%
+            summarise(sdate = sdate,
+                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
+                      ) %>%
+            replace_na(list(value = 0)) %>%
+
             ungroup() %>%
             select(-age.grp)
         )

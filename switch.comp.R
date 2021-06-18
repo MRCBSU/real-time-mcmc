@@ -11,7 +11,7 @@ if(Sys.info()["user"]=="aa995")   out.root <- "/home/aa995/rds/hpc-work"
 
 ## Change location of repo
 in.repo <- "real-time-mcmc"
-out.repo <- "real-time-mcmc-amgs"
+out.repo <- "real-time-mcmc"
 
 ## Change location of output directory
 in.base <- "chain2_chain2"
