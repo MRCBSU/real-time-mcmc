@@ -4,7 +4,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
@@ -138,7 +138,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 extra.time.to.death <- 0 #days
@@ -223,12 +223,8 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-
+prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1)
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
-date.prev <- lubridate::ymd("20210609")
-prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
-
-
 first.prev.day <- prev.end.day - num.prev.days + 1
 
 days.between.prev <- 14

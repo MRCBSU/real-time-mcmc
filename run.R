@@ -125,7 +125,7 @@ if(format.inputs){
       source(file.path(proj.dir, "R", "data", "format_prev.R"))
   }
   if(vacc.flag){
-      source(file.path(proj.dir, "R", "data", "format_vaccinations_J.R"))
+      source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
   } 
 } else if (vacc.flag) {
   load(vacc.rdata)
