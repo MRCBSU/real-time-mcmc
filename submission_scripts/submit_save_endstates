@@ -1,0 +1,34 @@
+#!/bin/bash
+#SBATCH -J trial_hpc_batch
+#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:10:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --array=0-11
+#SBATCH -p skylake
+#SBATCH --qos=covid0
+
+
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
+
+dirs=(*/)
+pwd
+application="Rscript"
+options="../../R/output/save_end_state.R"
+CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
+echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
+if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
+    echo "Running $CMD"
+  eval $CMD
+  # sbatch 
+fi
