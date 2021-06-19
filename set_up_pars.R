@@ -43,12 +43,20 @@ if(efficacies == "Nick"){
     value.vac.alpha1 <- c(0.80, 0.50)
 } else if(efficacies == "Jamie"){
     value.vac.alpha1 <- rep(3/7,2)
+} else if(efficacies == "PHE"){
+    value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
 } else {
     value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 }
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
+if(efficacies == "PHE"){
+    delta <- as_tibble(expand.grid(age.labs, vac.dates, regions)) %>% mutate(delta = Var2 > delta.date) %>% pull(delta)
+    v1.design <- cbind(v1.design, 0, 0)
+    v1.design[delta, 3:4] <- v1.design[delta, 1:2]
+    v1.design[delta, 1:2] <- 0
+}
 write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
 vacc.alpha.bps <- TRUE
 
@@ -57,12 +65,19 @@ if(efficacies == "Nick"){
     value.vac.alpha2 <- c(0.95, 0.70)
 } else if(efficacies == "Jamie"){
     value.vac.alpha2 <- c(2/3,6/7)
+} else if(efficacies == "PHE"){
+    value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)
 } else {
     value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 }
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
+if(efficacies == "PHE"){
+    vn.design <- cbind(vn.design, 0, 0)
+    vn.design[delta, 3:4] <- vn.design[delta, 1:2]
+    vn.design[delta, 1:2] <- 0
+}
 write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
 ## Efficacy against disease from one vaccine dose
@@ -70,6 +85,8 @@ if(efficacies == "Nick"){
     value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
 } else if(efficacies == "Jamie"){
     value.vac.pi1 <- c(0.65, 0.65)
+} else if(efficacies == "PHE"){
+    value.vac.pi1 <- c(0.625, 0.65, 0.31, 0.31)
 } else {
     value.vac.pi1 <- 0.48
 }
@@ -85,6 +102,8 @@ if(efficacies == "Nick"){
     value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
 } else if(efficacies == "Jamie"){
     value.vac.pi2 <- c(0.85, 0.65)
+} else if(efficacies == "PHE"){
+    value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)
 } else {
     value.vac.pi2 <- 0.6
 }
