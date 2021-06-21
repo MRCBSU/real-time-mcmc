@@ -48,10 +48,6 @@ matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household"
 
 
-#google.data.date <- format(ymd("20210528"), format = "%Y%m%d")
-#matrix.suffix <- "_timeuse_household"
-
-
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -220,17 +216,19 @@ date.prev <- lubridate::ymd("20210614") # Set this to last date in dataset
 
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
-prev.days.to.lose <- 0
+prev.days.to.lose <- 5
 ## Convert that to an analysis day number
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1)
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
-
 days.between.prev <- 14
+
 ## Convert that to an analysis day number
-prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
-last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
+#prev.end.day <- date.prev - start.date - prev.cutoff.days + 1
+#last.prev.day <- prev.end.day ## Which is the last date that we will actually use in the likelihood?
+
+
 ## Get the date of the prevalence data
 if (use.INLA.prev) {
 	first.prev.day <- ymd("2020-05-01") - start.date + 1
@@ -269,11 +267,9 @@ out.dir <- file.path(proj.dir,
                          "_", data.desc))	# Value actually used
 if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
+if (prev.days.to.lose!=0) out.dir <- paste0(out.dir, "lose_prev_days")
 
 
-use.previous.run.for.start <- TRUE
-previous.run.to.use <- "/home/aa995/rds/rds-mrc-bsu/jbb50/for_angelos"
-iteration.number.to.start.from <- 6400
 
 #threads.per.regions <- 2
 
