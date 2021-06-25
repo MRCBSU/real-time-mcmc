@@ -152,7 +152,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 		opacity = 0.06,
         hoverinfo = "Third national lockdown"
     )
->>>>>>> origin/COVID_vacc_amgs_merged
+
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150

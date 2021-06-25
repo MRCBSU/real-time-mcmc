@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-google.data.date <- format(ymd("2021-06-18"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-06-25"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_timeuse_household" #this is from Colin's merging stuff 
 
@@ -211,12 +211,12 @@ if(gp.flag){
 
 
 ## Dates of prevalence data
-date.prev <- lubridate::ymd("20210614") # Set this to last date in dataset
+date.prev <- lubridate::ymd("20210621") # Set this to last date in dataset
 #prev.cutoff.days <- 5
 
 ## Get the date of the prevalence data
 prev.cutoff.days <- 2
-prev.days.to.lose <- 5
+prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1)
@@ -279,7 +279,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20210618" #date.data ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210625" #date.data ## Optional: if not specified will take the most recent data file.
 vacc.rdata <- file.path(proj.dir, "data", "RTM_format", region.type, "vaccination", paste0(region.type, "vacc", str.date.vacc, ".RData"))
 
 
@@ -304,4 +304,5 @@ if(vacc.flag){
 #future.n <- (c(2.4, 3.5, 3.7, 3.5, 4.5, 4.5, 2.9, 2.0, 1.9) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(4.3, 4.1, 4.3, 2.4, rep(2, 5)) * 10^6) * (55.98 / 66.65)
 #future.n <- (c(4.4, 3, 1.8, 1.9, 1.9, 1.8, 1.8, c(2.4, 4)) * 10^6) * (55.98 / 66.65)
-future.n  <- (c(2.5, 2.0, 1.6, 1.6, 1.5, 1.4, 2.0, c(2.0, 4)) * 10^6) * (55.98 / 66.65) 
+#future.n  <- (c(2.5, 2.0, 1.6, 1.6, 1.5, 1.4, 2.0, c(2.0, 4)) * 10^6) * (55.98 / 66.65) 
+future.n  <- (c(2.8, 2.6, 2.4, 2.2, rep(2.4, 7)) * 10^6) * (55.98 / 66.65)

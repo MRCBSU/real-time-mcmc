@@ -1,5 +1,4 @@
 library(rmarkdown)
-library(tidyverse)
 
 ## Location of this script
 thisFile <- function() {
@@ -16,8 +15,7 @@ thisFile <- function() {
 }
 
 ## Where are various directories?
-#file.loc <- dirname(thisFile())
-file.loc = "~/real-time-mcmc"
+file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
@@ -80,12 +78,7 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    if (exists("date.prev")) {
-		prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
-	} else {
-		prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
-	}
-	if (use.INLA.prev) prev.file.prefix <- paste0(prev.file.prefix, "INLA_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
@@ -95,42 +88,39 @@ if(prev.flag){
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
-  if(data.desc == "reports") {
-	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
-  } else if (grepl("adjusted", data.desc)) {
-	  source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
-  } else if (running.England) {
-	  source(file.path(proj.dir, "R/data/format_deaths.R"))
-  }
-  if ("Scotland" %in% regions) {
-	  source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
-  }
-  if ("Northern_Ireland" %in% regions) {
-	  source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
-  }
-  if ("Wales" %in% regions) {
-	  source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
-  }
-  if(sero.flag){
-	  source(file.path(proj.dir, "R/data/format_sero.R"))
-  }
-  if(gp.flag){
-	  source(file.path(proj.dir, "R/data/format_linelist.R"))
-  }
-  if(prev.flag){
-      source(file.path(proj.dir, "R", "data", "format_prev.R"))
-  }
-  if(vacc.flag){
-      source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
-  } 
-} else if (vacc.flag) {
-  load(vacc.rdata)
+    if(vacc.flag){
+        source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+    }
+    if(data.desc == "reports") {
+        source(file.path(proj.dir, "R/data/format_death_reports.R"))
+    } else if (grepl("adjusted", data.desc)) {
+        source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
+    } else if (running.England) {
+        source(file.path(proj.dir, "R/data/format_deaths.R"))
+    }
+    if ("Scotland" %in% regions) {
+        source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+    }
+    if ("Northern_Ireland" %in% regions) {
+        source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+    }
+    if ("Wales" %in% regions) {
+        source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+    }
+    if(sero.flag){
+        source(file.path(proj.dir, "R/data/format_sero.R"))
+    }
+    if(gp.flag){
+        source(file.path(proj.dir, "R/data/format_linelist.R"))
+    }
+    if(prev.flag){
+        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+    }
 }
-
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))

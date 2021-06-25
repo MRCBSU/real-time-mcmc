@@ -1,0 +1,432 @@
+```{r echo=FALSE}
+repeat.for.regions <- function(v) {
+	paste(rep(v, nr), collapse = ", ")
+}
+options(scipen=999)
+```
+
+gp_negbin_overdispersion = { param_value = `r value.eta`;
+
+prior_distribution = `r 1 + gp.flag`;
+
+prior_parameters = `r paste(pars.eta, collapse = ", ")`;
+
+proposal_variance = 1;
+
+} 
+
+
+hosp_negbin_overdispersion = { param_value = `r value.eta.h`;
+
+prior_distribution = `r 1 + hosp.flag`;
+
+prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
+
+proposal_variance = 2.799636;
+
+} 
+
+
+latent_period = { param_value = `r value.dl`;
+
+prior_distribution = 1;
+
+}
+
+
+relative_infectiousness = { param_value = 1.0;
+
+prior_distribution = 1;
+			    
+}
+
+
+importation_rates = { param_value = 0.0;
+
+prior_distribution = 1;
+
+}
+
+
+infectious_period = { param_value = `r value.dI`;
+
+prior_distribution = 2;
+
+prior_parameters = `r paste(pars.dI, collapse = ", ")`;
+
+proposal_variance = 0.007562;
+
+}
+
+r1_period = { param_value = `r value.r1`;
+
+prior_distribution = `r prior.r1`;
+
+`r ifelse(prev.flag & (prior.r1 > 1), paste0("prior_parameters = ", paste(pars.r1, collapse = ", "), ";"), "")`
+
+`r ifelse(prev.flag & (prior.r1 > 1), "proposal_variance = 0.007562;", "")`
+
+}
+
+vacc_1st_disease = { param_value = `r value.vac.alpha1`;
+
+prior_distribution = `r prior.vac.alpha1`;
+
+`r ifelse(vacc.flag & (prior.alpha1 > 1), paste0("prior_parameters = ", paste(pars.alpha1, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha1 > 1), "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "regression_design = vac.alpha1.design.txt;", "")`
+
+}
+
+vacc_nth_disease = { param_value = `r value.vac.alpha2`;
+
+prior_distribution = `r prior.vac.alpha2`;
+
+`r ifelse(vacc.flag & (prior.alpha2 > 1), paste0("prior_parameters = ", paste(pars.alpha2, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha2 > 1), "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps, "regression_design = vac.alphan.design.txt;", "")`
+
+}
+
+vacc_1st_infect = { param_value = `r value.vac.pi1`;
+
+prior_distribution = `r prior.vac.pi1`;
+
+`r ifelse(vacc.flag & (prior.pi1 > 1), paste0("prior_parameters = ", paste(pars.pi1, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi1 > 1), "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pi1.design.txt;", "")`
+
+}
+
+vacc_nth_infect = { param_value = `r value.vac.pi2`;
+
+prior_distribution = `r prior.vac.pi2`;
+
+`r ifelse(vacc.flag & (prior.pi2 > 1), paste0("prior_parameters = ", paste(pars.pi2, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi2 > 1), "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pin.design.txt;", "")`
+
+}
+
+prop_case_to_GP_consultation = { param_value = `r paste(value.pgp, collapse = ", ")`;
+
+prior_distribution = `r paste(rep(ifelse(gp.flag, ifelse(nA == 1, 3, ifelse(pgp.prior.diffuse, 4, 5)), 1), length(value.pgp)), collapse = ", ")`;
+
+`r ifelse(gp.flag, paste0("prior_parameters = ", paste(pars.pgp, collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, paste0("proposal_variance = ", paste(rep(0.002, length(value.pgp)), collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag & nA != 1, paste0("age_breakpoints = ", paste(abreaks.icr, collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, "region_breakpoints = true;", "")`
+
+`r ifelse(gp.flag & case.positivity, paste0("time_breakpoints = ", paste(start.gp:(end.gp - 1), collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, "regression_link = 2;", "")`
+
+`r ifelse(gp.flag, "regression_design = icr.design.txt;", "")`
+
+}
+
+
+contact_parameters = { param_value = `r paste(as.character(contact.reduction), collapse = ", ")`;
+
+prior_distribution = `r paste(contact.dist, collapse = ", ")`;
+
+prior_parameters = `r paste(contact.pars, collapse = ", ")`;
+
+proposal_variance = `r paste(contact.proposal, collapse = ", ")`;
+
+region_breakpoints = true;
+
+regression_link = 1;
+
+regional_param = true;
+
+`r ifelse(rw.flag, "regression_design = m.design.txt;", "")`
+
+} ### ANY REGIONAL OR TEMPORAL OR AGE DEPENDENCE IS SPECIFIED ELSEWHERE FOR THIS PARAMETER
+
+
+log_beta_rw = { param_value = `r paste(beta.rw.vals, collapse = ", ")`;
+
+prior_distribution = `r paste(beta.dist, collapse = ", ")`;
+
+prior_parameters = "log_beta_rw_sd";
+
+proposal_variance = `r paste(beta.rw.props, collapse = ", ")`;
+
+prior_hyper = `r as.integer(beta.update)`;
+
+regression_link = 1;
+
+`r ifelse(beta.rw.flag, "regression_design = beta.design.txt;", "")`
+
+time_breakpoints = `r paste(beta.breaks, collapse = ", ")`;
+
+region_breakpoints = true;
+
+regional_param = true;
+
+}  ## WILL NEED TO GIVE A FACTOR OF 1 IN THE FIRST COMPONENT AFTER THE INVERSE CANONICAL LINK TRANSFORMATION IS APPLIED.
+
+
+log_beta_rw_sd = { param_value = 0, `r beta.rw.sd`;
+
+prior_distribution = 1, 2;
+
+prior_parameters = `r paste(beta.rw.sd.pars, collapse = ", ")`;
+
+proposal_variance = 0, 0.097174;
+
+}
+
+R0_amplitude_kA = { param_value = 0.0;
+
+prior_distribution = 1;
+
+}
+
+
+R0_seasonal_peakday = { param_value = 355;
+
+prior_distribution = 1;
+
+}
+
+
+exponential_growth_rate = { param_value = `r paste(value.egr, collapse = ", ")`;
+
+prior_distribution = `r repeat.for.regions(2)`;
+
+prior_parameters = `r repeat.for.regions(pars.egr)`;
+
+proposal_variance = `r repeat.for.regions(0.000003)`;
+
+region_breakpoints = true;
+
+regional_param = true;
+
+}
+
+
+log_p_lambda_0 = { param_value = `r paste(value.nu, collapse = ", ")`;
+
+prior_distribution = `r paste(rep(4, nr), collapse = ", ")`;
+
+prior_parameters = `r paste(rep(pars.nu, nr), collapse = ", ")`;
+
+proposal_variance = 0.000284;
+
+region_breakpoints = true;
+
+regional_param = true;
+
+}
+
+prop_susceptible = { param_value = 1.0;
+
+prior_distribution = 1;
+
+}
+
+
+prop_HI_32_to_HI_8 = {	param_value = 1.0;
+
+prior_distribution = 1;
+
+}
+
+
+prop_symptomatic = { param_value = 1.0;
+
+prior_distribution = 1;
+
+}
+
+
+prop_case_to_hosp = { param_value = `r paste(value.ifr, collapse = ", ")`;
+
+prior_distribution = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
+
+prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
+
+proposal_variance = `r paste(var.ifr, collapse = ", ")`;
+
+`r ifelse(nA == 1, "", "age_breakpoints = 2, 3, 4, 5, 6, 7;")`
+
+`r ifelse(single.ifr, "", paste("time_breakpoints = ", paste(tbreaks.ifr, collapse = ", "), ";"))`
+
+`r ifelse(single.ifr, "", "regression_link = 2;")`
+
+`r ifelse(single.ifr, "", "regression_design = ifr.design.txt;")`
+
+}
+
+
+prop_case_to_death = { param_value = 0.01;
+
+prior_distribution = 1;
+
+}
+
+
+background_GP = { param_value = 0.0;
+
+prior_distribution = 1;
+
+}
+
+
+day_of_week_effects = { param_value = `r ifelse(gp.flag, paste(pars.dow, collapse = ", "), 1)`;
+
+prior_distribution = `r paste(ifelse(gp.flag, rep(5, length(pars.dow)), 1), collapse = ", ")`;
+
+`r ifelse(gp.flag, "prior_parameters = 0, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143, -0.892857166666667, 0, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, -0.892857166666667, 5.357143;", "")`
+
+`r ifelse(gp.flag, paste0("proposal_variance = ", paste(prop.dow, collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, paste0("time_breakpoints = ", paste(start.gp:(end.gp - 1), collapse = ", "), ";"), "")`
+
+`r ifelse(gp.flag, "regression_link = 1;", "")`
+
+`r ifelse(gp.flag, "regression_design = d_o_w_design_file.txt;", "")`
+
+}
+
+test_sensitivity = { param_value = 1;
+
+prior_distribution = 1;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+test_specificity = { param_value = 1;
+
+prior_distribution = 1;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+sero_test_sensitivity = { param_value = `r sero.sens`;
+
+prior_distribution = `r ssens.prior.dist`;
+
+prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
+
+proposal_variance = `r paste(ssens.prop, collapse = ", ")`;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+sero_test_specificity = { param_value = `r sero.spec`;
+
+prior_distribution = `r sspec.prior.dist`;
+
+prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
+
+proposal_variance = `r paste(sspec.prop, collapse = ", ")`;
+
+} ## CODE CURRENTLY IGNORES ANY VARIATION
+
+
+exponential_growth_rate_hyper = { param_value = 6.3, 57;
+
+prior_distribution = 1, 1;
+
+}
+
+
+l_p_lambda_0_hyper = { param_value = -19.1495, 4.05411;
+
+prior_distribution = 1, 1;
+
+}
+
+
+prop_susceptible_hyper = { param_value = 0, 0, 0, 0, 0, 0, 0;
+
+prior_distribution = 1, 1, 1, 1, 1, 1, 1;
+
+}
+
+
+incubation_distribution = { gamma_mean = 4.0;
+
+gamma_sd = 1.41;
+
+}
+
+
+symp_to_gp_distribution = { gamma_mean = 0.0;
+
+gamma_sd = 0.0;
+
+}
+
+
+symp_to_hosp_distribution = { gamma_mean = `r ddelay.mean`;
+
+gamma_sd = `r ddelay.sd`;
+
+}
+
+
+symp_to_death_distribution = { gamma_mean = 0.0;
+
+gamma_sd = 0.0;
+
+}
+
+
+gp_reporting_distribution = { gamma_mean = `r ldelay.mean`;
+
+gamma_sd = `r ldelay.sd`;
+
+}
+
+
+hosp_reporting_distribution = { gamma_mean = `r rdelay.mean`;
+
+gamma_sd = `r rdelay.sd`;
+
+}
+
+
+death_reporting_distribution = { gamma_mean = 0.0;
+
+gamma_sd = 0.0;
+
+}
