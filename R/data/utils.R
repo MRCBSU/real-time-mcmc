@@ -117,3 +117,15 @@ all.regions <- list( ## Region names that might be used and their constituent NH
 )
 all.regions$Outside_London = all.regions$England[-3]
 
+# Given a vector, return the first element where predicate is true
+# Returns NULL if not true for any
+first.where.true <- function(vec, predicate) {
+  true.at <- which(predicate(vec))
+  if (length(true.at) == 0) return(NULL)
+  index.to.use <- min(true.at)
+  return(vec[index.to.use])
+}
+
+
+
+
