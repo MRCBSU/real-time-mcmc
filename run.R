@@ -92,9 +92,6 @@ if(vacc.flag){
     vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
-    if(vacc.flag){
-        source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
-    }
     if(data.desc == "reports") {
         source(file.path(proj.dir, "R/data/format_death_reports.R"))
     } else if (grepl("adjusted", data.desc)) {
@@ -110,6 +107,9 @@ if(format.inputs){
     }
     if ("Wales" %in% regions) {
         source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+    }
+    if(vacc.flag){
+        source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
     }
     if(sero.flag){
         source(file.path(proj.dir, "R/data/format_sero.R"))
