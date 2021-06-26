@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210618"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210625"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -77,7 +77,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 410
+num.prev.days <- 417
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -127,15 +127,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210611", c("Prev403_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths",
-                                                                                   "Prev403_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210619", c("Prev410_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths",
+                                                                                   "Prev410_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210611", c("Prev403_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths",
-                                                                                    "Prev403_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210619", c("Prev410_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths",
+                                                                                    "Prev410_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210611", c("Prev403_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths",
-                                                                               "Prev403_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths_chain2")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210619", c("Prev410_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths",
+                                                                               "Prev410_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210618_timeuse_household_deaths_chain2")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -174,7 +174,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210616")
+date.prev <- lubridate::ymd("20210623")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -217,6 +217,6 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(2.8, 2.6, 2.4, 2.2, rep(2.4, 7)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210511")
