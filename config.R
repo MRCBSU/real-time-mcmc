@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210625"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210702"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -98,14 +98,15 @@ contact.prior <- "ons"
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
+NHS28.alt.ifr.prior <- TRUE && region.type == "NHS"
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
-scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, ifelse(NHS28.alt.ifr.prior, "lower", ""))
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -127,15 +128,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210625", c("Prev417_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
-                                                                                   "Prev417_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
+                                                                                   "Prev424_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210625", c("Prev417_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
-                                                                                    "Prev417_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
+                                                                                    "Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210625", c("Prev417_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
-                                                                               "Prev417_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths",
+                                                                               "Prev424_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_deaths_chain2")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
