@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
@@ -107,7 +107,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -140,7 +140,7 @@ if(use.previous.run.for.start){
                                                                                "Prev403_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths_chain2")
                                          )
 }
-iteration.number.to.start.from <- 1 ## 6400
+iteration.number.to.start.from <- 6400
 
 ## From where will the various datasets be sourced?
 data.dirs <- file.path(proj.dir,
@@ -176,7 +176,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210628")
+date.prev <- lubridate::ymd("20210630")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -210,7 +210,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20210702" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210706" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){

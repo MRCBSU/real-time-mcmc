@@ -128,7 +128,7 @@ if(format.inputs){
       source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
   } 
 } else if (vacc.flag) {
-  load(vacc.rdata)
+  load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))
 }
 
 
