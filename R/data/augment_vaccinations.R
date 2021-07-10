@@ -92,7 +92,7 @@ for(dt in (d0 + 1):d.end){
                 mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
             
             while(any(tmp2.reg$exceed.f > 0 & !tmp2.reg$exhausted)){
-                idx <- which(tmp2.reg$exceed.f > 0 & !tmp2.reg$exhausted)
+                idx <- max(which(tmp2.reg$exceed.f > 0 & !tmp2.reg$exhausted))
                 tmp2.reg$f[idx] <- tmp2.reg$f[idx] - tmp2.reg$exceed.f[idx]
                 tmp2.reg$exhausted[idx] <- TRUE
                 if(idx > 4){ ## If we're still vaccinating adult age-groups
