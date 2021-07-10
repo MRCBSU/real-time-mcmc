@@ -15,8 +15,8 @@ require(tidyverse)
 require(cubelyr)
 require(lubridate)
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-    input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
-    ## input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
+    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
+    input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
     ## List the possible files in the directory
     vacc.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
@@ -101,7 +101,7 @@ fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
         group_by(age.grp, pop) %>%
         summarise(sdate, n, n.cum = cumsum(n)) %>%
         mutate(pop = max(pop, n.cum + 1)) %>%
-        mutate(value = zapsmall(n / (pop - dplyr::lag(n.cum)))) %>% ## Calculating the fraction of the denominator population still at risk.
+        mutate(value = zapsmall(n / (pop - dplyr::lag(n.cum)), digits = 6)) %>% ## Calculating the fraction of the denominator population still at risk.
         replace_na(list(value = 0)) %>%
         ungroup() %>%
         mutate(value = 2 * (1 - sqrt(1 - value))) %>% ## This line transforms the number of events until a final ok, and then 
