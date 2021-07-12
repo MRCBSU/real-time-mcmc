@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 google.data.date <- format(ymd("20210709"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -106,7 +106,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, ifelse(NHS28.alt.ifr.pri
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -128,15 +128,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths",
-                                                                                   "Prev424_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210709", c("NHS60_chain1",
+                                                                                   "NHS60_chain2")
                                              )
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths",
                                                                                     "Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210704", c("Prev424_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths",
-                                                                               "Prev424_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths_chain2")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210709", c("Prev431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths",
+                                                                               "Prev431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths_chain2")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
