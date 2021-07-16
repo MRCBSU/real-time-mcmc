@@ -31,7 +31,6 @@
 #SBATCH --array=1
 
 
-
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -43,8 +42,6 @@
 
 
 forecast_switch="midterm"
-
-
 
 
 

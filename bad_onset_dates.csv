@@ -11,8 +11,11 @@ NA,2020-03-30,2020-04-08,Not lab confirmed (HPT epi-link)
 NA,NA,NA,Not lab confirmed (HPT symptoms only)
 1498289,2020-12-31,2021-01-05,Lab Confirmed
 124482,2020-04-02,2020-04-03,Lab Confirmed
+<<<<<<< HEAD
 NA,2020-04-09,2020-04-10,Not lab confirmed (HPT epi-link)
 1027743,2020-05-04,2020-06-02,Lab Confirmed
+=======
+>>>>>>> origin/COVID_vacc_amgs_merged
 NA,2020-04-05,2020-04-06,Not lab confirmed (HPT symptoms only)
 NA,2020-04-03,2020-04-07,Not lab confirmed (HPT epi-link)
 NA,2020-05-06,2020-05-07,Not lab confirmed (HPT epi-link)
@@ -25,6 +28,7 @@ NA,2020-04-19,2020-04-27,Not lab confirmed (HPT symptoms only)
 1020321,2020-04-26,2020-04-28,Lab Confirmed
 893643,2020-04-05,2020-04-06,Lab Confirmed
 996594,2020-04-11,2020-04-15,Lab Confirmed
+<<<<<<< HEAD
 984120,2020-04-12,2020-04-14,Lab Confirmed
 1646885,2021-02-21,2021-02-22,Lab Confirmed
 1546273,2021-01-12,2021-01-13,Lab Confirmed
@@ -83,3 +87,23 @@ NA,2020-03-26,2020-05-24,Not lab confirmed (HPT symptoms only)
 1007220,2020-04-20,2020-04-21,Lab Confirmed
 -2810207,2021-01-31,2021-04-01,Lab Confirmed
 1577022,2021-02-01,2021-04-01,Lab Confirmed
+=======
+NA,2020-04-23,2020-04-26,Not lab confirmed (HPT symptoms only)
+984120,2020-04-12,2020-04-14,Lab Confirmed
+1646885,2021-02-21,2021-02-22,Lab Confirmed
+1546273,2021-01-12,2021-01-13,Lab Confirmed
+680821,2020-04-10,2020-04-13,Lab Confirmed
+312188,2020-04-10,2020-04-13,Lab Confirmed
+NA,2021-01-17,2021-06-01,Not lab confirmed (HPT symptoms only)
+NA,2020-04-16,2020-04-30,Not lab confirmed (HPT epi-link)
+1046626,2020-05-18,2020-05-24,Lab Confirmed
+NA,2020-03-15,2020-03-17,Not lab confirmed (HPT epi-link)
+987405,2020-04-11,2020-04-14,Lab Confirmed
+1375499,2020-11-23,2020-11-24,Lab Confirmed
+NA,2020-04-13,2020-04-14,Not lab confirmed (HPT symptoms only)
+1000434,2020-04-17,2020-04-20,Lab Confirmed
+NA,2020-04-06,2020-06-02,Not lab confirmed (HPT epi-link)
+997253,2020-03-31,2020-04-01,Lab Confirmed
+NA,2020-03-26,2020-05-24,Not lab confirmed (HPT symptoms only)
+1007220,2020-04-20,2020-04-21,Lab Confirmed
+>>>>>>> origin/COVID_vacc_amgs_merged

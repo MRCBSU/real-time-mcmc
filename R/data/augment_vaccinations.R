@@ -100,7 +100,63 @@ for(dt in (d0 + 1):d.end){
         mutate(n = vac1due,
                sdate = lubridate::as_date(dt)) %>%
         select(sdate, region, age.grp, dose, n, pPfizer, pop)
-    )
-  
+    
+    capacity <- max(0, capacity - sum(vacs.due$n))
+    cat("Got here 6:", dt, "\n")
+    ## Which priority groups are now fully immunised subject to uptake.
+    tmp2 <- NULL
+    options(warn=2)
+    if(capacity > 0){
+        for(reg in regions){
+            tmp2.reg <- 
+                ijab %>% filter(region == reg, sdate == dt - 1, dose == "First") %>%
+                inner_join(xdist, by = c("region", "age.grp")) %>%
+                arrange(region, age.grp) %>%
+                ungroup() %>%
+                mutate(sum.f = sum((.)$f), exhausted = ((pop * uptake) <= cumsum.n1)) %>%
+                ## mutate(f = f + ifelse(lead(exhausted, default = FALSE), lead(f, default = 0), 0)) %>%
+                mutate(f = ifelse(exhausted, 0, f)) %>%
+                mutate(cumsum.f = cumsum(f))
+            if(!all(tmp2.reg$f == 0)){ ## i.e. is there anyone left to vaccinate?
+                idx <- max(which(tmp2.reg$f != 0))
+                tmp2.reg$f[idx] <- tmp2.reg$f[idx] + tmp2.reg$sum.f[idx] - tmp2.reg$cumsum.f[idx]
+            }
+            tmp2.reg <- tmp2.reg %>% mutate(vac1due = f * capacity) %>%
+                mutate(exceed.f = f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due))
+            
+            while(any(tmp2.reg$exceed.f > 0 & !tmp2.reg$exhausted)){
+                idx <- max(which(tmp2.reg$exceed.f > 0 & !tmp2.reg$exhausted))
+                tmp2.reg$f[idx] <- tmp2.reg$f[idx] - tmp2.reg$exceed.f[idx]
+                tmp2.reg$exhausted[idx] <- TRUE
+                if(idx > 4){ ## If we're still vaccinating adult age-groups
+                    stopifnot(length(tmp2.reg$f[idx-1]) == length(tmp2.reg$exceed.f[idx]))
+                    tmp2.reg$f[idx-1] <- tmp2.reg$f[idx-1] + tmp2.reg$exceed.f[idx]
+                    tmp2.reg$exhausted[idx-1] <- FALSE
+                }
+                tmp2.reg <- tmp2.reg %>%
+                    mutate(vac1due = f * capacity) %>%
+                    mutate(exceed.f = zapsmall(f * pos.part(1 - ((uptake * pop) - cumsum.n1) / vac1due)))
+            }
+            tmp2 <- tmp2 %>% bind_rows(tmp2.reg)
+        }
+        tmp2 <- tmp2 %>%
+            mutate(n = vac1due, sdate = lubridate::as_date(dt)) %>%
+            select(sdate, region, age.grp, dose, n, pPfizer, pop)
+    } else {
+        tmp2 <- expand.grid(sdate = lubridate::as_date(dt),
+                              region = regions,
+                              age.grp = unique(jab.dat$age.grp),
+                              dose = "First",
+                              n = 0,
+                            pPfizer = 1) %>% left_join(vacs.due %>% select(region, age.grp, pop))
+    }
+    jab.dat <- jab.dat %>%
+        bind_rows(
+            vacs.due,
+            tmp2
+        )
+    options(warn=0)
+    
+
 }
 options(warn=0)

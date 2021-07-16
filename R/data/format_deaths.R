@@ -5,14 +5,6 @@ suppressMessages(library(tidyverse))
 ## Inputs that should (or may) change on a daily basis
 #########################################################
 
-# Given a vector, return the first element where predicate is true
-# Returns NULL if not true for any
-first.where.true <- function(vec, predicate) {
-	true.at <- which(predicate(vec))
-	if (length(true.at) == 0) return(NULL)
-	index.to.use <- min(true.at)
-	return(vec[index.to.use])
-}	
 
 if(!exists("date.data"))
     date.data <- (today() - days(1)) %>% format("%Y%m%d")
@@ -194,7 +186,6 @@ dth.dat %>%
 ## ## 
 
 latest.date <- ymd(date.data) ## - reporting.delay
-earliest.date <- ymd("2020-02-17")
 
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%

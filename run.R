@@ -99,6 +99,7 @@ if(vacc.flag){
     vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
+
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
   } else if (grepl("adjusted", data.desc)) {

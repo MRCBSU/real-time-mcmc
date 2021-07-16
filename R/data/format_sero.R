@@ -1,6 +1,6 @@
-suppressMessages(library(lubridate))
-suppressMessages(library(tidyverse))
-suppressMessages(library(gsubfn))
+suppressMessages(require(lubridate))
+suppressMessages(require(tidyverse))
+suppressMessages(require(gsubfn))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis

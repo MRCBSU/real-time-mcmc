@@ -84,9 +84,10 @@ write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"),
 if(efficacies == "Nick"){
   value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
 } else if(efficacies == "Jamie"){
-  value.vac.pi1 <- c(0.65, 0.65)
+    value.vac.pi1 <- c(0.65, 0.65)
 } else if(efficacies == "PHE"){
-  value.vac.pi1 <- c(0.625, 0.65, 0.31, 0.31)
+    value.vac.pi1 <- c(0.625, 0.65, 0.31, 0.31)
+
 } else {
   value.vac.pi1 <- 0.48
 }
@@ -95,15 +96,19 @@ prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
 vacc.pi.bps <- efficacies %in% c("Jamie", "PHE")
 if(vacc.pi.bps)
-  write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
+
+
+
+    write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
+
 
 ## Efficacy against disease from two vaccine doses
 if(efficacies == "Nick"){
   value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
 } else if(efficacies == "Jamie"){
-  value.vac.pi2 <- c(0.85, 0.65)
+    value.vac.pi2 <- c(0.85, 0.65)
 } else if(efficacies == "PHE"){
-  value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)
+    value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)
 } else {
   value.vac.pi2 <- 0.6
 }
@@ -111,8 +116,8 @@ prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
 if(vacc.pi.bps)
-  write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
-#vacc.pi.bps <- (efficacies == "Jamie")
+ write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
+
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
@@ -225,6 +230,13 @@ if(single.ifr){
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
+
+
+        if(NHS28.alt.ifr.prior){
+            mean.indices <- seq(1, length(pars.ifr), by = 2)
+            pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
+        }
+
         ## gradients from Brian's Co-CIN analysis
         grad.samp <- cbind(
         (logit(rbeta(1000000, 23/4.625,977/4.625))-logit(rbeta(1000000, 13.5, 39*13.5))) / 30, ## 0-44

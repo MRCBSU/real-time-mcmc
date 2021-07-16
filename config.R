@@ -38,8 +38,13 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
+
 google.data.date <- format(ymd("2021-07-16"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
+
+
+
+
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -77,7 +82,11 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 424
+
+
+
+num.prev.days <- 431
+
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -100,10 +109,15 @@ contact.prior <- "ons"
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
+NHS28.alt.ifr.prior <- TRUE && region.type == "NHS"
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
+
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
+
+
+
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
@@ -129,6 +143,7 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
+
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20210611", c("Prev403_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths",
                                                                                    "Prev403_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0Jamie_matrices_20210611_timeuse_household_deaths_chain2")
                                              )
@@ -176,7 +191,11 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
+
 date.prev <- lubridate::ymd("20210714")
+
+
+
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -186,9 +205,12 @@ days.between.prev <- 14
 prev.lik.days <- rev(seq(from = as.integer(last.prev.day), to = as.integer(first.prev.day), by = -days.between.prev))
 if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev, "-", prev.days.to.lose)
 
+
 ## # Using 24 here means that each Friday an extra break will be added 3.5 weeks before the Friday in question
 ## lag.last.beta <- 24 - 7
 ## if (lag.last.beta != 24) scenario.name <- paste0(scenario.name, "_last_break_", lag.last.beta, "_days")
+
+
 
 ## if (matrix.suffix != "_timeuse_household_new_base") pasteo(scenario.name, "_", matrix.suffix)
 efficacies <- "PHE" ## current values can be 'Nick', 'Jamie', or 'SPIM', 'PHE'.
@@ -210,7 +232,11 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
+
 str.date.vacc <- "20210716" ## Optional: if not specified will take the most recent data file.
+
+
+
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
@@ -221,6 +247,6 @@ if(vacc.flag){
 ## - this is mostly set for the benefit of projections rather than model fitting.
 #future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
 future.n  <- (c(1.8, 1.7, 1.4, 1.4, rep(1.4, 7)) * 10^6) * (55.98 / 66.65)
-
 ## Approximate data at which delta became dominant strain
-delta.date <- ymd("20210511")
+delta.date <- ymd("20210510")
+
