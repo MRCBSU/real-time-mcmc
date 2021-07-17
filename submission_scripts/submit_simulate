@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=8
+#SBATCH --array=6
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -67,7 +67,7 @@ module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-# workdir="Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths"
+# workdir="Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths_chain2"
 echo $workdir
 
 #! Full path to application executable: 

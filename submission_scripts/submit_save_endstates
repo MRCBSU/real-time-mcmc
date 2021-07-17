@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-11
+#SBATCH --array=0-1
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
@@ -26,9 +26,9 @@ pwd
 application="Rscript"
 options="../../R/output/save_end_state.R"
 CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
-echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
-if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
-    echo "Running $CMD"
+# echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
+# if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
+#     echo "Running $CMD"
   eval $CMD
   # sbatch 
-fi
+# fi
