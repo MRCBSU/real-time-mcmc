@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 google.data.date <- format(ymd("20210716"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
