@@ -136,7 +136,7 @@ application="Rscript"
 
 #! Run options for the application:
 # options="--vanilla R/output/SPIMask.R"
-options="--vanilla ../../R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla ../../R/output/mc_${forecast_switch}_forecast_Paul.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:

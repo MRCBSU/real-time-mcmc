@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0-5
+#SBATCH --array=0,2,4
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -61,15 +61,24 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 #! Insert additional module load commands after this line if needed:
 #!module load pandoc                         # Need this to generate the STAN model code
 #!module load R/3.6
-module load gsl
+#module load pandoc
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
+module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
+
+
+# # Navigate to the correct working directory
+dirs=(*/)
+workdir=${dirs[SLURM_ARRAY_TASK_ID]}
+# workdir="Prev424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210702_timeuse_household_deaths_chain2"
+echo $workdir
+
 
 
 #! Full path to application executable: 
 application="Rscript"
 
 #! Run options for the application:
-options="--vanilla ../../../R/output/mc_${forecast_switch}_forecast.R"
+options="--vanilla ../../R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -115,10 +124,10 @@ JOBID=$SLURM_JOB_ID
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
 
-dirs=(*/)
-cd ${dirs[SLURM_ARRAY_TASK_ID]}
+#dirs=(*/)
+#cd ${dirs[SLURM_ARRAY_TASK_ID]}
 eval $CMD
-Rscript ../../../R/output/plot_projections.R projections_midterm.RData
+#Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
