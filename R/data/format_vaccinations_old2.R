@@ -14,32 +14,34 @@ suppressMessages(require(parallel))
 require(tidyverse)
 require(cubelyr)
 require(lubridate)
+
 if(!exists("vacc.loc")){ ## Set to default format for the filename
-    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
-    input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
-    ## List the possible files in the directory
-    vacc.loc <- file.info(file.path(input.loc,
-                                    list.files(path = input.loc,
-                                               pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
-                                    )
-                          )
-    ## Has a particular date's data been specified
-    rnames <- rownames(vacc.loc)
-    if(exists("str.date.vacc")){
-        input.loc <- rnames[grepl(str.date.vacc, rnames)]
-    } else {
-        ## Pick up the most recently added
-        input.loc <- rnames[which.max(vacc.loc$ctime)]
-        ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
-        str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
-    }
+
+  input.loc <- "/data/covid-19/data-raw/dstl/2021-07-23"
+  ## input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
+  ## List the possible files in the directory
+  vacc.loc <- file.info(file.path(input.loc,
+                                  list.files(path = input.loc,
+                                             pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
+  )
+  )
+  ## Has a particular date's data been specified
+  rnames <- rownames(vacc.loc)
+  if(exists("str.date.vacc")){
+    input.loc <- rnames[grepl(str.date.vacc, rnames)]
+  } else {
+    ## Pick up the most recently added
+    input.loc <- rnames[which.max(vacc.loc$ctime)]
+    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
+    str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
+  }
 } else {
-    if(is.null(vacc.loc)){
-        input.loc <- commandArgs(trailingOnly = TRUE)[1]
-    } else {
-        if(startsWith(vacc.loc, "/")) input.loc <- prev.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", prev.loc)
-    }
+  if(is.null(vacc.loc)){
+    input.loc <- commandArgs(trailingOnly = TRUE)[1]
+  } else {
+    if(startsWith(vacc.loc, "/")) input.loc <- prev.loc
+    else input.loc <- build.data.filepath(subdir = "raw", "vaccination", prev.loc)
+  }
 }
 
 ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
@@ -258,6 +260,12 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## ##     vacc.dat$sdate[i] <- fuzzy_date_parse(vacc.dat$sdate[i])
     ## cat("Got here 2b\n")
     vacc.dat <- vacc.dat %>%
+
+#	mutate(sdate = fuzzy_date_parse(sdate))
+#    cat("Got here 2b\n")
+#    vacc.dat <- vacc.dat %>%
+
+
         mutate(age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
     cat("Got here3\n")
     ## Remove rows with missing key information
