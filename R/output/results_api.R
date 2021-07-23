@@ -42,6 +42,7 @@ if (!exists("infections")) {
     parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
     iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
     stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
+    date.data = "20210716"
 	rm(int_iter)
 	rm(tmp_env)
   } else {

@@ -1,25 +1,4 @@
 library(tidyverse)
-library(rmarkdown)
-library(qs)
-
-## Location of this script
-thisFile <- function() {
-  cmdArgs <- commandArgs(trailingOnly = FALSE)
-  needle <- "--file="
-  match <- grep(needle, cmdArgs)
-  if (length(match) > 0) {
-    # Rscript
-    return(normalizePath(sub(needle, "", cmdArgs[match])))
-  } else if (.Platform$GUI == "RStudio" || Sys.getenv("RSTUDIO") == "1") {
-    # We're in RStudio
-    return(rstudioapi::getSourceEditorContext()$path)
-  } else {
-    # 'source'd via R console
-    return(normalizePath(sys.frames()[[1]]$ofile))
-  }
-}
-
-###############################################################
 
 proj1 <- "projections_midterm.RData"
 proj2 <- "projections_counter.RData"
@@ -51,17 +30,7 @@ infecs.no.vac <- thin.outs(cou.env$infections)
 preval.no.vac <- thin.outs(cou.env$prevalence)
 severe.no.vac <- thin.outs(cou.env$vacc.infections)
 
-Rfile.dir <- dirname(thisFile())
-#stop()
 rm(cou.env)
 
 save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, severe.vac, severe.no.vac, file = "deaths_comparison_prev.RData")
 ## estimate total deaths saved is 201 (164-251)!!
-
-pth <- getwd()
-setwd(Rfile.dir)
-render(
-    'lives_saved_report.Rmd',
-    html_document(pandoc_args = "--self-contained"),
-    output_dir = pth
-    )

@@ -1,0 +1,73 @@
+### Updates
+
+#### Model and report changes
+
+<<<<<<< HEAD
+
+
+
+=======
+1. The model now accounts for a different susceptibility to infection in each adult age group (no prior information is used); and for the under-15s, (using prior information from [Viner et al, 2020](https://jamanetwork.com/journals/jamapediatrics/fullarticle/2771181), which estimates children to be less likely to acquire infection when in contact with an infectious individual).
+>>>>>>> origin/COVID_vacc_amgs_merged
+1. The model has the ability to incorporate estimates of community prevalence, by region and age group, from the Office of National Statistics COVID-19 Infection Survey (see Data Sources for details). These are included weekly since the outset of the Survey in May 2020 for the age groups >4 years to inform trends in incidence that are too recent to be captured by the data on deaths.
+
+2. The model now accounts for the ongoing immunisation programme, stratifying the population of people still susceptible to infection with the virus according to their immunisation status (unimmunised/1 dose/2 doses). We use data on the daily proportions of the population getting immunised to inform this splitting of the population, assuming that it takes three weeks for vaccine-derived immunity to develop .
+1. The geographical definition has been changed from the seven NHS regions ([map](https://www.arcgis.com/sharing/rest/content/items/e4dd34a2d07b43088e17ed73e1bd3357/data)) to the nine regions typically used in government ([map](https://www.arcgis.com/sharing/rest/content/items/738566d958834b70a809dc72a154eaf9/data)). This new spatial definition more appropriately reflects the existing regional heterogeneity.
+4. Using observations of improved survival in hospitalised COVID-19 patients, we have allowed the probability of dying following infection with SARS-CoV2 (the infection-fatality rate, IFR) to gradually change over the course of June 2020, with a decrease being estimated. More recently, the Kent variant of the virus has gradually become the predominant virus strain and we accordingly allow for a change in the IFR over the period in which the relative prevalence of this strain has been growing.
+5. The ‘Epidemic summary’ now only reports the current value for the IFR by age. To visualise how this has changed over time in our model, see the IFR tab in the ‘Infections and Deaths’ section of the report. The quantity that is now plotted under this tab is the probability of dying if infected, taking into account the impact of the immunisation programme.
+
+
+#### Updated findings
+
+<<<<<<< HEAD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. The current estimate of the daily number of new infections occurring each day across England is 3,840 (2,510--5,9430, 95% credible interval).
+1. The daily infection rate is estimated to be the highest in London (GL) with 783, new daily infections, corresponding to 9 per 100,000 population per day. All other regions have 6--7 new infections per 100k population with the exception of the North West where incidence appears low. Note these regional estimates are highly uncertain and that a substantial proportion of these daily infections will be asymptomatic.
+1. We predict that the number of deaths occurring daily is likely to remain low with a forecast for the period around the 28th May suggesting that there will be between 9 and 35 deaths per day.
+1. The probability of Rt exceeding 1 is 70% and 67% in the South West (SW) and GL respectively; 59% in both the East of England (EE) and South East (SE); around 30% in the West and East Midlands (WM and EM), North East (NE) and Yorkshire and Humber (YH); and less than 5% in the NW.
+1. The growth rate for England remains at 0.01 (-0.01--0.03, 95% credible interval) per day. This means that, nationally, the number of infections is likely to be increasing, although there is considerable uncertainty and heterogeneity across regions, with negative growth in many, the NW in particular.
+1. London, followed by the WM and the NE, have the highest attack rates, that is the proportions of the regional populations who have ever been infected, with 32%, 21% and 20% respectively. The SW continues to have the lowest attack rate at 10%. These constitute a big downward revision from our previous published report, particularly so for the NW.
+=======
+1. The current estimate of the daily number of new infections occurring each day across England is 5,350 (3,920–-7,160, 95% credible interval). Though infection incidence is currently estimated to be increasing, this represents a small upward revision of our most recent estimate.
+1. The daily infection rate is estimated to be the highest in the North East (NE) with 619 new daily infections, corresponding to 23 per 100,000 population per day. The South West (SW) is the second highest with 797 infections (14 per 100,000). All other regions have 10 new infections per 100k population or less, with incidence in the North West appearing to be particularly low (2 infections per 100,000). Note that currently these regional estimates are particularly uncertain and that a substantial proportion of these daily infections will be asymptomatic.
+1. We predict that the number of deaths occurring daily is likely to remain low but also likely to start increasing. For the 11h June we forecast between 25 and 67 daily deaths. 
+1. The probability of Rt exceeding 1 is 84% and 83% in the NE and SW respectively; around 60% in the East of England (EE) and both East and West Midlands (EM & WM); 30--40% in the London (GL), South East (SE) and Yorkshire and Humber (YH) regions; and 5% in the NW.
+1. The growth rate for England remains at 0.01 (0.00-–0.02, 95% credible interval) per day. This means that, nationally, the number of infections is likely to be increasing, although there is considerable uncertainty and heterogeneity across regions, with negative growth in many, the NW in particular.
+1. London, followed by the NE and the WM, has the highest attack rates, that is the proportions of the regional populations who have ever been infected, with 27%, 23% and 22% respectively. The SW continues to have the lowest attack rate at 12%. The attack rate in London constitutes a 5% downward revision from our previous published report.
+>>>>>>> origin/COVID_vacc_amgs_merged
+1. Note that the deaths data used are only very weakly informative on Rt over the last two weeks and are thankfully becoming increasingly sparse. Therefore, the estimate for current incidence, Rt and the forecast of daily numbers of deaths are likely to be subject to some revision.
+
+
+#### Interpretation
+
+The plots of the estimated Rt in the most recent weeks show reasonably stable values  despite the gradual relaxation of pandemic mitigation measures. Going forward, an increase is anticipated in the coming days, a consequence of the ongoing relaxation of restrictions, before a transient drop over the school half-term week. The Rt for five regions have central estimates just above 1 (EE, EM, NE, , SW, WM), although these estimates are uncertain. At current levels of incidence, these values of Rt are not a particular concern, though they do require careful monitoring.
+
+The incidence of deaths has continued to fall more sharply than predicted by the model, which predicts that there will be a gradual rise over the coming few weeks.
+
+The plot of the infection fatality rate (IFR) presents age-specific probabilities of death given infection. It shows an increasing mortality risk from September onwards in all ages until the immunisation programme begins to have an impact in late January. From the end of January we estimate a decreasing IFR in all adult age groups, but most steeply in the older ages. This drop measures the benefits of immunisation against death over and above the benefits against infection. Specifically, there is an estimated fall to a still-high 7% in the over-75s and 0.3% overall. The overall impact of the immunisation programme can be seen more clearly in the ‘All Ages’ plot, where the precipitous decline in IFR since late January is a product of this efficacy against death but also of the increasing proportion of infections in young people; older age groups are immunised and become protected against infection. The impact of the second immunisation doses (initially in the 45-64) becoming widespread will begin to affect this quantity over the coming weeks.
+
+<<<<<<< HEAD
+Estimates of cumulative infection are low in comparison to some earlier reports. This is due to the inclusion of the prevalence data, which appear to have the effect of reducing the number of infections. Nowhere is this more true than in the North West, where estimates of attack rate have fallen to 17%. London remains the region with the largest levels of cumulative infection to date.
+
+Other indicators (e.g. hospital bed prevalence, reported new cases) continue to suggest a declining epidemic. Prevalence of infection, as estimated by the ONS Community Infections Survey is now around 0.10% in England with some regional heterogeneity. It is hoped that these trends continue, enabling the continued progressive relaxation of pandemic mitigation measures in line with the government’s roadmap to opening society. We will continue to monitor the situation closely.
+
+=======
+Estimates of cumulative infection are low in comparison to some earlier reports. This is due to the inclusion of the prevalence data, which appear to have the effect of reducing the number of infections. Nowhere is this more true than in the North West, where estimates of attack rate have fallen to 18%. London remains the region with the largest levels of cumulative infection to date.
+Other indicators (e.g. hospital bed prevalence, reported new cases) are now beginning to suggest a resurgent epidemic, largely due to the increasing presence of the B.1.617 strain. Prevalence of infection, as estimated by the ONS Community Infections Survey is under 0.10% in England with some regional heterogeneity. Given the low prevalence, the increasing transmission is not an immediate concern, but the presence of a rapidly spreading new strain does provide some alarm. We will continue to monitor the situation closely.
+>>>>>>> origin/COVID_vacc_amgs_merged
