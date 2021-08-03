@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -38,8 +38,8 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210716"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+google.data.date <- format(ymd("20210730"), format = "%Y%m%d")
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -77,7 +77,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 438
+num.prev.days <- 452
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -96,19 +96,19 @@ contact.model <- 6
 contact.prior <- "ons"
 ## if (contact.model != 4)
     scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
-## Does each age group have a single IFR or one that varies over time?
-single.ifr <- FALSE
-NHS28.alt.ifr.prior <- TRUE && region.type == "NHS"
-if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
-## tbreaks.interval <- 365.25 / 4
-scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, ifelse(NHS28.alt.ifr.prior, "lower", ""))
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
 	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
+## Does each age group have a single IFR or one that varies over time?
+single.ifr <- FALSE
+NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
+if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
+if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+tbreaks.interval <- 365.25 / 4
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "quarters")
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
@@ -128,15 +128,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210712", c("Prev431_cm6ons_IFR4bplower_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths_chain2",
-                                                                                   "Prev431_cm6ons_IFR4bplower_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210716", c("NHS60_timeuse",
+                                                                                   "Prev438_cm6ons_IFR4bplower_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210716_stable_household_deaths")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210712", c("Prev431_cm6ons_IFR4bplower_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths_chain2",
-                                                                                    "Prev431_cm6ons_IFR4bplower_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210716", c("NHS28_timeuse",
+                                                                                    "Prev438_cm6ons_IFR4bplower_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210716_stable_household_deaths")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210712", c("Prev431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210709_stable_household_deaths",
-                                                                               "Prev431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210709_timeuse_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210716", c("ONS60_timeuse",
+                                                                               "Prev438_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210716_stable_household_deaths")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -175,7 +175,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210714")
+date.prev <- lubridate::ymd("20210728")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -214,6 +214,6 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(1.8, 1.7, 1.4, 1.4, rep(1.4, 7)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(1.4, 1.4, 1.7, rep(1.3, 8)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
