@@ -60,8 +60,8 @@ save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no
 
 pth <- getwd()
 setwd(Rfile.dir)
-render(
+rmarkdown::render(
     'lives_saved_report.Rmd',
-    html_document(pandoc_args = "--self-contained"),
     output_dir = pth
-    )
+    clean = T
+)

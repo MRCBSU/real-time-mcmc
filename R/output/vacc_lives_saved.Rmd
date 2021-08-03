@@ -1,0 +1,279 @@
+---
+title: Direct and indirect impact of the vaccination prgramme on COVID-19 caused mortality
+output:
+  bookdown::html_document2: default
+date: "`r Sys.Date()`"
+bibliography: references.bib
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(cache = T,
+                      echo = F,
+                      message = F,
+                      warning = F,
+                      dpi=300,
+											dev = "png",
+                      eval = T)
+ggplot2::theme_set(ggplot2::theme_bw(10))
+
+# Only used if standalone == T
+```
+
+```{r get_data}
+if (standalone) {
+  library("tidyverse")
+  library("lubridate")
+  library("qs")
+  library("ggpubr")
+# Get the data from the shared file
+} else {
+  source("smbclient.R")
+  fns <- c(get_latest_file("Real time modelling output/vaccinations_deaths", "*.RData", cache_path))
+}
+```
+
+```{r tabAssumptions, eval = F}
+tibble(
+  Against = c(rep("Infection", 2), rep("Disease", 4)),
+  Type = c("", "", "AZ", "AZ", "Pfizer", "Pfizer"),        
+  Dose = rep(c("1", "2"), 3),
+  Efficacy = c(48, 60, 74, 88, 90, 98)) %>%
+  dplyr::mutate(Efficacy = paste0(Efficacy, "%")) %>%
+  knitr::kable(caption = "Main vaccine efficacy assumptions in the model")
+```
+
+```{r}
+object_map_df <- 
+  list(
+       list(object = "deaths.no.vac", outcome = "Mortality", scenario = "No vaccination"),
+       list(object = "deaths.vac", outcome = "Mortality", scenario = "Vaccination"),
+       list(object = "infecs.no.vac", outcome = "Infection", scenario = "No vaccination"),
+       list(object = "infecs.vac", outcome = "Infection", scenario = "Vaccination"),
+       list(object = "preval.no.vac", outcome = "Prevalence", scenario = "No vaccination"),
+       list(object = "preval.vac", outcome = "Prevalence", scenario = "Vaccination")
+       ) %>% dplyr::bind_rows()
+# Load the data into a data frame
+# fns holds the filename
+fns %>% purrr::map(function(fn) {
+  load(fn)
+  object_map_df %>% purrr::pmap(function(object, outcome, scenario) {
+    obj <- get(object)
+    apply(obj, c(1,3), sum) -> m
+    as.data.frame(m) %>%
+      dplyr::mutate(Outcome = outcome, Scenario = scenario, np = dplyr::row_number())
+  }) %>%
+    dplyr::bind_rows() %>%
+      dplyr::mutate(Model = dplyr::case_when(stringr::str_detect(fn, "prev") ~ "ONS/Death", T ~ "Death"))
+}) %>%
+    dplyr::bind_rows() -> df
+
+
+df %>% dplyr::filter( Scenario == "Vaccination", Outcome == "Infection", np == 1) -> test_df
+if (nrow(test_df) > 1)
+  stop("Loading data has failed")
+
+stringr::str_extract(fns[1], "\\d{8}") -> fn_date
+fn_date %>% lubridate::as_date(format = "%Y%m%d") -> cutDate
+
+qsave(fn_date, "date.qs")
+if (!standalone)
+  qsave(fn_date, file.path(cache_path, "last_date.qs"))
+
+df %>% tidyr::gather(Date, value, -Scenario, -Model, -np, -Outcome) %>%
+  dplyr::mutate(Date = lubridate::as_date(as.numeric(Date))) %>%
+# Till the end of last week
+  dplyr::filter(Date <= cutDate) -> data_df
+
+# Throw if we have more than one model
+if (length(unique(data_df$Model)) != 1)
+  stop("If we compare multiple models then we should adapt the figures below")
+
+qsave(data_df, "outcomes.qs")
+```
+
+
+
+```{r figMortality, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
+data_df <- qread("outcomes.qs")
+
+# We only use the data up till now
+cutDate <- max(data_df$Date)
+
+
+data_df %>%
+  dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
+  dplyr::group_by(Date, Scenario, Model, Outcome) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                   value = quantile(value, Quantile)) %>%
+  dplyr::ungroup() %>%
+  tidyr::spread(Quantile, value) -> plot_df
+    
+ggplot(data = plot_df) +
+  geom_ribbon(aes(x = Date, ymin = `0.025`, ymax = `0.975`, fill = Scenario), alpha = 0.3) +
+  geom_ribbon(aes(x = Date, ymin = `0.25`, ymax = `0.75`, fill = Scenario), alpha = 0.3) +
+  facet_wrap(. ~ Outcome, nrow = 1, scales = "free") +
+  theme(legend.position="bottom") +
+  ylab("Daily incidence")
+```
+
+```{r cumulative, fig.cap = "Averted number of infections (left) and deaths (right) due to vaccination (cumulativily).", fig.height = 3.5}
+data_df %>%
+  dplyr::filter(Outcome != "Prevalence") %>%
+  tidyr::spread(Scenario, value) %>%
+  dplyr::mutate(Reduction = `No vaccination` - `Vaccination`) %>%
+  dplyr::group_by(Model, Outcome, np) %>%
+  dplyr::arrange(Date) %>%
+  dplyr::mutate(value = cumsum(Reduction)) %>%
+  dplyr::group_by(Model, Outcome, Date) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                   value = round(quantile(value, Quantile))) %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
+  tidyr::spread(Quantile, value) -> plot_df
+
+ggplot(data = plot_df) +
+  geom_ribbon(aes(x = Date, ymin = `0.025`, ymax = `0.975`), fill = "Red", alpha = 0.3) +
+  geom_ribbon(aes(x = Date, ymin = `0.25`, ymax = `0.75`), fill = "Red", alpha = 0.3) +
+  facet_wrap(. ~ Outcome, nrow = 1, scales = "free") +
+  theme(legend.position="bottom") +
+  ylab("Averted infections/mortality (cumulative)")
+```
+
+```{r tableMortality}
+data_df %>%
+  dplyr::filter(Outcome != "Prevalence") %>%
+  tidyr::spread(Scenario, value) %>%
+  dplyr::mutate(Reduction = `No vaccination` - `Vaccination`) %>%
+  dplyr::group_by(np, Model, Outcome) %>%
+  dplyr::summarise(Reduction = sum(Reduction)) %>%
+  dplyr::group_by(Model, Outcome) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                   #Reduction = round(quantile(Reduction, Quantile))) %>%
+                   Reduction = quantile(Reduction, Quantile)) %>%
+  dplyr::mutate(Reduction = dplyr::case_when(Outcome == "Infection" & Quantile < 0.4 ~ 1000*floor(Reduction/1000),
+                                             Outcome == "Infection" & Quantile > 0.6 ~ 1000*ceiling(Reduction/1000),
+                                             Outcome == "Infection" ~ 1000*round(Reduction/1000),
+                                             Outcome == "Mortality" & Quantile < 0.4 ~ 100*floor(Reduction/100),
+                                             Outcome == "Mortality" & Quantile > 0.6 ~ 100*ceiling(Reduction/100),
+                                             Outcome == "Mortality" ~ 100*round(Reduction/100),
+                                             T ~ NA_real_)) %>%
+  dplyr::summarise(Reduction = paste(Reduction[3], " [", Reduction[1], ", ", Reduction[5], "]")) %>%
+  dplyr::mutate(Model = "PHE/Cambridge") %>%
+  knitr::kable(caption = paste0("Inferred reduction in infections and mortality as the result of vaccination up to ", cutDate))
+```
+
+## Log transformed
+
+```{r figMortalityLog, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
+data_df <- qread("outcomes.qs")
+cutDate <- max(data_df$Date)
+
+data_df %>%
+  dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
+  dplyr::group_by(Date, Scenario, Model, Outcome) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                   value = quantile(value, Quantile)) %>%
+  dplyr::ungroup() %>%
+  tidyr::spread(Quantile, value) -> plot_df
+    
+ggplot(data = plot_df) +
+  geom_ribbon(aes(x = Date, ymin = `0.025`, ymax = `0.975`, fill = Scenario), alpha = 0.3) +
+  geom_ribbon(aes(x = Date, ymin = `0.25`, ymax = `0.75`, fill = Scenario), alpha = 0.3) +
+  facet_wrap(. ~ Outcome, nrow = 1, scales = "free") +
+  theme(legend.position="bottom") +
+  ylab("Daily incidence") +
+  scale_y_log10()
+
+```
+
+```{r cumulativeLog, fig.cap = "Averted number of infections (left) and deaths (right) due to vaccination (cumulativily).", fig.height = 3.5}
+data_df %>%
+  dplyr::filter(Outcome != "Prevalence") %>%
+  tidyr::spread(Scenario, value) %>%
+  dplyr::mutate(Reduction = `No vaccination` - `Vaccination`) %>%
+  dplyr::group_by(Model, Outcome, np) %>%
+  dplyr::arrange(Date) %>%
+  dplyr::mutate(value = cumsum(Reduction)) %>%
+  dplyr::group_by(Model, Outcome, Date) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                   value = round(quantile(value, Quantile))) %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
+  tidyr::spread(Quantile, value) -> plot_df
+
+ggplot(data = plot_df) +
+  geom_ribbon(aes(x = Date, ymin = `0.025`, ymax = `0.975`), fill = "Red", alpha = 0.3) +
+  geom_ribbon(aes(x = Date, ymin = `0.25`, ymax = `0.75`), fill = "Red", alpha = 0.3) +
+  facet_wrap(. ~ Outcome, nrow = 1, scales = "free") +
+  theme(legend.position="bottom") +
+  ylab("Averted infections/mortality (cumulative)") +
+  scale_y_log10()
+
+```
+
+## By age group
+
+```{r load_by_age}
+if (length(fns) > 1)
+  stop("We need to fix this to load multiple model results")
+
+load(fns)
+dimnames(get(object_map_df$object[1])) -> lst
+if (length(lst) != 3)
+  stop("Did we add more strata to the datasets?")
+ag <- factor(lst$age, levels = lst$age)
+
+object_map_df %>%
+  dplyr::filter(outcome != "Prevalence") %>%
+  purrr::pmap(function(object, outcome, scenario) {
+  tibble::tibble() %>% 
+    tidyr::expand(Date = lubridate::as_date(as.numeric(lst$date)), AgeGroup = ag, np = as.numeric(lst$iteration)) %>%
+    dplyr::mutate(value = as.vector(get(object))) %>%
+    dplyr::arrange(np, AgeGroup, Date) %>%
+    dplyr::filter(Date > lubridate::as_date("2020-09-01") & Date <= cutDate) %>%
+    dplyr::mutate(Outcome = outcome, Scenario = scenario)
+}) %>%
+  dplyr::bind_rows() -> df0
+ 
+#format(object.size(df0), units = "Mb")
+df0 %>%
+  tidyr::spread(Scenario, value) %>%
+  dplyr::mutate(Reduction = `No vaccination` - Vaccination) %>%
+  dplyr::select(-`No vaccination`, -Vaccination) %>%
+  dplyr::group_by(np, AgeGroup, Outcome) %>%
+  dplyr::summarise(Reduction = sum(Reduction)) %>%
+  dplyr::group_by(AgeGroup, Outcome) %>%
+  dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+                 Reduction = quantile(Reduction, Quantile)) %>%
+  dplyr::mutate(Reduction = signif(Reduction, 3)) %>%
+  dplyr::summarise(Reduction = paste(Reduction[3], " [", Reduction[1], ", ", Reduction[5], "]")) %>%
+  dplyr::mutate(Model = "PHE/Cambridge") %>%
+  dplyr::select(Model, Outcome, AgeGroup, Reduction) %>%
+  dplyr::ungroup() %>%
+  dplyr::arrange(Model, Outcome, AgeGroup) %>%
+  knitr::kable(caption = paste0("Inferred reduction in infections and mortality by age group as the result of vaccination up to ", cutDate))
+```
+
+```{r attack_rate_by_age, eval = F}
+# Should load infecs.vac as above
+df %>%
+  dplyr::group_by(np, AgeGroup) %>%
+  dplyr::arrange(Date) %>%
+  dplyr::mutate(value = cumsum(value)) %>%
+  dplyr::mutate(Week = lubridate::isoweek(Date), Year = lubridate::isoyear(Date)) %>%
+  dplyr::group_by(np, Week, Year, AgeGroup) %>%
+  # Take the last day of the week
+  dplyr::arrange(Date) %>%
+  dplyr::slice(dplyr::n()) %>%
+  dplyr::ungroup() -> cumulative_incidence_df
+  #dplyr::group_by(Week, Year, AgeGroup) %>%
+  #dplyr::summarise(Quantile = c(0.025, 0.25, 0.5, 0.75, 0.975),
+  #               value = quantile(value, Quantile)) %>%
+  #dplyr::ungroup() %>%
+  #dplyr::arrange(Year, Week, Quantile) ->
+  #  cumulative_incidence_df
+
+qs::qsave(cumulative_incidence_df, file = "cumulative_incidence.qs")
+```
+
+# References

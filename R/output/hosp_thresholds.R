@@ -4,7 +4,7 @@ require(cubelyr)
 suppressMessages(extract <- R.utils::extract)
 
 ## Get the repo location
-proj.dir <- file.path(dirname(dirname(getwd())), "real-time-mcmc")
+proj.dir <- file.path(dirname(dirname(getwd())))
 
 ## Load in convolution functions for estimating hospitalisations, ICUs and deaths
 source(file.path(proj.dir, "R", "output", "convolution.R"))
@@ -31,7 +31,7 @@ apply.convolution <- function(start, func, over = "date") {
 }
 
 ## Where are our outputs to be found
-output.dir <- file.path(proj.dir, "model_runs", "20210709", "NHS60_chain2")
+output.dir <- file.path(proj.dir, "model_runs", "20210716", "NHS60_timeuse")
 load(file.path(output.dir, "projections_midterm.RData"))
 
 ## Estimated and projected incidence stored in `incidence' object
@@ -62,11 +62,11 @@ los.dist <- cut(samp, 0:ceiling(max(samp))) %>%
 
 
 ## Beds available - fields icu_prev_acute1 in the NHS SitRep
-beds.used <- c(137, 503, 479, 586, 697, 175, 133)
-## beds.used <- c(82, 322, 296, 285, 515, 109, 97)
+## beds.used <- c(137, 503, 479, 586, 697, 175, 133)
+beds.used <- c(197, 560, 646, 806, 741, 275, 207)
 beds.available <- as_tibble(list(capacity = c(9915, 12760, 15092, 14934, 13331, 10993, 8948), region = dimnames(infections)$region))
 beds.total <- beds.used / (beds.used + beds.available$capacity)
-beds.day <- lubridate::as_date("20210711")
+beds.day <- lubridate::as_date("20210717")
 
 ## Function to translate these infections into hospital occupancy
 hosp.occupancy <- function(infections = infections, delay1 = warwick.delay, delay2 = los.dist){
