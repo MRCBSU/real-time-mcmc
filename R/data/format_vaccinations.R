@@ -154,7 +154,7 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
-
+## if(TRUE){
     ## Extract file from archive
     if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
         file.copy(input.loc, file.path("data", basename(input.loc)))
@@ -322,7 +322,6 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 
     jab.dat <- bind_rows(jab.dat1, jab.dat2)
     rm(jab.dat1, jab.dat2)
-    
     jab.dat <- jab.dat %>%
         mutate(sdate = sdate + vacc.lag) %>%
         get.region() %>%
