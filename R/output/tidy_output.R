@@ -184,7 +184,9 @@ nice.array <- function(x)
         dimnames = output.dimnames)
 infections <- nice.array(NNI); rm(NNI)
 sero <- nice.array(sero)
-if(vacc.flag) vacc.infections <- nice.array(DNNI); rm(DNNI)
+if(vacc.flag){
+    vacc.infections <- nice.array(DNNI); rm(DNNI)
+} else vacc.infections <- infections
 cum_infections <- infections %>% apply.over.named.array("date", cumsum)
 if(dths.flag){
     deaths2 <- nice.array(Deaths)
@@ -270,6 +272,7 @@ if (!dths.flag) {
     death.data <- derived.quantity(ifr,
                                    overdispersion.param = params$hosp_negbin_overdispersion,
                                    convolution = F.death,
+                                   series = vacc.infections,
                                    merge.youngest.grps = 3 + merge.flg,
                                    merge.youngest.label = ifelse(merge.flg, "<45", "<25"))
     deaths <- death.data$mean
@@ -346,7 +349,6 @@ if (gp.flag == 0) {
 ## Get population
 population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
-  
 print('Saving results')
 save.objs <- c("infections", "cum_infections", "vacc.infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
      "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")

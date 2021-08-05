@@ -1,6 +1,6 @@
 ## Get the variables as they were saved on the original computer
 setup.env <- new.env()
-Rfile <- "mcmc"
+Rfile <- "tmp"
 load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
@@ -11,16 +11,14 @@ if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-## in.repo <- "real-time-mcmc"
-## out.repo <- "real-time-mcmc"
-in.repo <- "_INLA"
-out.repo <- ""
+in.repo <- "real-time-mcmc"
+out.repo <- "real-time-mcmc"
+## in.repo <- "_new_base"
+## out.repo <- ""
 
 ## Change location of output directory
-in.base <- "PrevINLA431_cm6ons_IFR4bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210716_timeuse_household_deaths"
-out.base <- "NHS60_timeuse"
-in.base <- "2021-07-14_92"
-out.base <- "2021-07-14_78_92"
+in.base <- "PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210730_timeuse_household_deaths"
+out.base <- "ONS60"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

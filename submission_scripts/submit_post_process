@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1,2,5
+#SBATCH --array=0
 
 #SBATCH -p skylake-himem
 #SBATCH --qos=covid0
@@ -126,9 +126,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 echo -e "\nIn working directory\n${workdir}\n"
-if [ -f "posterior_report10" ]; then
+# if [ -f "posterior_report10" ]; then
     eval $CMD
-fi
+# fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
