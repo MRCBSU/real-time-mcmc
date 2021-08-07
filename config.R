@@ -38,7 +38,7 @@ if (args[2] == "All")  {
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
 
-google.data.date <- format(ymd("20210730"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210806"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
@@ -77,7 +77,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 452
+num.prev.days <- 459
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -106,9 +106,9 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
-tbreaks.interval <- 365.25 / 4
-scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "quarters")
+if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+## tbreaks.interval <- 365.25 / 4
+scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
@@ -175,7 +175,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210728")
+date.prev <- lubridate::ymd("20210804")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -214,6 +214,6 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(1.4, 1.4, 1.7, rep(1.3, 8)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(1.4, 1.7, 1.5, rep(1.1, 8)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
