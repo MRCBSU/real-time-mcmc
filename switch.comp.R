@@ -4,21 +4,21 @@ Rfile <- "tmp"
 load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
-in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
+## in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
-## in.root <- "/rds/user/aa995/hpc-work"
+in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
 in.repo <- "real-time-mcmc"
 out.repo <- "real-time-mcmc"
+## in.repo <- "_new_base"
+## out.repo <- ""
 
 ## Change location of output directory
-in.base <- "PrevINLA424_cm6ons_IFR4bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210709_timeuse_household_new_base_deaths"
-out.base <- "NHS60_chain1"
-## in.base <- "_new_base"
-## out.base <- ""
+in.base <- "PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210730_timeuse_household_deaths"
+out.base <- "ONS60"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)
