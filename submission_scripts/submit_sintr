@@ -1,0 +1,1 @@
+sintr -A MRC-BSU-SL2-CPU -p skylake-himem -N1 -n1 -c4 -t 1:0:0 --qos=INTR

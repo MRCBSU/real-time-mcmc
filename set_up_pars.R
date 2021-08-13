@@ -93,9 +93,9 @@ if(efficacies == "Nick"){
 prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
 prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
-if(efficacies == "Jamie")
+vacc.pi.bps <- efficacies %in% c("Jamie", "PHE")
+if(vacc.pi.bps)
     write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
-vacc.pi.bps <- (efficacies == "Jamie")
 
 ## Efficacy against disease from two vaccine doses
 if(efficacies == "Nick"){
@@ -110,9 +110,8 @@ if(efficacies == "Nick"){
 prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
-if(efficacies == "Jamie")
+if(vacc.pi.bps)
     write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
-vacc.pi.bps <- (efficacies == "Jamie")
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]
@@ -210,7 +209,7 @@ if(single.ifr){
 } else { ## IFR changes over time, presume logistically...
     if(nA > 1){
         value.ifr <- logit(c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791))
-        var.ifr <- rep(0.000360, nA)
+        var.ifr <- rep(0.000360, length(value.ifr))
     } else {
         value.ifr <- logit(c(0.007, 1))
         var.ifr <- rep(0.005, 2)
