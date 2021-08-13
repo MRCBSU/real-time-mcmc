@@ -610,6 +610,97 @@ void regional_matrix_param_GP_PATCH(gsl_matrix* out_mat, const updParamSet &para
 }
 */
 
+
+
+// * * * * * * * * * *
+
+#include <cmath>
+#include "LSODA.h"
+
+
+// Believe it or not, pi is not officially defined
+static constexpr double PI = 3.14159265358979323846;
+
+// TODO: N is fixed, but needs to match what is defined in mod_pars.txt
+static const int N = 10;
+
+// Data: 0 to N-1 are z_n, N is sigma, N+1 is T (as a double)
+void dbetadt(double t, double* y, double* ydot, void* data) {
+  double sum = 0;
+  double *params = static_cast<double *>(data);
+  double T = params[N+1];
+
+  for (int n = 0; n < N; n++) {
+    double phi = sqrt(2.0/T) * cos((2*n - 1) * PI * t / (2.0 * T));
+    sum += params[n] * phi;
+  }
+
+  // Previous, non-Brownian equation:
+  ydot[0] = -1 * y[0] + params[N] * sum;
+  
+  // Brownian:
+  //ydot[0] = params[N] * sum;
+}
+
+
+// T = num days * num time steps
+void beta_ou_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::paramIndex index, upd::paramIndex sd_index, const int region_index,  int days, const int steps_per_day) {
+
+  gsl_vector_const_view view = paramSet.lookup(index, region_index);
+
+  // TODO
+  // The number of days between the start of the run and the start of lockdown.
+  // Fixed for this pandemic, but should become a mod_inputs setting.
+  int days_offset = 36;
+  days = days - days_offset;
+  
+  double params[N+2];
+  for (int n = 0; n < N; n++)
+    params[n] = gsl_vector_get(&view.vector, n);
+  // TODO: We assume 1st component is ignored.
+  // TODO: We assume param is global
+  params[N] = paramSet[sd_index].values[1];
+  params[N+1] = days - 0.5;
+
+  LSODA lsoda;
+  std::vector<double> y = { 0 };   // Starting value
+  std::vector<double> out;
+  int istate = 1;
+
+  double t = 0;
+  double tout = 0.5;
+
+  // Before the lockdown, return exp(0). The first element of the ODE is also exp(0).
+  for (int i = 0; i <= days_offset * steps_per_day; i++)
+    gsl_vector_set(out_vec, i, exp(0));
+
+  for (int i = 1; i < days * steps_per_day; i++) {
+    lsoda.lsoda_update(dbetadt,
+		       1, // size of system
+		       y,  // starting vals
+		       out,  // output
+		       &t,  // start time
+		       tout,  // next output time
+		       &istate,  // state variable used by solver
+		       &params, // parameters
+		       1.49012e-8, //rtol - default used by scipy odeint()
+		       1.49012e-8  //atol - (C++ default is 1e-6)
+      );
+    
+    tout += 0.5;
+    
+    // The result is returned in elt 1, not elt 0
+    gsl_vector_set(out_vec, i+(days_offset*steps_per_day), exp(out[1]));
+
+    //cout << setprecision(16) << tout << "\t" << out[1] << endl;
+  }
+}
+
+
+// * * * * * * * * * *
+
+
+
 void block_regional_parameters(regional_model_params& out_rmp,
 			       const updParamSet &updPars,
 			       const global_model_instance_parameters& in_gmip,
@@ -687,9 +778,10 @@ void block_regional_parameters(regional_model_params& out_rmp,
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookup(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_lbeta_rw")){
-    regional_time_vector_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, region_index, in_gmip.l_transmission_time_steps_per_day);
-    if(0 != gsl_vector_get(out_rmp.l_lbeta_rw, 0))
-      gsl_vector_scale(out_rmp.l_lbeta_rw, 1 / gsl_vector_get(out_rmp.l_lbeta_rw, 0)); // Random-walk necessarily centred on 0.
+    beta_ou_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, upd::LBETA_RW_SD, region_index, in_gmip.l_duration_of_runs_in_days, in_gmip.l_transmission_time_steps_per_day);
+    //regional_time_vector_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, region_index, in_gmip.l_transmission_time_steps_per_day);
+    //if(0 != gsl_vector_get(out_rmp.l_lbeta_rw, 0))
+    //  gsl_vector_scale(out_rmp.l_lbeta_rw, 1 / gsl_vector_get(out_rmp.l_lbeta_rw, 0)); // Random-walk necessarily centred on 0.
   }
   if(update_flags.getFlag("l_sensitivity"))
   { // STRICTLY A SCALAR QUANTITY

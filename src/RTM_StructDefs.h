@@ -264,39 +264,6 @@ void mcmcPars_free(mcmcPars&);
 // LIKELIHOOD STRUCTURE
 
 
-
-class rlikelihood {
-public:
-  double region_lfx;
-  double GP_lfx;
-  double Hosp_lfx;
-  double Deaths_lfx;
-  double Sero_lfx;
-  double Viro_lfx;
-  double Prev_lfx;
-
-  rlikelihood()
-    : region_lfx(0), GP_lfx(0), Hosp_lfx(0), Deaths_lfx(0),
-      Sero_lfx(0), Viro_lfx(0), Prev_lfx(0) { }
-};
-
-class glikelihood {
-public:
-  double total_lfx;
-  double bar_lfx;
-  double sumsq_lfx;
-
-  std::vector<rlikelihood> rlik;
-
-  glikelihood()
-    : total_lfx(0), bar_lfx(0), sumsq_lfx(0) { }
-
-  glikelihood(const global_model_instance_parameters &gmip)
-    : total_lfx(0), bar_lfx(0), sumsq_lfx(0),
-      rlik(gmip.l_num_regions) { }
-};
-
-/*
 // CCS: Rewritten as a class to remove need for manual memory management
 class likelihood {
 public:
@@ -333,7 +300,7 @@ public:
       Prev_lfx.allocZero(num_regions);
   }
 };
-*/
+
 //void likelihood_alloc(likelihood&, const global_model_instance_parameters);
 //void likelihood_free(likelihood&);
 //void likelihood_memcpy(likelihood&, const likelihood&);

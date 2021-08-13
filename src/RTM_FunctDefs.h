@@ -42,11 +42,9 @@ int mix_timecat(const int, const gsl_vector_int*, const double);
 void mixing_matrix_parameterise(mixing_model&);
 
 // FUNCTIONS IN RTM_Likelihoods.cc
-//void block_log_likelihood(likelihood& llhood, Region* meta_region, int region, bool flag_update_transmission_model, bool flag_update_reporting_model, bool flag_update_GP_likelihood, bool flag_update_Hosp_likelihood, bool flag_update_Viro_likelihood, bool flag_update_Sero_likelihood, bool flag_update_Prev_likelihood, const global_model_instance_parameters &gmip, updParamSet &pars, bool inBlock = false);
-
-void fn_log_likelihood_global(glikelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
+void fn_log_likelihood_global(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
 		       const global_model_instance_parameters &, gslVector&, gslVector&);
-void fn_log_likelihood_region(rlikelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
+void fn_log_likelihood(likelihood&, Region*, int, bool, bool, bool, bool, bool, bool, bool,
 		       const global_model_instance_parameters &, gslVector&, gslVector&);
 void output_per_selected_period(const int&, const gsl_matrix*, gsl_matrix*);
 double fn_log_lik_positivity(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
@@ -55,6 +53,6 @@ double fn_log_lik_negbindata(const gsl_matrix*, const gsl_matrix*, const gsl_mat
 double fn_log_lik_loggaussian_fixedsd(const gsl_matrix*, const gsl_matrix*, const gsl_matrix*);
 
 // FUNCTIONS IN RTM_MetropHast.cc
-void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, Region*, glikelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
+void metrop_hast(const mcmcPars&, globalModelParams&, updParamSet &, Region*, Region*, likelihood&, const global_model_instance_parameters&, const mixing_model&, gsl_rng*);
 
 #endif

@@ -4,6 +4,8 @@ HEADERS = $(wildcard src/*.h)
 RTM_OBJS = $(SRC:src/%.cc=build/rtm/%.o)
 RTM_OPTIM_OBJS = $(SRC:src/%.cc=build/rtm_optim/%.o)
 RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
+RTM_TEST_OBJS = $(SRC:src/%.cc=build/rtm_test/%.o)
+
 RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc2/%.o)
@@ -13,6 +15,10 @@ CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -std=c++11
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	$(CXX) $(RTM_DEBUG_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
+
+# Multicore debugging build
+rtm_test: $(RTM_TEST_OBJS) $(HEADERS)
+	$(CXX) -fopenmp $(RTM_TEST_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_test
 
 
 rtm: $(RTM_OBJS) $(HEADERS)
@@ -41,6 +47,11 @@ clean:
 build/rtm_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_debug
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
+
+build/rtm_test/%.o: src/%.cc
+	@mkdir -p build/rtm_test
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -fopenmp -DUSE_THREADS -O0 -march=native
+
 
 build/rtm/%.o: src/%.cc
 	@mkdir -p build/rtm

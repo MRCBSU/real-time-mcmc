@@ -173,7 +173,7 @@ void write_progress_report(const string& report_type, const int int_report_no, c
 
 // ALL-PURPOSE REPORT FUNCTION //
 void write_progress_report(const string& report_type, const int& int_report_no, const int& int_iter, const int& chain_length,
-			   const globalModelParams& gmp, const glikelihood& llhood,
+			   const globalModelParams& gmp, const likelihood& llhood,
 			   bool posterior_stats_flag, bool acceptance_flag, bool propvar_flag)
 {
   string filename(report_type);
@@ -250,7 +250,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 updParamSet &paramSet,
 		 Region* state_country,
 		 Region* country2,
-		 glikelihood& lfx,
+		 likelihood& lfx,
 		 const global_model_instance_parameters& gmip,
 		 const mixing_model& base_mix,
 		 gsl_rng* r)
@@ -292,7 +292,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   }
   
   // Likelihood
-  glikelihood prop_lfx(gmip);
+  likelihood prop_lfx(gmip);
   prop_lfx = lfx;
 
   int maximum_block_size = simulation_parameters.maximum_block_size;
@@ -353,14 +353,9 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       gsl_vector_int_set_1ton(b[int_param]);
       if(theta_i_size <= maximum_block_size)
 	gsl_vector_int_set_1ton(a[int_param]);
-
-      // OPEN PARAMETER OUTPUT FILES...
-      //string filename("coda_");
-      //filename += theta.param_list[int_param].param_name;
-      //if(theta.param_list[int_param].flag_update)
-      //  output_codas[int_param].open(filename.c_str(), ios::out|ios::trunc|ios::binary);
     }
 
+  // OPEN PARAMETER OUTPUT FILES...
   for (int i = 0; i < paramSet.params.size(); i++) {
     string filename("coda_");
     filename += paramSet[i].param_name;
@@ -368,53 +363,84 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       output_codas[i].open(filename, ios::out|ios::trunc|ios::binary);
   }
 
+  // TODO: The binom coeff is still included, but seems on initial test to
+  // run faster?!
+  //cout << "Warning: Code includes unnecessary calculation of binomial coeff in RTM_Likelihoods:fn_log_lik_positivity" << endl;
+  
+  //cout << "Warning: Transform disabled\n";
+  cout << "All regions\n";
+  cout << "Non-Brownian 10\n";
+  //cout << "Warning: OU ODE Disabled\n";
+  
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)
     {
-      if (int_iter % 50000 == 0 && int_iter > 0 && true)
+      if (int_iter % 10000 == 0 && int_iter > 0 && true)
 	std::cout << "Iteration " << int_iter << " of " << simulation_parameters.num_iterations << std::endl;
 
       // Block update
 
-      // Update two blocks every iter: global block and one of the local blocks
-      // int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
+      // Local first, one block per iter
+      /*
+      int reg = gsl_rng_uniform_int(r, nregions) + 1;
+
+      paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+      paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+      paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx);
+      paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx, int_iter);
+
+      paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx, int_iter);
+   
+      // Python only updates selected region
+      if (int_iter > 199) {
+	paramSet.blocks[reg].adaptiveUpdate(int_iter);
+	paramSet.blocks[0].adaptiveUpdate(int_iter);
+      }
+      */
+
+      // #######################################################
+      // #######################################################
+      // #######################################################
+      // #######################################################
+      // #######################################################
+      // #######################################################
+      
+      // Local
+      for (int reg = 1; reg <= nregions; reg++) {
+	paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
+	paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+      }
+
+#pragma omp parallel for default(shared) schedule(static) if(paramSet.blocks[1].size() > 0)
+      for (int reg = 1; reg <= nregions; reg++)
+	paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx);
+
+      for (int reg = 1; reg <= nregions; reg++)
+	paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx, int_iter);
       
       // Global
+      paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+      paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+      paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx, int_iter);
 
-      if(paramSet.blocks[0].size() > 0){
-	paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
-	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-	if (int_iter > 199)
-	  paramSet.blocks[0].adaptiveUpdate(int_iter);
-      }
-      // Local
-      if(paramSet.blocks[1].size() > 0){
-	for (int reg = 1; reg <= nregions; reg++) {
-	  paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
-	  paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
-	}
-      }
-#pragma omp parallel for default(shared) schedule(static) if(paramSet.blocks[1].size() > 0)
-      for (int reg = 1; reg <= nregions; reg++) {
-	paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
-      }
 
-      if(paramSet.blocks[1].size() > 0){
+      if (int_iter > 199) {
+	paramSet.blocks[0].adaptiveUpdate(int_iter);
 	for (int reg = 1; reg <= nregions; reg++) {
-	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-	  if (int_iter > 199)
 	  paramSet.blocks[reg].adaptiveUpdate(int_iter);
 	}
       }
-
-      if (debug) {
+      
+      
+      if (true) {
 	paramSet.outputPars();
-	if (int_iter % 100 == 0 && int_iter > 0)
+	if (int_iter % 1000 == 0 && int_iter > 0)
 	  paramSet.printAcceptRates(int_iter);
       }
       
-      // Update Posterior mean and sumsq on a per-parameter basis
+      // Update posterior mean and sumsq on a per-parameter basis
       if (int_iter >= simulation_parameters.burn_in) {
 	for (updParam& par : paramSet.params) {
 	  // mean/subsq only defined if flag_update = true
@@ -437,7 +463,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
 	output_coda_lfx.write(reinterpret_cast<char const*>(&(paramSet.lfx.total_lfx)), sizeof(double));
       }
-    
+
       // Output model statistics
       if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_stats_every)) {
 	for (int reg = 0; reg < nregions; reg++) {
@@ -479,13 +505,6 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 	prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
 	prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
-	
-	// TODO: Does it make more sense to copy the whole lfx object at the
-	// start of each iter?
-	// for (updParamBlock& block : paramSet.blocks) {
-	//  block.prop_lfx.bar_lfx = paramSet.lfx.bar_lfx;
-	//  block.prop_lfx.sumsq_lfx = paramSet.lfx.sumsq_lfx;
-	// }
       }
 
       // Output MCMC sampler progress reports

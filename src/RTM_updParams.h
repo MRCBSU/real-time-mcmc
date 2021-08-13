@@ -14,9 +14,7 @@
 
 // Debugging flags
 //#define USE_OLD_CODE
-//#define SKIP_NEW_CODE
 extern bool debug;  // Set in RTM_updParams.cc
-
 
 // upd = Updateable
 class updParam;
@@ -77,7 +75,7 @@ public:
   infection_to_data_delay hosp_delay;
   infection_to_data_delay death_delay;
 
-  glikelihood lfx;
+  likelihood lfx;
   
   int numRegions;
   
@@ -110,7 +108,7 @@ public:
   // Calculate acceptance ratios (in parallel over blocks)
   void calcAccept(Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix);
   // Accept or reject
-  void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip);
+  void doAccept(gsl_rng *rng, Region* country, const global_model_instance_parameters& gmip, int iter);
   // Adapt MH distribution over time
   void adaptiveUpdate(int iter);
   
@@ -177,20 +175,14 @@ public:
   double laccept;   // Acceptance score
   int numAccept;    // Acceptance rate
   int numProposed;
-
-  // Extract the number of components in block
-  int size() const;
   
-  // likelihood lfx;
-  // likelihood prop_lfx;
-
-  // Initialise likelihood
-  // void setLlhood(likelihood& l) {
-    // lfx = l;
-    // prop_lfx = l;  // Sets vector sizes of prop_lfx
-  // }
   double childProposalDensity;
   double childCurrentDensity;
+
+  // Number of parameter components within update block
+  int size() const {
+    return values.size();
+  }
   
   // TODO: Region ptr breaks default copy/assign/destruct
   // Safe for now as blocks aren't moved/copied once added to blocks vector
@@ -199,9 +191,9 @@ public:
 
   // M-H methods
   void calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter);
-  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, glikelihood& prop_lfx);
-  void calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& prop_lfx);
-  void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, glikelihood& prop_lfx);
+  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, likelihood& prop_lfx);
+  void calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, likelihood& prop_lfx);
+  void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, likelihood& prop_lfx, int iter);
   void adaptiveUpdate(int iter);
 };
 
@@ -219,7 +211,7 @@ public:
   int regionSize;     // For local params, num components per region
 	              // Warning: *Not* number of components per proposal block
   bool global;	// True if global param, false if local
-  
+
   // Prior params: Vector of length number of components.
   std::vector<gslVector> prior_params;
   // If prior is separate parameter, prior_params[i].size() == 0 and the index of
