@@ -211,8 +211,9 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& stream, const gslVector& vec) {
-    for (size_t i = 0; i < vec.size(); i++)
-      stream << vec[i] << " ";
+    for (size_t i = 0; i < vec.size() - 1; i++)
+      stream << vec[i] << ", ";
+    stream << vec[vec.size() - 1];
     return stream;
   }
 

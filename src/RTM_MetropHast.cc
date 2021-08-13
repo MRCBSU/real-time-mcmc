@@ -369,7 +369,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   
   //cout << "Warning: Transform disabled\n";
   cout << "All regions\n";
-  cout << "Non-Brownian 10\n";
+  cout << "Brownian 10\n";
   //cout << "Warning: OU ODE Disabled\n";
   
   // Central Loop //
@@ -840,11 +840,18 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       
     } // END FOR(int_iter < num_iterations)
 
-    for(int int_i = 0; int_i < nregions; int_i++){
+  // Print endpoint
+  for (int i = 0; i < paramSet.params.size(); i++) {
+    if (paramSet[i].flag_update)
+      cout << paramSet[i].param_name << ": " << paramSet[i].values << endl;
+  }
+  
+  
+  for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
     gsl_matrix_free(output_Delta_Dis[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES
-
+    
     Region_free(prop_country[int_i], gmip);
   }
   delete [] prop_country;

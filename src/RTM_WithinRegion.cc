@@ -636,10 +636,10 @@ void dbetadt(double t, double* y, double* ydot, void* data) {
   }
 
   // Previous, non-Brownian equation:
-  ydot[0] = -1 * y[0] + params[N] * sum;
+  //ydot[0] = -1 * y[0] + params[N] * sum;
   
   // Brownian:
-  //ydot[0] = params[N] * sum;
+  ydot[0] = params[N] * sum;
 }
 
 
