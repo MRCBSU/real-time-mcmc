@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=8
+#SBATCH --array=6
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
@@ -142,3 +142,4 @@ eval $CMD
 # echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks_per_node (OMP_NUM_THREADS=$OMP_NUM_THREADS)"
 
 # eval $CMD
+
