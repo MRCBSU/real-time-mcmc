@@ -1,6 +1,7 @@
 suppressMessages(require(lubridate))
 suppressMessages(require(tidyverse))
 suppressMessages(require(gsubfn))
+suppressMessages(require(readxl))
 
 #########################################################
 ## Inputs that should (or may) change on a daily basis
@@ -10,7 +11,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
     input.loc <- "data/raw/serology"
     ## List the possible files in the directory
-    sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("202*csv"))))
+    sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("*xlsx"))))
     ## Pick the most recently added
     input.loc <- rownames(sero.loc)[which.max(sero.loc$mtime)]
 } else {
@@ -22,6 +23,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
     }
 }
 
+## Set the max and min dates for the data
 earliest.date <- start.date
 latest.date <- sero.end.date
 
@@ -50,12 +52,18 @@ possible.col.names <- list(
     sample_date = c("sampledate", "SampleDate"),
     Eoutcome = c("EuroImm_outcome", "EuroImmun_outcome", "euroimmun_outcome"),
     Eresult = c("EuroImmun_units", "EuroImm_Units", "euroimmun_units"),
-    Routcome = c("RBD_units", "RBD_outcome", "rbd_outcome"),
-    Rresult = c("RBD_units", "RBD_Units", "rbd_units")
+    Routcome = c("RBD_outcome", "RBD_outcome", "rbd_outcome"),
+    Rresult = c("RBD_units", "RBD_Units", "rbd_units"),
+    RNoutcome = c("RocheN_outcome", "roche_n_outcome", "Roche_N_outcome"),
+    RNresult = c("RocheN_units", "roche_n_units", "Roche_N_units"),
+    RSoutcome = c("RocheS_outcome", "roche_s_outcome", "Roche_S_outcome"),
+    RSresult = c("RocheS_units", "roche_s_units", "Roche_S_units")
 )
 if(region.type == "ONS") possible.col.names$ONS_region = "ONS_Region"
 
-input.col.names <- suppressMessages(names(read_csv(input.loc, n_max=0)))
+names(read_xlsx(input.loc,sheet = 1, n_max = 0))
+
+input.col.names <- suppressMessages(names(read_xlsx(input.loc,sheet = 1, n_max = 0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
 first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
 col.names <- lapply(possible.col.names, first.valid.col.name)
@@ -94,6 +102,7 @@ thisFile <- function() {
         }
 }
 
+
 ## Where are various directories?
 if(!exists("file.loc")){
     file.loc <- dirname(thisFile())
@@ -131,29 +140,83 @@ sero.col.args[[col.names[["Eoutcome"]]]] <- col_character()
 sero.col.args[[col.names[["Eresult"]]]] <- col_double()
 sero.col.args[[col.names[["Routcome"]]]] <- col_character()
 sero.col.args[[col.names[["Rresult"]]]] <- col_double()
+sero.col.args[[col.names[["RNoutcome"]]]] <- col_character()
+sero.col.args[[col.names[["RNresult"]]]] <- col_double()
+sero.col.args[[col.names[["RSoutcome"]]]] <- col_character()
+sero.col.args[[col.names[["RSresult"]]]] <- col_double()
 if(region.type == "ONS") sero.col.args[[col.names[["ONS_region"]]]] <- col_character()
 sero.cols <- do.call(cols_only, sero.col.args)
 
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
 strPos <- c("+", "Positive", "positive")
-sero.dat <- read_csv(input.loc,
-                     col_types = sero.cols) %>%
+#! read xlsx line needs to have improved robustness
+sero.dat <- read_xlsx(input.loc, sheet = 1,
+                     col_types = c(
+                       "text",
+                       "text",
+                       "text",
+                       "text",
+                       "text",
+                       "date",
+                       "text",
+                       "numeric",
+                       "numeric",
+                       "numeric",
+                       "text",
+                       "text",
+                       "numeric",
+                       "text",
+                       "numeric",
+                       "text",
+                       "numeric",
+                       "text",
+                       "numeric",
+                       "text",
+                       "numeric",
+                       "text",
+                       "text",
+                       "date",
+                       "date",
+                       "text",
+                       "text",
+                       "text"
+                     )) %>%
+  select(!!!syms(names(sero.cols$cols))) %>% 
     rename(!!!col.names) %>%
+    pivot_longer(contains("outcome"), names_to = "assay", values_to = "outcome") %>% 
+    filter(!is.na(outcome)) %>% 
     mutate(SDate = fuzzy_date_parse(sample_date),
-           Positive = endsWith(Eoutcome, "+") | Eoutcome == "Positive")
+           Positive = endsWith(outcome, "+") | outcome == "Positive")
+
+
+## Set which collection to examine
+if(NHSBT.flag) {
+  sero.dat <- sero.dat %>%
+    filter(startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT"))
+} else {
+  sero.dat <- sero.dat %>%
+    filter(startsWith(surv, "RCGP") | startsWith(surv, "rcgp"))
+}
 
 ## Apply filters to get only the data we want.
 sero.dat <- sero.dat %>%
-    filter(startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT")) %>%
     filter(!is.na(region), SDate <= sero.end.date) %>%
     mutate(region = get.region(.),
            age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
            date = SDate - serology.delay)
 
+## Set correct name for the assay we want to examine
+if(RocheS.flag) {
+  roche <- "RSoutcome"
+} else {
+  roche <- "RNoutcome"
+}
+
 ## ## Get into format for use by the rtm
 ## First denominators
 rtm.sam <- sero.dat %>%
+    filter((assay == "Eoutcome" & as_date(date) < ymd("2020-05-22")) | (assay == roche & as_date(date) >= ymd("2020-05-22"))) %>% 
     group_by(date, region, age.grp, .drop = FALSE) %>%
     tally %>%
     right_join(expand_grid(date = as_date(earliest.date:latest.date), ## Add unsamples region, date and age group combinations
@@ -165,6 +228,7 @@ rtm.sam <- sero.dat %>%
     arrange(date)
 ## Then positives
 rtm.pos <- sero.dat %>%
+    filter((assay == "Eoutcome" & as_date(date) < ymd("2020-05-22")) | (assay == roche & as_date(date) >= ymd("2020-05-22"))) %>% 
     filter(Positive) %>%
     group_by(date, region, age.grp, .drop = FALSE) %>%
     tally %>%
@@ -180,6 +244,10 @@ rtm.pos <- sero.dat %>%
 #serosam.files <- str_replace_all(serosam.files, date.data, date.sero.str)
 #seropos.files <- str_replace_all(seropos.files, date.data, date.sero.str)
 names(serosam.files) <- names(seropos.files) <- regions
+
+# If directory required doesn't exist create it
+walk(dirname(serosam.files), ~dir.create(., showWarnings = F, recursive = T))
+
 for(reg in regions){
     region.sam <- pivot_wider(rtm.sam %>%
                               filter(region == reg),
@@ -229,6 +297,9 @@ for(reg in regions){
             )
 
     }
+
+# If directory required doesn't exist create it
+dir.create(out.dir, recursive = T)
 
 ## Save the data
 write_csv(rtm.sam, file.path(out.dir, "sero_samples_data.csv"))
