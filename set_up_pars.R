@@ -224,7 +224,6 @@ if(single.ifr){
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
-        stop()
         if(NHS28.alt.ifr.prior){
             mean.indices <- seq(1, length(pars.ifr), by = 2)
             pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
