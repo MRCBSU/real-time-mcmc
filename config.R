@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -77,7 +77,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 466
+num.prev.days <- 471
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
@@ -106,7 +106,7 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -128,15 +128,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210806", c("Prev459_cm6ons_NHS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_timeuse_household_deaths",
-                                                                                   "Prev459_cm6ons_NHS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_timeuse_household_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210813", c("Prev466_cm6ons_NHS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_timeuse_household_deaths",
+                                                                                   "Prev466_cm6ons_NHS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_timeuse_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210806", c("Prev459_cm6ons_NHS28cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_stable_household_deaths_chain2",
-                                                                                    "Prev459_cm6ons_NHS28cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_stable_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210813", c("Prev466_cm6ons_NHS28cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_timeuse_household_deaths_chain2",
+                                                                                    "Prev466_cm6ons_NHS28cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_stable_household_deaths")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210806", c("Prev459_cm6ons_ONS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_timeuse_household_deaths",
-                                                                               "Prev459_cm6ons_ONS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210806_stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210813", c("Prev466_cm6ons_ONS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_timeuse_household_deaths_chain2",
+                                                                               "Prev466_cm6ons_ONS60cutoff_IFR4bp_18wk2_prev14-0PHE_matrices_20210813_stable_household_deaths")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -175,7 +175,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210811")
+date.prev <- lubridate::ymd("20210816")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
