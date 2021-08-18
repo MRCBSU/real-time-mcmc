@@ -42,7 +42,7 @@ save.text <- "MTP"
 ## projections.file <- "projections_R2.1.RData"
 ## scen.text <- "MTP R2.1"
 ## save.text <- "MTP_R_2.1"
-mtp.filter.date <- lubridate::ymd("20210731") ## ymd(date.data)
+mtp.filter.date <- lubridate::ymd("20210807") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
@@ -396,7 +396,6 @@ if(med.term.flag){
     if(!file.exists(fl.proj))
         stop("Missing projections file")
     load(fl.proj)
-    stop()
     if(exists("prevalence"))
         if(all(dim(prevalence) == dim(infections)))
             prev.flag <- TRUE
