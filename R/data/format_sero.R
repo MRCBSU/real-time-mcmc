@@ -131,11 +131,12 @@ if(!exists("serosam.files")){
                                          "ages_positives.txt")
 }
 ## Which columns are we interested in?
+sero.date.fmt <- "%d-%b-%y"
 sero.col.args <- list()
 sero.col.args[[col.names[["surv"]]]] <- col_character()
 sero.col.args[[col.names[["age"]]]] <- col_integer()
 sero.col.args[[col.names[["region"]]]] <- col_character()
-sero.col.args[[col.names[["sample_date"]]]] <- col_character()
+sero.col.args[[col.names[["sample_date"]]]] <- col_date(sero.date.fmt)
 sero.col.args[[col.names[["Eoutcome"]]]] <- col_character()
 sero.col.args[[col.names[["Eresult"]]]] <- col_double()
 sero.col.args[[col.names[["Routcome"]]]] <- col_character()
@@ -147,48 +148,25 @@ sero.col.args[[col.names[["RSresult"]]]] <- col_double()
 if(region.type == "ONS") sero.col.args[[col.names[["ONS_region"]]]] <- col_character()
 sero.cols <- do.call(cols_only, sero.col.args)
 
+get.col.type <- function(x){
+    ifelse(identical(x, col_character()), "text",
+    ifelse(identical(x, col_double()), "numeric",
+    ifelse(identical(x, col_integer()), "numeric",
+    ifelse(identical(x, col_date(sero.date.fmt)), "date", "skip"))))
+}
+fields <- sapply(sero.col.args[input.col.names], get.col.type)
+
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
 strPos <- c("+", "Positive", "positive")
 #! read xlsx line needs to have improved robustness
-sero.dat <- read_xlsx(input.loc, sheet = 1,
-                     col_types = c(
-                       "text",
-                       "text",
-                       "text",
-                       "text",
-                       "text",
-                       "date",
-                       "text",
-                       "numeric",
-                       "numeric",
-                       "numeric",
-                       "text",
-                       "text",
-                       "numeric",
-                       "text",
-                       "numeric",
-                       "text",
-                       "numeric",
-                       "text",
-                       "numeric",
-                       "text",
-                       "numeric",
-                       "text",
-                       "text",
-                       "date",
-                       "date",
-                       "text",
-                       "text",
-                       "text"
-                     )) %>%
-  select(!!!syms(names(sero.cols$cols))) %>% 
+
+sero.dat <- read_xlsx(input.loc, sheet = 1, col_types = fields) %>% 
     rename(!!!col.names) %>%
     pivot_longer(contains("outcome"), names_to = "assay", values_to = "outcome") %>% 
     filter(!is.na(outcome)) %>% 
     mutate(SDate = fuzzy_date_parse(sample_date),
            Positive = endsWith(outcome, "+") | outcome == "Positive")
-
 
 ## Set which collection to examine
 if(NHSBT.flag) {
@@ -196,7 +174,9 @@ if(NHSBT.flag) {
     filter(startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT"))
 } else {
   sero.dat <- sero.dat %>%
-    filter(startsWith(surv, "RCGP") | startsWith(surv, "rcgp"))
+      filter(startsWith(surv, "RCGP") | startsWith(surv, "rcgp") |
+             ((startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT")) & SDate < ymd("2020-05-22"))
+             )
 }
 
 ## Apply filters to get only the data we want.
@@ -299,7 +279,8 @@ for(reg in regions){
     }
 
 # If directory required doesn't exist create it
-dir.create(out.dir, recursive = T)
+if(!file.exists(out.dir))
+    dir.create(out.dir, recursive = T)
 
 ## Save the data
 write_csv(rtm.sam, file.path(out.dir, "sero_samples_data.csv"))
@@ -311,6 +292,9 @@ require(viridis)
 require(hrbrthemes)
 require(plotly)
 require(htmlwidgets)
+
+strAssay <- ifelse(RocheS.flag, "S", "N")
+strCollection <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
 
 rtm.plot <- rtm.sam %>%
     inner_join(rtm.pos %>% rename(p = n)) %>%
@@ -334,14 +318,18 @@ plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, 
 ggsave(plot.filename,
        gp,
        width = 9.15,
-       height = 6)
-saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, ".html")))
+       height = 6,
+       title = glue::glue("Assay: Roche-", strAssay, "; Collection: ", strCollection))
+saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, strCollection, "_", strAssay, ".html")))
 
-pp.focus <- ggplotly(gp+ylim(c(0, 0.25)), tooltip = "text")
+## pp.focus <- ggplotly(gp+ylim(c(0, 0.25)), tooltip = "text")
 
-plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".jpg"))
-ggsave(plot.filename,
-       gp,
-       width = 9.15,
-       height = 6)
-saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".html")))
+## plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".jpg"))
+## ggsave(plot.filename,
+##        gp,
+##        width = 9.15,
+##        height = 6,
+##        main = glue::glue("Assay: Roche-", ifelse(RocheS.flag, "S", "N")"; Collection: ", ifelse(NHSBT.flag, "NHSBT", "RCGP")))
+## saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".html")))
+
+stop()
