@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-google.data.date <- format(ymd("2021-07-30"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-08-20"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 
@@ -111,7 +111,7 @@ contact.prior <- "ons"
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- TRUE && region.type == "NHS"
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "4bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
@@ -121,7 +121,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -192,7 +192,7 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20210728")
+date.prev <- lubridate::ymd("20210818")
 
 
 
@@ -233,7 +233,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20210730" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210820" ## Optional: if not specified will take the most recent data file.
 
 
 
@@ -246,7 +246,7 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 #future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
-future.n  <- (c(1.4, 1.4, 1.7, 1.3, rep(1.3, 7)) * 10^6) * (55.98 / 66.65)
+future.n  <- (c(1.5, 1.3, 1.1, 1.0, rep(1.0, 7)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
 
