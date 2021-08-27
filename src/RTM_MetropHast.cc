@@ -368,9 +368,9 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   //cout << "Warning: Code includes unnecessary calculation of binomial coeff in RTM_Likelihoods:fn_log_lik_positivity" << endl;
   
   //cout << "Warning: Transform disabled\n";
-  cout << "All regions\n";
-  cout << "Brownian 10\n";
-  //cout << "Warning: OU ODE Disabled\n";
+  //cout << "All regions\n";
+  //cout << "Brownian 10\n";
+  //cout << "Warning: OU ODE Disabled, using AMGS\n";
   
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)

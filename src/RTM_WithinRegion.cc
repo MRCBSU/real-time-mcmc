@@ -622,24 +622,26 @@ void regional_matrix_param_GP_PATCH(gsl_matrix* out_mat, const updParamSet &para
 static constexpr double PI = 3.14159265358979323846;
 
 // TODO: N is fixed, but needs to match what is defined in mod_pars.txt
-static const int N = 10;
+// static const int N = 10;
 
-// Data: 0 to N-1 are z_n, N is sigma, N+1 is T (as a double)
+// Data: 1 to N are z_n, N+1 is sigma, N+2 is T (as a double)
 void dbetadt(double t, double* y, double* ydot, void* data) {
   double sum = 0;
   double *params = static_cast<double *>(data);
-  double T = params[N+1];
+
+  int N = (int) (params[0]+0.5);  // Convert to int
+  double T = params[N+2];
 
   for (int n = 0; n < N; n++) {
     double phi = sqrt(2.0/T) * cos((2*n - 1) * PI * t / (2.0 * T));
-    sum += params[n] * phi;
+    sum += params[n+1] * phi;
   }
 
   // Previous, non-Brownian equation:
   //ydot[0] = -1 * y[0] + params[N] * sum;
   
   // Brownian:
-  ydot[0] = params[N] * sum;
+  ydot[0] = params[N+1] * sum;
 }
 
 
@@ -653,14 +655,21 @@ void beta_ou_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::pa
   // Fixed for this pandemic, but should become a mod_inputs setting.
   int days_offset = 36;
   days = days - days_offset;
+
+  int N = paramSet.ode_length;
+
+  double params[N+3];
+
+  // We pass the number of pars N in the first element of the array
+  // For 'simplicity', passed as a double
+  params[0] = N;
   
-  double params[N+2];
   for (int n = 0; n < N; n++)
-    params[n] = gsl_vector_get(&view.vector, n);
+    params[n+1] = gsl_vector_get(&view.vector, n);
   // TODO: We assume 1st component is ignored.
   // TODO: We assume param is global
-  params[N] = paramSet[sd_index].values[1];
-  params[N+1] = days - 0.5;
+  params[N+1] = paramSet[sd_index].values[1];
+  params[N+2] = days - 0.5;
 
   LSODA lsoda;
   std::vector<double> y = { 0 };   // Starting value

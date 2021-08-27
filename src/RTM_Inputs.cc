@@ -493,6 +493,29 @@ void read_modpar(updateable_model_parameter& modpar,
     /// IS THIS NODE TO BE UPDATED IN THIS MCMC SIMULATION?
     modpar.flag_update = (gsl_vector_int_max(modpar.prior_distribution) > (int) cCONSTANT);
 
+
+    /// CCS:
+    // For the ODE parameter, read and check 'ode_length'
+    // TODO: This code almost certainly buggy/doesn't support all 'features' of the way the
+    // input file is read
+    if (modpar.param_name == "log_beta_rw") {
+      
+      int strpos = var_string.find("ode_length");
+      if(strpos != string::npos)
+	paramSet.ode_length = (link_function) read_int("ode_length", var_string);
+
+      if (paramSet.ode_length == 0)
+	cout << "Brownian ODE length not given; assume using non-ODE random walk for betas\n";
+      else {
+	// Check length matches
+	if (paramSet.ode_length * num_regions != modpar.param_value->size) {
+	  cerr << "Error: log_beta_rw values length (" << modpar.param_value->size << ") does not match ode_length (" << paramSet.ode_length << ") * num_regions (" << num_regions << ")\n";
+	  exit(1);
+	}
+	cout << "ODE length: " << paramSet.ode_length << endl;
+      }
+    }
+    
     /// ALLOCATE AND ASSIGN ALL PROPERTIES WHOSE USE IS CONDITIONAL ON BEING A STOCHASTIC NODE IN THE MODEL
     if(modpar.flag_update)
       {

@@ -78,6 +78,8 @@ public:
   likelihood lfx;
   
   int numRegions;
+  // For Brownian motion calculation of betas: number of ODE params per region
+  int ode_length;
   
   updParamSet() :
     params(UMP_FINAL_NUM_PARAMS) { }
