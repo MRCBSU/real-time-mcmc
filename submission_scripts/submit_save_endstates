@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-10
+#SBATCH --array=0-5
 #SBATCH -p skylake
 #SBATCH --qos=covid0
 
