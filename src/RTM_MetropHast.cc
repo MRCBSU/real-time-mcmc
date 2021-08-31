@@ -371,6 +371,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   //cout << "All regions\n";
   //cout << "Brownian 10\n";
   //cout << "Warning: OU ODE Disabled, using AMGS\n";
+  cout << "Wiener Process\n";
   
   // Central Loop //
   for(; int_iter < simulation_parameters.num_iterations; int_iter++)

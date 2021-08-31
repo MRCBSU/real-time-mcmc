@@ -646,7 +646,7 @@ void dbetadt(double t, double* y, double* ydot, void* data) {
 
 
 // T = num days * num time steps
-void beta_ou_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::paramIndex index, upd::paramIndex sd_index, const int region_index,  int days, const int steps_per_day) {
+void beta_ou_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::paramIndex index, upd::paramIndex sd_index, const int region_index, int days, const int steps_per_day) {
 
   gsl_vector_const_view view = paramSet.lookup(index, region_index);
 
@@ -704,6 +704,39 @@ void beta_ou_parameter(gsl_vector* out_vec, const updParamSet &paramSet, upd::pa
     //cout << setprecision(16) << tout << "\t" << out[1] << endl;
   }
 }
+
+
+
+void beta_brownian_param(gsl_vector* out_vec, const updParamSet &paramSet, upd::paramIndex index, upd::paramIndex sd_index, const int region_index, int days, const int steps_per_day) {
+
+  int days_offset = 36;
+  int step_offset = days_offset * steps_per_day;
+  days = days - days_offset;
+
+  // thetas:
+  gsl_vector_const_view parVals = paramSet.lookup(index, region_index);
+
+  double sigma = paramSet[sd_index].values[1];
+  
+  // Before lockdown, beta is fixed at 1
+  for (int i = 0; i < days_offset * steps_per_day; i++)
+    gsl_vector_set(out_vec, i, 1);
+
+  for (int i = 0; i < days * steps_per_day; i++) {
+    double sum = 0;
+    double t_c = i / ((double) days * steps_per_day);
+
+    for (int n = 0; n < (&parVals.vector)->size; n++) {
+      double theta = gsl_vector_get(&parVals.vector, n);
+      // The Wiener process eqn assumes 1-based sum, so adjust
+      sum += theta * sin((n + 0.5) * PI * t_c) / ((n + 0.5) * PI);
+    }
+
+    // Take the exponent
+    gsl_vector_set(out_vec, i + step_offset, exp(sum * sigma * sqrt(2 * days)));
+  }
+}
+
 
 
 // * * * * * * * * * *
@@ -787,7 +820,8 @@ void block_regional_parameters(regional_model_params& out_rmp,
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookup(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_lbeta_rw")){
-    beta_ou_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, upd::LBETA_RW_SD, region_index, in_gmip.l_duration_of_runs_in_days, in_gmip.l_transmission_time_steps_per_day);
+    beta_brownian_param(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, upd::LBETA_RW_SD, region_index, in_gmip.l_duration_of_runs_in_days, in_gmip.l_transmission_time_steps_per_day);
+    //beta_ou_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, upd::LBETA_RW_SD, region_index, in_gmip.l_duration_of_runs_in_days, in_gmip.l_transmission_time_steps_per_day);
     //regional_time_vector_parameter(out_rmp.l_lbeta_rw, updPars, upd::LBETA_RW, region_index, in_gmip.l_transmission_time_steps_per_day);
     //if(0 != gsl_vector_get(out_rmp.l_lbeta_rw, 0))
     //  gsl_vector_scale(out_rmp.l_lbeta_rw, 1 / gsl_vector_get(out_rmp.l_lbeta_rw, 0)); // Random-walk necessarily centred on 0.
