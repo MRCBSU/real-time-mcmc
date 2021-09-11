@@ -57,10 +57,11 @@ rm(cou.env)
 save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, severe.vac, severe.no.vac, file = "deaths_comparison_prev.RData")
 ## estimate total deaths saved is 201 (164-251)!!
 
-pth <- getwd()
-setwd(Rfile.dir)
-rmarkdown::render(
-    'lives_saved_report.Rmd',
-    output_dir = pth
-    clean = T
-)
+source(file.path(Rfile.dir, "vacc_lives_saved.R"))
+## pth <- getwd()
+## setwd(Rfile.dir)
+## rmarkdown::render(
+##     'lives_saved_report.Rmd',
+##     output_dir = pth,
+##     clean = T
+## )

@@ -1,6 +1,9 @@
 standalone <- T
 
-fns <- "deaths_comparison_prev20210709.RData"
+fns <- "deaths_comparison_prev.RData"
 
-rmarkdown::render("report.Rmd", clean = T)
+pth <- getwd()
+rmarkdown::render(file.path(Rfile.dir, "vacc_lives_saved.Rmd"),
+                  output_dir = pth,
+                  clean = T)
 

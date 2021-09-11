@@ -31,7 +31,8 @@ apply.convolution <- function(start, func, over = "date") {
 }
 
 ## Where are our outputs to be found
-output.dir <- file.path(proj.dir, "model_runs", "20210716", "NHS60_timeuse")
+output.dir <- file.path(proj.dir, "model_runs", "20210904", "Prev487_cm6ons_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210903_timeuse_household_deaths")
+
 load(file.path(output.dir, "projections_midterm.RData"))
 
 ## Estimated and projected incidence stored in `incidence' object
@@ -62,11 +63,11 @@ los.dist <- cut(samp, 0:ceiling(max(samp))) %>%
 
 
 ## Beds available - fields icu_prev_acute1 in the NHS SitRep
-## beds.used <- c(137, 503, 479, 586, 697, 175, 133)
-beds.used <- c(197, 560, 646, 806, 741, 275, 207)
+beds.used <- c(511, 1098, 1157, 1106, 942,668, 454)
+## beds.used <- c(465, 1135, 1139, 1067, 840, 576, 437)
 beds.available <- as_tibble(list(capacity = c(9915, 12760, 15092, 14934, 13331, 10993, 8948), region = dimnames(infections)$region))
 beds.total <- beds.used / (beds.used + beds.available$capacity)
-beds.day <- lubridate::as_date("20210717")
+beds.day <- lubridate::as_date("20210902")
 
 ## Function to translate these infections into hospital occupancy
 hosp.occupancy <- function(infections = infections, delay1 = warwick.delay, delay2 = los.dist){
