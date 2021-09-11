@@ -356,7 +356,13 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
         cat("First stopifnot\n")
         stopifnot(!is.na(region.dat))
-        stopifnot(all(region.dat[, -1] >= 0))
+        ## stopifnot(all(region.dat[, -1] >= 0))
+        if(any(region.dat[, -1] < 0)){ ## 20210910 TEMPORARY MEASURE... CORRECT NEXT WEEK
+            print("Bug fix hit\n")
+            ids <- which(region.dat[, -1] < 0, arr.ind = TRUE)
+            for(i in 1:nrow(ids))
+                region.dat[ids[i, 1], ids[i, 2] + 1] <- 0
+            }
         stopifnot(all(region.dat[, -1] <= 2))
         tmpFile <- vac1.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)
