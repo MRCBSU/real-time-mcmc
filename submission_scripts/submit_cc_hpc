@@ -3,7 +3,7 @@
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --time=72:00:00
+#SBATCH --time=23:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -13,9 +13,9 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-5
-#SBATCH -p skylake
-#SBATCH --qos=covid0
+#SBATCH --array=5
+#SBATCH -p cclake
+#!SBATCH --qos=covid0
 
 
 #SBATCH --output=model_runs_20210120regjobs_%a.out
