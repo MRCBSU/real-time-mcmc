@@ -32,3 +32,4 @@ scratch/**
 .DS_Store
 *#
 BSU_website_plots/**
+**.qs

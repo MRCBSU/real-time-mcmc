@@ -31,7 +31,7 @@ apply.convolution <- function(start, func, over = "date") {
 }
 
 ## Where are our outputs to be found
-output.dir <- file.path(proj.dir, "model_runs", "20210910_backup", "Prev494_cm6ons_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210910_timeuse_household_deaths")
+output.dir <- file.path(proj.dir, "model_runs", "20210910_backup", "Prev494_cm6ons_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210910_timeuse_household_deaths_chain2")
 
 load(file.path(output.dir, "projections_midterm.RData"))
 

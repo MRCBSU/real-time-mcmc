@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=6
+#SBATCH --array=4
 
 #SBATCH -p skylake
 #SBATCH --qos=covid0
