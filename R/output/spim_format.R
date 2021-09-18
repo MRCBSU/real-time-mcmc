@@ -36,13 +36,13 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
-## projections.file <- "projections_midterm.RData"
-## scen.text <- "MTP"
-## save.text <- "MTP"
-projections.file <- "projections_R2.RData"
-scen.text <- "MTP R2.0"
-save.text <- "MTP_R_2.0"
-mtp.filter.date <- lubridate::ymd("20210828") ## ymd(date.data)
+projections.file <- "projections_midterm.RData"
+scen.text <- "MTP"
+save.text <- "MTP"
+## projections.file <- "projections_R2.RData"
+## scen.text <- "MTP R2.0"
+## save.text <- "MTP_R_2.0"
+mtp.filter.date <- lubridate::ymd("20210904") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11

@@ -11,8 +11,8 @@ if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "real-time-mcmc"
-out.repo <- "real-time-mcmc"
+in.repo <- "20210910_backup_backup"
+out.repo <- "20210910"
 ## in.repo <- "_new_base"
 ## out.repo <- ""
 

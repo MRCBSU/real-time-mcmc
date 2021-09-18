@@ -74,6 +74,8 @@ if (nrow(test_df) > 1)
 
 stringr::str_extract(pth, "\\d{8}") -> fn_date
 fn_date %>% lubridate::as_date(format = "%Y%m%d") -> cutDate
+if(projections)
+	cutDate <- max(lubridate::as_date(as.numeric(dimnames(deaths.vac)[["date"]])))
 
 qsave(fn_date, "date.qs")
 if (!standalone)
@@ -96,8 +98,9 @@ qsave(data_df, "outcomes.qs")
 ```{r figMortality, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
 data_df <- qread("outcomes.qs")
 
-# We only use the data up till now
-cutDate <- max(data_df$Date)
+## # We only use the data up till now
+if(!projections)
+	cutDate <- max(data_df$Date)
 
 
 data_df %>%
@@ -166,7 +169,7 @@ data_df %>%
 
 ```{r figMortalityLog, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
 data_df <- qread("outcomes.qs")
-cutDate <- max(data_df$Date)
+## cutDate <- max(data_df$Date)
 
 data_df %>%
   dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
