@@ -37,6 +37,7 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
+adm.end.date <- ymd(20210917)
 
 google.data.date <- format(ymd("20210813"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
@@ -57,6 +58,12 @@ break.window <- 2 ## How many WEEKS between breakpoints in the model for the tra
 age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
 age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "All ages"
 nA <- length(age.labs)
+
+#! Added age groupings for the sitrep data
+age_adm.agg <- c(0, 6, 18, 65, 85, Inf)
+age_adm.labs <- c("0-5","6-17","18-64","65-84", "85+", "NA") ## "All ages"
+age_adm.oldlabs <- c("0_5", "6_17", "18_64", "65_84", "85", "")
+nA_adm <- length(age_adm.labs)
 
 if(!exists("regions")) regions <- "England"
 
@@ -142,10 +149,11 @@ if(use.previous.run.for.start){
 iteration.number.to.start.from <- 1 ## 6400
 
 ## From where will the various datasets be sourced?
+#! Added admissions to data directories
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination"))
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination","admission"))
                        )
-names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc")
+names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc", "adm")
 
 flg.confirmed = TRUE
 

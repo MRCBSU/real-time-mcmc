@@ -1,5 +1,8 @@
 library(rmarkdown)
 
+##Tmp clear environment to test reproducibility
+rm(list = ls())
+
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -37,9 +40,27 @@ run.outputs <- FALSE
 ## Which code is being considered
 if(!exists("gp.flag")) gp.flag <- 1
 if(!exists("hosp.flag")) hosp.flag <- 1
+if(!exists("adm.flag")) adm.flag <- 1
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
 if(!exists("prev.flag")) prev.flag <- 0
+
+
+if(sero.flag){
+  admsam.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_samples.txt")
+  admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
+} else {
+  admsam.files <- seropos.files <- NULL
+}
+
+if(adm.flag) {
+  source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
+}
+
+
+## Temporary stop line added to prevent running further than addition of hopsitalisation data
+stop()
+
 
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
