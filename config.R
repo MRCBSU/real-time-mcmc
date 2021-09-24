@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-google.data.date <- format(ymd("2021-09-17"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-09-24"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 
@@ -85,7 +85,7 @@ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
 
 
-num.prev.days <- 501
+num.prev.days <- 508
 
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -121,7 +121,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -192,7 +192,7 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20210915")
+date.prev <- lubridate::ymd("20210922")
 
 
 
@@ -233,7 +233,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20210917" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20210924" ## Optional: if not specified will take the most recent data file.
 
 
 
@@ -246,7 +246,7 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 #future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
-future.n  <- (c(0.8, 0.8, 0.8, 0.8, rep(0.8, 7)) * 10^6) * (55.98 / 66.65)
+future.n  <- (c(1.1, 1.4, 1.7, 1.8,1.8,1.9, rep(1.9, 5)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
 

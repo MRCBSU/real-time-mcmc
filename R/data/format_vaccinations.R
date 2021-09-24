@@ -17,7 +17,7 @@ require(lubridate)
 if(!exists("vacc.loc")){ ## Set to default format for the filename
     ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
     # input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
-    input.loc <- "/data/covid-19/data-raw/dstl/2021-08-27"
+    input.loc <- "/data/covid-19/data-raw/dstl/2021-09-17"
     ## List the possible files in the directory
     vacc.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
