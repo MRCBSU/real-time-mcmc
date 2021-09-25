@@ -187,7 +187,6 @@ dth.dat %>%
 ## ## 
 
 latest.date <- ymd(date.data) ## - reporting.delay
-
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
