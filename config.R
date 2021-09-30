@@ -97,7 +97,7 @@ use.INLA.prev <- TRUE
 vacc.flag <- 1
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
@@ -144,18 +144,18 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
 
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210625",c("PrevINLA410_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_new_base_deaths",
-                                                                                   "PrevINLA410_cm6ons_IFR4bp_NHS60cutoff_25wk2_prev14-0PHE_matrices_20210625_timeuse_household_new_base_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924",c("PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
+                                                                                   "PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210709_old", c("PrevINLA424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210709_timeuse_household_new_base_deaths",
-                                                                                    "PrevINLA424_cm6ons_IFR4bp_NHS28cutoff_25wk2_prev14-0PHE_matrices_20210709_timeuse_household_new_base_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924", c("PrevINLA508_cm6ons_IFR5bp_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
+                                                                                    "PrevINLA508_cm6ons_IFR5bp_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210716", c("PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210716_timeuse_household_new_base_deaths",
-                                                                               "PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210716_timeuse_household_new_base_deaths_chain2")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924", c("PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
+                                                                               "PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
                                          )
 }
-iteration.number.to.start.from <- 6400
+iteration.number.to.start.from <- 5000
 
 ## From where will the various datasets be sourced?
 data.dirs <- file.path(proj.dir,

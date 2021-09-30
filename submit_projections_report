@@ -21,7 +21,7 @@
 
 
 
-#SBATCH --array=4
+#SBATCH --array=6
 
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00

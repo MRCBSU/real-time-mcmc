@@ -52,16 +52,16 @@ preval.no.vac <- thin.outs(cou.env$prevalence)
 severe.no.vac <- thin.outs(cou.env$vacc.infections)
 
 Rfile.dir <- dirname(thisFile())
-#stop()
 rm(cou.env)
-
+## stop()
 save(deaths.vac, deaths.no.vac, infecs.vac, infecs.no.vac, preval.vac, preval.no.vac, severe.vac, severe.no.vac, file = "deaths_comparison_prev.RData")
 ## estimate total deaths saved is 201 (164-251)!!
 
-pth <- getwd()
-setwd(Rfile.dir)
-render(
-    'lives_saved_report.Rmd',
-    html_document(pandoc_args = "--self-contained"),
-    output_dir = pth
-    )
+source(file.path(Rfile.dir, "vacc_lives_saved.R"))
+## pth <- getwd()
+## setwd(Rfile.dir)
+## rmarkdown::render(
+##     'lives_saved_report.Rmd',
+##     output_dir = pth,
+##     clean = T
+## )

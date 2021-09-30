@@ -1,0 +1,600 @@
+---
+title: 'COVID-19: nowcast and forecast'
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
+date: "`r lubridate::today()`"
+output:
+  html_document:
+    self_contained: no
+---
+
+<base target="_parent">
+
+```{r preamble, include=FALSE}
+if (!exists("external")) external = T
+external.bak <- external
+knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+knitr::opts_chunk$set(error=TRUE)
+
+suppressMessages(library(knitr))
+suppressMessages(library(DT))
+suppressMessages(library(lubridate))
+suppressMessages(library(plotly))
+suppressMessages(library(tidyverse))
+suppressMessages(extract <- R.utils::extract)
+if(exists("Rfile.loc")) {
+  source(file.path(Rfile.loc, "results_api.R"))
+  source(file.path(Rfile.loc, "plot_funcs.R"))
+} else {
+  proj.dir <- "~/RTM"
+  source("results_api.R")
+  source("plot_funcs.R")
+}
+results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
+if (external && exists("dth.dat") && !is.null(dth.dat)) {
+	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
+	results_hash = NULL
+}
+if (!exists("prev.dat")) prev.dat <- NULL
+external <- external.bak
+extract <- R.utils::extract
+
+```
+
+## {.tabset}
+
+```{r eval=external, child='updates.Rmd'}
+```
+
+### Summary
+
+Real-time tracking of an epidemic, as data accumulate over time, is an essential component of a public health response to a new outbreak. A team of statistical modellers at the MRC Biostatistics Unit (BSU), University of Cambridge, are working to provide regular now-casts and forecasts of COVID-19 infections and deaths. This information feeds directly to the SAGE sub-group, Scientific Pandemic Influenza sub-group on Modelling (SPI-M), and to regional Public Health England (PHE) teams.
+
+### Methods
+
+We fit a transmission model ([Birrell et al. 2020](https://www.medrxiv.org/content/10.1101/2020.08.24.20180737v1)) to a number of data sources (see 'Data Sources'), to  reconstruct the number of  new COVID-19 infections over time in different age groups and NHS regions, estimate a measure of ongoing transmission and predict the number of new COVID-19 deaths.
+
+### Data sources
+
+We use:
+  
+1. Data on COVID-19 confirmed deaths from the Public Health England (PHE) line-listing   This consists of a combination of deaths notified to:
+    * the Demographics Batch Service (DBS), a mechanism that allows PHE to submit a file of patient information to the National Health Service spine for tracing against the personal demographics service (PDS). PHE submit a line list of patients diagnosed with COVID-19 to DBS daily. The file is returned with a death flag and date of death updated (started 20th March, 2020).
+    * NHS England, who report data from NHS trusts relating to patients who have died after admission to hospital or within emergency department settings.
+    * Health Protection Teams (HPTs), resulting from a select survey created by PHE to capture deaths occurring outside of hospital settings, e.g. care homes (started 23rd March, 2020)
+2. Data on antibody prevalence in blood samples from a PHE survey of NHS Blood Transfusion (NHSBT) donors.
+
+Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 65-74, 75+, and the NHS England regions (North East and Yorkshire, North West, Midlands, East of England, London, South East, South West).
+
+3. Published information on the the natural history of COVID-19 ([Verity et al., 2020](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099%2920%2930243-7/abstract); [Li et al, 2020](https://www.nejm.org/doi/10.1056/NEJMoa2001316)) 
+4. Information on contacts between different age groups from:
+    * A Survey that describes relative rates of contacts between different age groups ([Mossong et al. 2008](https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074)).
+    * [Google Community Mobility reports](https://www.google.com/covid19/mobility/), informing the  changes in people’s mobility over the course of the pandemic, particularly after the March 23rd lockdown measures.
+    * [The ONS’ time use survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=8128), which in conjunction with the google mobility study, allows estimation of the changing exposure to infection risk over time.
+    * Data from the Department for Education describing the proportion of children currently attending school.
+6. Daily data on the numbers of people getting immunised by age-group and region. These data are derived from the National Immunisation Management Service (NIMS). These data includes all COVID-19 immunisations administered at hospital hubs, local immunisation service sites such as GP practices, and dedicated immunisation centres.
+
+
+## Epidemic summary {.tabset}
+
+### Current $R_t$
+
+Value of $R_t$, the average number of secondary infections due to a typical infection today.
+
+```{r Rt-table}
+get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
+  datatable() %>%
+  formatRound(2:4)
+
+```
+
+### Number of infections
+
+```{r cum-inf-sum}
+format_num <- function(x) {
+  return(format(round(signif(x, 3)), big.mark = ",", scientific = FALSE, width = 0))
+}
+
+tbl_pop <- population %>%
+    group_by(region) %>%
+    summarise(population = sum(value))
+
+tbl_cum_inf_region <-
+  get.aggregated.quantiles(cum_infections, "region", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data))
+  
+tbl_ar_Eng <- get.aggregated.quantiles(cum_infections, NULL, c(0.025, 0.5, 0.975))  %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  mutate(
+    population = sum(population$value),
+    region = "England"
+  )
+
+tbl_inf_region <-
+  bind_rows(
+    get.aggregated.quantiles(infections, NULL, c(0.025, 0.5, 0.975))  %>%
+    pivot_wider(names_from = quantile) %>%
+    filter(date == ymd(date.data)) %>%
+    mutate(
+      region = "England",
+      population = sum(population$value)
+    ),
+    get.aggregated.quantiles(infections, "region", c(0.025, 0.5, 0.975)) %>%
+    pivot_wider(names_from = quantile) %>%
+    filter(date == ymd(date.data)) %>%
+    left_join(tbl_pop, by = "region")
+  ) %>%
+  mutate_at(vars(starts_with("0")), .funs = list(rate = ~100e3*./population)) %>%
+  mutate_at(vars(starts_with("0")), format_num) %>%
+  transmute(
+    Region = region,
+    `Daily infections` = paste0(`0.5`, " (", `0.025`, "--", `0.975`, ")"),
+    `Daily infections / 100k` = paste0(`0.5_rate`, " (", `0.025_rate`, "--", `0.975_rate`, ")")
+  )
+
+```
+
+```{r cum-inf-disp}
+bind_rows(
+  select(tbl_ar_Eng, -population),
+  tbl_cum_inf_region
+) %>%
+  mutate_at(vars(`0.025`, `0.5`, `0.975`), format_num) %>%
+  transmute(
+    Region = region,
+    Cumulative_infections = paste0(`0.5`, " (", `0.025`, "--", `0.975`, ")"),
+  ) %>%
+  left_join(tbl_inf_region, by = "Region") %>%
+  datatable()
+```
+
+### Attack rate {.tabset}
+
+The percentage of a given group that has been infected.
+
+#### By region
+
+```{r attack-region}
+bind_rows(
+  tbl_ar_Eng,
+  tbl_pop %>%
+    left_join(tbl_cum_inf_region, by = c('region' = 'region'))
+  ) %>%
+  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`, population) %>%
+  mutate(
+    Median = Median / population,
+    `95% CrI (lower)` = `95% CrI (lower)` / population,
+    `95% CrI (upper)` = `95% CrI (upper)` / population
+    ) %>%
+  select(-population) %>%
+  datatable() %>%
+  formatPercentage(2:4)
+```
+
+
+#### By age
+
+```{r attack-age}
+tbl_cum_inf_age <-
+  get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
+  pivot_wider(names_from = quantile) %>%
+  filter(date == ymd(date.data)) %>%
+  select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+
+population %>%
+  group_by(age) %>%
+  summarise(population = sum(value)) %>%
+  left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
+  mutate(
+    Median = Median / population,
+    `95% CrI (lower)` = `95% CrI (lower)` / population,
+    `95% CrI (upper)` = `95% CrI (upper)` / population
+    ) %>%
+  select(-population) %>%
+  arrange(match(age, age.labs)) %>%
+  datatable() %>%
+  formatPercentage(2:4)
+```
+
+### Current IFR
+
+
+```{r ifr, eval=!is.null(deaths)}
+merge.youngest.age.groups <- function(mat, num.to.group = 2, idx = "iteration") {
+  if (num.ages <= 1) {return(mat)}
+  add.function <- function(x) {
+    to.merge <- x[1:num.to.group]
+    to.preserve <- x[(num.to.group+1):length(x)]
+    return(c(sum(to.merge), to.preserve))
+  }
+  result <- apply(mat, idx, add.function)
+  return(result)
+}
+overall_ifr <- function(day.ifr)
+  today_cum_inf_by_age %>%
+    `*` (day.ifr) %>%
+    rowSums() %>%
+    `/`(rowSums(today_cum_inf_by_age)) %>%
+    quantile(QUANTILES) %>%
+    enframe(name = "quantile") %>%
+    mutate(age = "Overall")
+
+## ifr.start <- ifr[, , 1]
+names(dim(ifr)) <- c("iteration", "age", "date")
+dimnames(ifr) <- list(iteration = parameter.iterations, age = dimnames(deaths)$age, date = dimnames(deaths)$date)
+ifr.today <- ifr[, , ymd(date.data) - start.date]
+today_cum_inf_by_age <- apply(infections[,ymd(date.data)-start.date,,,drop = FALSE], c("age", "iteration"), sum) %>%
+		     merge.youngest.age.groups() %>%
+		     t()
+if(vacc.flag){
+	today_cum_infstar_by_age <- apply(vacc.infections[,ymd(date.data) - start.date,,,drop = FALSE], c("age", "iteration"), sum) %>%
+				 merge.youngest.age.groups() %>%
+				 t()
+	ifr.today <- ifr.today[parameter.to.outputs, ] * today_cum_infstar_by_age / today_cum_inf_by_age
+	overall_ifr_today <- overall_ifr(ifr.today)
+} else {
+	ifr.tmp <- ifr.today[parameter.to.outputs, ]
+	overall_ifr_today <- overall_ifr(ifr.today[parameter.to.outputs, ])
+}
+
+## if(!single.ifr)
+##	overall_ifr_start <- overall_ifr(ifr.start)
+## overall_ifr_today <- overall_ifr(ifr.today[parameter.to.outputs, ])
+
+ifr.table <- function(x, overall_x)
+  x %>%
+    as.matrix() %>%
+    `colnames<-`(dimnames(deaths)$age) %>%
+    as_tibble() %>%
+    pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+    group_by(age) %>%
+    summarise(value = list(quantile(ifr, QUANTILES))) %>%
+    mutate(quantile = list(names(value[[1]]))) %>%
+    unnest(c(quantile, value)) %>%
+    bind_rows(overall_x) %>%
+    mutate(
+	quantile = parse.percentage(quantile),
+    	value = paste0(signif(100 * value, 2), "%")
+  	) %>%
+    pivot_wider(names_from = quantile, values_from = value) %>%
+    select(Age = age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) %>%
+    arrange(match(Age, c("Overall", dimnames(deaths)$age)))
+
+## if(!single.ifr){
+## 	ifr.table(ifr.start, overall_ifr_start) %>%
+##   			     inner_join(ifr.table(ifr.today, overall_ifr_today), by = "Age") %>%
+##   			     rename(Med_early = Median.x,
+##     			     		      Lower_early = `95% CrI (lower).x`,
+##     					      Upper_early = `95% CrI (upper).x`,
+##     					      Med_late = Median.y,
+##     					      Lower_late = `95% CrI (lower).y`,
+##     					      Upper_late = `95% CrI (upper).y`) %>%
+##    					       datatable()
+## } else {
+  ifr.table(ifr.today, overall_ifr_today) %>%
+   		       datatable()
+## }
+
+# (params$prop_case_to_hosp %>%
+#   as.matrix() %>%
+#   `colnames<-`(dimnames(deaths)$age) %>%
+#   as_tibble() %>%
+#   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+#   mutate(age = factor(age, levels = dimnames(deaths)$age)) %>%
+#   ggplot(aes(x = age, y = ifr)) +
+#   geom_violin()) %>%
+#   ggplotly()
+#   
+# params$prop_case_to_hosp %>%
+#   as.matrix() %>%
+#   `colnames<-`(dimnames(deaths)$age) %>%
+#   as_tibble() %>%
+#   pivot_longer(everything(), names_to = 'age', values_to = 'ifr') %>%
+#   group_by(age) %>%
+#   summarise(value = list(quantile(ifr, c(0.025, 0.25, 0.5, 0.75, 0.975)))) %>%
+#   mutate(quantile = list(names(value[[1]]))) %>%
+#   unnest(c(quantile, value)) %>%
+#   mutate(
+#     age = factor(age, levels = dimnames(deaths)$age),
+#     quantile = parse.percentage(quantile)
+#   ) %>%
+#   pivot_wider(names_from = quantile, values_from = value, names_prefix = "q") %>%
+#   ggplot(aes(x = age, lower=q0.25, upper=q0.75, middle=q0.5, ymin=q0.025, 
+#                     ymax=q0.975)) +
+#   geom_boxplot(stat = "identity") +
+#   scale_y_continuous()
+```
+
+### Change in infections incidence {.tabset}
+
+#### Growth rates
+
+```{r growth-rate-func}
+signed_inf <- function(num) {
+  ifelse(
+    num == 0, 0,
+    ifelse(num > 0, +Inf, -Inf)
+  )
+}
+
+add.England <- function(data) {
+  sum.all(infections)
+  data <- apply(infections, c("region", "iteration", "date"), sum)
+  data <- aperm(data, c("date", "region", "iteration", "age"))
+  data["England",,] <- apply(infections, c("iteration", "date"), sum)
+}
+
+today.int <- as.integer(ymd(date.data))
+wanted.days <- as.character(c(today.int - 1, today.int, today.int + 1))
+require(abind)
+calc.infec.growth.rate <- function(R,gt,infecs) {
+  ## To get a gt for England, just taking the mean of the other regions. In practice there is no regional heterogeneity. Would need more careful though if regional differences introduced.
+  gt <- do.call(cbind, gt) %>% cbind(apply((.), 1, mean))
+  rt <- R %>%
+     get.infection.weighted.Rt(infecs, which(parameter.to.outputs %in% iterations.for.Rt)) %>%
+     abind(R, along = 3, use.dnns = TRUE) %>%
+     as.tbl_cube(met_name = "value") %>%
+     as_tibble() %>%
+     mutate(region = ifelse(region == "", "England", region))
+  dimnames(gt)[[1]] <- unique(rt$iteration)
+  dimnames(gt)[[2]][dim(gt)[2]] <- "England"
+  names(dimnames(gt)) <- c("iteration", "region")
+  gt <- gt %>%
+     as.tbl_cube(met_name = "genTime") %>%
+     as_tibble()
+  rt %>%
+     left_join(gt) %>%
+     mutate(growth = log(value) / genTime) %>%
+     group_by(date, region) %>%
+     summarise(Median = median(growth),
+              `95% CrI (lower)` = quantile(growth, 0.025),
+              `95% CrI (upper)` = quantile(growth, 0.975)
+              ) %>%
+    arrange(match(region, c("England", regions))) %>%
+    mutate(Region = str_replace_all(region, "_", " ")) %>%
+    select(Region, everything()) %>%
+    ungroup() %>%
+    select(-region,-date)   
+}
+calc.growth.rate <- function(data) {
+  data <- data %>%
+    aperm(c("date", "region", "iteration", "age")) %>%
+    `[`(wanted.days,,,,drop = FALSE)
+  num.iterations <- dim(data)[3]
+  data %>%
+    apply(c("region", "iteration", "date"), sum) %>%
+    as.tbl_cube(met_name = "value") %>%
+    as_tibble() %>%
+    bind_rows(
+      apply(data, c("iteration", "date"), sum) %>%
+      as.tbl_cube(met_name = "value") %>%
+      as_tibble() %>%
+      mutate(region = "England")
+    ) %>%
+    mutate(
+      date = lubridate::as_date(date)
+    ) %>%
+    arrange(date, iteration) %>%
+    group_by(region, iteration) %>%
+    mutate(gradient = lead(value) - lag(value)) %>%
+    summarise(growth = 
+                ifelse(value == 0,
+                       signed_inf(gradient),
+                       gradient / (2 * value))[2]
+    ) %>%
+    group_by(region) %>%
+    summarise(Median = median(growth),
+              `95% CrI (lower)` = quantile(growth, 0.025),
+              `95% CrI (upper)` = quantile(growth, 0.975)
+              ) %>%
+    arrange(match(region, c("England", regions))) %>%
+    mutate(Region = str_replace_all(region, "_", " ")) %>%
+    select(Region, everything()) %>%
+    select(-region)
+}
+## infections.growth.rates <- calc.growth.rate(infections)
+if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
+infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
+						Egt,
+						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
+if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
+```
+
+NB: negative growth rates are rates of decline. Values are daily changes.
+
+`r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
+
+#### Halving times
+
+Halving times in days, if a region shows growth than value will be NA.
+
+```{r inf-halving}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. > 0, NA, -1/log2(1+.))
+  ) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r inf-doubling}
+
+infections.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+    
+```
+
+### Change in deaths incidence {.tabset}
+
+
+#### Growth rates
+
+NB: negative growth rates are rates of decline. Values are daily changes.
+
+```{r death-growth, eval=!is.null(deaths)}
+knitr::kable(deaths.growth.rates, digits = 2, align = 'lccc')
+```
+
+#### Halving times
+
+Halving times in days, if a region shows growth than value will be NA.
+
+```{r death-halving, eval=!is.null(deaths)}
+
+deaths.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. > 0, NA, -1/log2(1+.))
+  ) %>%
+  knitr::kable(digits = 2, align = 'lccc')
+
+```
+
+#### Doubling times
+
+Doubling times in days, if a region shows decline then the value will be NA.
+
+```{r death-doubling, eval=!is.null(deaths)}
+
+deaths.growth.rates %>%
+  mutate_at(
+    vars(-'Region'),
+    ~ifelse(. < 0, NA, log(2)/(.))
+  ) %>%
+  rename(tmp = `95% CrI (upper)`) %>%
+  rename(`95% CrI (lower)` = tmp,
+  	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
+  select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
+  knitr::kable(digits = 2, aligh = 'lccc')
+```
+
+## Infections and deaths {.tabset}
+
+The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
+
+```{r eval=!is.null(prev.dat)&&!external, child='prev-report.Rmd'}
+```
+
+```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}
+```
+
+### Infection incidence {.tabset}
+
+#### By region
+```{r reg-inf, cache=TRUE, cache.extra=results_hash}
+make.plots(infections, by = "region")
+```
+
+#### By age
+```{r age-inf, cache=TRUE, cache.extra=results_hash}
+make.plots(infections, by = "age")
+```
+
+### Cumulative infections {.tabset}
+
+#### By region
+```{r reg-cum-inf-reg, cache=TRUE, cache.extra=results_hash}
+make.plots(cum_infections, by = "region")
+```
+
+#### By age
+```{r r-cum-inf-age, cache=TRUE, cache.extra=results_hash}
+make.plots(cum_infections, by = "age")
+```
+
+```{r eval=!is.null(deaths), child='deaths-report.Rmd'}
+```
+
+### IFR
+
+```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
+sum.up.and.merge <- function(inf){
+		 inf_by_age <- apply(inf, c("age", "date", "iteration"), sum)
+		 inf_by_age <- merge.youngest.age.groups(inf_by_age, idx = c("iteration", "date"))
+		names(dimnames(inf_by_age))[1] <- "age"
+		dimnames(inf_by_age)$age <- dimnames(ifr)$age
+		inf_by_age
+}
+## Only look at IFR iterations for which the infections array has been evaluated
+ifr.tab <- extract(ifr, indices=list(parameter.to.outputs), dims="iteration")
+
+## Format infections
+inf_by_age <- sum.up.and.merge(infections) %>% aperm(names(dimnames(ifr.tab)))
+if(vacc.flag){
+	dinf_by_age <- sum.up.and.merge(vacc.infections) %>% aperm(names(dimnames(ifr.tab)))
+	## Calculate a scaled version of the IFR
+	ifr.tab <- ifr.tab * dinf_by_age / inf_by_age
+}
+## Calculate time-specific weighted-mean for the IFR, weighted by current age-profile of infections
+total_inf_by_age <- apply(inf_by_age, c("iteration", "date"), sum)
+ifr.all <- array(apply(inf_by_age * ifr.tab, "age", `/`, total_inf_by_age), dim = dim(ifr.tab)[c("iteration", "date", "age")])
+dimnames(ifr.all) <- list(iteration = dimnames(ifr.tab)$iteration, date = dimnames(ifr.tab)$date, age = dimnames(ifr.tab)$age)
+ifr.eng <- apply(ifr.all, c("iteration", "date"), sum)
+rm(inf_by_age, total_inf_by_age, ifr.all)
+
+## Join England to the rest of the IFR array.
+require(abind)
+name.order <- c("iteration", "date", "age")
+ifr.tab <- aperm(ifr.tab, name.order)
+ifr.tab <- abind(ifr.eng, ifr.tab, along = 3); rm(ifr.eng)
+names(dimnames(ifr.tab)) <- name.order
+dimnames(ifr.tab)$age[1] <- "All ages"
+
+make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL)
+```
+
+### Prob $R_t > 1$
+
+The figure below shows the probability that $R_t$ is greater than 1 (ie: the number of infections is growing) in each region over time.
+Clicking the regions in the legend allows lines to be added or removed from the figure.
+
+```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash}
+(Rt > 1) %>%
+  apply(c("date", "region"), sum) %>%
+  `/`(length(dimnames(Rt)$iteration)) %>%
+  as.tbl_cube(met_name = "value") %>%
+  as_tibble() %>%
+  mutate(date = as_date(date)) %>%
+  filter(date <= ymd(date.data)) %>%
+  create.base.subplot(1, "") %>%
+  add_lines(y = ~value, x = ~date, color = ~region) %>%#, hovertemplate = "%{y:.2r}") %>%
+  layout(showlegend = TRUE, yaxis = list(tickformat = "%", title = "$\\text{Probability }R_t > 1$"),
+         xaxis = list(title = "Date"))
+```
+
+### $R_t$
+```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
+make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
+
+
+```
+
+```{r eval=(!external & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-report.Rmd'}
+```
+
+```{r eval=(!external & as.logical(gp.flag) & file.exists(file.path(out.dir, "projections.RData"))), child='projinf-cases-report.Rmd'}
+
+```
+
+
+# 
+
+Copyright © MRC Biostatistics Unit, University of Cambridge

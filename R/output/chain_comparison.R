@@ -26,8 +26,8 @@ source(file.path(Rfile.loc, "drw.R"))
 #colcode.fl <- "./Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths"
 #oldcode.fl <- "./Prev396_cm6ons_IFR4bp_ONS60cutoff_25wk2_prev14-0Jamie_matrices_20210604_timeuse_household_deaths_chain2"
 
-colcode.fl <- "./PrevINLA431_cm6ons_IFR4bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210716_timeuse_household_new_base_deaths"
-oldcode.fl <- "./PrevINLA431_cm6ons_IFR4bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210716_timeuse_household_new_base_deaths_chain2"
+colcode.fl <- "./PrevINLAnew508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths"
+oldcode.fl <- "./PrevINLAnew508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2"
 
 
 ## load("mcmc.RData")

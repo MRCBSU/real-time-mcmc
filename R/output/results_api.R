@@ -33,7 +33,8 @@ if (!exists("infections")) {
   }
   output.required <- file.path(out.dir, "output_matrices.RData")
   if (file.exists(output.required)) {
-	tmp_env <- new.env()
+	mcmc_env <- tmp_env <- new.env()
+    load(file.path(out.dir, "mcmc.RData"), mcmc_env)
     load(file.path(out.dir, "tmp.RData"), tmp_env)
     load(output.required)
     int_iter <- 0:(tmp_env$num.iterations - 1)
@@ -42,8 +43,11 @@ if (!exists("infections")) {
     parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
     iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
     stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
-    date.data = "20210716"
-	rm(int_iter)
+    date.data = mcmc_env$date.data
+    dates.used= mcmc_env$dates.used
+    start.date = mcmc_env$start.date
+    end.hosp = mcmc_env$end.hosp	
+        rm(int_iter)
 	rm(tmp_env)
   } else {
     source(file.path(proj.dir, "R/output/tidy_output.R"))
