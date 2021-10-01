@@ -51,7 +51,7 @@ seb_report_delay <- 1L
 
 ##file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
-adm.sus.geog_link <- "LAD19NM"
+adm.sus.geog_link <- "LAD19CD"
 adm.sus.region_col <- "RGN19NM"
 adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
