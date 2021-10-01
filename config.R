@@ -39,7 +39,7 @@ serology.delay <- 25 ## Assumed number of days between infection and developing 
 sero.end.date <- ymd(20200522)
 
 
-google.data.date <- format(ymd("2021-09-24"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-10-01"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 
@@ -85,7 +85,7 @@ prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
 
 
-num.prev.days <- 508
+num.prev.days <- 515
 
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -97,7 +97,7 @@ use.INLA.prev <- TRUE
 vacc.flag <- 1
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
@@ -192,7 +192,7 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20210922")
+date.prev <- lubridate::ymd("20210929")
 
 
 
@@ -233,7 +233,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20210924" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211001" ## Optional: if not specified will take the most recent data file.
 
 
 
@@ -246,7 +246,6 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 #future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
-future.n  <- (c(1.1, 1.4, 1.7, 1.8,1.8,1.9, rep(1.9, 5)) * 10^6) * (55.98 / 66.65)
+future.n  <- (c(0.8, 0.8, 0.8, 0.8,0.8,0.8, rep(0.8, 5)) * 10^6) * (55.98 / 66.65)
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
-
