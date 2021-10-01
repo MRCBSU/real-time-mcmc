@@ -1,8 +1,5 @@
 library(rmarkdown)
 
-##Tmp clear environment to test reproducibility
-rm(list = ls())
-
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -53,13 +50,10 @@ if(sero.flag){
   admsam.files <- seropos.files <- NULL
 }
 
+## Added the admissions data and moved it to the top of this file 
 if(adm.flag) {
   source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
 }
-
-
-## Temporary stop line added to prevent running further than addition of hopsitalisation data
-stop()
 
 
 if (region.type == "NHS") {

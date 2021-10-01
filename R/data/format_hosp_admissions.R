@@ -7,84 +7,131 @@ suppressMessages(require(gsubfn))
 ## Inputs that should (or may) change on a weekly basis
 #########################################################
 ## Where to find the data, if NULL use command line argument
-if(!exists("adm.loc")){ ## Set to default format for the filename
+if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
     input.loc <- "data/raw/admissions"
     ## List the possible files in the directory
-    adm.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("202*xlsx"))))
-    ## Pick the most recently added
-    input.loc <- rownames(adm.loc)[which.max(adm.loc$mtime)]
-} else {
-    if(is.null(adm.loc)){
-        input.loc <- commandArgs(trailingOnly = TRUE)[1]
+    adm_seb.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("sitrep*rds"))))
+    if (region.type == "NHS") {
+        adm_sus.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("nhs*csv"))))
     } else {
-        if(startsWith(adm.loc, "/")) input.loc <- adm.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "admissions", sero.loc)
+        adm_sus.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("ltla*csv"))))
+    }
+    ## Pick the most recently added
+    input_seb.loc <- rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)]
+    input_sus.loc <- rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)]
+} else {
+    if(is.null(adm_sus.loc) | is.null(adm_seb.loc)){
+        input_seb.loc <- commandArgs(trailingOnly = TRUE)[1]
+        input_sus_ons.loc <- commandArgs(trailingOnly = TRUE)[2]
+    } else {
+        if(startsWith(adm_seb.loc, "/")) input_seb.loc <- adm_seb.loc
+        else input_seb.loc <- build.data.filepath(subdir = "raw", "admissions", adm_seb.loc)
+        if(startsWith(adm_sus.loc, "/")) input_sus.loc <- adm_sus.loc
+        else input_sus.loc <- build.data.filepath(subdir = "raw", "admissions", adm_sus.loc)
     }
 }
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
+#! Note get peter to output sus data in this format going forwards
 if(!exists("date.adm")){
     fl.name <- basename(input.loc)
-    date.adm.str <- strapplyc(fl.name, "[0-9]{8,}", simplify = TRUE)
-    date.adm <- as_date(paste(substr(date.adm.str,1,4),
-                                     substr(date.adm.str,5,6),
-                                     substr(date.adm.str,7,8),
-                                     sep = "-"))
+    date.adm_sus.str <- str_match(rownames(adm_sus.loc),"([0-9]+)\\.csv$")[[1,2]]
+    date.adm_seb.str <- str_match(rownames(adm_seb.loc),"([0-9]+)\\.rds$")[[1,2]]
+    date.adm_sus <- ymd(date.adm_sus.str)
+    date.adm_seb <- ymd(date.adm_sus.str)
 }
 
+# Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
-latest.date <- date.adm - 1
-
-## Define an age-grouping
+if(sus_seb_combination == 1) {
+    latest_sus.date <- adm_sus.end.date
+    earliest_seb.date <- adm_sus.end.date + 1
+}
+latest.date <- adm.end.date
+## Define an age-grouping (the final age groupings note these can be modified in config.r this is just a default)
 if(!exists("age_adm.agg")){
-    age_adm.agg <- c(0, 6, 18, 65, 85, Inf)
-    age_adm.oldlabs <- c("0_5", "6_17", "18_64", "65_84", "85", "")
-    age_adm.labs <- c("0-5", "6-17", "18-64", "65-84", "85+", "NA") ## "All ages"
+    age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
+    age_adm.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
+    age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
 }
 nA_adm <- length(age_adm.labs)
 
-#! This behavioiur is not yet functional
+#! This behaviour is not yet functional
 # if(!exists("regions")){
 #     regions <- c("London", "Outside_London")
 # }
 
-possible.col.names <- list(
-    region = c("region", "Region", "Geography", "NHS_Region"),
-    date = c("DateVal"),
-    report_level = c("ReportLevel"),
-    trust_code = c("TrustCode"),
-    trust_name = c("TrustName"),
-    admissions = c("hospital_inc"),
-    admissions0_5 = c("hospital_inc_0-5"),
-    admissions6_17 = c("hospital_inc_6-17"),
-    admissions18_64 = c("hospital_inc_18-64"),
-    admissions65_84 = c("hospital_inc_65-84"),
-    admissions85 = c("hospital_inc_85+"),
-    diagnoses = c("hospital_inc_new"),
-    diagnoses0_5 = c("hospital_inc_new_0-5"),
-    diagnoses6_17 = c("hospital_inc_new_6-17"),
-    diagnoses18_64 = c("hospital_inc_new_18-64"),
-    diagnoses65_84 = c("hospital_inc_new_65-84"),
-    diagnoses85 = c("hospital_inc_new_85+")
-)
+## Read in sebs data if it is needed
+## Note data is stored in an rds so we must initially read in all data
+if(sus_seb_combination == 2 | sus_seb_combination == 1) {
 
-input.col.names <- suppressMessages(names(read_xlsx(input.loc, sheet = "Extracted Data", n_max =0)))
-is.valid.col.name <- function(name) {name %in% input.col.names}
-first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
-col.names <- lapply(possible.col.names, first.valid.col.name)
-invalid.col.names <- sapply(col.names, is.null)
-if (any(invalid.col.names)) {
-	names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
-	stop(paste("No valid column name for:", names.invalid.cols))
+
+    # Only list the values with age data for admissions and diagnoses
+    possible.col.names.seb <- list(
+        region = c("region", "Region", "Geography", "NHS_Region"),
+        date = c("DateVal", "date"),
+        trust_code = c("org_code"),
+        trust_name = c("org_name"),
+        # admissions = c("n_patients_admitted"),
+        admissions_ages_0_5 = c("n_patients_admitted_age_0_5"),
+        admissions_ages_6_17 = c("n_patients_admitted_age_6_17"),
+        admissions_ages_18_24 = c("n_patients_admitted_age_18_24"),
+        admissions_ages_25_34 = c("n_patients_admitted_age_25_34"),
+        admissions_ages_35_44 = c("n_patients_admitted_age_35_44"),
+        admissions_ages_45_54 = c("n_patients_admitted_age_45_54"),
+        admissions_ages_55_64 = c("n_patients_admitted_age_55_64"),
+        admissions_ages_65_74 = c("n_patients_admitted_age_65_74"),
+        admissions_ages_75_84 = c("n_patients_admitted_age_75_84"),
+        admissions_ages_85 = c("n_patients_admitted_age_85"),
+        # diagnoses = c("n_inpatients_diagnosed"),
+        diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
+        diagnoses_ages_6_17 = c("n_inpatients_diagnosed_age_6_17"),
+        diagnoses_ages_18_24 = c("n_inpatients_diagnosed_age_18_24"),
+        diagnoses_ages_25_34 = c("n_inpatients_diagnosed_age_25_34"),
+        diagnoses_ages_35_44 = c("n_inpatients_diagnosed_age_35_44"),
+        diagnoses_ages_45_54 = c("n_inpatients_diagnosed_age_45_54"),
+        diagnoses_ages_55_64 = c("n_inpatients_diagnosed_age_55_64"),
+        diagnoses_ages_65_74 = c("n_inpatients_diagnosed_age_65_74"),
+        diagnoses_ages_75_84 = c("n_inpatients_diagnosed_age_75_84"),
+        diagnoses_ages_85 = c("n_inpatients_diagnosed_age_85")
+    )
+
+    # Ensure all the useful pieces of data have been grabbed
+    adm.dat.seb <- read_rds(input_seb.loc)
+    input.col.names.seb <- suppressMessages(names(adm.dat.seb))
+    is.valid.col.name.seb <- function(name) {name %in% input.col.names.seb}
+    first.valid.col.name.seb <- function(names) {first.where.true(names, is.valid.col.name.seb)}
+    col.names.seb <- lapply(possible.col.names.seb, first.valid.col.name.seb)
+    invalid.col.names <- sapply(col.names.seb, is.null)
+    if (any(invalid.col.names)) {
+        names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+        stop(paste("No valid column name for:", names.invalid.cols))
+    }
 }
 
-if (region.type == "NHS") {
-	get.region <- function(x) str_replace_all(x$region, " ", "_")
-} else {
-	get.region <- function(x) str_replace_all(x$ONS_region, " ", "_")
-    stop("ONS data not yet implemented")
+# Select only the columns we want to read in from the sus data (if we need the sus data)
+if(sus_seb_combination == 0 | sus_seb_combination == 1) {
+    possible.col.names.sus <- list(
+        date = c("DateVal", "date"),
+        ages = c("ageGrpRTM", "ages"),
+        nosocomial = c("group")
+    )
+
+
+    input.col.names.sus <- suppressMessages(names(read_csv(input_sus.loc, n_max = 0)))
+    is.valid.col.name.sus <- function(name) {name %in% input.col.names.sus}
+    first.valid.col.name.sus <- function(names) {first.where.true(names, is.valid.col.name.sus)}
+    col.names.sus <- lapply(possible.col.names.sus, first.valid.col.name.sus)
+    invalid.col.names <- sapply(col.names.sus, is.null)
+    if (any(invalid.col.names)) {
+        names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+        stop(paste("No valid column name for:", names.invalid.cols))
+    }
 }
+
+# define get region functions (note modified to take in the column rather than the df)
+get.region <- function(x) str_replace_all(x, " ", "_")
 
 ## Location of this script
 thisFile <- function() {
@@ -132,69 +179,263 @@ if(!exists("admsam.files")){
                                          "ages_positives.txt")
 }
 
+## Construct the sus data into a useful format if necessary (date, age, region, admissions)
+if(sus_seb_combination == 0 | sus_seb_combination == 1) {
 
-adm.date.fmt <- "%y-%b-%d" #! Not right but irrelevant
-adm.col.args <- list()
-adm.col.args[[col.names[["region"]]]] <- col_character()
-adm.col.args[[col.names[["date"]]]] <- col_date(adm.date.fmt)
-adm.col.args[[col.names[["report_level"]]]] <- col_character()
-adm.col.args[[col.names[["trust_code"]]]] <- col_character()
-adm.col.args[[col.names[["trust_name"]]]] <- col_character()
-adm.col.args[[col.names[["admissions"]]]] <- col_integer()
-adm.col.args[[col.names[["admissions0_5"]]]] <- col_integer()
-adm.col.args[[col.names[["admissions6_17"]]]] <- col_integer()
-adm.col.args[[col.names[["admissions18_64"]]]] <- col_integer()
-adm.col.args[[col.names[["admissions65_84"]]]] <- col_integer()
-adm.col.args[[col.names[["admissions85"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses0_5"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses6_17"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses18_64"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses65_84"]]]] <- col_integer()
-adm.col.args[[col.names[["diagnoses85"]]]] <- col_integer()
-adm.cols <- do.call(cols_only, adm.col.args)
+    ## Define the correct column types
+    adm.date.fmt <- "%y-%b-%d"
+    adm.col.args <- list()
+    adm.col.args[[col.names.sus[["date"]]]] <- col_date(adm.date.fmt)
+    adm.col.args[[col.names.sus[["ages"]]]] <- col_character()
+    adm.col.args[[col.names.sus[["nosocomial"]]]] <- col_character()
+    adm.cols <- do.call(cols_only, adm.col.args)
 
-get_col_type <- function(x) {
-    ifelse(
-        identical(x, col_character()), "text",
-        ifelse(identical(x, col_double()), "numeric",
-        ifelse(identical(x, col_integer()), "numeric",
-        ifelse(identical(x, col_date(adm.date.fmt)), "text",
-        "skip"
-    ))))
+    # define a function to get the col_types
+    #! Note issue with default being integer (currently necessary as ons +nhs data uses many regions, ons is worst as would have to define all ltla regions as columns manually)
+    get_col_type_sus <- function(x) {
+        ifelse(
+            identical(x, col_character()), "c",
+            ifelse(identical(x, col_double()), "d",
+            ifelse(identical(x, col_integer()), "i",
+            ifelse(identical(x, col_date(adm.date.fmt)), "D",
+            "i"
+        ))))
+    }
+    # get the coltypes and name all columns with df colnames
+    fields <- sapply(adm.col.args[input.col.names.sus], get_col_type_sus)
+    names(fields) <- ifelse(is.na(names(fields)), input.col.names.sus, names(fields))
+
+    # Read the data from the sus file and rearrange to summarise across ages
+    print(paste0("Reading in data from ", input.loc))
+
+    adm.dat.sus <- read_csv(input_sus.loc, col_types = fields )  %>%
+          rename(!!!col.names.sus)  %>%
+        pivot_longer(where(is.numeric), names_to = "region", values_to = "admissions") %>%
+        ungroup()  %>%
+        group_by(date, ages, region)  %>%
+        summarise(across(where(is.numeric), ~sum(., na.rm = T)))  %>%
+        pivot_wider(id_cols = c(date, region), names_from = ages, values_from = admissions)
+
+    # Combine ages as defined in the config file
+    for(i in seq_along(summarise_classes_sus)) {
+        adm.dat.sus <- adm.dat.sus %>%
+                group_by(date, region)  %>%
+                mutate(!!names(summarise_classes_sus)[[i]] := sum(!!!syms(summarise_classes_sus[[i]]), na.rm = T), .keep = "unused")
+    }
+
+    # Give ages correct names (match with both dfs)
+    adm.dat.sus <- adm.dat.sus  %>%
+        pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions")  %>%
+        mutate(ages = factor(ages, levels = age_adm_sus.oldlabs))
+
+    levels(adm.dat.sus$ages) <- age_adm.labs
+
+    # Relabel problem regions as defined in config
+    #! Note issue that it assumes consistency of region names within a df
+    if(region.type == "NHS") {
+
+        adm.dat.sus <- adm.dat.sus %>%
+            mutate(region = get.region(region))
+
+        if(length(relevel_sus_locs_nhs) != 0) {
+            adm.dat.sus  <- adm.dat.sus  %>%
+                mutate(region = fct_recode(region, !!!relevel_sus_locs_nhs))
+        }
+    } else {
+
+        # Read in linker with linking column and new region column defined in config.r
+        possible.col.names.sus_link <- list(
+            link = c(adm.sus.geog_link),
+            region = c(adm.sus.region_col)
+        )
+
+        # Check the columns are correct
+        input.col.names.sus_link <- suppressMessages(names(read_csv(paste(input.loc,adm.sus.geog_link.loc, sep = "/"), n_max = 0)))
+        is.valid.col.name.sus_link <- function(name) {name %in% input.col.names.sus_link}
+        first.valid.col.name.sus_link <- function(names) {first.where.true(names, is.valid.col.name.sus_link)}
+        col.names.sus_link <- lapply(possible.col.names.sus_link, first.valid.col.name.sus_link)
+        invalid.col.names <- sapply(col.names.sus_link, is.null)
+        if (any(invalid.col.names)) {
+            names.invalid.cols <- paste0(names(possible.col.names.sus_link)[invalid.col.names], collapse = ", ")
+            stop(paste("No valid column name for:", names.invalid.cols))
+        }
+
+        # define column types
+        adm.date.fmt <- "%y-%b-%d"
+        adm.col.args <- list()
+        adm.col.args[[col.names.sus_link[["link"]]]] <- col_character()
+        adm.col.args[[col.names.sus_link[["region"]]]] <- col_character()
+        adm.cols <- do.call(cols_only, adm.col.args)
+
+        # define column types and defaults as function
+        get_col_type_sus_link <- function(x) {
+            ifelse(
+                identical(x, col_character()), "c",
+                ifelse(identical(x, col_double()), "d",
+                ifelse(identical(x, col_integer()), "i",
+                ifelse(identical(x, col_date(adm.date.fmt)), "D",
+                "_"
+            ))))
+        }
+
+        # set coltypes and give coltypes correct colnames
+        fields <- sapply(adm.col.args[input.col.names.sus_link], get_col_type_sus_link)
+        names(fields) <- ifelse(is.na(names(fields)), input.col.names.sus_link, names(fields))
+
+        # Read in geography linker
+        sus_geog_link <- read_csv(paste(input.loc,adm.sus.geog_link.loc, sep = "/"), col_types = fields)  %>%
+                            rename(!!!col.names.sus_link)
+
+        # Join on linker and select new region column as only geography column
+        adm.dat.sus <- sus_geog_link %>%
+                        right_join(adm.dat.sus, by = c("link" = "region")) %>%
+                        mutate(region = get.region(region))  %>%
+                        select(-link)
+
+        # Give ages correct names (match with both dfs)
+        if(length(relevel_sus_locs_ons) != 0) {
+            adm.dat.sus  <- adm.dat.sus  %>%
+                mutate(region = fct_recode(region, !!!relevel_sus_locs_ons))
+        }
+    }
+
+    # Sum all admissions by each group
+    adm.dat.sus <- adm.dat.sus %>%
+        group_by(region, date, ages)  %>%
+        summarise(across(admissions, ~sum(., na.rm = T)))
+
 }
-fields <- sapply(adm.col.args[input.col.names], get_col_type)
 
-print(paste0("Reading in data from ", input.loc))
 
-adm.dat <- read_xlsx(input.loc, sheet = "Extracted Data", col_types = fields) %>%
-    rename(!!!col.names)  %>%
-    pivot_longer(where(is.numeric), names_to = "ages", values_to = "count") %>%
-    filter(!is.na(count)) %>%
-    mutate(type = str_extract(ages, "^(admissions|diagnoses)"),
-           ages = str_remove(ages, "^(admissions|diagnoses)"),
-           date = ymd(date))
+## Construct sebs data into a useful format if necessary (date, age, region, admissions)
+if(sus_seb_combination == 1 | sus_seb_combination == 2) {
 
-adm.dat <- adm.dat %>%
-    mutate(region = get.region(.),
-    ages = factor(ages, levels = age_adm.oldlabs))
+    # Rearrange sebs data to summarise across the ages (grab ages from the columns)
+    adm.dat.seb <- adm.dat.seb  %>%
+        select(-c(n_beds_mechanical_non_cov_ns:n_staff_absent_positive), -n_care_home_admitted)  %>%
+        unique()  %>%
+        rename(!!!col.names.seb)  %>%
+        select(!!!(unlist(names(col.names.seb)))) %>%
+        pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions") %>%
+        mutate(ages = str_match(ages, "_ages\\_(.+)$")[,2])  %>%
+        group_by(ages, date, region, trust_code, trust_name)  %>%
+        summarise(across(admissions, ~sum(., na.rm = T)))  %>%
+        pivot_wider(id_cols = c(date, region, trust_code, trust_name), names_from = ages, values_from = admissions)
 
-levels(adm.dat$ages) <- age_adm.labs
+    # Combine ages as defined in the config file
+    for(i in seq_along(summarise_classes_seb)) {
+        adm.dat.seb <- adm.dat.seb %>%
+                        group_by(date,region, trust_code, trust_name)  %>%
+                        mutate(!!names(summarise_classes_seb)[[i]] := sum(!!!syms(summarise_classes_seb[[i]]), na.rm = T), .keep = "unused")
+    }
 
-if(region.type == "NHS") {
-    adm.sam <- adm.dat %>%
-        filter(report_level == "Region") %>%
-        select(-report_level, -trust_name, -trust_code) %>%
-        right_join(crossing(date = as_date(earliest.date:latest.date),
-                            region = regions,
-                            ages = age_adm.labs,
-                            type = c("admissions", "diagnoses")), by = c("date" = "date", "region" = "region", "ages" = "ages", "type" = "type")) %>%
-        replace_na(list(count = 0)) %>%
-        group_by(date, region, ages) %>%
-        summarise(across(count, .fn = sum))
+    # Give ages the correct names (match with both DFs)
+    adm.dat.seb <- adm.dat.seb  %>%
+    pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions")  %>%
+        mutate(ages = factor(ages, levels = age_adm_seb.oldlabs))
+
+    levels(adm.dat.seb$ages) <- age_adm.labs
+
+    # Relabel problem regions as defined in config
+    #! Note issue that it assumes consistency of region names within a df
+    if(region.type == "NHS") {
+
+        adm.dat.seb <- adm.dat.seb %>%
+            mutate(region = get.region(region))
+
+        if(length(relevel_seb_locs_nhs) != 0) {
+            adm.dat.seb  <- adm.dat.seb  %>%
+                mutate(region = fct_recode(region, !!!relevel_seb_locs_nhs))
+        }
+
+    } else {
+
+        # Read in linker with linking column and new region column defined in config.r
+        possible.col.names.seb_link <- list(
+            link = c(adm.seb.geog_link),
+            region = c(adm.seb.region_col)
+        )
+
+        # Check the columns are correct
+        input.col.names.seb_link <- suppressMessages(names(read_xlsx(paste(input.loc,adm.seb.geog_link.loc, sep = "/"), n_max = 0)))
+        is.valid.col.name.seb_link <- function(name) {name %in% input.col.names.seb_link}
+        first.valid.col.name.seb_link <- function(names) {first.where.true(names, is.valid.col.name.seb_link)}
+        col.names.seb_link <- lapply(possible.col.names.seb_link, first.valid.col.name.seb_link)
+        invalid.col.names <- sapply(col.names.seb_link, is.null)
+        if (any(invalid.col.names)) {
+            names.invalid.cols <- paste0(names(possible.col.names.seb_link)[invalid.col.names], collapse = ", ")
+            stop(paste("No valid column name for:", names.invalid.cols))
+        }
+
+        # define column types
+        adm.date.fmt <- "%y-%b-%d"
+        adm.col.args <- list()
+        adm.col.args[[col.names.seb_link[["link"]]]] <- col_character()
+        adm.col.args[[col.names.seb_link[["region"]]]] <- col_character()
+        adm.cols <- do.call(cols_only, adm.col.args)
+
+        # define column types and defaults as function
+        get_col_type_seb_link <- function(x) {
+            ifelse(
+                identical(x, col_character()), "text",
+                ifelse(identical(x, col_double()), "numeric",
+                ifelse(identical(x, col_integer()), "numeric",
+                ifelse(identical(x, col_date(adm.date.fmt)), "date",
+                "skip"
+            ))))
+        }
+
+        # set coltypes and give coltypes correct colnames
+        fields <- sapply(adm.col.args[input.col.names.seb_link], get_col_type_seb_link)
+        names(fields) <- ifelse(is.na(names(fields)), input.col.names.seb_link, names(fields))
+
+        # Read in geography linker
+        seb_geog_link <- read_xlsx(paste(input.loc,adm.seb.geog_link.loc, sep = "/"), col_types = fields)  %>%
+                            rename(!!!col.names.seb_link)
+
+        # Join on linker and select new region column as only geography column
+        adm.dat.seb <- seb_geog_link %>%
+                        right_join(adm.dat.seb %>% ungroup() %>% select(-region), by = c("link" = "trust_code")) %>%
+                        filter(!is.na(region))  %>%
+                        mutate(region = get.region(region))  %>%
+                        select(-link)
+
+        # Give ages correct names (match with both dfs)
+        if(length(relevel_seb_locs_ons) != 0) {
+            adm.dat.seb  <- adm.dat.seb  %>%
+                mutate(region = fct_recode(region, !!!relevel_seb_locs_ons))
+        }
+    }
+
+    # Sum all admissions by each group
+    adm.dat.seb <- adm.dat.seb  %>%
+        group_by(region, date, ages)  %>%
+        summarise(across(admissions, ~sum(., na.rm = T)))  %>%
+        mutate(date = date - seb_report_delay)
+
+}
+
+# Combine sebs data and sus data into the same df and select only correct dates
+if(sus_seb_combination == 0) {
+    adm.sam <- adm.dat.sus %>%
+                filter(date >= earliest.date)  %>%
+                filter(date <= date.adm_sus - adm_sus.strip_days)  %>%
+                filter(date <= latest.date)
+} else if(sus_seb_combination == 1) {
+    adm.sam <- adm.dat.sus %>%
+                filter(date >= earliest.date)  %>%
+                filter(date <= date.adm_sus - adm_sus.strip_days)  %>%
+                filter(date <= latest_sus.date)  %>%
+                bind_rows(adm.dat.seb  %>%
+                            filter(date >= earliest_seb.date)  %>%
+                            filter(date <= date.adm_seb -adm_seb.strip_days)  %>%
+                            filter(date <= latest.date)
+                )
 } else {
-    #! ONS regions needs to be sorted
-    adm.sam <- tribble(~data, NA)
+    adm.sam <- adm.dat.seb  %>%
+        filter(date >= earliest.date)  %>%
+        filter(date <= date.adm_seb -adm_seb.strip_days)  %>%
+        filter(date <= latest.date)
 }
 
 ## Write rtm data outputs to file
@@ -209,7 +450,7 @@ for(reg in regions) {
                               filter(region == reg),
                               id_cols = c(date, region),
                               names_from = ages,
-                              values_from = count
+                              values_from = admissions
                               )
 
     tmpFile <- admsam.files[reg]
@@ -239,16 +480,24 @@ require(htmlwidgets)
 
 adm.plot <- adm.sam %>%
     group_by(date, region) %>%
-    summarise(across(count, .fn = sum)) %>%
-    mutate(text = paste("Region:", region, "\nAdmssions:", count, "\nDate:", date))
+    summarise(across(admissions, .fn = sum)) %>%
+    mutate(text = paste("Region:", region, "\nAdmssions:", admissions, "\nDate:", date))
 
-ggp <- ggplot(adm.plot, aes(x = date, y = count, colour = region, text = text)) +
+ggp <- ggplot(adm.plot, aes(x = date, y = admissions, colour = region, text = text)) +
         geom_point(alpha = 0.7, size = 1.5) +
+        geom_line(aes(group = region), alpha = 0.7, size = 1.5) +
         scale_color_viridis(discrete = T, name = "Region") +
         theme_ipsum() +
         labs(x = "Date", y = "Number of Admissions")
 
 ggpp <- ggplotly(ggp, tooltip = "text")
+
+if(sus_seb_combination == 0) {
+    date.adm.str <- date.adm_sus
+} else {
+    date.adm.str <- date.adm_seb
+}
+
 
 plot.filename <- file.path(dirname(tmpFile), paste0("adm_plot", date.adm.str, ".jpg"))
 ggsave(plot.filename,

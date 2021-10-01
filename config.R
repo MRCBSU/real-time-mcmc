@@ -37,7 +37,26 @@ if (args[2] == "All")  {
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
 sero.end.date <- ymd(20200522)
-adm.end.date <- ymd(20210917)
+
+##Admissions flags/dates
+adm.end.date <- ymd(20210924)
+adm_sus.end.date <- ymd(20201014)
+adm_seb.start.date <- ymd(20201014)
+##Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
+sus_seb_combination <- 1L
+##Value to note how many days to remove from the end of the dataset
+adm_sus.strip_days <- 30L
+adm_seb.strip_days <- 5L
+seb_report_delay <- 1L
+
+##file.locs for admissions for geography linkers (with colname links)
+adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
+adm.sus.geog_link <- "LAD19NM"
+adm.sus.region_col <- "RGN19NM"
+adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
+adm.seb.geog_link <- "Trust_code"
+adm.seb.region_col <- "phec_nm"
+
 
 google.data.date <- format(ymd("20210813"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
@@ -60,10 +79,32 @@ age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "Al
 nA <- length(age.labs)
 
 #! Added age groupings for the sitrep data
-age_adm.agg <- c(0, 6, 18, 65, 85, Inf)
-age_adm.labs <- c("0-5","6-17","18-64","65-84", "85+", "NA") ## "All ages"
-age_adm.oldlabs <- c("0_5", "6_17", "18_64", "65_84", "85", "")
+summarise_classes_sus <- list("[0,25)" = c("[0,1)", "[1,5)", "[5,15)", "[15,25)"))
+
+summarise_classes_seb <- list("0_25" = c("0_5", "6_17", "18_24"),
+                              "25_45"= c("25_34", "35_44"),
+                              "45_65" = c("45_54", "55_64"),
+                              "65_75" = c("65_74"),
+                              "75" = c("75_84", "85")
+)
+
+age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
+age_adm_seb.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
+age_adm_sus.oldlabs <- c("[0,25)", "[25,45)", "[45,65)", "[65,75)", "[75,Inf]", "")
+age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
 nA_adm <- length(age_adm.labs)
+
+#! Relabelling of regions for mismatches in the data (assumes consistency within dataset)
+#! Additionally is run after get_region function therefore underscores are expected
+relevel_sus_locs_nhs <- c("East_of_England" = "EAST_OF_ENGLAND", "London" = "LONDON", "Midlands" = "MIDLANDS",
+                     "North_East_and_Yorkshire" = "NORTH_EAST_AND_YORKSHIRE", "North_West" = "NORTH_WEST",
+                     "South_East" = "SOUTH_EAST", "South_West" = "SOUTH_WEST")
+
+relevel_sus_locs_ons <- c()
+
+relevel_seb_locs_ons <- c("Yorkshire_and_The_Humber" = "Yorkshire_and_Humber")
+
+relevel_seb_locs_nhs <- c()
 
 if(!exists("regions")) regions <- "England"
 
