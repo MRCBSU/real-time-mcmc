@@ -11,6 +11,9 @@ pop.tmp <- pop.tmp <- read_csv(build.data.filepath(subdir = "population", "popn2
     filter(Name == "ENGLAND")
 under.50s <- sum(pop.tmp[, 5 + 45:49]) / sum(pop.tmp[, 5 + 45:64])
 vacc.over50s <- (0.9 * under.50s) + (0.95 * (1 - under.50s))
+vacc.25.44 <- 0.78
+vacc.15.24 <- 0.64
+vacc.5.14 <- 0.067
 
 ## What are we getting in the current weeks
 xdist <- jab.dat %>%
@@ -24,7 +27,9 @@ xdist <- jab.dat %>%
            uptake = ifelse(age.grp == "75+", vacc.over75s,
                     ifelse(age.grp == "65-74", vacc.over65s,
                     ifelse(age.grp == "45-64", vacc.over50s,
-                           vacc.under50s))))
+                    ifelse(age.grp == "25-44", vacc.25.44,
+                    ifelse(age.grp == "15-24", vacc.15.24,
+                    ifelse(age.grp == "5-14", vacc.5.14, 0.01)))))))
 
 d0 <- max(vac.dates)
 d.end <- d0 + 40
