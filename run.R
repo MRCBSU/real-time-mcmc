@@ -80,9 +80,9 @@ if(prev.flag){
                             paste0(prev.lik.days, collapse = "_"))
     prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
-    prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
-    prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
-    prev.dat.file <- paste0(prev.file.prefix, "ons_dat.csv")
+    prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
+    prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
+    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
