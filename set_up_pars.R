@@ -478,6 +478,8 @@ ssens.prior.dist <- ifelse(fix.sero.test.spec.sens, 1, 3)
 	ssens.prior.pars <- c(23.5, 9.5)
 	sspec.prior.pars <- c(569.5, 5.5)
 ## }
+## ssens.prior.pars <- c(2420.5, 978.5) ## TEMPORARY SETTING - tighter prior
+## ssens.prior.pars <- c(7.85, 0.501)
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)

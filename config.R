@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(5)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -189,6 +189,9 @@ if(prev.flag) scenario.name <- paste0(scenario.name, "_prev", days.between.prev,
 efficacies <- "PHE" ## current values can be 'Nick', 'Jamie', or 'SPIM', 'PHE'.
 vac.design <- "cumulative" ## currently values can be 'cumulative' or 'incident'.
 scenario.name <- paste0(scenario.name, efficacies)
+
+## ## temporary line - for adding ad hoc names to the scenario
+## scenario.name <- paste0(scenario.name, "_manufacturer")
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
