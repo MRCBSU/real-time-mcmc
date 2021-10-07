@@ -45,7 +45,7 @@ tibble(
 # Load the data into a data frame
 # fns holds the filename
 fns %>% purrr::map(function(fn) {
-  load(fn)
+  load(file.path(pth, fn))
   dnv <- apply(deaths.no.vac, c(1,3), sum)
   dv <- apply(deaths.vac, c(1,3), sum)
   inv <- apply(infecs.no.vac, c(1,3), sum)

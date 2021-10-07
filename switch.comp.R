@@ -4,15 +4,15 @@ Rfile <- "tmp"
 load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
-## in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
+in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
-in.root <- "/rds/user/aa995/hpc-work"
+## in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "real-time-mcmc"
-out.repo <- "real-time-mcmc"
+in.repo <- "20210910_backup_backup"
+out.repo <- "20210910"
 ## in.repo <- "_new_base"
 ## out.repo <- ""
 
