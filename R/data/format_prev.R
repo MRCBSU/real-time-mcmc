@@ -3,7 +3,7 @@
 #########################################################
 
 ## Where to find the data as downloaded from the ONS?
-## --------------------------------------------------
+# --------------------------------------------------
 ## Either already specified in the variable prev.loc
 ## or found as the latest entry into a default
 ## directory. If prev.loc is NULL, look for a
@@ -48,7 +48,7 @@ nA <- length(age.labs)
 
 ## Map our names for columns (LHS) to data column names (RHS)
 possible.col.names <- list(
-    age = c("age", "age_rtm", "ageg_rtm"),
+    ons.age = c("age", "age_rtm", "ageg_rtm"),
     region = c("nhsregion", "onsregion"),
     sample_date = "date",
     day = "study_day",
@@ -125,10 +125,13 @@ if(!exists("prev.mean.files")){
                                          "_ons_sdlogprev.txt")
 }
 
+age_lookup <- tibble(ons.age = c("2_4", "5_14", "15_24", "25_44", "45_64", "65_74", "75plus"),
+                     age = factor(age.labs[-1], levels=age.labs[-1], ordered = TRUE))
+
 ## Which columns are we interested in?
 prev.col.args <- list()
 prev.col.args[[col.names[["sample_date"]]]] <- col_character()
-prev.col.args[[col.names[["age"]]]] <- col_factor(ordered = TRUE)
+prev.col.args[[col.names[["ons.age"]]]] <- col_character()
 prev.col.args[[col.names[["region"]]]] <- col_character()
 prev.col.args[[col.names[["lmean"]]]] <- col_double()
 prev.col.args[[col.names[["lsd"]]]] <- col_double()
@@ -142,8 +145,9 @@ cat("Reading prevalence from", input.loc, "\n")
 prev.dat <- read_csv(input.loc,
                      col_types = prev.cols) %>%
     rename(!!!col.names) %>%
-	mutate(sample_date = fuzzy_date_parse(sample_date))
-levels(prev.dat$age) <- age.labs[-1]
+    mutate(sample_date = fuzzy_date_parse(sample_date)) %>%
+    left_join(age_lookup) %>%
+    select(-ons.age)
 
 should.include.rows <- function(x) {
 	include.days.mask <- x$day %in% prev.lik.days

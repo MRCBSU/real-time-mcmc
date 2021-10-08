@@ -81,6 +81,3 @@ Re-running the model isn't quite as simple as just running the model code (which
 7. Run the counterfactual simulations from the ONS60 analysis. As above for the use of the `submit_simulate' script, but in the file `mc_midterm_forecast.R' change the variable `projections.basename' to "projections_counter". Run the `submit_simulate' script from the same location as above with the correct array number.
 8. Once the counterfactual simulations are complete, navigate to the directory in which the simulations have been run and source the R script `../../../R/output/vac.comparison.R'. This will (currently) generate an .RData file that is to go to the JMT shared area.
 
-These scripts read in values from the set up files above.
-Therefore, they should not need modifying.
-Blame Josh if they do....

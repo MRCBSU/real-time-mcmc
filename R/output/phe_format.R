@@ -30,7 +30,7 @@ out.dir <- out.dirx; rm(out.dirx)
 
 
 create.spim.table <- function(data, name, by = NULL) {
-  qprobs <- c(0.01, 0.05, 0.25, 0.75, 0.95, 0.99, 0.5)
+  qprobs <- c(0.025, 0.05, 0.25, 0.75, 0.95, 0.975, 0.5)
   region.data <- data %>%
     get.aggregated.quantiles(c("region", by), qprobs) %>%
     bind_rows(data %>%
@@ -43,12 +43,12 @@ create.spim.table <- function(data, name, by = NULL) {
       values_from = value
     ) %>%
     rename(
-      `1st centile` = q0.01,
+      `1st centile` = q0.025,
       `5th centile` = q0.05,
       `25th centile` = q0.25,
       `75th centile` = q0.75,
       `95th centile` = q0.95,
-      `99th centile` = q0.99,
+      `99th centile` = q0.975,
       Value = q0.5,
       Geography = region
     ) %>%

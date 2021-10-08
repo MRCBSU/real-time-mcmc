@@ -1,21 +1,25 @@
 ## Get the variables as they were saved on the original computer
 setup.env <- new.env()
-load("tmp.RData", envir = setup.env)
+Rfile <- "tmp"
+load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
 in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
+## in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 if(Sys.info()["user"]=="aa995")   out.root <- "/home/aa995/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "real-time-mcmc"
-out.repo <- "real-time-mcmc"
+in.repo <- "20210910_backup_backup"
+out.repo <- "20210910"
+## in.repo <- "_new_base"
+## out.repo <- ""
 
 ## Change location of output directory
-in.base <- "chain2_chain2"
-out.base <- "chain2"
+in.base <- "PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210730_timeuse_household_deaths"
+out.base <- "ONS60"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)
@@ -43,4 +47,4 @@ expit <- function(x) exp(x)/(1+exp(x))
 ## abreaks.icr <- 3:7
 
 
-save(list = ls(envir = setup.env), file = "tmp.RData", envir = setup.env)
+save(list = ls(envir = setup.env), file = paste0(Rfile, ".RData"), envir = setup.env)

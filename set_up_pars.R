@@ -215,7 +215,7 @@ if(single.ifr){
 } else { ## IFR changes over time, presume logistically...
     if(nA > 1){
         value.ifr <- logit(c(5.77188478860128e-06, 9.57867182705255e-06, 4.5278018816958e-05, 0.000323870211139221, 0.00471791669192503, 0.0316645720110774, 0.202480672513791))
-        var.ifr <- rep(0.000360, nA)
+        var.ifr <- rep(0.000360, length(value.ifr))
     } else {
         value.ifr <- logit(c(0.007, 1))
         var.ifr <- rep(0.005, 2)
@@ -487,6 +487,8 @@ ssens.prior.dist <- ifelse(fix.sero.test.spec.sens, 1, 3)
 	ssens.prior.pars <- c(23.5, 9.5)
 	sspec.prior.pars <- c(569.5, 5.5)
 ## }
+## ssens.prior.pars <- c(2420.5, 978.5) ## TEMPORARY SETTING - tighter prior
+## ssens.prior.pars <- c(7.85, 0.501)
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)

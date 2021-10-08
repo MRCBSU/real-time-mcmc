@@ -61,8 +61,8 @@ if (any(invalid.col.names)) {
 	stop(paste("No valid column name for:", names.invalid.cols))
 }
 
-# Given a row in a deaths file, return its region.
-# Various useful functions for this are defined above.
+## Given a row in a deaths file, return its region.
+## Various useful functions for this are defined above.
 if (region.type == "NHS") get.region <- nhs.region
 if (region.type == "ONS") get.region <- ons.region
 
@@ -96,6 +96,7 @@ if(!exists("file.loc")){
 	source(file.path(file.loc, "utils.R"))
 	source(file.path(proj.dir, "config.R"))
 }
+
 if(!exists("data.files"))
     data.files <- build.data.filepath("RTM_format/deaths",
                                       "deaths",
@@ -186,7 +187,6 @@ dth.dat %>%
 ## ## 
 
 latest.date <- ymd(date.data) ## - reporting.delay
-
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
