@@ -44,7 +44,7 @@ sero.end.date <- ymd(20200522)
 
 
 
-google.data.date <- format(ymd("2021-10-01"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-10-08"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 ## Number of days to run the simulation for.
@@ -84,7 +84,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 515
+num.prev.days <- 522
 
 ## Shall we fix the serological testing specificity and sensitivty?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
@@ -198,7 +198,7 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20210929")
+date.prev <- lubridate::ymd("20211006")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -239,7 +239,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20211001" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211003" ## Optional: if not specified will take the most recent data file.
 
 
 
@@ -252,8 +252,8 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
-#future.n <- (c(2.5, 2, 1.6, 1.6, 1.5, 1.4, rep(2, 4)) * 10^6) * (55.98 / 66.65)
-future.n <- (c(0.8, 0.8, rep(0.8, 9)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.3, 0.7, 0.4, 0.5, 0.2, 0.2, rep(0.2, 4)) * 10^6) * (55.98 / 66.65)
+#future.n <- (c(0.8, 0.8, rep(0.8, 9)) * 10^6) * (55.98 / 66.65)
 
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
