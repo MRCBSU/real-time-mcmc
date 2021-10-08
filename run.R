@@ -57,7 +57,6 @@ if(sero.flag){
   source(file.path(proj.dir, "R/data/format_sero.R"))
 }
 
-
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
 } else if (region.type == "ONS") {

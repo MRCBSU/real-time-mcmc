@@ -36,7 +36,8 @@ if (args[2] == "All")  {
 }
 
 serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
-sero.end.date <- ymd(20210802)
+sero.end.date <- ymd(20210920)
+sero.date.fmt <- "%d%b%Y"
 
 google.data.date <- format(ymd("20211001"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
@@ -77,7 +78,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 ## Do we want to use NHSBT data (1) or RCGP data (0)
-NHSBT.flag <- 1
+NHSBT.flag <- 0
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight

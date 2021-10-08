@@ -10,8 +10,9 @@ suppressMessages(require(readxl))
 if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
     input.loc <- "data/raw/serology"
+    input.loc <- "~/CoVID-19/Data streams/Serology"
     ## List the possible files in the directory
-    sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("*xlsx"))))
+    sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("*xlsx|*csv"))))
     ## Pick the most recently added
     input.loc <- rownames(sero.loc)[which.max(sero.loc$mtime)]
 } else {
@@ -22,6 +23,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
         else input.loc <- build.data.filepath(subdir = "raw", "serology", sero.loc)
     }
 }
+csv.flag <- grepl("*csv$", input.loc)
 
 ## Set the max and min dates for the data
 earliest.date <- start.date
@@ -31,6 +33,7 @@ latest.date <- sero.end.date
 if(!exists("date.sero")){
     fl.name <- basename(input.loc)
     date.sero.str <- strapplyc(fl.name, "[0-9]{8,}", simplify = TRUE)
+    if(length(date.sero.str[[1]]) == 0) date.sero.str <- sero.end.date
 }
 
 ## Define an age-grouping
@@ -61,9 +64,11 @@ possible.col.names <- list(
 )
 if(region.type == "ONS") possible.col.names$ONS_region = "ONS_Region"
 
-names(read_xlsx(input.loc,sheet = 1, n_max = 0))
+## names(read_xlsx(input.loc,sheet = 1, n_max = 0))
 
-input.col.names <- suppressMessages(names(read_xlsx(input.loc,sheet = 1, n_max = 0)))
+if(csv.flag){
+    input.col.names <- suppressMessages(names(read_csv(input.loc, n_max = 0)))
+} else input.col.names <- suppressMessages(names(read_xlsx(input.loc,sheet = 1, n_max = 0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
 first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}
 col.names <- lapply(possible.col.names, first.valid.col.name)
@@ -131,7 +136,6 @@ if(!exists("serosam.files")){
                                          "ages_positives.txt")
 }
 ## Which columns are we interested in?
-sero.date.fmt <- "%d-%b-%y"
 sero.col.args <- list()
 sero.col.args[[col.names[["surv"]]]] <- col_character()
 sero.col.args[[col.names[["age"]]]] <- col_integer()
@@ -154,14 +158,20 @@ get.col.type <- function(x){
     ifelse(identical(x, col_integer()), "numeric",
     ifelse(identical(x, col_date(sero.date.fmt)), "date", "skip"))))
 }
-fields <- sapply(sero.col.args[input.col.names], get.col.type)
 
 ## Reading in the data ##
 print(paste("Reading from", input.loc))
 strPos <- c("+", "Positive", "positive")
 #! read xlsx line needs to have improved robustness
 
-sero.dat <- read_xlsx(input.loc, sheet = 1, col_types = fields) %>% 
+
+if(csv.flag){
+    sero.dat <- read_csv(input.loc, col_types = sero.cols)
+} else {
+    fields <- sapply(sero.col.args[input.col.names], get.col.type)
+    sero.dat <- read_xlsx(input.loc, sheet = 1, col_types = fields)
+}
+sero.dat <- sero.dat %>% 
     rename(!!!col.names) %>%
     pivot_longer(contains("outcome"), names_to = "assay", values_to = "outcome") %>% 
     filter(!is.na(outcome)) %>% 
@@ -331,5 +341,28 @@ saveWidget(pp, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.st
 ##        height = 6,
 ##        main = glue::glue("Assay: Roche-", ifelse(RocheS.flag, "S", "N")"; Collection: ", ifelse(NHSBT.flag, "NHSBT", "RCGP")))
 ## saveWidget(pp.focus, file=file.path(dirname(tmpFile), paste0("sero_plot_focus", date.sero.str, ".html")))
+
+rtm.plot.by.age <- rtm.sam %>%
+    inner_join(rtm.pos %>% rename(p = n)) %>%
+    mutate(X = p / n) %>%
+    filter(!is.nan(X)) %>%
+    mutate(text = paste(region, ": N = ", n))
+
+gap <- ggplot(rtm.plot.by.age, aes(x = date, y = X, size = n, colour = region, text = text)) +
+    geom_point(alpha = 0.7, position = position_dodge2(width = 0.6, preserve = "single")) +
+    scale_size(range = c(1, 10), name = "Sample size, N") +
+    scale_colour_viridis(discrete = TRUE, name = "Region") +
+    theme_ipsum() +
+    ylab("Proportion positive") +
+    facet_wrap(~age.grp)
+pap <- ggplotly(gap, tooltip = "text")
+
+plot.filename <- file.path(dirname(tmpFile), paste0("sero_plot_byage", date.sero.str, ".jpg"))
+ggsave(plot.filename,
+       gap,
+       width = 9.15,
+       height = 6,
+       title = glue::glue("Assay: Roche-", strAssay, "; Collection: ", strCollection))
+saveWidget(pap, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, strCollection, "_", strAssay, ".html")))
 
 stop()
