@@ -37,8 +37,8 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
     if(is.null(vacc.loc)){
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
     } else {
-        if(startsWith(vacc.loc, "/")) input.loc <- prev.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", prev.loc)
+        if(startsWith(vacc.loc, "/")) input.loc <- vacc.loc
+        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", vacc.loc)
     }
 }
 
