@@ -1,35 +1,30 @@
 #!/bin/bash
-#SBATCH -J trial_hpc_batch
-#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH --job_name=testrunRTM
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=9
-#SBATCH --time=72:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:03:00
 #! What types of email messages do you wish to receive?
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-type=TIME_LIMIT
-#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL,TIME_LIMIT,END
+#SBATCH --mail-user=joel.kandiah@phe.gov.uk
 #! Uncomment this to prevent the job from being requeued (e.g. if
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0,3,4
-#SBATCH -p skylake
-#SBATCH --qos=covid0
-
 
 #SBATCH --output=model_runs_20210120regjobs_%a.out
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
-module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
+module load gcc/gcc-9.4.0 gsl openmp openmpi OpenBLAS R 
 
-dirs=(*/)
-cd ${dirs[SLURM_ARRAY_TASK_ID]}
-pwd
+## dirs=(*/)
+## cd ${dirs[SLURM_ARRAY_TASK_ID]}
+## pwd
 
 if [ -f "posterior_report10" ]; then
     echo "existing output found"
 else
-  ../../../rtm_hpc2
-  # sbatch ../../../submit_post_process_correct_dir
+  ../../rtm_hpc2
 fi
+  # sbatch ../../../submit_post_process_correct_dir
+
