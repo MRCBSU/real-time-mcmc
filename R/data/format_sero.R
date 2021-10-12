@@ -185,16 +185,9 @@ if(NHSBT.flag) {
 } else {
   sero.dat <- sero.dat %>%
       filter(startsWith(surv, "RCGP") | startsWith(surv, "rcgp") |
-             ((startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT")) & SDate < ymd("2020-05-22"))
+             ((startsWith(surv, "NHSBT") | startsWith(surv, "NHS BT")) & SDate < sero.end.1stwv)
              )
 }
-
-## Apply filters to get only the data we want.
-sero.dat <- sero.dat %>%
-    filter(!is.na(region), SDate <= sero.end.date) %>%
-    mutate(region = get.region(.),
-           age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
-           date = SDate - serology.delay)
 
 ## Set correct name for the assay we want to examine
 if(RocheS.flag) {
@@ -203,10 +196,18 @@ if(RocheS.flag) {
   roche <- "RNoutcome"
 }
 
+## Apply filters to get only the data we want.
+sero.dat <- sero.dat %>%
+    filter(!is.na(region), SDate <= sero.end.date) %>%
+    filter((assay == "Eoutcome" & as_date(SDate) < sero.end.1stwv) | (assay == roche & as_date(SDate) >= sero.end.1stwv)) %>% 
+    mutate(region = get.region(.),
+           age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
+           date = SDate - serology.delay)
+latest.date <- max(sero.dat$date)
+
 ## ## Get into format for use by the rtm
 ## First denominators
 rtm.sam <- sero.dat %>%
-    filter((assay == "Eoutcome" & as_date(date) < ymd("2020-05-22")) | (assay == roche & as_date(date) >= ymd("2020-05-22"))) %>% 
     group_by(date, region, age.grp, .drop = FALSE) %>%
     tally %>%
     right_join(expand_grid(date = as_date(earliest.date:latest.date), ## Add unsamples region, date and age group combinations
@@ -218,7 +219,6 @@ rtm.sam <- sero.dat %>%
     arrange(date)
 ## Then positives
 rtm.pos <- sero.dat %>%
-    filter((assay == "Eoutcome" & as_date(date) < ymd("2020-05-22")) | (assay == roche & as_date(date) >= ymd("2020-05-22"))) %>% 
     filter(Positive) %>%
     group_by(date, region, age.grp, .drop = FALSE) %>%
     tally %>%
@@ -365,4 +365,3 @@ ggsave(plot.filename,
        title = glue::glue("Assay: Roche-", strAssay, "; Collection: ", strCollection))
 saveWidget(pap, file=file.path(dirname(tmpFile), paste0("sero_plot", date.sero.str, strCollection, "_", strAssay, ".html")))
 
-stop()

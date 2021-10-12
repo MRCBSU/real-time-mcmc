@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -35,8 +35,17 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
-sero.end.date <- ymd(20210920)
+## Do we want to use NHSBT data (1) or RCGP data (0)
+NHSBT.flag <- 0
+## Do we want to use Roche N (0) or Roche S (1) data
+RocheS.flag <- 0
+## Assumed number of days between infection and developing the antibody response
+serology.delay <- 25
+## Last date for which serology is used
+sero.end.date <- ymd(date.data) ## ymd(20210920)
+## Last date for which first wave serology is used
+sero.end.1stwv <- ymd(20200522)
+## Format of dates used in the serology data
 sero.date.fmt <- "%d%b%Y"
 
 google.data.date <- format(ymd("20211008"), format = "%Y%m%d")
@@ -77,10 +86,6 @@ gp.flag <- 0	# 0 = off, 1 = on
 hosp.flag <- 1					# 0 = off, 1 = on
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
-## Do we want to use NHSBT data (1) or RCGP data (0)
-NHSBT.flag <- 0
-## Do we want to use Roche N (0) or Roche S (1) data
-RocheS.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 num.prev.days <- 522
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -94,6 +99,7 @@ vacc.flag <- 1
 if (prev.flag) scenario.name <- paste0("Prev", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
+scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
 ## Give the run a name to identify the configuration

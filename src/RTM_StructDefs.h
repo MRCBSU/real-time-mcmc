@@ -184,8 +184,8 @@ struct regional_model_params{
   gsl_matrix* l_gp_negbin_overdispersion;
   gsl_matrix* l_hosp_negbin_overdispersion;
   gsl_matrix* l_day_of_week_effect;
-  double l_sero_sensitivity;
-  double l_sero_specificity;
+  gsl_matrix* l_sero_sensitivity;
+  gsl_matrix* l_sero_specificity;
 };
 
 void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model);

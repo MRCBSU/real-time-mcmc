@@ -340,24 +340,28 @@ prior_distribution = 1;
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_sensitivity = { param_value = `r sero.sens`;
+sero_test_sensitivity = { param_value = `r paste(sero.sens, collapse = ", ")`;
 
-prior_distribution = `r ssens.prior.dist`;
+prior_distribution = `r paste(ssens.prior.dist, collapse = ", ")`;
 
 prior_parameters = `r paste(ssens.prior.pars, collapse = ", ")`;
 
 proposal_variance = `r paste(ssens.prop, collapse = ", ")`;
 
+`r ifelse(flg.sero.break, paste0("time_breakpoints = ", paste(sero.sens.break, collapse = ", "), ";"), "")`
+
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 
 
-sero_test_specificity = { param_value = `r sero.spec`;
+sero_test_specificity = { param_value = `r paste(sero.spec, collapse = ", ")`;
 
-prior_distribution = `r sspec.prior.dist`;
+prior_distribution = `r paste(sspec.prior.dist, collapse = ", ")`;
 
 prior_parameters = `r paste(sspec.prior.pars, collapse = ", ")`;
 
 proposal_variance = `r paste(sspec.prop, collapse = ", ")`;
+
+`r ifelse(flg.sero.break, paste0("time_breakpoints = ", paste(sero.sens.break, collapse = ", "), ";"), "")`
 
 } ## CODE CURRENTLY IGNORES ANY VARIATION
 

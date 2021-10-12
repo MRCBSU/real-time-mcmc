@@ -46,8 +46,9 @@ if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
 
 # Moved serology calls to the top of the run script
 if(sero.flag){
-  serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_samples.txt")
-  seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_positives.txt")
+    str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
 } else {
   serosam.files <- seropos.files <- NULL
 }

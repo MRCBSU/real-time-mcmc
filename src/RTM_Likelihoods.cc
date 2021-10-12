@@ -776,7 +776,10 @@ void fn_log_likelihood_region(rlikelihood& llhood,
 	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
 	    // This proportion is age, but not time dependent.
 	gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_seropositivity->size1, meta_region[int_region].region_modstats.d_seropositivity->size2);
+	gsl_matrix* test_sens_scaling = gsl_matrix_alloc(test_positivity->size1, test_positivity->size2);
 	gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_seropositivity);
+	gsl_matrix_memcpy(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_sensitivity);
+	
 	gsl_vector* prop_immune_baseline_nonseropositive = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
 	gsl_vector* temp_vec = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
 	gsl_vector_memcpy(prop_immune_baseline_nonseropositive, meta_region[int_region].det_model_params.l_init_prop_sus);
@@ -795,8 +798,11 @@ void fn_log_likelihood_region(rlikelihood& llhood,
 
 	// ** Some account for test sensitivity and specificity. Will have to move from here
 	// ** if these two quantities are ever to be allowed to vary by time, region or age.
-	gsl_matrix_scale(test_positivity, meta_region[int_region].det_model_params.l_sero_sensitivity + meta_region[int_region].det_model_params.l_sero_specificity - 1);
-	gsl_matrix_add_constant(test_positivity, 1 - meta_region[int_region].det_model_params.l_sero_specificity);
+	gsl_matrix_add(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_specificity);
+	gsl_matrix_add_constant(test_sens_scaling, -1.0);
+	gsl_matrix_mul_elements(test_positivity, test_sens_scaling);
+	gsl_matrix_sub(test_positivity, meta_region[int_region].det_model_params.l_sero_specificity);
+	gsl_matrix_add_constant(test_positivity, 1.0);
 	    
 	// ** Is there any missing data - if dataset is of dimension less than the number of strata
 	if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
