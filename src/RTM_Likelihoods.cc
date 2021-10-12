@@ -803,7 +803,8 @@ void fn_log_likelihood_region(rlikelihood& llhood,
 	gsl_matrix_mul_elements(test_positivity, test_sens_scaling);
 	gsl_matrix_sub(test_positivity, meta_region[int_region].det_model_params.l_sero_specificity);
 	gsl_matrix_add_constant(test_positivity, 1.0);
-	    
+	gsl_matrix_free(test_sens_scaling);
+	
 	// ** Is there any missing data - if dataset is of dimension less than the number of strata
 	if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
 	  // ** Yes: Aggregate seropositivities using a weighted mean
