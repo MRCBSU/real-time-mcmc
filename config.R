@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -36,20 +36,20 @@ if (args[2] == "All")  {
 }
 
 ## Do we want to use NHSBT data (1) or RCGP data (0)
-NHSBT.flag <- 0
+NHSBT.flag <- 1
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
 ## Assumed number of days between infection and developing the antibody response
 serology.delay <- 25
 ## Last date for which serology is used
-sero.end.date <- ymd(date.data) ## ymd(20210920)
+sero.end.date <- ymd(20200522) ## ymd(20210920)
 ## Last date for which first wave serology is used
 sero.end.1stwv <- ymd(20200522)
 ## Format of dates used in the serology data
 sero.date.fmt <- "%d%b%Y"
 
 google.data.date <- format(ymd("20211008"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
