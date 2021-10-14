@@ -158,7 +158,6 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   int time_points = l_S->size1; 
   gsl_matrix* Number_New_Infected = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* Delta_Disease = (Vaccination) ? gsl_matrix_alloc(time_points, NUM_AGE_GROUPS) : Number_New_Infected;
-  gsl_matrix* adj_S = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
   gsl_vector* I = gsl_vector_alloc(NUM_AGE_GROUPS);
@@ -249,10 +248,10 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 																      ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vacc1_disease, t, a)) * gsl_matrix_get(l_SV1, t, a)) +
 																      ((1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vaccn_disease, t, a)) * gsl_matrix_get(l_SVn, t, a))));
 
-	    gsl_matrix_set(adj_S, t + 1, a, (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(l_SV1, t, a) +
-			   (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(l_SVn, t, a));
+	    double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(l_SV1, t, a) +
+	      (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(l_SVn, t, a);
 	    
-	    gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(Number_New_Infected, t + 1, a) + gsl_matrix_get(p_lambda, t, a) * gsl_matrix_get(adj_S, t + 1, a));
+	    gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(Number_New_Infected, t + 1, a) + gsl_matrix_get(p_lambda, t, a) * adj_S);
 
 	    gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t + 1, a) * (1 - Vaccination->getCount(nday, a) / timestepsperday));
 
@@ -277,7 +276,10 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	  if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 	    gsl_matrix_set(l_Seropositivity, t / timestepsperday, a, 1 - (gsl_matrix_get(l_S, t + 1, a) / gsl_vector_get(regional_population_by_age, a)));
 	    if(Vaccination)
-	      gsl_matrix_set(l_Seropositivity, t / timestepsperday, a, gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - gsl_matrix_get(adj_S, t + 1, a) / gsl_vector_get(regional_population_by_age, a));
+	      gsl_matrix_set(l_Seropositivity,
+			     t / timestepsperday,
+			     a,
+			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (gsl_matrix_get(l_SV1, t + 1, a) + gsl_matrix_get(l_SVn, t + 1, a)) / gsl_vector_get(regional_population_by_age, a));
 	    gsl_matrix_set(l_Prevalence, t / timestepsperday, a, gsl_matrix_get(l_I_1, t + 1, a) + gsl_matrix_get(l_I_2, t + 1, a) + gsl_matrix_get(l_R, t + 1, a));
 	  }
 
@@ -354,7 +356,6 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   }
 
   if(Vaccination) gsl_matrix_free(Delta_Disease);
-  gsl_matrix_free(adj_S);
   gsl_matrix_free(Number_New_Infected);
   gsl_matrix_free(p_lambda);
   gsl_matrix_free(P);
