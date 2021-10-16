@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=8-11
+#SBATCH --array=6-17
 
 #SBATCH -p cclake
 
