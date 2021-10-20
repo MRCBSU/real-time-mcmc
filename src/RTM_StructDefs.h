@@ -184,8 +184,8 @@ struct regional_model_params{
   gsl_matrix* l_gp_negbin_overdispersion;
   gsl_matrix* l_hosp_negbin_overdispersion;
   gsl_matrix* l_day_of_week_effect;
-  double l_sero_sensitivity;
-  double l_sero_specificity;
+  gsl_matrix* l_sero_sensitivity;
+  gsl_matrix* l_sero_specificity;
 };
 
 void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model);
@@ -200,6 +200,7 @@ struct model_statistics{
   gsl_matrix *d_H1N1_GP_Consultations;
   gsl_matrix *d_Reported_GP_Consultations;
   gsl_matrix *d_Reported_Hospitalisations;
+  gsl_matrix *d_internal_AR;
   gsl_matrix *d_seropositivity;
   gsl_matrix *d_viropositivity;
   gsl_matrix *d_prevalence;

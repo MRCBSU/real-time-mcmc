@@ -17,9 +17,9 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=22
 #! How much wallclock time will be required?
-#SBATCH --time=1:30:00
+#SBATCH --time=4:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -28,10 +28,11 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0
+#SBATCH --array=0,1,8,9
 
-#SBATCH -p skylake-himem
-#SBATCH --qos=covid0
+#SBATCH -p cclake
+
+#!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -126,9 +127,9 @@ echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 echo -e "\nIn working directory\n${workdir}\n"
-# if [ -f "posterior_report10" ]; then
+if [ -f "posterior_report10" ]; then
     eval $CMD
-# fi
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

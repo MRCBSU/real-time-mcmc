@@ -55,7 +55,7 @@ object_map_df <-
 # Load the data into a data frame
 # fns holds the filename
 fns %>% purrr::map(function(fn) {
-  load(fn)
+  load(file.path(pth, fn))
   object_map_df %>% purrr::pmap(function(object, outcome, scenario) {
     obj <- get(object)
     apply(obj, c(1,3), sum) -> m
@@ -72,8 +72,10 @@ df %>% dplyr::filter( Scenario == "Vaccination", Outcome == "Infection", np == 1
 if (nrow(test_df) > 1)
   stop("Loading data has failed")
 
-stringr::str_extract(fns[1], "\\d{8}") -> fn_date
+stringr::str_extract(pth, "\\d{8}") -> fn_date
 fn_date %>% lubridate::as_date(format = "%Y%m%d") -> cutDate
+if(projections)
+	cutDate <- max(lubridate::as_date(as.numeric(dimnames(deaths.vac)[["date"]])))
 
 qsave(fn_date, "date.qs")
 if (!standalone)
@@ -96,8 +98,9 @@ qsave(data_df, "outcomes.qs")
 ```{r figMortality, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
 data_df <- qread("outcomes.qs")
 
-# We only use the data up till now
-cutDate <- max(data_df$Date)
+## # We only use the data up till now
+if(!projections)
+	cutDate <- max(data_df$Date)
 
 
 data_df %>%
@@ -166,7 +169,7 @@ data_df %>%
 
 ```{r figMortalityLog, fig.cap="Inferred and predicted incidence, mortality and prevalence with and without vaccination in England.", fig.height = 3.5}
 data_df <- qread("outcomes.qs")
-cutDate <- max(data_df$Date)
+## cutDate <- max(data_df$Date)
 
 data_df %>%
   dplyr::filter(Date > lubridate::as_date("2021-01-01")) %>%
@@ -217,7 +220,7 @@ ggplot(data = plot_df) +
 if (length(fns) > 1)
   stop("We need to fix this to load multiple model results")
 
-load(fns)
+load(file.path(pth, fns))
 dimnames(get(object_map_df$object[1])) -> lst
 if (length(lst) != 3)
   stop("Did we add more strata to the datasets?")

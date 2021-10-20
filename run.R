@@ -41,6 +41,23 @@ if(!exists("adm.flag")) adm.flag <- 1
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
 if(!exists("prev.flag")) prev.flag <- 0
+if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
+if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
+
+
+# Moved serology calls to the top of the run script
+if(sero.flag){
+    str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+} else {
+  serosam.files <- seropos.files <- NULL
+}
+
+# Setup serology inputs
+if(sero.flag){
+  source(file.path(proj.dir, "R/data/format_sero.R"))
+}
 
 
 if(sero.flag){
@@ -76,12 +93,6 @@ if (exists("flg.cutoff")){
 }
 data.files <- paste0(data.files, ".txt")
 names(data.files) <- regions
-if(sero.flag){
-  serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_samples.txt")
-  seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_positives.txt")
-} else {
-  serosam.files <- seropos.files <- NULL
-}
 if(gp.flag){
     cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2_", ifelse(symptoms, "symptoms", "all"), ".txt")
     denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")
@@ -95,9 +106,9 @@ if(prev.flag){
                             paste0(prev.lik.days, collapse = "_"))
     prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
-    prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev.txt")
-    prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev.txt")
-    prev.dat.file <- paste0(prev.file.prefix, "ons_dat.csv")
+    prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
+    prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
+    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
@@ -125,9 +136,6 @@ if(format.inputs){
     }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
-    }
-    if(sero.flag){
-        source(file.path(proj.dir, "R/data/format_sero.R"))
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
@@ -191,3 +199,4 @@ if(run.outputs){
 
 ## Return back to initial directory
 setwd(startwd)
+

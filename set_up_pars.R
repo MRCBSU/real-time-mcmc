@@ -224,7 +224,6 @@ if(single.ifr){
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
-        stop()
         if(NHS28.alt.ifr.prior){
             mean.indices <- seq(1, length(pars.ifr), by = 2)
             pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
@@ -465,27 +464,46 @@ beta.rw.sd.pars <- c(1, sdpar)
 beta.rw.sd <- 0.151057317190954
 
 ## Serological test sensitivity and specificity
+flg.sero.break <- sero.end.date > sero.end.1stwv
+if(flg.sero.break) sero.sens.break <- sero.end.1stwv - serology.delay - start.date + 1
 ## sero.sens <- 71.5 / 101
 ## sero.spec <- 777.5 / 787
-sero.sens <- 0.707875480848508
-sero.spec <- 0.965012479451016
-ssens.prior.dist <- ifelse(fix.sero.test.spec.sens, 1, 3)
+sero.param.length <- 1 + ifelse(flg.sero.break, length(sero.sens.break), 0)
+sero.sens <- rep(0.707875480848508, sero.param.length)
+sero.spec <- rep(0.965012479451016, sero.param.length)
+ssens.prior.dist <- rep(ifelse(fix.sero.test.spec.sens, 1, 3), sero.param.length)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 ## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
 ## if (grepl("altSens", scenario.name)) {
 ## 	ssens.prior.pars <- c(142.5, 29.5)
 ## 	sspec.prior.pars <- c(1110.5, 8.5)
 ## } else {
-	ssens.prior.pars <- c(23.5, 9.5)
-	sspec.prior.pars <- c(569.5, 5.5)
+## ## Has been used for publication throughout...
+## 	ssens.prior.pars <- c(23.5, 9.5)
+## 	sspec.prior.pars <- c(569.5, 5.5)
+## Based on PHE report, June 2006, for sensitivity and specificity of EuroImmun
+ssens.prior.pars <- matrix(c(52.9, 17.9), 2, 1)
+sspec.prior.pars <- matrix(c(314, 3.18), 2, 1)
+if(flg.sero.break){
+    ssens.prior.pars <- cbind(ssens.prior.pars, c(457, 13.2))
+    sspec.prior.pars <- cbind(sspec.prior.pars, c(672, 1.35))
+    }
 ## }
+## ssens.prior.pars <- c(2420.5, 978.5) ## TEMPORARY SETTING - tighter prior
+## ssens.prior.pars <- c(7.85, 0.501)
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)
-ssens.prop <- 0.1
-sspec.prop <- 0.077976
-if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
-if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
+ssens.prop <- rep(0.1, sero.param.length)
+sspec.prop <- rep(0.077976, sero.param.length)
+if(any(ssens.prior.dist == 1)){
+    idx.w <- which(ssens.prior.dist == 1)
+    sero.sens[idx.w] <- ssens.prior.pars[1, idx.w] / apply(ssens.prior.pars[, idx.w, drop = FALSE], 2, sum)
+}
+if(any(sspec.prior.dist == 1)){
+    idx.w <- which(sspec.prior.dist == 1)
+    sero.spec[idx.w] <- sspec.prior.pars[1, idx.w] / apply(sspec.prior.pars[, idx.w, drop = FALSE], 2, sum)
+}
 
 if(use.previous.run.for.start) {
     previous.loc <- previous.run.to.use[1]
