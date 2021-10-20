@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -48,7 +48,7 @@ sero.end.1stwv <- ymd(20200522)
 ## Format of dates used in the serology data
 sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
-fix.sero.test.spec.sens <- TRUE #prev.flag == 1
+fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 google.data.date <- format(ymd("20211015"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
@@ -111,7 +111,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -143,8 +143,8 @@ if(use.previous.run.for.start){
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20211008", c("Prev522_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211008_stable_household_deaths",
                                                                                    "Prev522_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211008_stable_household_deaths_chain2")
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20211008", c("Prev522_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211008_stable_household_deaths_chain2",
-                                                                                    "Prev522_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211008_stable_household_deaths")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20211015", c("Prev529SeroNHSBT_1stwv_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths_chain2",
+                                                                                    "Prev529SeroNHSBT_1stwv_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths")
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20211008", c("Prev522SeroNHSBT_1stwv_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211008_stable_household_deaths_chain2",
