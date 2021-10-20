@@ -140,6 +140,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 					 gsl_matrix* l_NNI,
 					 gsl_matrix* l_Delta_Dis,
 					 gsl_matrix* l_Seropositivity,
+					 gsl_matrix* l_internal_AR,
 					 gsl_matrix* l_Prevalence,
 					 model_state* l_end_state,
 					 const regional_model_params& in_dmp,
@@ -275,12 +276,20 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
 	  if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 	    gsl_matrix_set(l_Seropositivity, t / timestepsperday, a, 1 - (gsl_matrix_get(l_S, t + 1, a) / gsl_vector_get(regional_population_by_age, a)));
-	    if(Vaccination)
-	      gsl_matrix_set(l_Seropositivity,
+	    if(Vaccination){
+	      gsl_matrix_set(l_internal_AR,
 			     t / timestepsperday,
 			     a,
 			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (gsl_matrix_get(l_SV1, t + 1, a) + gsl_matrix_get(l_SVn, t + 1, a)) / gsl_vector_get(regional_population_by_age, a));
+	    double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t + 1, a)) * gsl_matrix_get(l_SV1, t + 1, a) +
+	      (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t + 1, a)) * gsl_matrix_get(l_SVn, t + 1, a);
+	      gsl_matrix_set(l_Seropositivity,
+			     t / timestepsperday,
+			     a,
+			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (adj_S / gsl_vector_get(regional_population_by_age, a)));
+	    }
 	    gsl_matrix_set(l_Prevalence, t / timestepsperday, a, gsl_matrix_get(l_I_1, t + 1, a) + gsl_matrix_get(l_I_2, t + 1, a) + gsl_matrix_get(l_R, t + 1, a));
+
 	  }
 
 	  P_view = gsl_matrix_row(P, a);
@@ -353,6 +362,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   if(std::isnan(dbl_isnan_check)){
     gsl_matrix_set_all(l_NNI, GSL_NEGINF);
     gsl_matrix_set_all(l_Seropositivity, -1.0);
+    gsl_matrix_set_all(l_internal_AR, -1.0);
   }
 
   if(Vaccination) gsl_matrix_free(Delta_Disease);
@@ -367,7 +377,7 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 		      const global_model_instance_parameters& global_params,
 		      gsl_vector* R0_t, const gsl_vector* E1_0, const gsl_vector* E2_0,
 		      const gsl_vector* I1_0, const gsl_vector* I2_0,
-		      gsl_matrix* d_NNI, gsl_matrix* d_Delta_Dis, gsl_matrix* d_Seropositivity, gsl_matrix* d_Prevalence,
+		      gsl_matrix* d_NNI, gsl_matrix* d_Delta_Dis, gsl_matrix* d_Seropositivity, gsl_matrix* d_internal_AR, gsl_matrix* d_Prevalence,
 		      model_state* d_end_state,
 		      const rtmData* vaccination)
 {
@@ -396,6 +406,7 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 				      d_NNI,
 				      d_Delta_Dis,
 				      d_Seropositivity,
+				      d_internal_AR,
 				      d_Prevalence,
 				      d_end_state,
 				      in_dmp,
@@ -447,7 +458,7 @@ void fn_transmission_model(regional_model_params in_dmp,
 
   propagate_SEEIIR(in_dmp, regional_population_by_age, global_params,
 		   R0_t, l_E1_0, l_E2_0,
-		   l_I1_0, l_I2_0, mod_stats.d_NNI, mod_stats.d_Delta_Dis, mod_stats.d_seropositivity, mod_stats.d_prevalence,
+		   l_I1_0, l_I2_0, mod_stats.d_NNI, mod_stats.d_Delta_Dis, mod_stats.d_seropositivity, mod_stats.d_internal_AR, mod_stats.d_prevalence,
 		   mod_stats.d_end_state,
 		   vaccination);
 
@@ -776,9 +787,9 @@ void fn_log_likelihood_region(rlikelihood& llhood,
 	 ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
 	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
 	    // This proportion is age, but not time dependent.
-	gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_seropositivity->size1, meta_region[int_region].region_modstats.d_seropositivity->size2);
+	gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_internal_AR->size1, meta_region[int_region].region_modstats.d_internal_AR->size2);
 	gsl_matrix* test_sens_scaling = gsl_matrix_alloc(test_positivity->size1, test_positivity->size2);
-	gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_seropositivity);
+	gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_internal_AR);
 	gsl_matrix_memcpy(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_sensitivity);
 	
 	gsl_vector* prop_immune_baseline_nonseropositive = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);

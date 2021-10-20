@@ -200,6 +200,7 @@ struct model_statistics{
   gsl_matrix *d_H1N1_GP_Consultations;
   gsl_matrix *d_Reported_GP_Consultations;
   gsl_matrix *d_Reported_Hospitalisations;
+  gsl_matrix *d_internal_AR;
   gsl_matrix *d_seropositivity;
   gsl_matrix *d_viropositivity;
   gsl_matrix *d_prevalence;

@@ -373,6 +373,7 @@ void model_statistics_alloc(model_statistics &ms, const int times, const int age
   ms.d_H1N1_GP_Consultations = gsl_matrix_alloc(times, age_classes);
   ms.d_Reported_GP_Consultations = gsl_matrix_alloc(times, age_classes);
   ms.d_Reported_Hospitalisations = gsl_matrix_alloc(times, age_classes);
+  ms.d_internal_AR = gsl_matrix_alloc(times, age_classes);
   ms.d_seropositivity = gsl_matrix_alloc(times, age_classes);
   ms.d_viropositivity = gsl_matrix_alloc(times, age_classes);
   ms.d_prevalence = gsl_matrix_alloc(times, age_classes);
@@ -406,7 +407,10 @@ void model_statistics_memcpy(model_statistics &ms_dest, const model_statistics m
   if(Hosp_flag)
     gsl_matrix_memcpy(ms_dest.d_Reported_Hospitalisations, ms_src.d_Reported_Hospitalisations);
   if(Sero_flag)
-    gsl_matrix_memcpy(ms_dest.d_seropositivity, ms_src.d_seropositivity);
+    {
+      gsl_matrix_memcpy(ms_dest.d_seropositivity, ms_src.d_seropositivity);
+      gsl_matrix_memcpy(ms_dest.d_internal_AR, ms_src.d_internal_AR);
+    }
   if(Viro_flag)
     gsl_matrix_memcpy(ms_dest.d_viropositivity, ms_src.d_viropositivity);
   if(Viro_flag)
@@ -424,6 +428,7 @@ void model_statistics_free(struct model_statistics &ms)
   gsl_matrix_free(ms.d_H1N1_GP_Consultations);
   gsl_matrix_free(ms.d_Reported_Hospitalisations);
   gsl_matrix_free(ms.d_seropositivity);
+  gsl_matrix_free(ms.d_internal_AR);
   gsl_matrix_free(ms.d_viropositivity);
   gsl_matrix_free(ms.d_prevalence);
 }

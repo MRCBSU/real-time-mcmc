@@ -25,10 +25,17 @@ outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & in
 if(sero.end.date > sero.end.1stwv){
     idx.flag <- pw.cut.columns(sero.end.1stwv - start.date + 1, sero.end.date - start.date + 1, intervals.per.day = 1)
 } else { idx.flag <- rep(1, sero.end.date - start.date + 1) }
-sens <- params$sero_test_sensitivity[, idx.flag]
-spec <- params$sero_test_specificity[, idx.flag]
-qsens <- round(apply(params$sero_test_sensitivity, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
-qspec <- round(apply(params$sero_test_specificity, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
+if("sero_test_sensitivity" %in% names(params)){
+    sens <- params$sero_test_sensitivity[, idx.flag]
+    spec <- params$sero_test_specificity[, idx.flag]
+    qsens <- round(apply(params$sero_test_sensitivity, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
+    qspec <- round(apply(params$sero_test_specificity, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
+} else {
+    sens <- t(array(sero.sens, dim = c(max(idx.flag), length(parameter.iterations))))[, idx.flag]
+    spec <- t(array(sero.spec, dim = c(max(idx.flag), length(parameter.iterations))))[, idx.flag]
+    qsens <- round(apply(sens, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
+    qspec <- round(apply(spec, 2, quantile, probs = c(0.025, 0.5, 0.975)), digits = 3)
+}
 dimnames(sens) <- dimnames(spec) <- list(iteration = parameter.iterations, date = start.date:sero.end.date)
 sens_spec <- sens %>%
     as.tbl_cube(met_name = "sens") %>% as_tibble() %>% mutate(date = as_date(date)) %>% inner_join(spec %>%
