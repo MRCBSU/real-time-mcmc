@@ -37,7 +37,7 @@ run.outputs <- FALSE
 ## Which code is being considered
 if(!exists("gp.flag")) gp.flag <- 1
 if(!exists("hosp.flag")) hosp.flag <- 1
-if(!exists("adm.flag")) adm.flag <- 1
+if(!exists("adm.flag")) adm.flag <- !hosp.flag ## Not typically set by config.R - check
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
 if(!exists("prev.flag")) prev.flag <- 0
@@ -60,24 +60,23 @@ if(sero.flag){
 }
 
 
-if(sero.flag){
+if(adm.flag){
   admsam.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_samples.txt")
-  admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
+  ## admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
 } else {
-  admsam.files <- seropos.files <- NULL
+  admsam.files <- NULL
 }
-
-## Added the admissions data and moved it to the top of this file 
-if(adm.flag) {
-  source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
-}
-
 
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
 } else if (region.type == "ONS") {
 	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
 } else stop("Unknown region type for population")
+
+## Added the admissions data and moved it to the top of this file 
+if(adm.flag) {
+  source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
+}
 
 ## If these files don't already exits, make them
 data.files <- paste0(data.dirs["deaths"], "/",

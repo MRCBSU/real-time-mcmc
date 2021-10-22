@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -59,7 +59,7 @@ sus_seb_combination <- 1L
 ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 5L
-seb_report_delay <- 1L
+seb_report_delay <- 1L  ## Used within this file, so can't be moved.
 
 ##file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
@@ -100,7 +100,7 @@ summarise_classes_seb <- list("0_25" = c("0_5", "6_17", "18_24"),
                               "75" = c("75_84", "85")
 )
 
-age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
+age_adm.agg <- c(0, 25, 45, 65, 75, Inf) ### KEEP IN config.R
 age_adm_seb.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
 age_adm_sus.oldlabs <- c("[0,25)", "[25,45)", "[45,65)", "[65,75)", "[75,Inf]", "")
 age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
@@ -128,12 +128,12 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
-## The 'hosp' stream in the code is linked to death data
-hosp.flag <- 1					# 0 = off, 1 = on
+## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
+hosp.flag <- 0				# 0 = admissions, 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -179,6 +179,8 @@ if (data.desc == "all") {
 } else if (grepl("adjusted", data.desc)) {
     date.adj.data <- ymd(date.data) - 1  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
     reporting.delay <- 1
+} else if (grepl("admissions", data.desc)) {
+reporting.delay  <- seb_report_delay
 } else {
 	stop("Unknown data description")
 }
@@ -204,7 +206,7 @@ iteration.number.to.start.from <- 1 ## 6400
 ## From where will the various datasets be sourced?
 #! Added admissions to data directories
 data.dirs <- file.path(proj.dir,
-                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination","admission"))
+                       paste0("data/RTM_format/", region.type, "/", c("deaths","serology","cases","prevalence","vaccination","admissions"))
                        )
 names(data.dirs) <- c("deaths", "sero", "cases", "prev", "vacc", "adm")
 
@@ -269,7 +271,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20211012" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211018" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){

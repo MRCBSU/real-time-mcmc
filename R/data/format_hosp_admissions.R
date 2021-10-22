@@ -2,7 +2,7 @@ suppressMessages(require(lubridate))
 suppressMessages(require(tidyverse))
 suppressMessages(require(readxl))
 suppressMessages(require(gsubfn))
-
+stop()
 #########################################################
 ## Inputs that should (or may) change on a weekly basis
 #########################################################
@@ -39,7 +39,7 @@ if(!exists("date.adm")){
     date.adm_sus.str <- str_match(rownames(adm_sus.loc),"([0-9]+)\\.csv$")[[1,2]]
     date.adm_seb.str <- str_match(rownames(adm_seb.loc),"([0-9]+)\\.rds$")[[1,2]]
     date.adm_sus <- ymd(date.adm_sus.str)
-    date.adm_seb <- ymd(date.adm_sus.str)
+    date.adm_seb <- ymd(date.adm_seb.str)
 }
 
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
@@ -48,13 +48,18 @@ if(sus_seb_combination == 1) {
     latest_sus.date <- adm_sus.end.date
     earliest_seb.date <- adm_sus.end.date + 1
 }
-latest.date <- adm.end.date
+if(exists("adm.end.date")){
+    latest.date <- adm.end.date
+} else {
+    latest.date <- date.adm_seb - adm_seb.strip_days
+}
+
 ## Define an age-grouping (the final age groupings note these can be modified in config.r this is just a default)
 if(!exists("age_adm.agg")){
     age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
     age_adm.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
     age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
-}
+} else age_adm.oldlabs <- "Needs defining"
 nA_adm <- length(age_adm.labs)
 
 #! This behaviour is not yet functional
@@ -64,8 +69,7 @@ nA_adm <- length(age_adm.labs)
 
 ## Read in sebs data if it is needed
 ## Note data is stored in an rds so we must initially read in all data
-if(sus_seb_combination == 2 | sus_seb_combination == 1) {
-
+if(sus_seb_combination %in% c(1, 2)) {
 
     # Only list the values with age data for admissions and diagnoses
     possible.col.names.seb <- list(
@@ -160,7 +164,7 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 
-if(!exists("admsam.files")){
+if(!exists("admsam.files")){## HERE!!
     admsam.files <- build.data.filepath("RTM_format/admission",
                                          "adm",
                                          date.adm.str,

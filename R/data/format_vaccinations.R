@@ -490,7 +490,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## }
 
     save(vac.dates, v1.design, vn.design, jab.dat, file = vacc.rdata)
-    ## file.remove(file.path("data", basename(input.loc)))
+    file.remove(file.path("data", basename(input.loc)))
     
 } else {
 
