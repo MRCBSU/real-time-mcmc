@@ -60,7 +60,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 
-google.data.date <- format(ymd("2021-10-15"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-10-22"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 
@@ -104,7 +104,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 529
+num.prev.days <- 536
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -139,7 +139,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -221,7 +221,7 @@ prev.days.to.lose <- 0
 
 
 
-date.prev <- lubridate::ymd("20211013")
+date.prev <- lubridate::ymd("20211020")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -263,7 +263,7 @@ threads.per.regions <- 1
 vacc.flag <- 1 ## Do we have any vaccination data
 
 
-str.date.vacc <- "20211015" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211022" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -274,7 +274,7 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
-future.n <- (c(0.4, 0.5, rep(0.2, 4), rep(0.1, 5)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.15, 0.15, rep(0.15, 4), rep(0.15, 5)) * 10^6) * (55.98 / 66.65)
 
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
