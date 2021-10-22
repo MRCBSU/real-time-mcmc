@@ -43,7 +43,7 @@ save.text <- "MTP"
 ## scen.text <- "MTP R2.0"
 ## save.text <- "MTP_R_2.0"
 
-mtp.filter.date <- lubridate::ymd("20210918") ## ymd(date.data)
+mtp.filter.date <- lubridate::ymd("20211009") ## ymd(date.data)
 
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))

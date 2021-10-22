@@ -21,8 +21,12 @@ nweeks.ahead <-11
 counterfactual <- FALSE
 
 
+
 projections.basename <-"projections_counter"
 #projections.basename <- "projections_midterm"
+
+
+
 
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change

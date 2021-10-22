@@ -32,6 +32,7 @@ apply.convolution <- function(start, func, over = "date") {
 
 ## Where are our outputs to be found
 
+
 output.dir <- file.path(proj.dir, "model_runs", "20210924", "PrevINLAnew508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths")
 
 
@@ -66,17 +67,12 @@ los.dist <- cut(samp, 0:ceiling(max(samp))) %>%
 
 ## Beds available - fields icu_prev_acute1 in the NHS SitRep
 
-beds.used <- c(375,940,994,989,815,418,332)
-## beds.used <- c(82, 322, 296, 285, 515, 109, 97)
+
+## beds.used <- c(333, 847, 969, 1085, 770, 410, 384)
+beds.used <- c(438, 855, 1048, 1135, 813, 467, 427)
 beds.available <- as_tibble(list(capacity = c(9915, 12760, 15092, 14934, 13331, 10993, 8948), region = dimnames(infections)$region))
 beds.total <- beds.used / (beds.used + beds.available$capacity)
-beds.day <- lubridate::as_date("20210923")
-
-
-
-
-
-
+beds.day <- lubridate::as_date("20211014")
 
 
 ## Function to translate these infections into hospital occupancy

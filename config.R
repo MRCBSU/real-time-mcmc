@@ -9,9 +9,12 @@ region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
+
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))#Paul's line
+
+#if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 
 if (length(args) < 3) args <- c(args, "All", "England")
 
@@ -39,13 +42,30 @@ if (args[2] == "All")  {
 	stopifnot(length(regions) == nr)
 }
 
-serology.delay <- 25 ## Assumed number of days between infection and developing the antibody response
-sero.end.date <- ymd(20200522)
+## Do we want to use NHSBT data (1) or RCGP data (0)
+NHSBT.flag <- 1
+## Do we want to use Roche N (0) or Roche S (1) data
+RocheS.flag <- 0
+## Assumed number of days between infection and developing the antibody response
+serology.delay <- 25
+## Last date for which serology is used
+sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+## Last date for which first wave serology is used
+sero.end.1stwv <- ymd(20200522)
+## Format of dates used in the serology data
+sero.date.fmt <- "%d%b%Y"
+## Fix values at prior means?
+fix.sero.test.spec.sens <- FALSE #prev.flag == 1
+
 
 
 
 google.data.date <- format(ymd("2021-10-15"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
+
+
+#matrix.suffix <- "_stable_household"
+
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -84,10 +104,9 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 522
+num.prev.days <- 529
 
 ## Shall we fix the serological testing specificity and sensitivty?
-fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 exclude.eldest.prev <- FALSE
 
 use.INLA.prev <- TRUE
@@ -99,6 +118,7 @@ vacc.flag <- 1
 if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
+scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
 ## Give the run a name to identify the configuration
@@ -149,7 +169,6 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
 
-
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924",c("PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
                                                                                    "PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
                                              )
@@ -160,6 +179,7 @@ if(use.previous.run.for.start){
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924", c("PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
                                                                                "PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
                                           )
+
 }
 iteration.number.to.start.from <- 5000
 
@@ -197,6 +217,9 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
+
+
+
 
 date.prev <- lubridate::ymd("20211013")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
@@ -239,9 +262,8 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
+
 str.date.vacc <- "20211015" ## Optional: if not specified will take the most recent data file.
-
-
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -252,8 +274,7 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
-future.n <- (c(0.4, 0.5, 0.2, 0.2, 0.2, 0.2, rep(0.1, 4)) * 10^6) * (55.98 / 66.65)
-#future.n <- (c(0.8, 0.8, rep(0.8, 9)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.4, 0.5, rep(0.2, 4), rep(0.1, 5)) * 10^6) * (55.98 / 66.65)
 
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")

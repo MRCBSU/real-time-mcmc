@@ -42,6 +42,23 @@ if(!exists("hosp.flag")) hosp.flag <- 1
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
 if(!exists("prev.flag")) prev.flag <- 0
+if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
+if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
+
+
+# Moved serology calls to the top of the run script
+if(sero.flag){
+    str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+} else {
+  serosam.files <- seropos.files <- NULL
+}
+
+# Setup serology inputs
+if(sero.flag){
+  source(file.path(proj.dir, "R/data/format_sero.R"))
+}
 
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
@@ -63,12 +80,6 @@ if (exists("flg.cutoff")){
 }
 data.files <- paste0(data.files, ".txt")
 names(data.files) <- regions
-if(sero.flag){
-  serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_samples.txt")
-  seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_positives.txt")
-} else {
-  serosam.files <- seropos.files <- NULL
-}
 if(gp.flag){
     cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2_", ifelse(symptoms, "symptoms", "all"), ".txt")
     denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")
@@ -100,6 +111,7 @@ if(vacc.flag){
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
 
+
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
   } else if (grepl("adjusted", data.desc)) {
@@ -130,6 +142,33 @@ if(format.inputs){
   } 
 } else if (vacc.flag) {
   load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))
+
+#    if(data.desc == "reports") {
+#        source(file.path(proj.dir, "R/data/format_death_reports.R"))
+#    } else if (grepl("adjusted", data.desc)) {
+#        source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
+#    } else if (running.England) {
+#        source(file.path(proj.dir, "R/data/format_deaths.R"))
+#    }
+#    if ("Scotland" %in% regions) {
+#        source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+#    }
+#    if ("Northern_Ireland" %in% regions) {
+#        source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+#    }
+#    if ("Wales" %in% regions) {
+#        source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+#    }
+#    if(vacc.flag){
+#        source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+#    }
+#    if(gp.flag){
+#        source(file.path(proj.dir, "R/data/format_linelist.R"))
+#    }
+#    if(prev.flag){
+#        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+#    }
+
 }
 
 
@@ -187,3 +226,4 @@ if(run.outputs){
 
 ## Return back to initial directory
 setwd(startwd)
+

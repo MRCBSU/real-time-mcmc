@@ -12,14 +12,16 @@ if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 if(Sys.info()["user"]=="aa995")   out.root <- "/home/aa995/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "20210910_backup_backup"
-out.repo <- "20210910"
+in.repo <- "20211001_nth"
+out.repo <- "20210930_nth"
 ## in.repo <- "_new_base"
 ## out.repo <- ""
 
 ## Change location of output directory
-in.base <- "PrevINLA431_cm6ons_IFR4bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210730_timeuse_household_deaths"
-out.base <- "ONS60"
+## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
+## out.base <- "ONS60"
+in.base <- "20211001_1st"
+out.base <- "20210930_1st"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

@@ -619,7 +619,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			  for(int int_reg = 0; int_reg < nregions; ++int_reg)
     
 			    evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
-    
+			    
 			  theta_i->param_value = tempvec; // and then re-set to the original address
 
 			  // EVALUATE THE NEW LIKELIHOOD (ESSENTIALLY, ADJUST THE LIKELIHOOD STRUCTURE FOR THE PROPOSED VALUES)

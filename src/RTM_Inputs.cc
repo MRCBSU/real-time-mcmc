@@ -987,7 +987,6 @@ void read_global_model_parameters(globalModelParams& in_pars,
   node_links(in_pars, str_source);
 
   node_links(paramSet, str_source);
-
   
    for(inti = 0; inti < num_instances; inti++)
     // CALCULATE INITIAL PRIOR DENSITY - BUT FIRST CHECK THAT THE NODE IS STOCHASTIC

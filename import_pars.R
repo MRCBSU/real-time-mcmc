@@ -28,8 +28,8 @@ if(length(value.ifr) > ncol(prev.params$prop_case_to_hosp)){
 } else value.ifr <- prev.params$prop_case_to_hosp[iteration.number.to.start.from, ]
 ## pars.dow Ignoring for now
 if (!fix.sero.test.spec.sens && !prev.env$fix.sero.test.spec.sens) {
-  sero.sens <- prev.params$sero_test_sensitivity[iteration.number.to.start.from,]
-  sero.spec <- prev.params$sero_test_specificity[iteration.number.to.start.from,]
+  sero.sens[1:ncol(prev.params$sero_test_sensitivity)] <- prev.params$sero_test_sensitivity[iteration.number.to.start.from,]
+  sero.spec[1:ncol(prev.params$sero_test_sensitivity)] <- prev.params$sero_test_specificity[iteration.number.to.start.from,]
 }
 rm(prev.params)
 rm(prev.env)
