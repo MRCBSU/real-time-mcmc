@@ -149,8 +149,8 @@ if(use.previous.run.for.start){
                                                                                     "Prev529SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths")
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20211015", c("Prev529SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths_chain2",
-                                                                               "Prev529SeroNHSBT_Al_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20211015", c("Prev529SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths_chain2"
+                                                                               "Prev529SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211015_stable_household_deaths")
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400

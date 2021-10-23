@@ -348,10 +348,9 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
-stop()
+
     ## Following code will extrapolate the vaccination programme out into the future.
     source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
-
     for(reg in regions){
         region.dat <- jab.dat %>% ungroup() %>% fn.region.crosstab(reg, "First", ndays = max(jab.dat$sdate) - ymd("20200216"))
         cat("First stopifnot\n")
@@ -387,7 +386,7 @@ stop()
             tmp.design <- as.vector(as.matrix(pivot_wider(jab.dat %>% filter(region == reg, dose == "First", sdate %in% vac.dates), id_cols = age.grp, names_from = sdate, values_from = pPfizer) %>% select(-age.grp)))
         
         v1.design <- rbind(v1.design, cbind(tmp.design, 1 - tmp.design))
-
+## HERE
         region.dat <- jab.dat %>%
             filter(region == reg, dose == "Second") %>%
             left_join(jab.dat %>%
@@ -398,11 +397,18 @@ stop()
                       ) %>%
             arrange(sdate) %>%
             group_by(age.grp) %>%
-            summarise(sdate = sdate,
-                      value = n / (dplyr::lag(sum.first) - dplyr::lag(cumsum(n)))
+            summarise(adj = pos.part(max(dplyr::lag(cumsum(n)) - dplyr::lag(sum.first), na.rm = TRUE)),
+                      sdate = sdate,
+                      value = n / (dplyr::lag(sum.first) + adj + ifelse(adj > 0, 1, 0) - dplyr::lag(cumsum(n))),
+                      n = n
                       ) %>%
+            select(-adj) %>%
             replace_na(list(value = 0)) %>%
-            ungroup() %>%
+            ungroup()
+        region.dat$value[region.dat$value > 1] <- region.dat$n[region.dat$value > 1] / (region.dat$n[region.dat$value > 1] + 1)
+        
+        region.dat <- region.dat %>%
+            select(-n) %>%
             mutate(value = 2 * (1 - sqrt(1 - value))) %>%   ## This line transforms the data from a fraction to a rate
             pivot_wider(id_cols = sdate,
                         names_from = age.grp,
