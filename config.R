@@ -5,16 +5,18 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
 
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+#if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))#Paul's line
 
 #if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 
 if (length(args) < 3) args <- c(args, "All", "England")
 
@@ -57,15 +59,11 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-
-
-
 google.data.date <- format(ymd("2021-10-22"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 
 
 #matrix.suffix <- "_stable_household"
-
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -104,6 +102,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
+
 num.prev.days <- 536
 
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -113,6 +112,8 @@ use.INLA.prev <- TRUE
 
 ## Any inputs here for the vaccination data (or even if there is any)
 vacc.flag <- 1
+## Format used for dates in the vaccination file
+vac.date.fmt <- "%Y-%m-%d"
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
@@ -220,7 +221,6 @@ prev.days.to.lose <- 0
 
 
 
-
 date.prev <- lubridate::ymd("20211020")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -263,7 +263,11 @@ threads.per.regions <- 1
 vacc.flag <- 1 ## Do we have any vaccination data
 
 
+
 str.date.vacc <- "20211022" ## Optional: if not specified will take the most recent data file.
+
+
+
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -274,7 +278,11 @@ if(vacc.flag){
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
+
 future.n <- (c(0.15, 0.15, rep(0.15, 4), rep(0.15, 5)) * 10^6) * (55.98 / 66.65)
+
+
+
 
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")

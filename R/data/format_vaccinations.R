@@ -223,7 +223,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     vacc.col.args[[col.names[["age"]]]] <- col_double()
     vacc.col.args[[col.names[["region"]]]] <- col_character()
     vacc.col.args[[col.names[["dose"]]]] <- col_character()
-    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format="%d%b%Y")
+    vacc.col.args[[col.names[["sdate"]]]] <- col_date(format=vac.date.fmt)
     vacc.col.args[[col.names[["ltla_code"]]]] <- col_character()
     vacc.cols <- do.call(cols, vacc.col.args)
 
@@ -349,7 +349,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     ## Will need to extract some design matrices for vaccine efficacy also
     v1.design <- NULL
     vn.design <- NULL
-
+stop()
     ## Following code will extrapolate the vaccination programme out into the future.
     source(file.path(proj.dir, "R", "data", "augment_vaccinations.R"))
 
