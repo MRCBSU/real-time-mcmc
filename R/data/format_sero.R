@@ -10,7 +10,7 @@ suppressMessages(require(readxl))
 if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
     input.loc <- "data/raw/serology"
-    input.loc <- "~/CoVID-19/Data streams/Serology"
+    #input.loc <- "~/CoVID-19/Data streams/Serology"
     ## List the possible files in the directory
     sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("*xlsx|*csv"))))
     ## Pick the most recently added

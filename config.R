@@ -10,13 +10,13 @@ region.type <- "ONS"
 args <- commandArgs(trailingOnly = TRUE)
 
 
-#if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))#Paul's line
 
 #if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+#if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 
 if (length(args) < 3) args <- c(args, "All", "England")
 
@@ -60,10 +60,8 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 google.data.date <- format(ymd("2021-10-22"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-
-
-#matrix.suffix <- "_stable_household"
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection

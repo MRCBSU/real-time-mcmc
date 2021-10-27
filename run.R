@@ -56,9 +56,9 @@ if(sero.flag){
 }
 
 # Setup serology inputs
-if(sero.flag){
-  source(file.path(proj.dir, "R/data/format_sero.R"))
-}
+#if(sero.flag){
+#  source(file.path(proj.dir, "R/data/format_sero.R"))
+#}
 
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
@@ -109,9 +109,8 @@ if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
     vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
+
 if(format.inputs){
-
-
   if(data.desc == "reports") {
 	  source(file.path(proj.dir, "R/data/format_death_reports.R"))
   } else if (grepl("adjusted", data.desc)) {
@@ -142,7 +141,7 @@ if(format.inputs){
   } 
 } else if (vacc.flag) {
   load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))
-
+}
 #    if(data.desc == "reports") {
 #        source(file.path(proj.dir, "R/data/format_death_reports.R"))
 #    } else if (grepl("adjusted", data.desc)) {
@@ -169,7 +168,7 @@ if(format.inputs){
 #        source(file.path(proj.dir, "R", "data", "format_prev.R"))
 #    }
 
-}
+
 
 
 ## Set up the model specification.
