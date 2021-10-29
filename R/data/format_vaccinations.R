@@ -17,11 +17,11 @@ require(lubridate)
 if(!exists("vacc.loc")){ ## Set to default format for the filename
     ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
     # input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
-    input.loc <- "/data/covid-19/data-raw/dstl/2021-10-22"
+    input.loc <- "/data/covid-19/data-raw/dstl/2021-10-29"
     ## List the possible files in the directory
     vacc.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
-                                               pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
+                                               pattern=glob2rx(paste("202", "immunisations SPIM", "csv", sep = "*")))
                                     )
                           )
     ## Has a particular date's data been specified
@@ -157,12 +157,13 @@ vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
 ## if(TRUE){
     ## Extract file from archive
-    if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
-        file.copy(input.loc, file.path("data", basename(input.loc)))
-        input.loc <- decompress_file("data", basename(input.loc))
-    } else input.loc <- gsub(".zip", ".csv", file.path("data", basename(input.loc)))
-    
-   # input.loc <- "/data/covid-19/data-raw/dstl/2021-10-22/20211022 immunisations SPIM.csv"
+#    if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
+#        file.copy(input.loc, file.path("data", basename(input.loc)))
+#        input.loc <- decompress_file("data", basename(input.loc))
+#        cat("got_here","\n")
+#    } else input.loc <- gsub(".zip", ".csv", file.path("data", basename(input.loc)))
+#   cat(input.loc,'\n')    
+#    input.loc <- "/data/covid-19/data-raw/dstl/2021-10-22/20211022 immunisations SPIM.csv"
     
     if(str.date.vacc != strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)) stop("Specified date.vacc does not match the most recent prevalence data file.")
     

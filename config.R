@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -59,9 +59,9 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-google.data.date <- format(ymd("2021-10-22"), format = "%Y%m%d")
-#matrix.suffix <- "_timeuse_household_new_base"
-matrix.suffix <- "_stable_household_new_base"
+google.data.date <- format(ymd("2021-10-29"), format = "%Y%m%d")
+matrix.suffix <- "_timeuse_household_new_base"
+#matrix.suffix <- "_stable_household_new_base"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -101,7 +101,7 @@ prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
 
-num.prev.days <- 536
+num.prev.days <- 543
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -219,7 +219,7 @@ prev.days.to.lose <- 0
 
 
 
-date.prev <- lubridate::ymd("20211020")
+date.prev <- lubridate::ymd("20211027")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -262,7 +262,7 @@ vacc.flag <- 1 ## Do we have any vaccination data
 
 
 
-str.date.vacc <- "20211022" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211029" ## Optional: if not specified will take the most recent data file.
 
 
 
