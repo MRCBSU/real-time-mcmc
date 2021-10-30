@@ -17,7 +17,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=56
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?
@@ -28,10 +28,10 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=9
+#SBATCH --array=5
 
-#SBATCH -p skylake
-#SBATCH --qos=covid0
+#SBATCH -p cclake
+#!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 

@@ -16,11 +16,11 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <-11
+nweeks.ahead <-10
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_midterm"
+projections.basename <- "projections_counter"
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
