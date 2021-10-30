@@ -119,14 +119,14 @@ if(format.inputs){
     if ("Wales" %in% regions) {
         source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
     }
+    if(prev.flag){
+        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+    }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
-    }
-    if(prev.flag){
-        source(file.path(proj.dir, "R", "data", "format_prev.R"))
     }
 }
 
