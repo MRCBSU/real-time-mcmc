@@ -117,6 +117,9 @@ if(format.inputs){
     if(sero.flag){ # Setup serology inputs
         source(file.path(proj.dir, "R/data/format_sero.R"))
     }
+    if(sero.flag){    ## Setup serology inputs
+        source(file.path(proj.dir, "R/data/format_sero.R"))
+    }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
     }
