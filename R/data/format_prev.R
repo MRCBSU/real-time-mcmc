@@ -1,3 +1,5 @@
+suppressMessages(require(gsubfn))
+
 #########################################################
 ## Inputs that should (or may) change on a daily basis
 #########################################################
