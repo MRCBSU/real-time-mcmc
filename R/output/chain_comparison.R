@@ -23,8 +23,8 @@ thisFile <- function() {
 Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
 
-colcode.fl <- "./Prev536SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211022_timeuse_household_deaths"
-oldcode.fl <- "./Prev536SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211022_timeuse_household_deaths_chain2"
+colcode.fl <- "./Prev542SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029_stable_household_deaths"
+oldcode.fl <- "./Prev542SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029_stable_household_deaths_chain2"
 
 ## load("mcmc.RData")
 load(file.path(colcode.fl, "tmp.RData"))
@@ -259,7 +259,7 @@ data.s <- data.frame(likelihood = as.vector(oldcode.lfx), rw = oldcode.lrw, tota
 df.lik.test <- bind_rows(data.p, data.s) %>% pivot_longer(-c(iteration, code), names_to = "type")
 
 
-glfx <- df.lik.test %>% filter(iteration > 3240) %>%
+glfx <- df.lik.test %>% ## filter(iteration > 3240) %>%
     ggplot(aes(x=value, after_stat(density), fill = code)) +
     geom_histogram(color="#e9ecef", alpha=0.6, position = "identity") +
     scale_fill_manual(values=c("#69b3a2", "#404080")) +
