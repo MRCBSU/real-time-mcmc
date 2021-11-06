@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -61,8 +61,8 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 google.data.date <- format(ymd("2021-11-05"), format = "%Y%m%d")
-#matrix.suffix <- "_timeuse_household_new_base"
-matrix.suffix <- "_stable_household_new_base"
+matrix.suffix <- "_timeuse_household_new_base"
+#matrix.suffix <- "_stable_household_new_base"
 
 
 
@@ -140,7 +140,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
