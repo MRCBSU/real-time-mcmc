@@ -60,7 +60,7 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
-google.data.date <- format(ymd("2021-10-29"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-11-05"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_stable_household_new_base"
 
