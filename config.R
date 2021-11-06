@@ -61,8 +61,8 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 google.data.date <- format(ymd("2021-11-05"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-#matrix.suffix <- "_stable_household_new_base"
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 
 
@@ -140,7 +140,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -216,7 +216,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 3
+prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
