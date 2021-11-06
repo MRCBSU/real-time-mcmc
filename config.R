@@ -59,9 +59,12 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
+
 google.data.date <- format(ymd("2021-10-29"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_stable_household_new_base"
+
+
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -100,8 +103,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-
-num.prev.days <- 543
+num.prev.days <- 550
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -168,17 +170,18 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
 
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924",c("PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
-                                                                                   "PrevINLA508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20211029", paste0(c("Prev542SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029",
+                                                                                          "Prev542SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029"), matrix.suffix, "_", data.desc, c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924", c("PrevINLA508_cm6ons_IFR5bp_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
-                                                                                    "PrevINLA508_cm6ons_IFR5bp_NHS28cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20211029", paste0(c("Prev542SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029",
+                                                                                           "Prev542SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029"), matrix.suffix, "_", data.desc, c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210924", c("PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths",
-                                                                               "PrevINLA508_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths_chain2")
-                                          )
-
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20211029", paste0(c("Prev542SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029", # _stable_household_deaths_chain2",
+                                                                                      "Prev542SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029") # _stable_household_deaths")
+                                                                                  , matrix.suffix, "_", data.desc, c("_chain2", ""))
+                                         )
+    
 }
 iteration.number.to.start.from <- 5000
 
@@ -213,13 +216,14 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 2
+prev.cutoff.days <- 3
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
 
 
-date.prev <- lubridate::ymd("20211027")
+date.prev <- lubridate::ymd("20211103")
+
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -262,10 +266,8 @@ vacc.flag <- 1 ## Do we have any vaccination data
 
 
 
-str.date.vacc <- "20211029" ## Optional: if not specified will take the most recent data file.
 
-
-
+str.date.vacc <- "20211101" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
