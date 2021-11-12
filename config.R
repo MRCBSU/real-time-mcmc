@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -60,7 +60,7 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
-google.data.date <- format(ymd("2021-11-05"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-11-12"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_stable_household_new_base"
 
@@ -140,7 +140,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -222,7 +222,7 @@ prev.days.to.lose <- 0
 
 
 
-date.prev <- lubridate::ymd("20211103")
+date.prev <- lubridate::ymd("20211110")
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -267,7 +267,7 @@ vacc.flag <- 1 ## Do we have any vaccination data
 
 
 
-str.date.vacc <- "20211101" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211111" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -279,7 +279,7 @@ if(vacc.flag){
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
 
-future.n <- (c(0.15, 0.15, rep(0.15, 4), rep(0.15, 5)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.16, 0.16, rep(0.16, 4), rep(0.16, 5)) * 10^6) * (55.98 / 66.65)
 
 
 
