@@ -28,11 +28,11 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=8,9
+#SBATCH --array=8,11
 
-#SBATCH -p cclake
+#SBATCH -p skylake
 
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 

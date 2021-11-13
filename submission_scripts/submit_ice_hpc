@@ -2,8 +2,8 @@
 #SBATCH -J trial_hpc_batch
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
-#SBATCH --time=00:10:00
+#SBATCH --cpus-per-task=9
+#SBATCH --time=35:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -23,15 +23,15 @@
 
 module purge
 module load rhel8/default-icl
+# module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
 
 dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
 pwd
-application="Rscript"
-options="../../R/output/save_end_state.R"
-CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
-# echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
-# if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
-#     echo "Running $CMD"
-  eval $CMD
-  # sbatch 
-# fi
+
+if [ -f "posterior_report10" ]; then
+    echo "existing output found"
+else
+  ../../../rtm_hpc2
+  # sbatch ../../../submit_post_process_correct_dir
+fi

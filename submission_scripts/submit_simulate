@@ -17,9 +17,9 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=56
+#SBATCH --cpus-per-task=32
 #! How much wallclock time will be required?
-#SBATCH --time=2:00:00
+#SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -30,8 +30,8 @@
 #SBATCH --verbose
 #SBATCH --array=1-5
 
-#SBATCH -p cclake
-#!SBATCH --qos=covid0
+#SBATCH -p skylake
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -67,7 +67,7 @@ module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-workdir="Prev542SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029_stable_household_deaths"
+workdir="Prev550SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211105_timeuse_household_deaths_chain2"
 echo $workdir
 
 #! Full path to application executable: 

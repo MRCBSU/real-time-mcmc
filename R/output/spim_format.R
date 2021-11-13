@@ -39,10 +39,10 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 ## projections.file <- "projections_midterm.RData"
 ## scen.text <- "MTP"
 ## save.text <- "MTP"
-projections.file <- "projections_R1.3.RData"
-scen.text <- "MTP R1.3"
-save.text <- "MTP_R_1.3"
-mtp.filter.date <- lubridate::ymd("20211023") ## ymd(date.data)
+projections.file <- "projections_R0.9.RData"
+scen.text <- "MTP R0.9"
+save.text <- "MTP_R_0.9"
+mtp.filter.date <- lubridate::ymd("20211030") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
