@@ -2,7 +2,7 @@ suppressMessages(require(lubridate))
 suppressMessages(require(tidyverse))
 suppressMessages(require(readxl))
 suppressMessages(require(gsubfn))
-stop()
+
 #########################################################
 ## Inputs that should (or may) change on a weekly basis
 #########################################################
@@ -57,15 +57,10 @@ if(exists("adm.end.date")){
 ## Define an age-grouping (the final age groupings note these can be modified in config.r this is just a default)
 if(!exists("age_adm.agg")){
     age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
-    age_adm.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
+    ## age_adm.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
     age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
-} else age_adm.oldlabs <- "Needs defining"
+} ## else age_adm.oldlabs <- "Needs defining"
 nA_adm <- length(age_adm.labs)
-
-#! This behaviour is not yet functional
-# if(!exists("regions")){
-#     regions <- c("London", "Outside_London")
-# }
 
 ## Read in sebs data if it is needed
 ## Note data is stored in an rds so we must initially read in all data
@@ -115,7 +110,7 @@ if(sus_seb_combination %in% c(1, 2)) {
 }
 
 # Select only the columns we want to read in from the sus data (if we need the sus data)
-if(sus_seb_combination == 0 | sus_seb_combination == 1) {
+if(sus_seb_combination %in% c(0,1)) {
     possible.col.names.sus <- list(
         date = c("DateVal", "date"),
         ages = c("ageGrpRTM", "ages"),
@@ -123,7 +118,7 @@ if(sus_seb_combination == 0 | sus_seb_combination == 1) {
     )
 
 
-    input.col.names.sus <- suppressMessages(names(read_csv(input_sus.loc, n_max = 0)))
+    input.col.names.sus <- suppressMessages(names(read_csv(input_sus.loc, n_max = 0, na = "")))
     is.valid.col.name.sus <- function(name) {name %in% input.col.names.sus}
     first.valid.col.name.sus <- function(names) {first.where.true(names, is.valid.col.name.sus)}
     col.names.sus <- lapply(possible.col.names.sus, first.valid.col.name.sus)
@@ -154,7 +149,6 @@ thisFile <- function() {
         }
 }
 
-
 ## Where are various directories?
 if(!exists("file.loc")){
     file.loc <- dirname(thisFile())
@@ -184,7 +178,7 @@ if(!exists("admsam.files")){## HERE!!
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)
-if(sus_seb_combination == 0 | sus_seb_combination == 1) {
+if(sus_seb_combination %in% c(0, 1)){
 
     ## Define the correct column types
     adm.date.fmt <- "%y-%b-%d"
@@ -212,7 +206,7 @@ if(sus_seb_combination == 0 | sus_seb_combination == 1) {
     # Read the data from the sus file and rearrange to summarise across ages
     print(paste0("Reading in data from ", input.loc))
 
-    adm.dat.sus <- read_csv(input_sus.loc, col_types = fields )  %>%
+    adm.dat.sus <- read_csv(input_sus.loc, col_types = fields, na = "")  %>%
           rename(!!!col.names.sus)  %>%
         pivot_longer(where(is.numeric), names_to = "region", values_to = "admissions") %>%
         ungroup()  %>%
@@ -239,7 +233,7 @@ if(sus_seb_combination == 0 | sus_seb_combination == 1) {
     if(region.type == "NHS") {
 
         adm.dat.sus <- adm.dat.sus %>%
-            mutate(region = get.region(region))
+            mutate(region = as.factor(get.region(region)))
 
         if(length(relevel_sus_locs_nhs) != 0) {
             adm.dat.sus  <- adm.dat.sus  %>%
@@ -312,7 +306,7 @@ if(sus_seb_combination == 0 | sus_seb_combination == 1) {
 
 
 ## Construct sebs data into a useful format if necessary (date, age, region, admissions)
-if(sus_seb_combination == 1 | sus_seb_combination == 2) {
+if(sus_seb_combination %in% c(1, 2)) {
 
     # Rearrange sebs data to summarise across the ages (grab ages from the columns)
     adm.dat.seb <- adm.dat.seb  %>%
@@ -345,7 +339,7 @@ if(sus_seb_combination == 1 | sus_seb_combination == 2) {
     if(region.type == "NHS") {
 
         adm.dat.seb <- adm.dat.seb %>%
-            mutate(region = get.region(region))
+            mutate(region = as.factor(get.region(region)))
 
         if(length(relevel_seb_locs_nhs) != 0) {
             adm.dat.seb  <- adm.dat.seb  %>%
@@ -443,7 +437,7 @@ if(sus_seb_combination == 0) {
 }
 
 ## Write rtm data outputs to file
-names(admsam.files) <- names(admpos.files) <- regions
+names(admsam.files) <- regions
 
 ## Create missing directories
 walk(dirname(admsam.files), ~dir.create(., showWarnings = F, recursive = T))
@@ -509,3 +503,4 @@ ggsave(plot.filename,
        width = 9.15,
        height = 6)
 saveWidget(ggpp, file=file.path(dirname(tmpFile), paste0("adm_plot", date.adm.str, ".html")))
+stop()

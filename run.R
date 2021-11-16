@@ -44,24 +44,8 @@ if(!exists("prev.flag")) prev.flag <- 0
 if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
 if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
 
-
-# Moved serology calls to the top of the run script
-if(sero.flag){
-    str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
-    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
-    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
-} else {
-  serosam.files <- seropos.files <- NULL
-}
-
-# Setup serology inputs
-if(sero.flag){
-  source(file.path(proj.dir, "R/data/format_sero.R"))
-}
-
-
 if(adm.flag){
-  admsam.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_samples.txt")
+  admsam.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_counts.txt")
   ## admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
 } else {
   admsam.files <- NULL
@@ -76,6 +60,20 @@ if (region.type == "NHS") {
 ## Added the admissions data and moved it to the top of this file 
 if(adm.flag) {
   source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
+}
+
+# Moved serology calls to the top of the run script
+if(sero.flag){
+    str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+} else {
+  serosam.files <- seropos.files <- NULL
+}
+
+# Setup serology inputs
+if(sero.flag){
+  source(file.path(proj.dir, "R/data/format_sero.R"))
 }
 
 ## If these files don't already exits, make them

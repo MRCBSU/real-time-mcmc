@@ -5,10 +5,10 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -50,18 +50,18 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-##Admissions flags/dates
+## ##Admissions flags/dates
 adm.end.date <- ymd(20210924)
 adm_sus.end.date <- ymd(20201014)
-adm_seb.start.date <- ymd(20201014)
-##Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
+## adm_seb.start.date <- ymd(20201014)
+## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
 sus_seb_combination <- 1L
-##Value to note how many days to remove from the end of the dataset
+## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 5L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
 
-##file.locs for admissions for geography linkers (with colname links)
+## ## file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
 adm.sus.geog_link <- "LAD19CD"
 adm.sus.region_col <- "RGN19NM"
@@ -100,7 +100,7 @@ summarise_classes_seb <- list("0_25" = c("0_5", "6_17", "18_24"),
                               "75" = c("75_84", "85")
 )
 
-age_adm.agg <- c(0, 25, 45, 65, 75, Inf) ### KEEP IN config.R
+age_adm.agg <- c(0, 25, 45, 65, 75, Inf) ## KEEP IN config.R
 age_adm_seb.oldlabs <- c("0_25", "25_45", "45_65", "65_75", "75", "")
 age_adm_sus.oldlabs <- c("[0,25)", "[25,45)", "[45,65)", "[65,75)", "[75,Inf]", "")
 age_adm.labs <- c("0-25", "25-45","45-65", "65-75", "75+", "NA") ## "All ages"
@@ -133,7 +133,7 @@ data.desc <- "admissions"
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-hosp.flag <- 0				# 0 = admissions, 1 = deaths
+hosp.flag <- 0				# 0 = admissions (by default - can be modified by adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -159,7 +159,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
