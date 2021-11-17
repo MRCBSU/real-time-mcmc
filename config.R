@@ -61,8 +61,8 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 google.data.date <- format(ymd("2021-11-12"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-#matrix.suffix <- "_stable_household_new_base"
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 
 
@@ -103,7 +103,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 550
+num.prev.days <- 557
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
