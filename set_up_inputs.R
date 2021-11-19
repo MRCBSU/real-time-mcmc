@@ -25,18 +25,19 @@ if(deaths.flag){
 }
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
-if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
-	if(exists("rtm.plot")) {
-		start.sero <- min(rtm.plot$date) - start.date + 1
-		end.sero <- max(rtm.plot$date) - start.date + 1
-	} else {
-		warning('Running sero likelihood between 14 and 85 days')
-		start.sero <- 14
-		end.sero <- 85 
-	}
-} else {
-	start.sero <- end.sero <- 1
-}
+## if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
+## 	if(exists("rtm.plot")) {
+## 		start.sero <- min(rtm.plot$date) - start.date + 1
+## 		end.sero <- max(rtm.plot$date) - start.date + 1
+## 	} else {
+## 		warning('Running sero likelihood between 14 and 85 days')
+## 		start.sero <- 14
+## 		end.sero <- 85 
+## 	}
+## } else {
+## 	start.sero <- end.sero <- 1
+## }
+
 ## The 'viro' stream in the code
 viro.data <- NULL
 viro.denom <- NULL
@@ -199,14 +200,33 @@ if (deaths.flag == 1) {
 	}
     if(is.null(end.hosp)) end.hosp <- set.end.date(end.hosp, hosp.data)
 }
+
 sero.data <- list(sample = "NULL",
                   positive = "NULL")
 if (sero.flag == 1) {
     sero.data <- list(sample = serosam.files, positive = seropos.files)
     if(!all(sapply(sero.data, function(x) all(file.exists(x)))))
         stop("One of the specified serology data files does not exist")
-    if(is.null(end.sero)) end.sero <- set.end.date(end.sero, sero.data)
+    if(!format.inputs) { ## Need to define the limits for the serology likelihood
+        ## Read in the samples file
+        sero.lims <- do.call(bind_rows, lapply(serosam.files, read_tsv, col_names = FALSE)) %>%
+            pivot_longer(cols = -1, names_to = "counts") %>%
+            filter(value > 0)
+        ## Find the date of the earliest and latest samples.
+        start.sero <- min(sero.lims$X1) - start.date + 1
+        end.sero <- max(sero.lims$X1) - start.date + 1
+    } else if(exists("rtm.plot")) {
+        start.sero <- min(rtm.plot$date) - start.date + 1
+        end.sero <- max(rtm.plot$date) - start.date + 1
+    } else {
+        warning('Running sero likelihood from day 1 to end\n')
+        start.sero <- 1
+        end.sero <- set.end.date(end.sero, sero.data)
+    }
+} else {
+    start.sero <- end.sero <- 1
 }
+
 prev.data <- list(lmeans = "NULL",
                   lsds = "NULL")
 if(prev.flag == 1){

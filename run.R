@@ -74,11 +74,6 @@ if(sero.flag){
   serosam.files <- seropos.files <- NULL
 }
 
-# Setup serology inputs
-if(sero.flag){
-  source(file.path(proj.dir, "R/data/format_sero.R"))
-}
-
 ## If these files don't already exits, make them
 if(deaths.flag){
     data.files <- paste0(data.dirs["deaths"], "/",
@@ -136,14 +131,17 @@ if(format.inputs){
     if ("Wales" %in% regions) {
         source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
     }
+    if(prev.flag){
+        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+    }
+    if(sero.flag){    ## Setup serology inputs
+        source(file.path(proj.dir, "R/data/format_sero.R"))
+    }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
-    }
-    if(prev.flag){
-        source(file.path(proj.dir, "R", "data", "format_prev.R"))
     }
 }
 
