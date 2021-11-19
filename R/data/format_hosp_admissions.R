@@ -34,11 +34,14 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
 #! Note get peter to output sus data in this format going forwards
-if(!exists("date.adm")){
+if(!exists("date.adm_sus")){
     fl.name <- basename(input.loc)
-    date.adm_sus.str <- str_match(rownames(adm_sus.loc),"([0-9]+)\\.csv$")[[1,2]]
-    date.adm_seb.str <- str_match(rownames(adm_seb.loc),"([0-9]+)\\.rds$")[[1,2]]
+    date.adm_sus.str <- str_match(rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)],"([0-9]+)\\.csv$")[,2]
     date.adm_sus <- ymd(date.adm_sus.str)
+}
+if(!exists("date.adm_seb")){
+    fl.name <- basename(input.loc)
+    date.adm_seb.str <- str_match(rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)],"([0-9]+)\\.rds$")[,2]
     date.adm_seb <- ymd(date.adm_seb.str)
 }
 
@@ -307,7 +310,6 @@ if(sus_seb_combination %in% c(0, 1)){
 
 ## Construct sebs data into a useful format if necessary (date, age, region, admissions)
 if(sus_seb_combination %in% c(1, 2)) {
-
     # Rearrange sebs data to summarise across the ages (grab ages from the columns)
     adm.dat.seb <- adm.dat.seb  %>%
         select(-c(n_beds_mechanical_non_cov_ns:n_staff_absent_positive), -n_care_home_admitted)  %>%
@@ -477,6 +479,7 @@ require(plotly)
 require(htmlwidgets)
 
 adm.plot <- adm.sam %>%
+    filter(!is.na(region)) %>%
     group_by(date, region) %>%
     summarise(across(admissions, .fn = sum)) %>%
     mutate(text = paste("Region:", region, "\nAdmssions:", admissions, "\nDate:", date))
@@ -490,12 +493,11 @@ ggp <- ggplot(adm.plot, aes(x = date, y = admissions, colour = region, text = te
 
 ggpp <- ggplotly(ggp, tooltip = "text")
 
-if(sus_seb_combination == 0) {
-    date.adm.str <- date.adm_sus
-} else {
-    date.adm.str <- date.adm_seb
-}
-
+## if(sus_seb_combination == 0) {
+##     date.adm.str <- date.adm_sus
+## } else {
+##     date.adm.str <- date.adm_seb
+## }
 
 plot.filename <- file.path(dirname(tmpFile), paste0("adm_plot", date.adm.str, ".jpg"))
 ggsave(plot.filename,
@@ -503,4 +505,3 @@ ggsave(plot.filename,
        width = 9.15,
        height = 6)
 saveWidget(ggpp, file=file.path(dirname(tmpFile), paste0("adm_plot", date.adm.str, ".html")))
-stop()

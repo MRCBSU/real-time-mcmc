@@ -36,7 +36,7 @@ run.outputs <- FALSE
 
 ## Which code is being considered
 if(!exists("gp.flag")) gp.flag <- 1
-if(!exists("hosp.flag")) hosp.flag <- 1
+if(!exists("hosp.flag")) hosp.flag <- deaths.flag <- 1
 if(!exists("adm.flag")) adm.flag <- !hosp.flag ## Not typically set by config.R - check
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
@@ -45,7 +45,10 @@ if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
 if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
 
 if(adm.flag){
-  admsam.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_counts.txt")
+    if(!exists("adm.end.date")){
+        date.adm.str <-  ymd(date.data) - adm_seb.strip_days
+    } else date.adm.str <- adm.end.date
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
   ## admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
 } else {
   admsam.files <- NULL
@@ -77,19 +80,21 @@ if(sero.flag){
 }
 
 ## If these files don't already exits, make them
-data.files <- paste0(data.dirs["deaths"], "/",
-                     data.desc,
-                     date.data, "_",
-                     regions, "_",
-                     nA, "ag",
-                     ifelse(flg.confirmed, "CONF", ""),
-                     reporting.delay, "delay")
-if (exists("flg.cutoff")){
-    if(flg.cutoff)
-	data.files <- paste0(data.files, "cutoff", str.cutoff)
+if(deaths.flag){
+    data.files <- paste0(data.dirs["deaths"], "/",
+                         data.desc,
+                         date.data, "_",
+                         regions, "_",
+                         nA, "ag",
+                         ifelse(flg.confirmed, "CONF", ""),
+                         reporting.delay, "delay")
+    if (exists("flg.cutoff")){
+        if(flg.cutoff)
+            data.files <- paste0(data.files, "cutoff", str.cutoff)
+    }
+    data.files <- paste0(data.files, ".txt")
+    names(data.files) <- regions
 }
-data.files <- paste0(data.files, ".txt")
-names(data.files) <- regions
 if(gp.flag){
     cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2_", ifelse(symptoms, "symptoms", "all"), ".txt")
     denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")

@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -50,10 +50,6 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-## ##Admissions flags/dates
-adm.end.date <- ymd(20210924)
-adm_sus.end.date <- ymd(20201014)
-## adm_seb.start.date <- ymd(20201014)
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
 sus_seb_combination <- 1L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -69,6 +65,13 @@ adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
+## ##Admissions flags/dates
+## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
+adm_sus.end.date <- ymd(20201014)
+## adm_seb.start.date <- ymd(20201014)
+## ## IF THE BELOW ARE NOT SPECIFIED, THE MOST RECENT FILE WILL BE CHOSEN
+## date.adm_sus <- ymd()
+## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20211015"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
@@ -133,7 +136,7 @@ data.desc <- "admissions"
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-hosp.flag <- 0				# 0 = admissions (by default - can be modified by adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0				# 0 = admissions (by default - can be modified by adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -264,7 +267,7 @@ out.dir <- file.path(proj.dir,
                          scenario.name,
                          "_matrices_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
-if (!hosp.flag) out.dir <- paste0(out.dir, "_no_deaths")
+if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 1

@@ -13,8 +13,8 @@ if(gp.flag){
 }
 
 ## The 'hosp' stream in the code is linked to death data
-if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
-if(hosp.flag){
+if(!exists("hosp.flag")) hosp.flag <- deaths.flag <- 1	# 0 = use hospital admissions, 1 = deaths
+if(deaths.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
@@ -191,7 +191,7 @@ if (gp.flag == 1) {
 	if(is.null(end.gp)) end.gp <- set.end.date(end.gp, gp.data)
 }
 hosp.data <- "NULL"
-if (hosp.flag == 1) {
+if (deaths.flag == 1) {
     hosp.data <- data.files
     if(!all(file.exists(hosp.data))) {
 		print(hosp.data[which(!file.exists(hosp.data))])
