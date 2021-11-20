@@ -131,8 +131,8 @@ if(format.inputs){
     if ("Wales" %in% regions) {
         source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
     }
-    if(prev.flag){
-        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+    if(sero.flag){ # Setup serology inputs
+        source(file.path(proj.dir, "R/data/format_sero.R"))
     }
     if(sero.flag){    ## Setup serology inputs
         source(file.path(proj.dir, "R/data/format_sero.R"))
@@ -142,6 +142,9 @@ if(format.inputs){
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
+    }
+    if(prev.flag){
+        source(file.path(proj.dir, "R", "data", "format_prev.R"))
     }
 }
 
