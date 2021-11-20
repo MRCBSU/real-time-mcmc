@@ -81,3 +81,12 @@ Re-running the model isn't quite as simple as just running the model code (which
 7. Run the counterfactual simulations from the ONS60 analysis. As above for the use of the `submit_simulate' script, but in the file `mc_midterm_forecast.R' change the variable `projections.basename' to "projections_counter". Run the `submit_simulate' script from the same location as above with the correct array number.
 8. Once the counterfactual simulations are complete, navigate to the directory in which the simulations have been run and source the R script `../../../R/output/vac.comparison.R'. This will (currently) generate an .RData file that is to go to the JMT shared area.
 9. For SPI-M, navigate to the directory in which the model outputs exist. Open `../../../R/output/spim_format.R'. Make sure ``med.term.flag`` and ``nowcast.flag`` are both set to ``TRUE``. Update the variable ``mtp.filter.date`` by adding one week to the date (typically this should be close to ten days prior to the current date).
+
+## R value scenarios
+
+SPI-M will occasionally request scenarios which assume the R value will take a particular value on a particular day. To run these scenarios:
+
+1. In `submit_simulate` change the value of the variable `forecast_switch` to "spim_ask". Comment out the line which selects `workdir` from an array of directory names and manually set the relative name of the directory (relative to the yyyymmdd-style directory). Set the line `#SBATCH --array` to be equal to 1-n, where n is the number of R values under study.
+2. In `R/output/mc_spim_ask_forecast.R`, set the variable `Rscenario` to be equal to the vector of R values under study, keeping the selection of the `out.ind` element of the vector.
+3. Run the batch file `submit_simulate`.
+4. For SPI-M, navigate to the directory in which the model outputs exist. Open `../../../R/output/spim_format.R`. Set ``med.term.flag = FALSE`` and ``nowcast.flag = TRUE``. Use the same value for ``mtp.filter.date`` as above (point 9). Step 3 will lead to n projections .RData files being saved in the output directory. You need to run the `spim_format.R` file for each one, setting the variable ``projections.file`` to a different one of the .RData files each time, with corresponding values for the variables `scen.text` and `save.text` - suitable values for these should be stored in the ``spim_format.R`` file, and will need uncommenting (whilst commenting the midterm projections equivalent), substituting in the correct value for R where appropriate and obvious.
