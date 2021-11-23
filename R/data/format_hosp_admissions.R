@@ -161,23 +161,13 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 
-if(!exists("admsam.files")){## HERE!!
-    admsam.files <- build.data.filepath("RTM_format/admission",
-                                         "adm",
-                                         date.adm.str,
-                                         "_",
-                                         regions,
-                                         "_",
-                                         nA_adm,
-                                         "ages_samples.txt")
-    admpos.files <- build.data.filepath("RTM_format/admission",
-                                         "adm",
-                                         date.adm.str,
-                                         "_",
-                                         regions,
-                                         "_",
-                                         nA_adm,
-                                         "ages_positives.txt")
+if(!exists("admsam.files")){
+    if(!exists("adm.end.date")){
+        date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
+                                                  date.adm_seb - adm_seb.strip_days,
+                                                  date.adm_sus - adm_sus.strip_days))
+    } else date.adm.str <- adm.end.date
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)
@@ -444,6 +434,14 @@ names(admsam.files) <- regions
 ## Create missing directories
 walk(dirname(admsam.files), ~dir.create(., showWarnings = F, recursive = T))
 
+## Pad data with some zeros to take it back to day 1.
+adm.sam <- expand_grid(region = regions, date = lubridate::as_date(start.date:max(adm.sam$date)), ages = unique(adm.sam$ages)) %>%
+    mutate(admissions = 0) %>%
+    bind_rows(adm.sam) %>%
+    group_by(region, date, ages) %>%
+    summarise(admissions = max(admissions)) %>%
+    ungroup()
+
 # Loop over regions and save the data for them
 for(reg in regions) {
     region.sam <- pivot_wider(adm.sam %>%
@@ -451,7 +449,9 @@ for(reg in regions) {
                               id_cols = c(date, region),
                               names_from = ages,
                               values_from = admissions
-                              )
+                              ) %>%
+        ungroup() %>%
+        select(-region)
 
     tmpFile <- admsam.files[reg]
 

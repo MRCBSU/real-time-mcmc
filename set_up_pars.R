@@ -1,3 +1,9 @@
+beta.params.from.mean.sd <- function(mean, sd){
+ a <- c(0,0)
+ a[1] <- ((mean^2 * (1 - mean)) - (mean * (sd^2))) / (sd^2)
+ a[2] <- (a[1] * (1 - mean)) / mean
+ a
+}
 
 add.extra.vals.per.region <- function(vec, val, num) {
   mat <- matrix(vec, ncol = nr)
@@ -39,15 +45,20 @@ if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
 vac.effec.bp <- 1:(length(vac.dates) - 1)
 
 ## Efficacy against disease from one vaccine dose
-if(efficacies == "Nick"){
-    value.vac.alpha1 <- c(0.80, 0.50)
-} else if(efficacies == "Jamie"){
-    value.vac.alpha1 <- rep(3/7,2)
-} else if(efficacies == "PHE"){
-    value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
-} else {
-    value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(deaths.flag){
+    if(efficacies == "Nick"){
+        value.vac.alpha1 <- c(0.80, 0.50)
+    } else if(efficacies == "Jamie"){
+        value.vac.alpha1 <- rep(3/7,2)
+    } else if(efficacies == "PHE"){
+        value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
+    } else {
+        value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+    }
+} else if(adm.flag){
+value.vac.alpha1 <- c(31/75, 13/35, 49/69, 49/69) 
 }
+
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
@@ -61,14 +72,18 @@ write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"),
 vacc.alpha.bps <- TRUE
 
 ## Efficacy against disease from second/nth vaccine dose
-if(efficacies == "Nick"){
-    value.vac.alpha2 <- c(0.95, 0.70)
-} else if(efficacies == "Jamie"){
-    value.vac.alpha2 <- c(2/3,6/7)
-} else if(efficacies == "PHE"){
-    value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)
-} else {
-    value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+if(deaths.flag){
+    if(efficacies == "Nick"){
+        value.vac.alpha2 <- c(0.95, 0.70)
+    } else if(efficacies == "Jamie"){
+        value.vac.alpha2 <- c(2/3,6/7)
+    } else if(efficacies == "PHE"){
+        value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)
+    } else {
+        value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+    }
+} else if(adm.flag){
+    value.vac.alpha2 <- c(13/20, 43/57, 4/5, 4/5)
 }
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
@@ -80,9 +95,9 @@ if(efficacies == "PHE"){
 }
 write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
-## Efficacy against disease from one vaccine dose
+## Efficacy against infection from one vaccine dose - can be derived from vaccine surveillance report 26 (alpha)
 if(efficacies == "Nick"){
-    value.vac.pi1 <- 0.48 ## This will need to change when I can figure out how(!)
+    value.vac.pi1 <- 0.48
 } else if(efficacies == "Jamie"){
     value.vac.pi1 <- c(0.65, 0.65)
 } else if(efficacies == "PHE"){
@@ -97,9 +112,9 @@ vacc.pi.bps <- efficacies %in% c("Jamie", "PHE")
 if(vacc.pi.bps)
     write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
 
-## Efficacy against disease from two vaccine doses
+## Efficacy against infection from two vaccine doses  - can be derived from vaccine surveillance report 26 (alpha)
 if(efficacies == "Nick"){
-    value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
+    value.vac.pi2 <- 0.6
 } else if(efficacies == "Jamie"){
     value.vac.pi2 <- c(0.85, 0.65)
 } else if(efficacies == "PHE"){
@@ -201,10 +216,17 @@ if(single.ifr){
     if(nA == 1){
         pars.ifr <-  c(21.6, 3070) / 4  ## c(4.35, 770)
     } else {
-        means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
-        pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
-        pars.ifr[13] <- 9.50
-        pars.ifr[14] <- 112
+        if(deaths.flag){
+            means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+            pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
+            pars.ifr[13] <- 9.50
+            pars.ifr[14] <- 112
+        } else if(adm.flag){
+            means.ifr <- c(0.000102, 0.000204, 0.0054, 0.0343, 0.0816, 0.142, 0.175)
+            sd.ifr <- c(NA, NA, 0.0020, 0.011, 0.018, 0.036, 0.051)
+            pars.ifr <- as.vector(rbind(rep(1, 2), (1 - means.ifr[1:2]) / means.ifr[1:2]))
+            for(i in 3:length(means.ifr)) pars.ifr <- c(pars.ifr, beta.params.from.mean.sd(means.ifr[i], sd.ifr[i]))            
+        }
     }
 } else { ## IFR changes over time, presume logistically...
     if(nA > 1){
@@ -217,34 +239,52 @@ if(single.ifr){
     if(nA == 1){
         pars.ifr <- c(0.00705, 0.00304)
     } else {
-        means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
-        pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
-        pars.ifr[13] <- 9.50
-        pars.ifr[14] <- 112
+        if(deaths.flag){
+            means.ifr <- c(1.61e-5, 4.28e-5, 1.89e-4, 9.02e-4, 8.20e-3, 3.11e-2, 6.04e-2)
+            pars.ifr <- as.vector(rbind(rep(1, length(means.ifr)), (1 - means.ifr) / means.ifr))
+            pars.ifr[13] <- 9.50
+            pars.ifr[14] <- 112
+        } else if(adm.flag){
+            means.ifr <- c(0.000102, 0.000204, 0.0054, 0.0343, 0.0816, 0.142, 0.175)
+            sd.ifr <- c(NA, NA, 0.0020, 0.011, 0.018, 0.036, 0.051)
+            pars.ifr <- as.vector(rbind(rep(1, 2), (1 - means.ifr[1:2]) / means.ifr[1:2]))
+            for(i in 3:length(means.ifr)) pars.ifr <- c(pars.ifr, beta.params.from.mean.sd(means.ifr[i], sd.ifr[i]))
+        }
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
-        if(NHS28.alt.ifr.prior){
+        if((!adm.flag) & NHS28.alt.ifr.prior){
             mean.indices <- seq(1, length(pars.ifr), by = 2)
             pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
         }
         ## gradients from Brian's Co-CIN analysis
-        grad.samp <- cbind(
-        (logit(rbeta(1000000, 23/4.625,977/4.625))-logit(rbeta(1000000, 13.5, 39*13.5))) / 30, ## 0-44
-        (logit(rbeta(1000000, 76/2.875, 924/2.875))-logit(rbeta(1000000, 23*5.25, 175*5.25))) / 30, ## 45-64
-        (logit(rbeta(1000000, 195/2.9375, 805/2.9375))-logit(rbeta(1000000, 281/1.240235,719/1.240235))) / 30, ## 65-74
-        (logit(rbeta(1000000, 321/1.375, 679/1.375))-logit(rbeta(1000000, 382*2.625, 618*2.625))) / 30 ## 75+
-        )
+        if(deaths.flag){
+            grad.samp <- cbind(
+            (logit(rbeta(1000000, 23/4.625,977/4.625))-logit(rbeta(1000000, 13.5, 39*13.5))) / 30, ## 0-44
+            (logit(rbeta(1000000, 76/2.875, 924/2.875))-logit(rbeta(1000000, 23*5.25, 175*5.25))) / 30, ## 45-64
+            (logit(rbeta(1000000, 195/2.9375, 805/2.9375))-logit(rbeta(1000000, 281/1.240235,719/1.240235))) / 30, ## 65-74
+            (logit(rbeta(1000000, 321/1.375, 679/1.375))-logit(rbeta(1000000, 382*2.625, 618*2.625))) / 30 ## 75+
+            )
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))))
+        } else if(adm.flag){
+            grad.samp <- cbind(
+            (rnorm(1000000, pars.ifr[7], pars.ifr[8])-rnorm(1000000, pars.ifr[7], pars.ifr[8])) / 30, ## 0-44
+            (rnorm(1000000, pars.ifr[9], pars.ifr[10])-rnorm(1000000, pars.ifr[9], pars.ifr[10])) / 30, ## 45-64
+            (rnorm(1000000, pars.ifr[11], pars.ifr[12])-rnorm(1000000, pars.ifr[11], pars.ifr[12])) / 30, ## 65-74
+            (rnorm(1000000, pars.ifr[13], pars.ifr[14])-rnorm(1000000, pars.ifr[13], pars.ifr[14])) / 30 ## 75+
+            )
+            grad.samp <- sweep(grad.samp, 2, apply(grad.samp, 2, mean))
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
+        }
         ## expand pars.ifr according to the model
-        pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(mean(x), sd(x)))))
         if(bp.flag <- !is.na(str_extract(ifr.mod, "[0-9]bp"))){
-            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-mean(x), sd(x)))))
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-zapsmall(mean(x)), sd(x)))))
             if((num.bp <- as.numeric(str_extract(ifr.mod, "[0-9]"))) > 2){
                 for(i in num.bp:3)
                     pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
             }
         } else if(ifr.mod == "lin.bp"){
-            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) 0.3 * c(-mean(x), sd(x)))))
+            pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) 0.3 * c(-zapsmall(mean(x)), sd(x)))))
         }; rm(grad.samp)
         value.ifr <- c(value.ifr, rep(0, (length(pars.ifr) / 2) - length(value.ifr)))
         var.ifr <- c(var.ifr, rep(0.00036, length(value.ifr) - length(var.ifr)))
@@ -327,15 +367,24 @@ value.eta <- 0.406967;
 pars.eta <- c(1.0, 0.02);
 
 ## Hosp Overdispersion
-value.eta.h <- 0.06729983
-pars.eta.h <- c(1.0, 0.2)
-
-## Delay to death
-ddelay.mean <-15.0
-ddelay.sd <- 12.1
-if(grepl("newOtoD", scenario.name, fixed = TRUE)){
-    ddelay.mean <- 9.3
-    ddelay.sd <- 9.7
+if(deaths.flag){
+    value.eta.h <- 0.06729983
+    pars.eta.h <- c(1.0, 0.2)
+} else if(adm.flag){
+    value.eta.h <- 0.07
+    pars.eta.h <- c(1.0, 0.2)
+}
+## Delay to death - if we're using death data...
+if(deaths.flag){
+    ddelay.mean <-15.0
+    ddelay.sd <- 12.1
+    if(grepl("newOtoD", scenario.name, fixed = TRUE)){
+        ddelay.mean <- 9.3
+        ddelay.sd <- 9.7
+    }
+} else if(adm.flag){ ## Currently highly unprincipled.
+    ddelay.mean <- 9.0
+    ddelay.sd <- (2/3) * 12.1
 }
 
 ## Reporting delay on the deaths

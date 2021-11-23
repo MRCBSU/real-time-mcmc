@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -74,7 +74,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20211119"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -131,12 +131,12 @@ region.code <- "Eng"
 # all: all deaths, by date of death
 # adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 # adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1				# 0 = admissions (by default - can be modified by adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0				# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -185,7 +185,7 @@ if (data.desc == "all") {
     date.adj.data <- ymd(date.data) - 1  ## accounting for the fact that the raw and adjusted death files may have different dates on them.
     reporting.delay <- 1
 } else if (grepl("admissions", data.desc)) {
-reporting.delay  <- seb_report_delay
+    reporting.delay  <- seb_report_delay
 } else {
 	stop("Unknown data description")
 }
@@ -196,15 +196,15 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20211112", paste0(c("Prev557SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112",
-                                                                                          "Prev557SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112"), matrix.suffix, "_", data.desc, c("_chain2", ""))
+                                                                                          "Prev557SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112"), matrix.suffix, "_", "deaths", c("_chain2", ""))
                                              )
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20211112", paste0(c("Prev557SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112",
-                                                                                           "Prev557SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112"), matrix.suffix, "_", data.desc, c("_chain2", ""))
+                                                                                           "Prev557SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112"), matrix.suffix, "_", "deaths", c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20211112", paste0(c("Prev557SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112", # _stable_household_deaths_chain2",
                                                                                       "Prev557SeroNHSBT_All_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211112") # _stable_household_deaths")
-                                                                                  , matrix.suffix, "_", data.desc, c("_chain2", ""))
+                                                                                  , matrix.suffix, "_", "deaths", c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
