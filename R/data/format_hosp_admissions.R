@@ -161,23 +161,13 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 
-if(!exists("admsam.files")){## HERE!!
-    admsam.files <- build.data.filepath("RTM_format/admission",
-                                         "adm",
-                                         date.adm.str,
-                                         "_",
-                                         regions,
-                                         "_",
-                                         nA_adm,
-                                         "ages_samples.txt")
-    admpos.files <- build.data.filepath("RTM_format/admission",
-                                         "adm",
-                                         date.adm.str,
-                                         "_",
-                                         regions,
-                                         "_",
-                                         nA_adm,
-                                         "ages_positives.txt")
+if(!exists("admsam.files")){
+    if(!exists("adm.end.date")){
+        date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
+                                                  date.adm_seb - adm_seb.strip_days,
+                                                  date.adm_sus - adm_sus.strip_days))
+    } else date.adm.str <- adm.end.date
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)

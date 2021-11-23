@@ -44,26 +44,13 @@ if(!exists("prev.flag")) prev.flag <- 0
 if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
 if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
 
-if(adm.flag){
-    if(!exists("adm.end.date")){
-        date.adm.str <-  ymd(date.data) - adm_seb.strip_days
-    } else date.adm.str <- adm.end.date
-    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
-  ## admpos.files <- paste0(data.dirs["adm"], "/", adm.end.date, "_", regions, "_", nA_adm, "ag_positives.txt")
-} else {
-  admsam.files <- NULL
-}
+if(!adm.flag) admsam.files <- NULL ## The output filenames for the data will be determined within format_hosp_admissions.R
 
 if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
 } else if (region.type == "ONS") {
 	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
 } else stop("Unknown region type for population")
-
-## Added the admissions data and moved it to the top of this file 
-if(adm.flag) {
-  source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
-}
 
 # Moved serology calls to the top of the run script
 if(sero.flag){
@@ -115,21 +102,26 @@ if(vacc.flag){
     vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
 if(format.inputs){
-    if(data.desc == "reports") {
-        source(file.path(proj.dir, "R/data/format_death_reports.R"))
-    } else if (grepl("adjusted", data.desc)) {
-        source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
-    } else if (running.England) {
-        source(file.path(proj.dir, "R/data/format_deaths.R"))
+    if(deaths.flag){
+        if(data.desc == "reports") {
+            source(file.path(proj.dir, "R/data/format_death_reports.R"))
+        } else if (grepl("adjusted", data.desc)) {
+            source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
+        } else if (running.England) {
+            source(file.path(proj.dir, "R/data/format_deaths.R"))
+        }
+        if ("Scotland" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+        }
+        if ("Northern_Ireland" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+        }
+        if ("Wales" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+        }
     }
-    if ("Scotland" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
-    }
-    if ("Northern_Ireland" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
-    }
-    if ("Wales" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+    if(adm.flag) {
+        source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
     }
     if(prev.flag){
         source(file.path(proj.dir, "R", "data", "format_prev.R"))
