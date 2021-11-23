@@ -434,6 +434,14 @@ names(admsam.files) <- regions
 ## Create missing directories
 walk(dirname(admsam.files), ~dir.create(., showWarnings = F, recursive = T))
 
+## Pad data with some zeros to take it back to day 1.
+adm.sam <- expand_grid(region = regions, date = lubridate::as_date(start.date:max(adm.sam$date)), ages = unique(adm.sam$ages)) %>%
+    mutate(admissions = 0) %>%
+    bind_rows(adm.sam) %>%
+    group_by(region, date, ages) %>%
+    summarise(admissions = max(admissions)) %>%
+    ungroup()
+
 # Loop over regions and save the data for them
 for(reg in regions) {
     region.sam <- pivot_wider(adm.sam %>%
@@ -441,7 +449,9 @@ for(reg in regions) {
                               id_cols = c(date, region),
                               names_from = ages,
                               values_from = admissions
-                              )
+                              ) %>%
+        ungroup() %>%
+        select(-region)
 
     tmpFile <- admsam.files[reg]
 
