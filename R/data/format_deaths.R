@@ -7,7 +7,7 @@ suppressMessages(library(tidyverse))
 
 
 if(!exists("date.data"))
-    date.data <- (today() - days(1)) %>% format("%Y%m%d")
+    date.data <- (today() - days(2)) %>% format("%Y%m%d")
 
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {
@@ -187,7 +187,6 @@ dth.dat %>%
 ## ## 
 
 latest.date <- ymd(date.data) ## - reporting.delay
-
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%

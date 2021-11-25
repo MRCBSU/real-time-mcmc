@@ -11,7 +11,7 @@ suppressMessages(library(tidyr))
 ## YYYYMMDD string, used in filenames and reporting lag
 # Default: yesterday's date
 if(!exists("date.data"))
-    date.data <- (today() - days(1)) %>% format("%Y%m%d")
+    date.data <- (today() - days(3)) %>% format("%Y%m%d")
 # Or specify manually
 # date.data <- "20200325"
 

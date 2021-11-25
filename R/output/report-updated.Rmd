@@ -9,9 +9,10 @@ output:
 
 <base target="_parent">
 
-```{r preamble, include=FALSE}
+```{r preamble, include=FALSE,  message = FALSE}
 if (!exists("external")) external = T
 external.bak <- external
+message(external.bak)
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 knitr::opts_chunk$set(error=TRUE)
 
@@ -21,6 +22,7 @@ suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 suppressMessages(extract <- R.utils::extract)
+cat(Rfile.loc)
 if(exists("Rfile.loc")) {
   source(file.path(Rfile.loc, "results_api.R"))
   source(file.path(Rfile.loc, "plot_funcs.R"))

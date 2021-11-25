@@ -14,6 +14,7 @@ suppressMessages(require(parallel))
 require(tidyverse)
 require(cubelyr)
 require(lubridate)
+
 if(!exists("vacc.loc")){ ## Set to default format for the filename
     ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
     input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
@@ -37,8 +38,8 @@ if(!exists("vacc.loc")){ ## Set to default format for the filename
     if(is.null(vacc.loc)){
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
     } else {
-        if(startsWith(vacc.loc, "/")) input.loc <- prev.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", prev.loc)
+        if(startsWith(vacc.loc, "/")) input.loc <- vacc.loc
+        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", vacc.loc)
     }
 }
 
@@ -151,6 +152,12 @@ decompress_file <- function(directory, file, .file_cache = FALSE) {
 ## Substitute this into the names of the intended data file names
 vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
 vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+
+
+print(vac1.files)
+print(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc)))))
+print(gsub(".zip", ".csv", file.path("data", basename(input.loc))))
+print(input.loc)
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
@@ -268,7 +275,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
                                     !is.na(dose),
                                     !is.na(age.grp))
     n.vaccs.complete <- nrow(vacc.dat)
-    cat("Got here4\n")
+    cat("Got here 4\n")
     ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
     
     ## ## ====== DATA ON FIRST VACCINATION
@@ -410,7 +417,13 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
             pad.rows.at.end(ndays)
         cat("Second stopifnot\n")
         stopifnot(!is.na(region.dat))
-        stopifnot(all(region.dat[, -1] >= 0))
+        ## stopifnot(all(region.dat[, -1] >= 0))
+        if(any(region.dat[, -1] < 0)){ ## 20211001 TEMPORARY MEASURE... CORRECT NEXT WEEK
+            print("Bug fix 2nd vac hit\n")
+            ids <- which(region.dat[, -1] < 0, arr.ind = TRUE)
+            for(i in 1:nrow(ids))
+                region.dat[ids[i, 1], ids[i, 2] + 1] <- 0
+        }
         stopifnot(all(region.dat[, -1] <= 2))
         tmpFile <- vacn.files[reg]
         dir.create(dirname(tmpFile), recursive = TRUE, showWarnings = FALSE)

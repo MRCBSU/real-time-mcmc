@@ -56,10 +56,10 @@ if(!exists("age.labs"))
 
 ## CONTACT MATRICES SETTINGS
 ## Load Edwin's base matrices from contactsr
-google.data.date.str <- paste0(google.data.date, matrix.suffix)
+google.data.date_and_suff.str <- paste0(google.data.date, matrix.suffix) ## This line is confusing why would the date variable contain the suffix? suggest rename
 matrix.dir <- file.path(
 	proj.dir, "contact_mats",
-	paste0("google_mobility_relative_matrices_", google.data.date.str)
+	paste0("google_mobility_relative_matrices_", google.data.date_and_suff.str)
 )
 if (nA == 1) {
 	cm.files <- rep("single_age.txt", length(cm.breaks) + 1)
@@ -68,9 +68,9 @@ if (nA == 1) {
   mat.dates <- start.date + cm.breaks - 1
   lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
   lst$England$all$m <- lst$England$all$m * 1e7
-  cm.files <- paste0("england_8ag_contact", google.data.date.str, ".txt")
+  cm.files <- paste0("england_8ag_contact", google.data.date_and_suff.str, ".txt")
   for(i in 1:length(cm.breaks))
-      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date.str, ".txt"))
+      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date_and_suff.str, ".txt"))
   cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
   cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
   cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)

@@ -38,8 +38,13 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     knit(input = fl.pars, output = file.path(out.loc, "mod_pars.txt"), quiet = TRUE)
     
     ## Run the code
+    print(proj.dir)
     setwd(out.loc)
+    print(out.loc)
+    print(proj.dir)
+    print(file.path(proj.dir, paste0("rtm_", rtm.exe)))
     exit_code <- system(file.path(proj.dir, paste0("rtm_", rtm.exe)), intern = FALSE)
+    print(exit_code)
     if(exit_code != 0) stop(paste("Error running in", out.loc, "on iteration", iter))
     
     ## Read the outputs in and append to output objects
@@ -75,6 +80,11 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
                 array(dim = c(nA, ndays, num.iterations))
             close(DNNI.files[[intr]])
         }
+        # if(dths.flag){
+        #     Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
+        #               array(dim = c(nA, ndays, num.iterations))
+        #     close(DNNI.files[[intr]])
+        # }
         if(dths.flag){
             Deaths[[intr]] <- readBin(Deaths.files[[intr]], double(), n = num.iterations * ndays * nA) %>%
                       array(dim = c(nA, ndays, num.iterations))

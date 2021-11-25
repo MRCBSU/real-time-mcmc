@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --job_name=testrunRTM
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=09:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL,TIME_LIMIT,END
+#SBATCH --mail-user=joel.kandiah@phe.gov.uk
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+#SBATCH --begin
+
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
+
+echo "Error!"
+exit 125
