@@ -51,12 +51,13 @@ if(deaths.flag){
     } else if(efficacies == "Jamie"){
         value.vac.alpha1 <- rep(3/7,2)
     } else if(efficacies == "PHE"){
-        value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
+        ## value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46) ## Based on vaccine surveillance report wk 26
+        value.vac.alpha1 <- c(2/5, 7/15, 31/46, 31/46) ## Based on a combination of vaccine surveillance reports, wk 26, 36, 46
     } else {
         value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
     }
 } else if(adm.flag){
-value.vac.alpha1 <- c(31/75, 13/35, 49/69, 49/69) 
+    value.vac.alpha1 <- c(31/75, 13/35, 49/69, 49/69) 
 }
 
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
@@ -78,7 +79,8 @@ if(deaths.flag){
     } else if(efficacies == "Jamie"){
         value.vac.alpha2 <- c(2/3,6/7)
     } else if(efficacies == "PHE"){
-        value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)
+        ## value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
+        value.vac.alpha2 <- c(17/20, 19/45, 17/20, 11/14) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
     } else {
         value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
     }
@@ -101,7 +103,8 @@ if(efficacies == "Nick"){
 } else if(efficacies == "Jamie"){
     value.vac.pi1 <- c(0.65, 0.65)
 } else if(efficacies == "PHE"){
-    value.vac.pi1 <- c(0.625, 0.65, 0.31, 0.31)
+    ## value.vac.pi1 <- c(0.625, 0.65, 0.31, 0.31)  ## Based on vaccine surveillance report wk 26
+    value.vac.pi1 <- c(0.625, 0.625, 0.31, 0.31)  ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
 } else {
     value.vac.pi1 <- 0.48
 }
@@ -118,7 +121,8 @@ if(efficacies == "Nick"){
 } else if(efficacies == "Jamie"){
     value.vac.pi2 <- c(0.85, 0.65)
 } else if(efficacies == "PHE"){
-    value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)
+    ## value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)  ## Based on vaccine surveillance report wk 26
+    value.vac.pi2 <- c(0.8, 0.775, 0.8, 0.65) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
 } else {
     value.vac.pi2 <- 0.6
 }
