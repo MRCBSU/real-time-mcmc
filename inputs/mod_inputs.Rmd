@@ -5,7 +5,7 @@
 
 GP_consultation_flag `r gp.flag`
 
-Hospitalisation_flag `r hosp.flag`
+Hospitalisation_flag `r as.numeric(hosp.flag | adm.flag)`
 
 Deaths_flag	     0
 
