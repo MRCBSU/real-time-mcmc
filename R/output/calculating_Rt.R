@@ -31,7 +31,7 @@ if(ncol(m) %% r != 0) {
   ni <- nrow(R0)
   colnames(R0) <- regions
   for(idir in 1:length(cm.bases)){
-	# Read the matrices containing the transmission between age groups (from Ediwn)
+	# Read the matrices containing the transmission between age groups (from Edwin)
     M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
     # Read matrices which select which elements of m to use, add one because R uses 1-based indexing
     # but the model uses 0-based

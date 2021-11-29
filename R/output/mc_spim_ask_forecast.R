@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 setwd(out.dir)
 out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-Rscenario <- c(1.1, 1.5, 2.0)[out.ind]
+Rscenario <- c(0.9, 1.1, 1.3, 1.4)[out.ind]
 ## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -32,7 +32,7 @@ rm(Renv)
 
 source(file.path(Rfile.loc, "sim_func.R"))
 
-nweeks.ahead <- 11
+nweeks.ahead <- 9
 
 counterfactual <- FALSE
 
@@ -201,7 +201,7 @@ if(vacc.flag){
 }
 ## The matrix for the random-walks will need changing to account for an extra breakpoint
 ## Place the new break-point now
-today.break <- ymd("20210906") - start.date + 1
+today.break <- ymd("20211206") - start.date + 1
 beta.breaks <- c(beta.breaks, today.break)
 beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
     rbind(rep(1, nbetas)) %>%

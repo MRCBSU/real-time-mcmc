@@ -20,7 +20,7 @@ niter <- nrow(params$log_beta_rw)
 beta <- exp(beta.design %*% t(params$log_beta_rw)) %>%
     array(dim = c(nw, nr, niter))
 names(dim(beta)) <- c("Date", "Region", "iteration")
-dimnames(beta) <- list(Date = seq(ymd("20200323"), by = 7, length.out = nw),
+dimnames(beta) <- list(Date = c(ymd("20200323"), beta.breaks + start.date - 1),
                        Region = regions,
                        iteration = 1:niter)
 
@@ -40,7 +40,7 @@ qbeta <- beta %>%
 
 ## doubleYScale(obj1, obj2, add.ylab2 = TRUE, use.style = FALSE)
 
-## Get into a data fram from which we can do a ribbon plot
+## Get into a data frame from which we can do a ribbon plot
 df_areaStep <- bind_rows(old = qbeta,
                          new = qbeta %>%
                              group_by(Region) %>%
@@ -74,28 +74,31 @@ pp <- ggplotly(gqb, tooltip = "text")
 
 saveWidget(pp, file="beta_and_Rstar.html")
 
-gscat <- ggplot(qbeta %>% left_join(Rs %>% select(-Region)), aes(x = `q50%`, y = value, label = Date, group = Region)) +
-    ## geom_path() +
-    geom_point(aes(colour = Date), size = 2.5) +
-    ## geom_text()
-    theme_classic() +
-    ## scale_colour_distiller(palette = "Spectral") +
-    xlab("Beta") +
-    ylab("R") +
-    facet_wrap(~Region, scale = "free_x")
+if(exists("Rs")){
+    gscat <- ggplot(qbeta %>% left_join(Rs %>% select(-Region)), aes(x = `q50%`, y = value, label = Date, group = Region)) +
+        ## geom_path() +
+        geom_point(aes(colour = Date), size = 2.5) +
+        ## geom_text()
+        theme_classic() +
+        ## scale_colour_distiller(palette = "Spectral") +
+        xlab("Beta") +
+        ylab("R") +
+        facet_wrap(~Region, scale = "free_x")
+    
+    ggsave("beta_Rstar_regional_scatter_nopath.pdf", gscat, width = 12.5, height = 8.25)
+}
 
-ggsave("beta_Rstar_regional_scatter_nopath.pdf", gscat, width = 12.5, height = 8.25)
-
-gscat_path <- ggplot(qbeta %>% left_join(Rs %>% select(-Region)), aes(x = `q50%`, y = value, label = Date, group = Region)) +
-    geom_path() +
-    geom_point(aes(colour = Date), size = 2) +
-    ## geom_text()
-    xlab("Beta") +
-    ylab("R") +
-    facet_wrap(~Region, scale = "free_x")
-
-ggsave("beta_Rstar_regional_scatter.pdf", gscat_path, width = 12.5, height = 8.25)
-
+if(exists("Rs")){
+    gscat_path <- ggplot(qbeta %>% left_join(Rs %>% select(-Region)), aes(x = `q50%`, y = value, label = Date, group = Region)) +
+        geom_path() +
+        geom_point(aes(colour = Date), size = 2) +
+        ## geom_text()
+        xlab("Beta") +
+        ylab("R") +
+        facet_wrap(~Region, scale = "free_x")
+    
+    ggsave("beta_Rstar_regional_scatter.pdf", gscat_path, width = 12.5, height = 8.25)
+}
 
 #### REPEAT THE ABOVE BUT FOR INCREMENTS
 qbeta.inc <- beta %>%
@@ -126,57 +129,58 @@ qbeta.inc <- beta %>%
 ##                             group_by(Region) %>%
 ##                             mutate(`q50$` = dplyr::lag(lvalue
 
-Rs.inc <- Rs %>%
-    mutate(lincrement = lvalue - dplyr::lag(lvalue)) %>%
-    filter(lincrement < Inf) %>%
-    select(-value, -type, -lvalue) %>%
-    mutate(lincrement_low = lincrement,
-           lincrement_hi = lincrement)
-
-df.incs <- bind_rows(beta = qbeta.inc,
-                     R = Rs.inc,
-                     .id = "source")
-
-## Lollipop chart
-library(hrbrthemes)
-extrafont::loadfonts()
-glol <- ggplot(data = df.incs %>% mutate(Region = factor(Region)), aes(group = Region)) +
-    geom_linerange(aes(x = Date, ymin = 0, ymax=lincrement), colour = "grey", position = position_dodge(width = 4.25)) +
-    geom_point(aes(x = Date, y = lincrement, colour = Region), size = 3, position = position_dodge(width = 4.25)) +
-    theme_ipsum(base_family = "Helvetica") +
-    theme(
-        legend.position = "none",
-        panel.border = element_blank(),
-        panel.spacing = unit(0.1, "lines"),
-        strip.text.x = element_text(size = 8)
-    ) +
-    xlab("Date") +
-    ylab("Increment log(val)") +
-    facet_wrap(~source, ncol = 1, scale = "free_y")
-ggsave("lollipop_increments.pdf", glol, width = 12.5, height = 8.25)
-
-
-
-
-## gqb_inc_b <- ggplot(df_areaStep_inc, aes(x = Date, y = `q50%`, colour = Region)) +
-##     geom_step() +
-##     geom_ribbon(aes(ymin = `q2.5%`, ymax = `q97.5%`, fill = Region), alpha = 0.4) +
-##     xlab("Date") +
-##     ylab("log(beta) increments") +
-
-## gqb_inc_a <- ggplot(data = Rs %>%
-##                   mutate(lvalue_increment = lvalue - lag(lvalue, default = 0))
-##                   mutate(scaled_value = (lvalue - min(lvalue)) / (max(lvalue) - min(lvalue))), aes(x = Date, y = scaled_value), linetype = 1, lwd = 2, col = "black") +
-##     geom_step()
-
-gscat_inc <- ggplot(qbeta.inc %>%
-                    left_join(Rs.inc %>% select(-Region), by = "Date") %>%
-                    rename(beta = lincrement.x,
-                           R = lincrement.y),
-                    aes(x = beta, y = R, label = Date, group = Region)) +
-    geom_point(aes(colour = Date)) +
-    xlab("Beta") +
-    ylab("R") +
-    facet_wrap(~Region, scale = "free_x")
-
-ggsave("beta_Rstar_regional_inc_scatter_nopath.pdf", gscat_inc, width = 12.5, height = 8.25)
+if(exists("Rs")){
+    Rs.inc <- Rs %>%
+        mutate(lincrement = lvalue - dplyr::lag(lvalue)) %>%
+        filter(lincrement < Inf) %>%
+        select(-value, -type, -lvalue) %>%
+        mutate(lincrement_low = lincrement,
+               lincrement_hi = lincrement)
+    
+    df.incs <- bind_rows(beta = qbeta.inc,
+                         R = Rs.inc,
+                         .id = "source")
+    ## Lollipop chart
+    library(hrbrthemes)
+    extrafont::loadfonts()
+    glol <- ggplot(data = df.incs %>% mutate(Region = factor(Region)), aes(group = Region)) +
+        geom_linerange(aes(x = Date, ymin = 0, ymax=lincrement), colour = "grey", position = position_dodge(width = 4.25)) +
+        geom_point(aes(x = Date, y = lincrement, colour = Region), size = 3, position = position_dodge(width = 4.25)) +
+        theme_ipsum(base_family = "Helvetica") +
+        theme(
+            legend.position = "none",
+            panel.border = element_blank(),
+            panel.spacing = unit(0.1, "lines"),
+            strip.text.x = element_text(size = 8)
+        ) +
+        xlab("Date") +
+        ylab("Increment log(val)") +
+        facet_wrap(~source, ncol = 1, scale = "free_y")
+    ggsave("lollipop_increments.pdf", glol, width = 12.5, height = 8.25)
+    
+    
+    
+    
+    ## gqb_inc_b <- ggplot(df_areaStep_inc, aes(x = Date, y = `q50%`, colour = Region)) +
+    ##     geom_step() +
+    ##     geom_ribbon(aes(ymin = `q2.5%`, ymax = `q97.5%`, fill = Region), alpha = 0.4) +
+    ##     xlab("Date") +
+    ##     ylab("log(beta) increments") +
+    
+    ## gqb_inc_a <- ggplot(data = Rs %>%
+    ##                   mutate(lvalue_increment = lvalue - lag(lvalue, default = 0))
+    ##                   mutate(scaled_value = (lvalue - min(lvalue)) / (max(lvalue) - min(lvalue))), aes(x = Date, y = scaled_value), linetype = 1, lwd = 2, col = "black") +
+    ##     geom_step()
+    
+    gscat_inc <- ggplot(qbeta.inc %>%
+                        left_join(Rs.inc %>% select(-Region), by = "Date") %>%
+                        rename(beta = lincrement.x,
+                               R = lincrement.y),
+                        aes(x = beta, y = R, label = Date, group = Region)) +
+        geom_point(aes(colour = Date)) +
+        xlab("Beta") +
+        ylab("R") +
+        facet_wrap(~Region, scale = "free_x")
+    
+    ggsave("beta_Rstar_regional_inc_scatter_nopath.pdf", gscat_inc, width = 12.5, height = 8.25)
+}

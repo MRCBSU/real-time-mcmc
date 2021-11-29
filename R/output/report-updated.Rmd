@@ -37,7 +37,9 @@ if (external && exists("dth.dat") && !is.null(dth.dat)) {
 if (!exists("prev.dat")) prev.dat <- NULL
 external <- external.bak
 extract <- R.utils::extract
-
+dta.text <- ifelse(deaths.flag, "deaths", "admissions")
+Dta.text <- ifelse(deaths.flag, "Deaths", "Admissions")
+severity.measure <- ifelse(deaths.flag, "IFR", "IHR")
 ```
 
 ## {.tabset}
@@ -200,7 +202,7 @@ population %>%
   formatPercentage(2:4)
 ```
 
-### Current IFR
+### Current `r severity.measure`
 
 
 ```{r ifr, eval=!is.null(deaths)}
@@ -442,7 +444,7 @@ infections.growth.rates %>%
     
 ```
 
-### Change in deaths incidence {.tabset}
+### Change in `r dta.text` incidence {.tabset}
 
 
 #### Growth rates
@@ -525,7 +527,7 @@ make.plots(cum_infections, by = "age")
 ```{r eval=!is.null(deaths), child='deaths-report.Rmd'}
 ```
 
-### IFR
+### `r severity.measure`
 
 ```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
 ## ## Base R proved quicker than tidyr equivalents, to...
