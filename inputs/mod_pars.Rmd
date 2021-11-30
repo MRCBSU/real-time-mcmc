@@ -18,7 +18,7 @@ proposal_variance = 1;
 
 hosp_negbin_overdispersion = { param_value = `r value.eta.h`;
 
-prior_distribution = `r 1 + hosp.flag`;
+prior_distribution = `r 1 + (hosp.flag | adm.flag)`;
 
 prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
 
