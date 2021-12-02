@@ -434,7 +434,11 @@ beta.rw.vals <- c(
     0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 )[1:(nbetas.full*nr)]
+print("beta.rw.vals")
+print(beta.rw.vals)
 beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
+print("beta.rw.vals")
+print(beta.rw.vals)
 if(length(beta.rw.vals) > nbetas*nr)
     beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
@@ -464,33 +468,51 @@ beta.rw.sd.pars <- c(1, sdpar)
 beta.rw.sd <- 0.151057317190954
 
 ## Serological test sensitivity and specificity
+flg.sero.break <- sero.end.date > sero.end.1stwv
+if(flg.sero.break) sero.sens.break <- sero.end.1stwv - serology.delay - start.date + 1
 ## sero.sens <- 71.5 / 101
 ## sero.spec <- 777.5 / 787
-sero.sens <- 0.707875480848508
-sero.spec <- 0.965012479451016
-ssens.prior.dist <- ifelse(fix.sero.test.spec.sens, 1, 3)
+sero.param.length <- 1 + ifelse(flg.sero.break, length(sero.sens.break), 0)
+sero.sens <- rep(0.707875480848508, sero.param.length)
+sero.spec <- rep(0.965012479451016, sero.param.length)
+ssens.prior.dist <- rep(ifelse(fix.sero.test.spec.sens, 1, 3), sero.param.length)
 ## ssens.prior.pars <- c(137.5, 36.5) ## Change the .Rmd file to allow for stochasticity in the sensitivity/specificity
 ## Default is based on testing intervals 21-27 days, alternative is based on all testing intervals >21 days.
 ## if (grepl("altSens", scenario.name)) {
 ## 	ssens.prior.pars <- c(142.5, 29.5)
 ## 	sspec.prior.pars <- c(1110.5, 8.5)
 ## } else {
-	ssens.prior.pars <- c(23.5, 9.5)
-	sspec.prior.pars <- c(569.5, 5.5)
+## ## Has been used for publication throughout...
+## 	ssens.prior.pars <- c(23.5, 9.5)
+## 	sspec.prior.pars <- c(569.5, 5.5)
+## Based on PHE report, June 2006, for sensitivity and specificity of EuroImmun
+ssens.prior.pars <- matrix(c(52.9, 17.9), 2, 1)
+sspec.prior.pars <- matrix(c(314, 3.18), 2, 1)
+if(flg.sero.break){
+    ssens.prior.pars <- cbind(ssens.prior.pars, c(457, 13.2))
+    sspec.prior.pars <- cbind(sspec.prior.pars, c(672, 1.35))
+    }
 ## }
 ## ssens.prior.pars <- c(2420.5, 978.5) ## TEMPORARY SETTING - tighter prior
 ## ssens.prior.pars <- c(7.85, 0.501)
 
 sspec.prior.dist <- ssens.prior.dist
 ## sspec.prior.pars <- c(699.5, 8.5)
-ssens.prop <- 0.1
-sspec.prop <- 0.077976
-if(ssens.prior.dist == 1) sero.sens <-  ssens.prior.pars[1] / (sum(ssens.prior.pars))
-if(sspec.prior.dist == 1) sero.spec <-  sspec.prior.pars[1] / (sum(sspec.prior.pars))
+ssens.prop <- rep(0.1, sero.param.length)
+sspec.prop <- rep(0.077976, sero.param.length)
+if(any(ssens.prior.dist == 1)){
+    idx.w <- which(ssens.prior.dist == 1)
+    sero.sens[idx.w] <- ssens.prior.pars[1, idx.w] / apply(ssens.prior.pars[, idx.w, drop = FALSE], 2, sum)
+}
+if(any(sspec.prior.dist == 1)){
+    idx.w <- which(sspec.prior.dist == 1)
+    sero.spec[idx.w] <- sspec.prior.pars[1, idx.w] / apply(sspec.prior.pars[, idx.w, drop = FALSE], 2, sum)
+}
 
 if(use.previous.run.for.start) {
     previous.loc <- previous.run.to.use[1]
     source(file.path(proj.dir, "import_pars.R"))
 }
 
+print(beta.rw.vals)
 source(file.path(proj.dir, "par_check.R"))

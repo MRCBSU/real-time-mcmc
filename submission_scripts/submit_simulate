@@ -14,9 +14,9 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=5
+#SBATCH --cpus-per-task=12
 #! How much wallclock time will be required?
-#SBATCH --time=2:00:00
+#SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL,TIME_LIMIT,END
 #SBATCH --mail-user=joel.kandiah@phe.gov.uk
@@ -27,7 +27,7 @@
 #SBATCH --array=5
 #SBATCH --output=process_model_runs_20201206_%a_%j.out
 #SBATCH --error=process_model_runs_20201206_%a_%j.err
-#SBATCH --mem-per-cpu=5G
+#SBATCH --mem-per-cpu=2G
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -70,6 +70,8 @@ workdir=${dirs[SLURM_ARRAY_TASK_ID]}
 # echo $workdir
 
 pwd
+# workdir="Prev550SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211105_timeuse_household_deaths_chain2"
+# echo $workdir
 
 #! Full path to application executable: 
 application="Rscript"

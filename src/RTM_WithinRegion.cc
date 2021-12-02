@@ -708,20 +708,22 @@ void block_regional_parameters(regional_model_params& out_rmp,
 		     updPars[upd::SPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_sensitivity"))
-  { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookup(upd::SSENS, region_index);
-      fixed_quantity(out_rmp.l_sero_sensitivity,
-		     gsl_vector_get(&view.vector, 0),
-		     updPars[upd::SSENS].param_name,
-		     updPars[upd::SSENS].map_to_regional.design_matrix[region_index]);
+  { // NO LONGER STRICTLY A SCALAR QUANTITY
+    regional_matrix_parameter(out_rmp.l_sero_sensitivity, updPars.lookup(upd::SSENS, region_index), updPars[upd::SSENS].map_to_regional, region_index, 1);
+    // gsl_vector_const_view view = updPars.lookup(upd::SSENS, region_index);
+    //   fixed_quantity(out_rmp.l_sero_sensitivity,
+    // 		     gsl_vector_get(&view.vector, 0),
+    // 		     updPars[upd::SSENS].param_name,
+    // 		     updPars[upd::SSENS].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_specificity"))
-  { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookup(upd::SSPEC, region_index);
-      fixed_quantity(out_rmp.l_sero_specificity,
-		     gsl_vector_get(&view.vector, 0),
-		     updPars[upd::SSPEC].param_name,
-		     updPars[upd::SSPEC].map_to_regional.design_matrix[region_index]);
+  { // NO LONGER STRICTLY A SCALAR QUANTITY
+    regional_matrix_parameter(out_rmp.l_sero_specificity, updPars.lookup(upd::SSPEC, region_index), updPars[upd::SSPEC].map_to_regional, region_index, 1);
+    // gsl_vector_const_view view = updPars.lookup(upd::SSPEC, region_index);
+    //   fixed_quantity(out_rmp.l_sero_specificity,
+    // 		     gsl_vector_get(&view.vector, 0),
+    // 		     updPars[upd::SSPEC].param_name,
+    // 		     updPars[upd::SSPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_pr_symp"))
     regional_matrix_parameter(out_rmp.l_pr_symp, updPars.lookup(upd::PROP_SYMP, region_index), updPars[upd::PROP_SYMP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
@@ -875,19 +877,21 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
 		     in_umps[SPEC_INDEX].map_to_regional.design_matrix);
     }
   if(update_flags.getFlag("l_sero_sensitivity"))
-    { // STRICTLY A SCALAR QUANTITY
-      fixed_quantity(out_rmp.l_sero_sensitivity,
-		     gsl_vector_get(in_umps[SSENS_INDEX].param_value, 0),
-		     in_umps[SSENS_INDEX].param_name,
-		     in_umps[SSENS_INDEX].map_to_regional.design_matrix);
+    { // NO LONGER STRICTLY A SCALAR QUANTITY
+      regional_matrix_parameter(out_rmp.l_sero_sensitivity, in_umps[SSENS_INDEX].param_value, in_umps[SSENS_INDEX].map_to_regional, region_index, 1);
+      // fixed_quantity(out_rmp.l_sero_sensitivity,
+      // 		     gsl_vector_get(in_umps[SSENS_INDEX].param_value, 0),
+      // 		     in_umps[SSENS_INDEX].param_name,
+      // 		     in_umps[SSENS_INDEX].map_to_regional.design_matrix);
     }
   if(update_flags.getFlag("l_sero_specificity"))
-    { // STRICTLY A SCALAR QUANTITY
-      fixed_quantity(out_rmp.l_sero_specificity,
-		     gsl_vector_get(in_umps[SSPEC_INDEX].param_value, 0),
-		     in_umps[SSPEC_INDEX].param_name,
-		     in_umps[SSPEC_INDEX].map_to_regional.design_matrix);
-    }
+    { // NO LONGER STRICTLY A SCALAR QUANTITY
+      regional_matrix_parameter(out_rmp.l_sero_specificity, in_umps[SSPEC_INDEX].param_value, in_umps[SSPEC_INDEX].map_to_regional, region_index, 1);
+      // fixed_quantity(out_rmp.l_sero_specificity,
+      // 		     gsl_vector_get(in_umps[SSPEC_INDEX].param_value, 0),
+      // 		     in_umps[SSPEC_INDEX].param_name,
+      // 		     in_umps[SSPEC_INDEX].map_to_regional.design_matrix);
+    } 
   if(update_flags.getFlag("l_pr_symp"))
     regional_matrix_parameter(out_rmp.l_pr_symp, in_umps[PROP_SYMP_INDEX].param_value, in_umps[PROP_SYMP_INDEX].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
   if(update_flags.getFlag("l_pr_onset_to_GP"))

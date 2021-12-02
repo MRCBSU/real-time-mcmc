@@ -486,13 +486,15 @@ deaths.growth.rates %>%
   	 `95% CrI (upper)` = `95% CrI (lower)`) %>%
   select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
   knitr::kable(digits = 2, aligh = 'lccc')
+
+cat("The execution of the prevalence code block will proceed if\n prev.dat exists and this is", !is.null(prev.dat), "\n it is not and external report and this is", !external, "\n") 
 ```
 
 ## Infections and deaths {.tabset}
 
 The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
-```{r eval=!is.null(prev.dat)&&!external, child='prev-report.Rmd'}
+```{r opt-prev-report, eval=((!external)&&(!is.null(prev.dat))), child='prev-report.Rmd'}
 ```
 
 ```{r eval=!is.null(case.dat), child='hosp-report.Rmd'}

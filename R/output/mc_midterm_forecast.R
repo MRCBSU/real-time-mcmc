@@ -17,7 +17,7 @@ load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
 ## Number of weeks to forecast ahead
-nweeks.ahead <-11
+nweeks.ahead <-9
 
 counterfactual <- FALSE
 
@@ -220,6 +220,13 @@ if(gp.flag){
 # print("Got here 5a")
 
 ## Copy to projection directory other design matrices
+out.dir.tmp <- out.dir 
+#! Modified needs fix
+out.dir <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/model_runs/20210924/Prev508_cm6ons_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_deaths"
+print("Symlink locs")
+print(out.dir)
+print(projections.basedir)
+
 if(gp.flag)
     symlink.design("icr.design.txt")
 if(rw.flag)
@@ -234,6 +241,7 @@ if(vacc.flag){
     symlink.design("vac.alpha1.design.txt")
     symlink.design("vac.alphan.design.txt")
 }
+out.dir <- out.dir.tmp
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP
@@ -259,9 +267,11 @@ cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 
 xtmp1 <- sim_rtm(1, rtm.exe = exe)
-print(names(xtmp1))
-print(xtmp1)
-print("starting parallel region")
+# print(names(xtmp1)) 
+# print(xtmp1)
+# print("starting parallel region")
+stop()
+sim_rtm
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 print("ending parallel region")
 # print(xtmp)
@@ -290,7 +300,9 @@ dim.list <- list(iteration = 1:niter,
                  date = start.date + 0:(ndays - 1),
                  region = regions
                  )
+dim(infections)
 infections <- melt.list(NNI);rm(NNI)
+dim(infections)
 dimnames(infections) <- dim.list
 seropos <- melt.list(Sero);rm(Sero)
 dimnames(seropos) <- dim.list

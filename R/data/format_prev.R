@@ -1,3 +1,5 @@
+suppressMessages(require(gsubfn))
+
 #########################################################
 ## Inputs that should (or may) change on a daily basis
 #########################################################
@@ -8,14 +10,16 @@
 ## or found as the latest entry into a default
 ## directory. If prev.loc is NULL, look for a
 ## command-line argument.
+# print(paste0("prev.loc:", prev.loc))
 if(!exists("prev.loc")){ ## Set to default format for the filename
     input.loc <- "data/raw/prevalence"
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
-                                               pattern=glob2rx(paste("202", num.prev.days, tolower(region.type), "csv", sep = "*")))
+                                               pattern=glob2rx(paste("202", tolower(region.type), "csv", sep = "*")))
                                     )
                           )
+
     ## Pick the most recently added
     input.loc <- rownames(prev.loc)[which.max(prev.loc$ctime)]
 } else {
@@ -26,6 +30,9 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
         else input.loc <- build.data.filepath(subdir = "raw", "prevalence", prev.loc)
     }
 }
+
+print(date.prev)
+print(input.loc)
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
 if(date.prev != lubridate::ymd(strapplyc(input.loc, "[0-9/]{8,}", simplify = TRUE))) stop("Specified date.prev does not match the most recent prevalence data file.")
