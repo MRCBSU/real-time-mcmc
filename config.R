@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -60,9 +60,9 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
-google.data.date <- format(ymd("2021-11-26"), format = "%Y%m%d")
-#matrix.suffix <- "_timeuse_household_new_base"
-matrix.suffix <- "_stable_household_new_base"
+google.data.date <- format(ymd("2021-12-03"), format = "%Y%m%d")
+matrix.suffix <- "_timeuse_household_new_base"
+#matrix.suffix <- "_stable_household_new_base"
 
 
 
@@ -103,7 +103,7 @@ hosp.flag <- 1					# 0 = off, 1 = on
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 571
+num.prev.days <- 578
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -132,7 +132,7 @@ contact.prior <- "ons"
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- TRUE && region.type == "NHS"
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "6bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
@@ -140,14 +140,14 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "5bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "6bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -222,7 +222,7 @@ prev.days.to.lose <- 0
 
 
 
-date.prev <- lubridate::ymd("20211124")
+date.prev <- lubridate::ymd("20211201")
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -267,7 +267,7 @@ vacc.flag <- 1 ## Do we have any vaccination data
 
 
 
-str.date.vacc <- "20211125" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211202" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -279,7 +279,7 @@ if(vacc.flag){
 ## - this is mostly set for the benefit of projections rather than model fitting.
 
 
-future.n <- (c(0.18,0.18,0.16, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.18,0.16,0.12, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
 
 
 
