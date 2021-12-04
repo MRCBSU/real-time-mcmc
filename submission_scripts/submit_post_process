@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0-1
+#SBATCH --array=9,11
 
 #SBATCH -p skylake
 
