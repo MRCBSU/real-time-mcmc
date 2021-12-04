@@ -161,7 +161,7 @@ dth.dat <- read_csv(input.loc,
 if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
 	print("WARNING: The following rows have implausible death dates and have been excluded: ")
-	(x.out <- implausible.dates %>% select(c(finalid, Date, Onset, death_type))) %>% print(n=1000) %>% write_csv("bad_onset_dates.csv")
+	(x.out <- implausible.dates %>% select(c(finalid, Date, Onset, death_type))) %>% print(n=1000) ## %>% write_csv("bad_onset_dates.csv")
 	dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
