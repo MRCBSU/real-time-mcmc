@@ -21,17 +21,13 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=5
+#SBATCH --array=0,1
 #SBATCH --output=process_model_runs_20201206_%a_%j.out
 #SBATCH --error=process_model_runs_20201206_%a_%j.err
 #SBATCH --mem-per-cpu=8G
 #! sbatch directives end here (put any additional directives above this line)
 
-echo "hello"
-
 module load gcc R openmp intel_compiler OpenBLAS openmpi slurm
-
-echo hello
 
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/OpenBLAS/0.3.17/lib64"
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/openmp/12.0.1/lib"

@@ -7,7 +7,7 @@ suppressMessages(library(tidyverse))
 
 
 if(!exists("date.data"))
-    date.data <- (today() - days(6)) %>% format("%Y%m%d")
+    date.data <- (today() - days(2)) %>% format("%Y%m%d")
 
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {

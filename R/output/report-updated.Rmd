@@ -83,6 +83,7 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
 Value of $R_t$, the average number of secondary infections due to a typical infection today.
 
 ```{r Rt-table}
+
 get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
@@ -398,17 +399,19 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-## infections.growth.rates <- calc.growth.rate(infections)
+# infections.growth.rates <- calc.growth.rate(infections)
 if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
 infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
 						Egt,
 						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
+
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
 NB: negative growth rates are rates of decline. Values are daily changes.
 
 `r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
+
 
 #### Halving times
 

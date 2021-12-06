@@ -26,6 +26,8 @@ file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 Rfile.loc <- file.path(file.loc, "R/output")
 
+print("made it here")
+
 if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
 }

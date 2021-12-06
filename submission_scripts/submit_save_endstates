@@ -1,33 +1,29 @@
 #!/bin/bash
-#SBATCH -J trial_hpc_batch
-#SBATCH -A MRC-BSU-SL2-CPU
+
+#SBATCH --nodes=1
+#! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
+#! How many CPUs will each task require
 #SBATCH --cpus-per-task=2
-#SBATCH --time=00:10:00
+#! How much wallclock time will be required?
+#SBATCH --time=0:20:00
 #! What types of email messages do you wish to receive?
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-type=TIME_LIMIT
-#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL,TIME_LIMIT,END
+#SBATCH --mail-user=joel.kandiah@phe.gov.uk
 #! Uncomment this to prevent the job from being requeued (e.g. if
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+#SBATCH --array=0,1
+#SBATCH --output=submit_save_endstates_%a_%j.out
+#SBATCH --error=submit_save_endstates_%a_%j.err
 
-#SBATCH --array=0-11
-#SBATCH -p icelake
-#!SBATCH --qos=covid0
-
-
-#SBATCH --output=model_runs_20210120regjobs_%a.out
-#SBATCH --error=model_runs_20210120regjobs_%a.err
-
-module purge
-module load rhel8/default-icl
+module load R gcc openmp intel_compiler OpenBLAS openmpi slurm
 
 dirs=(*/)
 pwd
 application="Rscript"
-options="../../R/output/save_end_state.R"
+options="~/mcmc/real-time-mcmc/R/output/save_end_state.R"
 CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
 # echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
 # if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then

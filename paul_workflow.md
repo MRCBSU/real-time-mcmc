@@ -35,6 +35,7 @@ Re-running the model isn't quite as simple as just running the model code (which
 - replace location args at the top of the config file
 - adjust vaccination estiamte values
 - rename the Rdata files to be RData
+- update previous chains locations
 
 
 ## Configure the model

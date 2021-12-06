@@ -266,12 +266,10 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51", "joel.kandiah@phe.gov.uk")){
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
 
-xtmp1 <- sim_rtm(1, rtm.exe = exe)
+# xtmp1 <- sim_rtm(1, rtm.exe = exe)
 # print(names(xtmp1)) 
 # print(xtmp1)
 # print("starting parallel region")
-stop()
-sim_rtm
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 print("ending parallel region")
 # print(xtmp)
@@ -300,11 +298,16 @@ dim.list <- list(iteration = 1:niter,
                  date = start.date + 0:(ndays - 1),
                  region = regions
                  )
-dim(infections)
+print("dim.list")
+print(dim.list)
+
+
 infections <- melt.list(NNI);rm(NNI)
 dim(infections)
 dimnames(infections) <- dim.list
 seropos <- melt.list(Sero);rm(Sero)
+print("seropos")
+print(seropos)
 dimnames(seropos) <- dim.list
 save.list <- c("infections", "seropos")
 if(vacc.flag) {

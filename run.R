@@ -19,6 +19,7 @@ file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
+# out.dir <- paste0(out.dir, "_fixed")
 
 system(paste("mkdir -p", out.dir))
 
