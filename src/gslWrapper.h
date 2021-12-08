@@ -594,16 +594,16 @@ public:
   void print(size_t numRows, size_t numCols, std::ostream& stream = std::cout)  {
     print(0, 0, numRows, numCols, stream);
   }
-  void print(size_t rowStart, size_t numRows, size_t colStart, size_t numCols, std::ostream& stream = std::cout)  {
+  void print(size_t rowStart, size_t colStart, size_t numRows, size_t numCols, std::ostream& stream = std::cout)  {
     size_t rowEnd = std::min(rowStart + numRows, nrows());
     size_t colEnd = std::min(colStart + numCols, ncols());
-    std::cout << "{\n";
+    stream << "{\n";
     for (size_t i = rowStart; i < rowEnd; i++) {
       for (size_t j = colStart; j < colEnd; j++)
-	std::cout << (*this)[i][j] << " ";
-      std::cout << std::endl;
+	stream << (*this)[i][j] << " ";
+      stream << std::endl;
     }
-    std::cout << "}\n";
+    stream << "}\n";
   }
   friend std::ostream& operator<<(std::ostream &stream, gslMatrix mat) {
     stream << "{\n";
@@ -616,6 +616,14 @@ public:
     return stream;
   }
 
+  // Print matrix in single line in row-major order
+  void printLine(std::ostream& stream = std::cout) {
+    for (size_t i = 0; i < nrows(); i++)
+      for (size_t j = 0; j < ncols(); j++)
+	stream << (*this)[i][j] << " ";
+    stream << std::endl;
+  }
+  
 private:
   gsl_matrix *base;
 };

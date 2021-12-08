@@ -133,6 +133,8 @@ void read_mcmc_parameters(mcmcPars &mcmc_pars,
   mcmc_pars.adaptive_phase = READ_NEXT_VARIABLE_VALUE;
   mcmc_pars.adapt_every = READ_NEXT_VARIABLE_VALUE;
   mcmc_pars.burn_in = READ_NEXT_VARIABLE_VALUE;
+  mcmc_pars.read_covar = READ_NEXT_VARIABLE_VALUE;
+  mcmc_pars.global_updates = READ_NEXT_VARIABLE_VALUE;
   mcmc_pars.num_progress_reports = READ_NEXT_VARIABLE_VALUE;
   mcmc_pars.mixing_threshold_ub = READ_NEXT_DOUBLE_VARIABLE_VALUE;
   mcmc_pars.mixing_threshold_lb = READ_NEXT_DOUBLE_VARIABLE_VALUE;
