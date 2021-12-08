@@ -221,7 +221,7 @@ double jacobianFactor(double prop, double curr, distribution_type dist, double l
   }
 }
 
-void updParamSet::init(const string& dir) {
+void updParamSet::init(const string& covarin, const string& dir) {
 
   // Debug output: parameter output files. Overwrites existing files
   // Requires that 'dir' already exists. Default param value is "pars"
@@ -238,6 +238,14 @@ void updParamSet::init(const string& dir) {
       }
     }
   }
+
+  string covarfilename = "covariance.txt";
+  covarfile.open(covarfilename, std::ofstream::out);
+  if (! covarfile.is_open()) {
+    std::cerr << "Error: Unable to open output file " << covarfilename << "\n";
+    exit(1);
+  }
+
 
   // Count non-constant components
   int globalSize = 0, localSize = 0;
@@ -346,6 +354,27 @@ void updParamSet::init(const string& dir) {
     block.sigma *= 0.01;   // Scale
     block.beta = 0;
   }
+
+  // Load sigma from file
+  // (Initially beta = 0 and covar = sigma * exp(beta) so this is equivalent to
+  // setting the initial covar matrix)
+  if (covarin != "") {
+    ifstream infile(covarin, ifstream::in);
+    if (! infile.is_open()) {
+      std::cerr << "Error: Unable to open input file " << covarin << "\n";
+      exit(1);
+    }
+    for (auto &block : blocks) {
+      string line;
+      getline(infile, line);
+      stringstream linestr(line);
+      for (int i = 0; i < block.values.size(); i++) {
+	for (int j = 0; j < block.values.size(); j++) {
+	  linestr >> block.sigma[i][j];
+	}
+      }
+    }
+  }
 }
 
 
@@ -394,10 +423,9 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter) 
   // Assumes that the values vector is already up to date.
   // It is set on init, and set whenever proposal is accepted
   
-  // Covariance matrix. Sigma changes every iter, so no benefit to caching
-  gslMatrix covar;
+  // Init covariance matrix
   covar = sigma * exp(beta);
-  
+
   // Transform
   gslVector transformed(values.size());
   for (int i = 0; i < values.size(); i++)
@@ -867,6 +895,12 @@ void updParamSet::outputPars() {
       par.outfile << std::endl;
     }
   }
+}
+
+void updParamSet::printCovar(int iter) {
+  covarfile << iter << endl;
+  for (auto &block : blocks)
+    block.covar.printLine(covarfile);
 }
 
 void updParamSet::outputProposals() {

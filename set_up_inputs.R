@@ -13,12 +13,15 @@ if(gp.flag){
 }
 
 ## The 'hosp' stream in the code is linked to death data
-if(!exists("hosp.flag")) hosp.flag <- 1	# 0 = off, 1 = on
-if(hosp.flag){
+if(!exists("hosp.flag") & !exists("adm.flag")) hosp.flag <- deaths.flag <- adm.flag <- 1 ## 0 = use hospital admissions, 1 = deaths
+if(deaths.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
     end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
     if(grepl("adjusted", data.desc)) end.hosp <- end.hosp + date.adj.data - lubridate::as_date(date.data)
+} else if(adm.flag) {
+    start.hosp <- 1
+    end.hosp <- date.adm.str - start.date + 1
 } else {
     start.hosp <- 1
     end.hosp <- 1
@@ -152,18 +155,12 @@ cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
 
-
-#num.iterations <- 1500000
-#stopifnot(num.iterations < 1e6) # mod_inputs.txt format does not support integers >= one million
-#burnin <- 500000
-
-num.iterations <- 3000000
-burnin <- 500000
-
-
+num.iterations <- 1800000 ## 2592000
+burnin <- 180000
 adaptive.phase <- burnin / 2
-thin.outputs <- 1000 ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 500 ## After how many iterations to output each set of parameters
+thin.outputs <- 500 ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 250 ## After how many iterations to output each set of parameters
+
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 
 
@@ -200,8 +197,13 @@ if (gp.flag == 1) {
 	if(is.null(end.gp)) end.gp <- set.end.date(end.gp, gp.data)
 }
 hosp.data <- "NULL"
-if (hosp.flag == 1) {
+if (deaths.flag == 1) {
     hosp.data <- data.files
+}
+if (adm.flag) {
+    hosp.data <- admsam.files
+}
+if(deaths.flag | adm.flag){
     if(!all(file.exists(hosp.data))) {
 		print(hosp.data[which(!file.exists(hosp.data))])
         stop("Above hospitalisation data files does not exist")

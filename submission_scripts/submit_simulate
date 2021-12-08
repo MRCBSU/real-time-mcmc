@@ -19,7 +19,7 @@
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=32
 #! How much wallclock time will be required?
-#SBATCH --time=2:00:00
+#SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -29,11 +29,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-
-#SBATCH --array=6
-
-
-
+#SBATCH --array=1-4
 
 
 #SBATCH -p skylake
@@ -46,9 +42,7 @@
 
 
 
-forecast_switch="midterm"
-
-
+forecast_switch="spim_ask"
 
 
 #! Notes:
@@ -132,7 +126,7 @@ echo -e $workdir
 
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-# workdir="Prev487_cm6ons_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210903_timeuse_household_deaths"
+workdir="Prev564SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119_timeuse_household_deaths_chain2"
 echo $workdir
 
 

@@ -7,7 +7,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.4
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, "deaths/ons", "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -36,14 +36,14 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
-projections.file <- "projections_midterm.RData"
-scen.text <- "MTP"
-save.text <- "MTP"
-## projections.file <- "projections_R2.RData"
-## scen.text <- "MTP R2.0"
-## save.text <- "MTP_R_2.0"
 
-mtp.filter.date <- lubridate::ymd("20211009") ## ymd(date.data)
+## projections.file <- "projections_midterm.RData"
+## scen.text <- "MTP"
+## save.text <- "MTP"
+projections.file <- "projections_R0.9.RData"
+scen.text <- "MTP R0.9"
+save.text <- "MTP_R_0.9"
+mtp.filter.date <- lubridate::ymd("20211114") ## ymd(date.data)
 
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))

@@ -18,7 +18,7 @@ proposal_variance = 1;
 
 hosp_negbin_overdispersion = { param_value = `r value.eta.h`;
 
-prior_distribution = `r 1 + hosp.flag`;
+prior_distribution = `r 1 + (hosp.flag | adm.flag)`;
 
 prior_parameters = `r paste(pars.eta.h, collapse = ", ")`;
 
@@ -279,7 +279,7 @@ prior_distribution = 1;
 
 prop_case_to_hosp = { param_value = `r paste(value.ifr, collapse = ", ")`;
 
-prior_distribution = `r paste(rep(ifelse(hosp.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
+prior_distribution = `r paste(rep(ifelse(hosp.flag | adm.flag, ifelse(single.ifr, 3, 4), 1), length(value.ifr)), collapse = ", ")`;
 
 prior_parameters = `r paste(pars.ifr, collapse = ", ")`;
 

@@ -5,23 +5,32 @@ load.from <- file.path(previous.loc, "mcmc.RData")
 load(load.from, env = prev.env)
 prev.params <- prev.env$params
 
-value.eta.h <- prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
+if("hosp_negbin_overdispersion" %in% names(prev.params))
+    value.eta.h <- prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
 ## value.dl <- latent period value is fixed
-value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
-if (prev.flag && prev.env$prev.flag) value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
+if("infectious_period" %in% names(prev.params))
+    value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
+if (prev.flag && prev.env$prev.flag)
+    value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
 ## value.pgp GP stream not currently used
-contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
+if("contact_parameters" %in% names(prev.params))
+    contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
 ## if(contact.model == 6) { contact.reduction <- rep(contact.reduction, 2); contact.reduction[zero.contact.elements] <- 0 }
-beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
-beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
-if(nrow(beta.rw.vals) > nbetas)
-    beta.rw.vals <- beta.rw.vals[c(1, 1 + sort(sample.int(nrow(beta.rw.vals)-1, nbetas-1))), ]
-beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas)
-if(nrow(beta.rw.props) > nbetas)
-    beta.rw.props <- beta.rw.props[c(1, 1 + sort(sample.int(nrow(beta.rw.props)-1, nbetas-1))), ]
-beta.rw.sd <- prev.params$log_beta_rw_sd[iteration.number.to.start.from, 2]
-value.egr <- prev.params$exponential_growth_rate[iteration.number.to.start.from,]
-value.nu <- prev.params$log_p_lambda_0[iteration.number.to.start.from,]
+if("log_beta_rw" %in% names(prev.params)){
+    beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
+    beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
+    if(nrow(beta.rw.vals) > nbetas)
+        beta.rw.vals <- beta.rw.vals[c(1, 1 + sort(sample.int(nrow(beta.rw.vals)-1, nbetas-1))), ]
+    beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas)
+    if(nrow(beta.rw.props) > nbetas)
+        beta.rw.props <- beta.rw.props[c(1, 1 + sort(sample.int(nrow(beta.rw.props)-1, nbetas-1))), ]
+}
+if("log_beta_rw_sd" %in% names(prev.params))
+    beta.rw.sd <- prev.params$log_beta_rw_sd[iteration.number.to.start.from, 2]
+if("exponential_growth_rate" %in% names(prev.params))
+    value.egr <- prev.params$exponential_growth_rate[iteration.number.to.start.from,]
+if("log_p_lambda_0" %in% names(prev.params))
+    value.nu <- prev.params$log_p_lambda_0[iteration.number.to.start.from,]
 if(length(value.ifr) > ncol(prev.params$prop_case_to_hosp)){
     value.ifr <- c(prev.params$prop_case_to_hosp[iteration.number.to.start.from, ],
                    value.ifr[(ncol(prev.params$prop_case_to_hosp) + 1):length(value.ifr)])

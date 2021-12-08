@@ -17,12 +17,14 @@ require(lubridate)
 
 run.all <- TRUE
 if(exists("str.date.vacc")){
-  ## Substitute this into the names of the intended data file names
-  vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
-  vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
-  ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-  vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
-  if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
+
+    ## Substitute this into the names of the intended data file names
+    vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
+    vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+    ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
+    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
+    if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
+
 }
 
 if(run.all){
@@ -125,38 +127,16 @@ if(run.all){
   
   ## Function to handle the unzipping of a large file - apparently R's unzip function is unreliable.
   decompress_file <- function(directory, file, .file_cache = FALSE) {
+        
+
+    ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
+    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
     
-    if (.file_cache == TRUE) {
-      print("decompression skipped")
-    } else {
-      
-      ## Set working directory for decompression
-      ## simplifies unzip directory location behavior
-      wd <- getwd()
-      setwd(directory)
-      
-      ## Run decompression
-      decompression <-
-        system2("unzip",
-                args = c("-o", # include override flag
-                         gsub(" ", "\\\\ ", file)),
-                stdout = TRUE)
-      
-      ## uncomment to delete archive once decompressed
-      file.remove(file) 
-      
-      ## Reset working directory
-      setwd(wd); rm(wd)
-      
-      ## Test for success criteria
-      ## change the search depending on 
-      ## your implementation
-      if (grepl("Warning message", tail(decompression, 1))) {
-        print(decompression)
-      }
-      
-      return(gsub(".zip", ".csv", file.path(directory, file)))
-      
+    ## Define an age-grouping
+    if(!exists("age.agg")){
+        age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)
+        age.labs <- c("<1yr", "1-4", "5-14", "15-24", "25-44", "45-64", "65-74", "75+")
+
     }
   }
   
