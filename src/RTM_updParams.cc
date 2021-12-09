@@ -424,7 +424,7 @@ void updParamBlock::calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter) 
   // It is set on init, and set whenever proposal is accepted
   
   // Init covariance matrix
-  covar = sigma * exp(beta);
+  gslMatrix covar = sigma * exp(beta);
 
   // Transform
   gslVector transformed(values.size());
@@ -880,8 +880,10 @@ void updParamSet::outputPars() {
 
 void updParamSet::printCovar(int iter) {
   covarfile << iter << endl;
-  for (auto &block : blocks)
-    block.covar.printLine(covarfile);
+  for (auto &block : blocks) {
+    gslMatrix covar = block.sigma * exp(block.beta);
+    covar.printLine(covarfile);
+  }
 }
 
 void updParamSet::outputProposals() {

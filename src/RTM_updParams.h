@@ -171,9 +171,6 @@ public:
   gslVector mu;
   gslMatrix sigma;
 
-  // Covariance matrix
-  gslMatrix covar;
-
   // For adapting the proposal distribution
   // Static vars are a hack for the values shared among all local blocks
   double beta;
