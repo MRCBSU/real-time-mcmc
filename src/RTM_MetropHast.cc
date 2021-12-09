@@ -403,13 +403,13 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if(paramSet.blocks[0].size() > 0) {
 
 	for (int giter = 0; giter < simulation_parameters.global_updates; giter++) {
-
 	  paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
 	  paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
 	  paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-	  if (int_iter > 199)
-	    paramSet.blocks[0].adaptiveUpdate(int_iter);
 	}
+	
+	if (int_iter > 199)
+	  paramSet.blocks[0].adaptiveUpdate(int_iter);
       }
 
       // Output
