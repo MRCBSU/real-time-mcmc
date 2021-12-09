@@ -156,13 +156,10 @@ deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified b
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-<<<<<<< HEAD
+
 
 num.prev.days <- 578
 
-=======
-num.prev.days <- 578
->>>>>>> origin/covariance
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -229,14 +226,9 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-<<<<<<< HEAD
 
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20211029", paste0(c("Prev542SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029",
                                                                                           "Prev542SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211029"), matrix.suffix, "_", data.desc, c("_chain2", ""))
-=======
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20211126", paste0(c("Prev571SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211126",
-                                                                                          "Prev571SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211126"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
->>>>>>> origin/covariance
                                              )
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20211126", paste0(c("Prev571SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211126",
                                                                                            "Prev571SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211126"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
@@ -285,15 +277,9 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-<<<<<<< HEAD
-
-
 
 date.prev <- lubridate::ymd("20211201")
 
-=======
-date.prev <- lubridate::ymd("20211201")
->>>>>>> origin/covariance
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -333,16 +319,10 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-<<<<<<< HEAD
-
-
 
 
 str.date.vacc <- "20211202" ## Optional: if not specified will take the most recent data file.
 
-=======
-str.date.vacc <- "20211202" ## Optional: if not specified will take the most recent data file.
->>>>>>> origin/covariance
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
@@ -351,16 +331,12 @@ if(vacc.flag){
 }
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-<<<<<<< HEAD
+
 
 
 future.n <- (c(0.18,0.16,0.12, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
 
 
 
-
-=======
-future.n <- (c(rep(0.18, 2), 0.16, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
->>>>>>> origin/covariance
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
