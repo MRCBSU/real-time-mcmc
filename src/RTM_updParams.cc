@@ -671,24 +671,6 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
   
   }
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
 }
 
 void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& reg_lfx) {
@@ -704,7 +686,6 @@ void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, cons
 
     laccept += reg_lfx.region_lfx - paramSet.lfx.rlik[regionNum].region_lfx;
 }
-
 
 
 
