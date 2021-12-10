@@ -61,7 +61,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 
-google.data.date <- format(ymd("2021-12-03"), format = "%Y%m%d")
+google.data.date <- format(ymd("2021-12-10"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_stable_household_new_base"
 
@@ -158,7 +158,7 @@ prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
 
-num.prev.days <- 578
+num.prev.days <- 585
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -278,7 +278,7 @@ prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
-date.prev <- lubridate::ymd("20211201")
+date.prev <- lubridate::ymd("20211208")
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -321,7 +321,7 @@ threads.per.regions <- 1
 vacc.flag <- 1 ## Do we have any vaccination data
 
 
-str.date.vacc <- "20211202" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20211209" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
@@ -334,7 +334,7 @@ if(vacc.flag){
 
 
 
-future.n <- (c(0.18,0.16,0.12, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
+future.n <- (c(0.16,0.12,0.12, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
 
 
 
