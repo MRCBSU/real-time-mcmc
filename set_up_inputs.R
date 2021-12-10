@@ -256,3 +256,6 @@ if (grepl("adjusted", data.desc)) {
 } else {
 	study_region_str <- ""
 }
+
+## DO WE WANT MCMC-STYLE CHAINS (0), OR SMC-STYLE PARTICLES (1)
+mcmc.outs <- 0
