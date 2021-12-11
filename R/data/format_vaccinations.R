@@ -21,7 +21,7 @@ if(exists("str.date.vacc")){
     vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
     vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
+    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
     if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
 }
 
