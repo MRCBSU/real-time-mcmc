@@ -77,10 +77,17 @@ if(ncol(m) %% r != 0) {
     S <- (regions.total.population[ireg, ] * (1 - sero[[reg]][,,outputs.for.Rt,drop=FALSE])) %>%
         aperm(c(2, 1, 3))
     ## Calculate the relative Rt values as a function of the next generation matrix for each day
+    # print("ndays: ")
+    # print(ndays)
+    # print("dimensions S :")
+    # print(dim(S))
+    # print("iterations for Rt: ") 
+    # print(iterations.for.Rt)
     R.prime <- sapply(1:ndays,
                       function(x) sapply(1:length(iterations.for.Rt),
                                          function(i){
                                              MM <- matrix(M.star[[m.levels[x]]][, , i, drop = F], nA, nA)
+                                            #  if(i > 100) print(i)
                                              Rt.func(S[x, , i] / pop.total[ireg], MM)
                                          }
                                          )

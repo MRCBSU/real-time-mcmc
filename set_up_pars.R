@@ -44,7 +44,8 @@ if(efficacies == "Nick"){
 } else if(efficacies == "Jamie"){
     value.vac.alpha1 <- rep(3/7,2)
 } else if(efficacies == "PHE"){
-    value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
+    # value.vac.alpha1 <- c(2/5, 5/14, 31/46, 31/46)
+    value.vac.alpha1 <- c(2/5, 7/15, 31/46, 31/46)
 } else {
     value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
 }

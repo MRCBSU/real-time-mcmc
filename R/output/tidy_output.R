@@ -114,6 +114,7 @@ parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 ## save.image("tmptmp.RData")
 ################################################################
+# stop()
 print('Calculating Rt')
 source(file.path(Rfile.loc, "gen.time.R"))
 source(file.path(Rfile.loc, "calculating_Rt.R"))

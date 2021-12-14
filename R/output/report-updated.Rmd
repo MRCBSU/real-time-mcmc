@@ -9,7 +9,7 @@ output:
 
 <base target="_parent">
 
-```{r preamble, include=FALSE,  message = FALSE}
+```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
 message(external.bak)

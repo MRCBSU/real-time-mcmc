@@ -14,5 +14,6 @@ thisFile <- function() {
         }
 }
 
+print("about to run")
 source(file.path(dirname(thisFile()), "switch.comp.R"))
 source(file.path(dirname(thisFile()), "rerun.R"))

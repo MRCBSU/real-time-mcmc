@@ -13,15 +13,15 @@ if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 if(Sys.info()["user"] == "joel.kandiah@phe.gov.uk" ) out.root <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc"
 
 ## Change location of repo
-in.repo <- "20211129"
-out.repo <- "2021129"
+in.repo <- "20211210"
+out.repo <- "20211210"
 ## in.repo <- "_new_base"
 ## out.repo <- ""
 
 ## Change location of output directory
 ## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
 ## out.base <- "ONS60"
-in.base <- "Prev578SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211203_timeuse_household_deaths"
+in.base <- "Prev585SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210_timeuse_household_deaths"
 out.base <- "ONS60"
 
 ## Get all variable names

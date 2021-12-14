@@ -38,6 +38,8 @@ nforecast.weeks <- nweeks.ahead - nforecast.weeks
 # print(start.date + (1:nforecast.weeks * days(7)))
 mm.breaks <- start.date - 1 + as.numeric(max(cm.breaks)) + (1:nforecast.weeks * days(7))
 # print("Got here 1")
+google.data.date.str <- google.data.date
+print(google.data.date.str)
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
