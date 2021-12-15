@@ -379,28 +379,19 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Update two blocks every iter: global block and one of the local blocks
       // int reg = gsl_rng_uniform_int(r, nregions) + 1;	// Int in interval [1, nregions]
       
-      // Global
 
-      if(paramSet.blocks[0].size() > 0){
-	paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-	paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
-	paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-	if (int_iter > 199)
-	  paramSet.blocks[0].adaptiveUpdate(int_iter);
-      }
       // Local
-      if(paramSet.blocks[1].size() > 0){
+      if(paramSet.blocks[1].size() > 0) {
 	for (int reg = 1; reg <= nregions; reg++) {
 	  paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
 	  paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
 	}
-      }
-#pragma omp parallel for default(shared) schedule(static) if(paramSet.blocks[1].size() > 0)
-      for (int reg = 1; reg <= nregions; reg++) {
-	paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
-      }
 
-      if(paramSet.blocks[1].size() > 0){
+#pragma omp parallel for default(shared) schedule(static)
+	for (int reg = 1; reg <= nregions; reg++) {
+	  paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+	}
+
 	for (int reg = 1; reg <= nregions; reg++) {
 	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
 	  if (int_iter > 199)
@@ -408,11 +399,36 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	}
       }
 
+      // Global
+      if(paramSet.blocks[0].size() > 0) {
+
+	for (int giter = 0; giter < simulation_parameters.global_updates; giter++) {
+	  paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
+	  paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+	  paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
+	}
+	
+	if (int_iter > 199)
+	  paramSet.blocks[0].adaptiveUpdate(int_iter);
+      }
+
+      // Output
+      
+      if (int_iter >= simulation_parameters.burn_in) {	
+	int newiters = int_iter - simulation_parameters.burn_in;
+	int step = simulation_parameters.thin_output_every * 1000;
+
+	if (newiters % step == 0 || int_iter == simulation_parameters.num_iterations - 1)
+	  paramSet.printCovar(int_iter);
+      }
+	
+
       if (debug) {
 	paramSet.outputPars();
 	if (int_iter % 100 == 0 && int_iter > 0)
 	  paramSet.printAcceptRates(int_iter);
       }
+      
       
       // Update Posterior mean and sumsq on a per-parameter basis
       if (int_iter >= simulation_parameters.burn_in) {

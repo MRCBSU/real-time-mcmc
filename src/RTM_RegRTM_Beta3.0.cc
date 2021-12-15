@@ -111,9 +111,6 @@ int main(void){
 
 
   Region* country2 = new Region[global_fixedpars.l_num_regions];
-
-  // Block pars: Having read the parameters, initialise the rest of the block structure
-  paramSet.init();
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
@@ -136,6 +133,12 @@ int main(void){
   		       str_filename_inputs,
   		       str_mcmc_parameter_names,
   		       str_mcmc_parameter_defaults);
+
+  // Block pars: Having read the parameters, initialise the rest of the block structure
+  if (sim_pars.read_covar == 0)
+    paramSet.init();
+  else
+    paramSet.init("covariance_in.txt");
   
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
 #ifdef USE_THREADS
