@@ -89,11 +89,18 @@ if(projections.basename == "projections_snapshot") mcmc.outs <- smc.outs <- 1 el
 ## The mod_inputs.txt file wont change with each projections so can render it now
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
 
-## ## ### --- End of setting inputs for mod_inputs.txt --- ### ## ##
+## ## ## ### --- End of setting inputs for mod_inputs.txt --- ### ## ## ##
 
-## ## CHANGES NECESSARY FOR THE mod_pars.Rmd TEMPLATE
+## ## ## CHANGES NECESSARY FOR THE mod_pars.Rmd TEMPLATE
 
-## Will need to remove temporal breakpoints and rows from design matrices
+## ## Will need to remove temporal breakpoints and rows from design matrices
+vac.rows.remove <- function(t0, nr.levels, na.levels, t.breaks){
+    nt.levels <- length(t.breaks) + 1
+    tot.rows <- nr.levels * na.levels * t.levels
+    fac.grid <- expand.grid(1:na.levels, 1:nt.levels, 1:nr.levels)
+    ## which levels do we want to keep...
+}
+## Vaccine efficacy parameters - full age/time/region dependency.
+vac.rows.remove
 
-
-## ## ### ---  End of setting inputs for mod_pars.txt  --- ### ## ##
+## ## ## ### ---  End of setting inputs for mod_pars.txt  --- ### ## ## ##
