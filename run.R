@@ -22,7 +22,6 @@ source(file.path(proj.dir, "R/data/utils.R"))
 # out.dir <- paste0(out.dir, "_fixed")
 
 system(paste("mkdir -p", out.dir))
-
 ## do we need to do formatting?
 format.inputs <- TRUE
 
@@ -37,12 +36,21 @@ run.outputs <- FALSE
 
 ## Which code is being considered
 if(!exists("gp.flag")) gp.flag <- 1
-if(!exists("hosp.flag")) hosp.flag <- 1
+if(!exists("hosp.flag")) hosp.flag <- deaths.flag <- 1
+if(!exists("adm.flag")) adm.flag <- !hosp.flag ## Not typically set by config.R - check
 if(!exists("sero.flag")) sero.flag <- 1
 if(!exists("viro.flag")) viro.flag <- 0
 if(!exists("prev.flag")) prev.flag <- 0
 if(!exists("NHSBT.flag")) NHSBT.flag <- 1 # NHSBT == 1, RCGP == 0
 if(!exists("RocheS.flag")) RocheS.flag <- 1 # RocheS == 1, RocheN == 0
+
+if(!adm.flag) admsam.files <- NULL ## The output filenames for the data will be determined within format_hosp_admissions.R
+
+if (region.type == "NHS") {
+	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
+} else if (region.type == "ONS") {
+	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
+} else stop("Unknown region type for population")
 
 
 # Moved serology calls to the top of the run script
@@ -54,26 +62,22 @@ if(sero.flag){
   serosam.files <- seropos.files <- NULL
 }
 
-if (region.type == "NHS") {
-	source(file.path(proj.dir, "R/data/get_NHS_pop.R"))
-} else if (region.type == "ONS") {
-	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
-} else stop("Unknown region type for population")
-
 ## If these files don't already exits, make them
-data.files <- paste0(data.dirs["deaths"], "/",
-                     data.desc,
-                     date.data, "_",
-                     regions, "_",
-                     nA, "ag",
-                     ifelse(flg.confirmed, "CONF", ""),
-                     reporting.delay, "delay")
-if (exists("flg.cutoff")){
-    if(flg.cutoff)
-	data.files <- paste0(data.files, "cutoff", str.cutoff)
+if(deaths.flag){
+    data.files <- paste0(data.dirs["deaths"], "/",
+                         data.desc,
+                         date.data, "_",
+                         regions, "_",
+                         nA, "ag",
+                         ifelse(flg.confirmed, "CONF", ""),
+                         reporting.delay, "delay")
+    if (exists("flg.cutoff")){
+        if(flg.cutoff)
+            data.files <- paste0(data.files, "cutoff", str.cutoff)
+    }
+    data.files <- paste0(data.files, ".txt")
+    names(data.files) <- regions
 }
-data.files <- paste0(data.files, ".txt")
-names(data.files) <- regions
 if(gp.flag){
     cases.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_pillar_2_", ifelse(symptoms, "symptoms", "all"), ".txt")
     denoms.files <- paste0(data.dirs["cases"], "/", date.data, "_", regions, "_", nA, "_popdenom.txt")
@@ -94,41 +98,56 @@ if(prev.flag){
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
+print("before formatting")
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
     vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
 } else vac1.files <- vacn.files <- NULL
+print("after vacc formatting")
 if(format.inputs){
-    if(data.desc == "reports") {
-        source(file.path(proj.dir, "R/data/format_death_reports.R"))
-    } else if (grepl("adjusted", data.desc)) {
-        source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
-    } else if (running.England) {
-        source(file.path(proj.dir, "R/data/format_deaths.R"))
+    if(deaths.flag){
+        if(data.desc == "reports") {
+            source(file.path(proj.dir, "R/data/format_death_reports.R"))
+            print("after death reports")
+        } else if (grepl("adjusted", data.desc)) {
+            source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
+            print("after adj deaths")
+        } else if (running.England) {
+            source(file.path(proj.dir, "R/data/format_deaths.R"))
+            print("after format formatting")
+        }
+        if ("Scotland" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+        }
+        if ("Northern_Ireland" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+        }
+        if ("Wales" %in% regions) {
+            source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
+        }
     }
-    if ("Scotland" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
+    print("After Deaths Flag")
+    if(adm.flag) {
+        print("before adm")
+        source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
+        print("after adm")
     }
-    if ("Northern_Ireland" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_ni_deaths.R"))
+    print("After Adm flag")
+    if(prev.flag){
+        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+        print("after prev formatting")
     }
-    if ("Wales" %in% regions) {
-        source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
-    }
-    if(sero.flag){ # Setup serology inputs
+    if(sero.flag){    ## Setup serology inputs
         source(file.path(proj.dir, "R/data/format_sero.R"))
+        print("after sero formatting")
     }
-    # if(sero.flag){    ## Setup serology inputs
-    #     source(file.path(proj.dir, "R/data/format_sero.R"))
-    # }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+        print("after vacc formatting")
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
-    }
-    if(prev.flag){
-        source(file.path(proj.dir, "R", "data", "format_prev.R"))
+        print("after gp formatting")
     }
 }
 print("made it through")

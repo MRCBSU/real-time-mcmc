@@ -1,4 +1,4 @@
-### Deaths incidence {.tabset}
+### `r Dta.text` incidence {.tabset}
 
 #### By region
 ```{r reg-death, cache=TRUE, cache.extra=results_hash}
@@ -22,7 +22,7 @@ make.plots(noisy_deaths, by = "region", data = dth.dat, project.forwards = TRUE,
 make.plots(noisy_deaths, by = "age", data = dth.dat, project.forwards = TRUE, x.label = "Date of death")
 ```
 
-### Cumulative deaths {.tabset}
+### Cumulative `r dta.text` {.tabset}
 
 #### By region
 ```{r cum-reg-death, cache=TRUE, cache.extra=results_hash}

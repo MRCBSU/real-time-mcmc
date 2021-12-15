@@ -147,7 +147,7 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
     } else input.loc <- gsub(".zip", ".csv", file.path("data", basename(input.loc)))
     
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
+    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
     
     ## Define an age-grouping
     if(!exists("age.agg")){
