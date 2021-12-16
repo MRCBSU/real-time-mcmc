@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --job_name=inputs_process_rtm
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --time=04:30:00
@@ -11,10 +10,11 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 #SBATCH --mem=20G
-#SBATCH --output=model_runs_20210120regjobs_%a.out
-#SBATCH --error=model_runs_20210120regjobs_%a.err
+#SBATCH --partition=hpc
+#SBATCH --output=model_runs_20210120regjobs_%a_%j.out
+#SBATCH --error=model_runs_20210120regjobs_%a_%j.err
 
-module load R gcc
+# module load R gcc
 
 # sintr -N1 -n1 -c4 -t 1:0:0 --qos=INTR
 

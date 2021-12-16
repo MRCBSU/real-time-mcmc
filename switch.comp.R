@@ -10,11 +10,13 @@ in.root <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc"
 ## in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
-if(Sys.info()["user"] == "joel.kandiah@phe.gov.uk" ) out.root <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc"
+if(Sys.info()["user"] == "joel.kandiah@phe.gov.uk" & Sys.info()["nodename"] == "scheduler.dev-01.az-uks.hpc.unix.phe.gov.uk" ) {
+    out.root <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc"
+} else if(Sys.info()["user"] == "joel.kandiah@phe.gov.uk" ) out.root <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc"
 
 ## Change location of repo
-in.repo <- "20211129"
-out.repo <- "2021129"
+in.repo <- "20211202"
+out.repo <- "20211202"
 ## in.repo <- "_new_base"
 ## out.repo <- ""
 

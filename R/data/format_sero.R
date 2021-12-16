@@ -299,7 +299,7 @@ write_csv(rtm.pos, file.path(out.dir, "sero_positives_data.csv"))
 ## Save a quick plot of the data..
 require(ggplot2)
 require(viridis)
-require(hrbrthemes)
+# require(hrbrthemes)
 require(plotly)
 require(htmlwidgets)
 
@@ -319,7 +319,8 @@ gp <- ggplot(rtm.plot, aes(x = date, y = X, size = N, colour = region, text = te
     geom_point(alpha = 0.7, position = position_dodge2(width = 0.6, preserve = "single")) +
     scale_size(range = c(1, 10), name="Sample size, N") +
     scale_color_viridis(discrete = TRUE, name = "Region") +
-    theme_ipsum() +
+    # theme_ipsum() +
+    theme_minimal() +
     ylab("Proportion positive")
 
 pp <- ggplotly(gp, tooltip = "text")
@@ -352,7 +353,8 @@ gap <- ggplot(rtm.plot.by.age, aes(x = date, y = X, size = n, colour = region, t
     geom_point(alpha = 0.7, position = position_dodge2(width = 0.6, preserve = "single")) +
     scale_size(range = c(1, 10), name = "Sample size, N") +
     scale_colour_viridis(discrete = TRUE, name = "Region") +
-    theme_ipsum() +
+    # theme_ipsum() +
+    theme_minimal() +
     ylab("Proportion positive") +
     facet_wrap(~age.grp)
 pap <- ggplotly(gap, tooltip = "text")

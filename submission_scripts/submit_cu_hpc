@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --job_name=testrunRTM
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
 #SBATCH --time=38:00:00
@@ -10,16 +9,17 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+#SBATCH --partition=hpc
 
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
 
 
-module load gcc R openmp intel_compiler OpenBLAS openmpi slurm
+# module load gcc R openmp intel_compiler OpenBLAS openmpi slurm
 
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/OpenBLAS/0.3.17/lib64"
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/openmp/12.0.1/lib"
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/gsl/2.7/lib"
+# LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/OpenBLAS/0.3.17/lib64"
+# LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/openmp/12.0.1/lib"
+# LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/gsl/2.7/lib"
 
 # sintr -N1 -n1 -c4 -t 1:0:0 --qos=INTR
 
@@ -35,7 +35,7 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # ## pwd
 
 
-~/mcmc/real-time-mcmc/rtm_hpc2
+~/real-time-mcmc/rtm_hpc2
 
   # sbatch ../../../submit_post_process_correct_dir
 

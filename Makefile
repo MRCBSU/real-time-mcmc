@@ -9,9 +9,11 @@ RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc2/%.o)
 
-LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/usr/local/packages/gsl/2.7/lib -lgsl -lgslcblas -lgfortran -lm -lpthread
+# LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/usr/local/packages/gsl/2.7/lib -lgsl -lgslcblas -lgfortran -lm -lpthread
+LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas -lgfortran -lm -lpthread
 ## LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
-CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
+# CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
+CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE  
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	$(CXX) $(RTM_DEBUG_OBJS) -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
@@ -68,6 +70,8 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++11 -Ofast  -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 ## g++ -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<
+## icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	

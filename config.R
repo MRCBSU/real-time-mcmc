@@ -4,15 +4,15 @@
 library(lubridate)
 library(tidyr)
 
-deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20211203 COVID19 Deaths.csv"
-vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20211202 immunisations SPIM.csv"
+deaths.loc <- "/shared/home/phe.gov.uk/joel.kandiah/real-time-mcmc/data/raw/deaths/20211203 COVID19 Deaths.csv"
+vacc.loc <- "/shared/home/phe.gov.uk/joel.kandiah/real-time-mcmc/data/raw/vaccination/20211202 immunisations SPIM.csv"
 str.date.vacc <- "20211202"
 
 # Either ONS or NHS
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
