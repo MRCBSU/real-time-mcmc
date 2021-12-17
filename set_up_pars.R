@@ -118,16 +118,15 @@ if(vacc.pi.bps)
 
     write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
 
-<<<<<<< HEAD
 
-## Efficacy against disease from two vaccine doses
-if(efficacies == "Nick"){
-  value.vac.pi2 <- 0.6 ## This will need to change when I can figure out how(!)
-=======
+
+
+
+
+
 ## Efficacy against infection from two vaccine doses  - can be derived from vaccine surveillance report 26 (alpha)
 if(efficacies == "Nick"){
     value.vac.pi2 <- 0.6
->>>>>>> origin/covariance
 } else if(efficacies == "Jamie"){
     value.vac.pi2 <- c(0.85, 0.65)
 } else if(efficacies == "PHE"){
@@ -268,13 +267,9 @@ if(single.ifr){
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
-<<<<<<< HEAD
 
 
-        if(NHS28.alt.ifr.prior){
-=======
         if((!adm.flag) & NHS28.alt.ifr.prior){
->>>>>>> origin/covariance
             mean.indices <- seq(1, length(pars.ifr), by = 2)
             pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
         }
