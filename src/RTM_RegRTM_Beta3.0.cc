@@ -139,6 +139,10 @@ int main(void){
     paramSet.init();
   else
     paramSet.init("covariance_in.txt");
+
+  // Store adapt_every locally - used in AMGS adaptation calculation
+  for (auto &block : paramSet.blocks)
+    block.adapt_every = sim_pars.adapt_every;
   
   // SET THE MAXIMUM NUMBER OF PARALLEL THREADS
 #ifdef USE_THREADS
