@@ -21,7 +21,7 @@ if(exists("str.date.vacc")){
     vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
     vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
+    vacc.rdata <- build.data.filepath(file.path("RTM_2ndwave", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
     if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
 }
 
@@ -50,12 +50,12 @@ if(run.all){
             input.loc <- commandArgs(trailingOnly = TRUE)[1]
         } else {
             if(startsWith(vacc.loc, "/")) input.loc <- vacc.loc
-            else input.loc <- build.data.filepath(subdir = "raw", "vaccination", vacc.loc)
+            else input.loc <- build.data.filepath(subdir = "wave2raw", "vaccination", vacc.loc)
         }
     }
     
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
-    vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
+    vacc.rdata <- build.data.filepath(file.path("RTM_2ndwave", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
     
     ## Define an age-grouping
     if(!exists("age.agg")){
@@ -216,12 +216,12 @@ if(run.all){
         }
         
         if(!exists("vac1.files")){
-            vac1.files <- build.data.filepath("RTM_format/vaccination",
+            vac1.files <- build.data.filepath("RTM_2ndwave/vaccination",
                                               str.date.vacc,
                                               "_1stvaccinations_",
                                               regions,
                                               ".txt")
-            vacn.files <- build.data.filepath("RTM_format/vaccination",
+            vacn.files <- build.data.filepath("RTM_2ndwave/vaccination",
                                               str.date.vacc,
                                               "_nthvaccinations_",
                                               regions,

@@ -190,8 +190,8 @@ source(file.path(proj.dir, "R/data/utils.R"))
 gp.data <- "NULL"
 gp.denom <- "NULL"
 if (gp.flag == 1) {
-	gp.data <- build.data.filepath("RTM_format", "linelist", date.data, ".txt")
-	gp.denom <- build.data.filepath("RTM_format", "ll_denom", date.data, ".txt")
+	gp.data <- build.data.filepath("RTM_2ndwave", "linelist", date.data, ".txt")
+	gp.denom <- build.data.filepath("RTM_2ndwave", "ll_denom", date.data, ".txt")
 	if(is.null(end.gp)) end.gp <- set.end.date(end.gp, gp.data)
 }
 hosp.data <- "NULL"

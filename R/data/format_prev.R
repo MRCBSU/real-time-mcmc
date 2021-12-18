@@ -11,7 +11,7 @@ suppressMessages(require(gsubfn))
 ## directory. If prev.loc is NULL, look for a
 ## command-line argument.
 if(!exists("prev.loc")){ ## Set to default format for the filename
-    input.loc <- "data/raw/prevalence"
+    input.loc <- "data/wave2raw/prevalence"
     ## List the possible files in the directory
     prev.loc <- file.info(file.path(input.loc,
                                     list.files(path = input.loc,
@@ -25,7 +25,7 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
     } else {
         if(startsWith(prev.loc, "/")) input.loc <- prev.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "prevalence", prev.loc)
+        else input.loc <- build.data.filepath(subdir = "wave2raw", "prevalence", prev.loc)
     }
 }
 
@@ -107,13 +107,13 @@ if(!exists("file.loc")){
 	source(file.path(proj.dir, "config.R"))
 }
 if(!exists("prev.mean.files")){
-    prev.mean.files <- build.data.filepath("RTM_format/prevalence",
+    prev.mean.files <- build.data.filepath("RTM_2ndwave/prevalence",
                                            "prev",
                                            date.prev,
                                            "_",
                                            regions,
                                            "_ons_meanlogprev.txt")
-    prev.sd.files <- build.data.filepath("RTM_format/prevalence",
+    prev.sd.files <- build.data.filepath("RTM_2ndwave/prevalence",
                                          "prev",
                                          date.prev,
                                          "_",

@@ -560,7 +560,8 @@ if(any(sspec.prior.dist == 1)){
 
 if(use.previous.run.for.start) {
     previous.loc <- previous.run.to.use[1]
+    lv <- length(value.ifr)
     source(file.path(proj.dir, "import_pars.R"))
+    value.ifr <- value.ifr[1:lv]
 }
-
 source(file.path(proj.dir, "par_check.R"))

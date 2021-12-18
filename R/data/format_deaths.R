@@ -12,7 +12,7 @@ if(!exists("date.data"))
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {
 	possible.deaths.locations <- c(
-		file.path(proj.dir, paste0("data/raw/deaths/Dataset Modelling " , date.data, ".csv")),
+		file.path(proj.dir, paste0("data/wave2raw/deaths/Dataset Modelling " , date.data, ".csv")),
 		paste(date.data, "COVID19 Deaths.csv"),
 		paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv"),
 		paste0("/data/covid-19/data-raw/manual-downloads/deaths/", ymd(date.data), ".csv")
@@ -98,7 +98,7 @@ if(!exists("file.loc")){
 }
 
 if(!exists("data.files"))
-    data.files <- build.data.filepath("RTM_format/deaths",
+    data.files <- build.data.filepath("RTM_2ndwave/deaths",
                                       "deaths",
                                       date.data,
                                       "_",
@@ -267,7 +267,14 @@ if(write.deaths){
             legend.position = "top",
             legend.justification = "left",
             )
-    plot.filename <- build.data.filepath("RTM_format/deaths", "deaths_plot", date.data, "_", reporting.delay, "d", ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""), ".pdf")
+    plot.filename <- build.data.filepath("RTM_2ndwave/deaths",
+                                         "deaths_plot",
+                                         date.data,
+                                         "_",
+                                         reporting.delay,
+                                         "d",
+                                         ifelse(flg.cutoff, paste0("_cutoff", str.cutoff), ""),
+                                         ".pdf")
     if (!file.exists(dirname(plot.filename))) dir.create(dirname(plot.filename))
     ggsave(plot.filename,
            gp + guides(linetype=FALSE),

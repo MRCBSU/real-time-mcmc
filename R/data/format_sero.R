@@ -9,7 +9,7 @@ suppressMessages(require(readxl))
 ## Where to find the data, if NULL use command line argument
 if(!exists("sero.loc")){ ## Set to default format for the filename
     #input.loc <- build.data.filepath(subdir = "raw", "serology")
-    input.loc <- "data/raw/serology"
+    input.loc <- "data/wave2raw/serology"
     ## input.loc <- "~/CoVID-19/Data streams/Serology"
     ## List the possible files in the directory
     sero.loc <- file.info(file.path(input.loc, list.files(path=input.loc, pattern=glob2rx("*xlsx|*csv"))))
@@ -20,7 +20,7 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
         input.loc <- commandArgs(trailingOnly = TRUE)[1]
     } else {
         if(startsWith(sero.loc, "/")) input.loc <- sero.loc
-        else input.loc <- build.data.filepath(subdir = "raw", "serology", sero.loc)
+        else input.loc <- build.data.filepath(subdir = "wave2raw", "serology", sero.loc)
     }
 }
 csv.flag <- grepl("*csv$", input.loc)
@@ -118,7 +118,7 @@ if(!exists("file.loc")){
 }
 
 if(!exists("serosam.files")){
-    serosam.files <- build.data.filepath("RTM_format/serology",
+    serosam.files <- build.data.filepath("RTM_2ndwave/serology",
                                          "sero",
                                          date.sero.str,
                                          "_",
@@ -126,7 +126,7 @@ if(!exists("serosam.files")){
                                          "_",
                                          nA,
                                          "ages_samples.txt")
-    seropos.files <- build.data.filepath("RTM_format/serology",
+    seropos.files <- build.data.filepath("RTM_2ndwave/serology",
                                          "sero",
                                          date.sero.str,
                                          "_",
