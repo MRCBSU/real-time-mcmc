@@ -163,9 +163,9 @@ adapt_every	     100
 
 burn_in		     `r burnin`
 
-read_cover	     0
+read_cover	     `r stored.covar`
 
-global_updates	     1
+global_updates	     `r global.per.iter`
 
 num_progress_reports 10
 
