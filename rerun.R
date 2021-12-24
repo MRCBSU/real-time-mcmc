@@ -31,9 +31,10 @@ if (!file.exists("mcmc.RData")) {
 }
 
 render(
-	file.path(Rfile.loc, 'report-updated.Rmd'),
-	html_document(pandoc_args = "--self-contained"),
-	output_dir = out.dir
+    file.path(Rfile.loc, 'report-updated.Rmd'),
+    html_document(pandoc_args = "--self-contained"),
+    output_dir = out.dir,
+    intermediates_dir = "~/scratch/tmp"
 )
 
 ## Return back to initial directory

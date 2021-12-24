@@ -19,8 +19,8 @@ out.repo <- "20210930_nth"
 ## Change location of output directory
 ## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
 ## out.base <- "ONS60"
-in.base <- "20211001_1st"
-out.base <- "20210930_1st"
+in.base <- "chain3_chain3"
+out.base <- "chain3" 
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)
@@ -40,6 +40,13 @@ setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
 setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
     gsub(in.repo, out.repo, x, fixed = TRUE))
 setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
+    gsub(in.base, out.base, x, fixed = TRUE))
+## Added exception for sero.data
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
+    gsub(in.root, out.root, x, fixed = TRUE))
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
+    gsub(in.repo, out.repo, x, fixed = TRUE))
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
     gsub(in.base, out.base, x, fixed = TRUE))
 
 ## Temporary line to be deleted
