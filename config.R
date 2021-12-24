@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -54,7 +54,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 sus_seb_combination <- 1L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
-adm_seb.strip_days <- 5L
+adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
 
 ## ## file.locs for admissions for geography linkers (with colname links)
