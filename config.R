@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(281)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(315)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -73,7 +73,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20210312"), format = "%Y%m%d")
+google.data.date <- format(ymd("20210212"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -141,7 +141,7 @@ deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified b
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 312
+num.prev.days <- 282
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -203,8 +203,8 @@ if(use.previous.run.for.start){
                                                                                            "Prev585SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210514", paste0(c("Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514", # _stable_household_deaths_chain2",
-                                                                                      "Prev375_cm4ons_IFR3bp_ONS60cutoff_25wk2_prev14-5Jamie_matrices_20210514") # _stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20210107", paste0(c("Prev249SeroNHSBT_All_ONS60cutoff_IFR3bp_18wk2_prev14-0PHE_matrices_20210104", # _stable_household_deaths_chain2",
+                                                                                      "Prev249SeroNHSBT_All_ONS60cutoff_IFR3bp_18wk2_prev14-0PHE_matrices_20210104") # _stable_household_deaths")
                                                                                   , matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
@@ -245,7 +245,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20210310")
+date.prev <- lubridate::ymd("20210208")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
