@@ -19,8 +19,8 @@ out.repo <- "20210930_nth"
 ## Change location of output directory
 ## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
 ## out.base <- "ONS60"
-in.base <- "chain3_chain3"
-out.base <- "chain3" 
+in.base <- "NHSBT_All"
+out.base <- "NHSBT_Retro" 
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

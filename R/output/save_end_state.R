@@ -1,4 +1,6 @@
-out.dir <- commandArgs(trailingOnly = TRUE)[1]
+out.dir <- ifelse(is.na(commandArgs(trailingOnly = TRUE)[1]),
+                  "./",
+                  commandArgs(trailingOnly = TRUE)[1])
 setwd(out.dir)
 
 load("mcmc.RData")
