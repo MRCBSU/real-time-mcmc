@@ -154,8 +154,8 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 800000 ## 2592000
-burnin <- 400000
+num.iterations <- 829600 ## 2592000
+burnin <- 429600
 adaptive.phase <- 129600
 thin.outputs <- 200 ## After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 100 ## After how many iterations to output each set of parameters
