@@ -364,10 +364,26 @@ void updParamSet::init(const string& covarin, const string& dir) {
       std::cerr << "Error: Unable to open input file " << covarin << "\n";
       exit(1);
     }
-    for (auto &block : blocks) {
-      string line;
+
+    // First two lines are debugging info
+    string line;
+    stringstream linestr;
+    for (int i = 0; i < 2; i++)
       getline(infile, line);
-      stringstream linestr(line);
+    
+    for (auto &block : blocks) {
+      getline(infile, line);
+      linestr.str(line);
+
+      // First line contains beta then mu vector
+      linestr >> block.beta;
+      for (int i = 0; i < block.mu.size(); i++) {
+	linestr >> block.mu[i];
+      }
+
+      // Second line is sigma matrix
+      getline(infile, line);
+      linestr.str(line);
       for (int i = 0; i < block.values.size(); i++) {
 	for (int j = 0; j < block.values.size(); j++) {
 	  linestr >> block.sigma[i][j];
@@ -375,6 +391,18 @@ void updParamSet::init(const string& covarin, const string& dir) {
       }
     }
   }
+
+  // Add an epsilon to the diagonal of the sigma for each block
+  double global_epsilon = 0;
+  double local_epsilon = 0;
+  
+  for (int i = 0; i < blocks[0].values.size(); i++)
+    blocks[0].sigma[i][i] += global_epsilon;
+
+  for (int b = 1; b < blocks.size(); b++)
+    for (int i = 0; i < blocks[b].values.size(); i++)
+      blocks[b].sigma[i][i] += local_epsilon;
+
 }
 
 
@@ -839,13 +867,17 @@ void updParamBlock::adaptiveUpdate(int iter) {
   }
 
   double betastart = beta;
-  
-  double eta = pow(iter - 199 + 1, -0.6);
+
+  // Warning: Hardcoded start point. Assumes adaptation starts at 1000 iters.
+  // Add 2, as per AMGS algorithm, to ensure that eta is always < 1.
+  // (Otherwise 0^(-p) = inf, 1^(-p) = 1)
+  double eta = pow(((iter - 1000) / (double) adapt_every) + 2, -0.6);
+
   // if (global)
   beta = beta + eta * (acceptLastMove - 0.234);
     // else
     // beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
-  
+
   for (int i = 0; i < mu.size(); i++)
     mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);
   
