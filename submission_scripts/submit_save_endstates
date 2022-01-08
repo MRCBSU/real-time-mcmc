@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0,1,4-13
+#SBATCH --array=0-11
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
@@ -27,7 +27,7 @@ module load rhel8/default-icl
 dirs=(*/)
 pwd
 application="Rscript"
-options="../../R/output/save_end_state.R"
+options="/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/R/output/save_end_state.R"
 CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
 # echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
 # if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
