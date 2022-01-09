@@ -151,7 +151,7 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 
 num_iterations	     `r num.iterations`
 
-output_type	     0
+output_type	     `r mcmc.outs`
 
 thin_output_every    `r thin.params`
 
@@ -162,6 +162,10 @@ adaptive_phase	     `r adaptive.phase`
 adapt_every	     100
 
 burn_in		     `r burnin`
+
+read_cover	     `r stored.covar`
+
+global_updates	     `r global.per.iter`
 
 num_progress_reports 10
 

@@ -154,14 +154,14 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-
-num.iterations <- 1800000 ## 2592000
-burnin <- 180000
-adaptive.phase <- burnin / 2
-thin.outputs <- 500 ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 250 ## After how many iterations to output each set of parameters
-
+num.iterations <- 829600 ## 2592000
+burnin <- 429600
+adaptive.phase <- 129600
+thin.outputs <- 200 ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 100 ## After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
+stored.covar <- 0
+global.per.iter <- 13
 
 
 
@@ -266,3 +266,6 @@ if (grepl("adjusted", data.desc)) {
 } else {
 	study_region_str <- ""
 }
+
+## DO WE WANT MCMC-STYLE CHAINS (0), OR SMC-STYLE PARTICLES (1)
+mcmc.outs <- 0

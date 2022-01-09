@@ -42,6 +42,13 @@ setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
     gsub(in.repo, out.repo, x, fixed = TRUE))
 setup.env$prev.data <- lapply(setup.env$prev.data, function(x)
     gsub(in.base, out.base, x, fixed = TRUE))
+## Added exception for sero.data
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
+    gsub(in.root, out.root, x, fixed = TRUE))
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
+    gsub(in.repo, out.repo, x, fixed = TRUE))
+setup.env$sero.data <- lapply(setup.env$sero.data, function(x)
+    gsub(in.base, out.base, x, fixed = TRUE))
 
 ## Temporary line to be deleted
 if(exists("infections")) rm(infections)

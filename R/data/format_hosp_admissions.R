@@ -302,7 +302,7 @@ if(sus_seb_combination %in% c(0, 1)){
 if(sus_seb_combination %in% c(1, 2)) {
     # Rearrange sebs data to summarise across the ages (grab ages from the columns)
     adm.dat.seb <- adm.dat.seb  %>%
-        select(-c(n_beds_mechanical_non_cov_ns:n_staff_absent_positive), -n_care_home_admitted)  %>%
+        select_if(!(names(.) %in% c("n_beds_mechanical_non_cov_ns", "n_beds_mechanical_suspected", "n_beds_noninvasive_non_cov_ns", "n_beds_noninvasive_suspected", "n_beds_oxygenation_non_cov_ns", "n_beds_oxygenation_suspected", "n_beds_other_3_non_cov_ns", "n_beds_other_3_suspected", "suspected_prev", "non_cov_nsid_prev", "non_cov_ns_prev", "n_staff_absent_caring", "n_staff_absent_positive", "n_care_home_admitted"))) %>% 
         unique()  %>%
         rename(!!!col.names.seb)  %>%
         select(!!!(unlist(names(col.names.seb)))) %>%

@@ -2,7 +2,7 @@
 #SBATCH -J trial_hpc_batch
 #SBATCH -A MRC-BSU-SL2-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=3
 #SBATCH --time=00:10:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-11
+#SBATCH --array=0,1,4-13
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
