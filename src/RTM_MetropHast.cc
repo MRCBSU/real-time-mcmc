@@ -517,8 +517,10 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	    
 	  } else if(simulation_parameters.oType == cSMC) {
 	    for(int i = 0; i < country2[reg].region_modstats.d_NNI->size1; i++)
-	      for(int j = 0; j < country2[reg].region_modstats.d_NNI->size2; j++)
+	      for(int j = 0; j < country2[reg].region_modstats.d_NNI->size2; j++){
+		file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Delta_Dis, i, j)), sizeof(double));
 		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_NNI, i, j)), sizeof(double));
+	      }
 	    country2[reg].region_modstats.d_end_state->write(file_state[reg]);
 	  }
 	}

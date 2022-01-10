@@ -32,11 +32,7 @@ apply.convolution <- function(start, func, over = "date") {
 
 ## Where are our outputs to be found
 
-
-
-output.dir <- file.path(proj.dir, "model_runs", "20210924", "PrevINLAnew508_cm6ons_IFR5bp_NHS60cutoff_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_new_base_deaths")
-
-
+output.dir <- file.path(proj.dir, "model_runs", "20211210", "Prev585SeroNHSBT_All_NHS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210_timeuse_household_deaths")
 
 load(file.path(output.dir, "projections_midterm.RData"))
 
@@ -69,6 +65,7 @@ los.dist <- cut(samp, 0:ceiling(max(samp))) %>%
 
 ## Beds available - fields icu_prev_acute1 in the NHS SitRep
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 ## beds.used <- c(333, 847, 969, 1085, 770, 410, 384)
@@ -77,9 +74,13 @@ beds.used <- c(438, 855, 1048, 1135, 813, 467, 427)
 ## beds.used <- c(723, 996, 1245, 1373, 1051, 825, 598)
 beds.used <- c(582, 977, 1121, 1162, 875, 733, 535)
 >>>>>>> origin/covariance
+=======
+## beds.used <- c(508, 1009, 1095, 906, 732, 766, 534)
+beds.used <- c(609, 1266, 1054, 861, 777, 830, 548)
+>>>>>>> origin/hosp_cov_restart
 beds.available <- as_tibble(list(capacity = c(9915, 12760, 15092, 14934, 13331, 10993, 8948), region = dimnames(infections)$region))
 beds.total <- beds.used / (beds.used + beds.available$capacity)
-beds.day <- lubridate::as_date("20211118")
+beds.day <- lubridate::as_date("20211212")
 
 
 ## Function to translate these infections into hospital occupancy

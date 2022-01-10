@@ -42,7 +42,9 @@ if(prev.prior == "relax") pars.r1 <- c(5.5, 1)
 if(prev.prior == "long_positive") pars.r1 <- c(11.7, 0.903)
 if(prev.prior == "Cevik") pars.r1 <- c(32.2, 2.60)
 
-vac.effec.bp <- 1:(length(vac.dates) - 1)
+vac.effec.bp <- 1:(min(ndays, length(vac.dates)) - 1)
+v0.design <- as_tibble(expand.grid(age.labs, vac.dates, regions))
+include <- v0.design %>% mutate(dayno = Var2 - start.date + 1, include = dayno <= ndays) %>% pull(include)
 
 ## Efficacy against disease from one vaccine dose
 if(deaths.flag){
@@ -64,11 +66,12 @@ prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha1 <- max(prior.vac.alpha1)
 if(vacc.flag & (prior.alpha1 > 1)) pars.alpha1 <- c(4, 1)
 if(efficacies == "PHE"){
-    delta <- as_tibble(expand.grid(age.labs, vac.dates, regions)) %>% mutate(delta = Var2 > delta.date) %>% pull(delta)
+    delta <- v0.design %>% mutate(delta = Var2 > delta.date) %>% pull(delta)
     v1.design <- cbind(v1.design, 0, 0)
     v1.design[delta, 3:4] <- v1.design[delta, 1:2]
     v1.design[delta, 1:2] <- 0
 }
+v1.design <- v1.design[include, ]
 write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.alpha1.design.txt"), col_names = FALSE)
 vacc.alpha.bps <- TRUE
 
@@ -95,6 +98,7 @@ if(efficacies == "PHE"){
     vn.design[delta, 3:4] <- vn.design[delta, 1:2]
     vn.design[delta, 1:2] <- 0
 }
+vn.design <- vn.design[include, ]
 write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
 
 ## Efficacy against infection from one vaccine dose - can be derived from vaccine surveillance report 26 (alpha)
@@ -573,7 +577,8 @@ if(any(sspec.prior.dist == 1)){
 
 if(use.previous.run.for.start) {
     previous.loc <- previous.run.to.use[1]
+    lv <- length(value.ifr)
     source(file.path(proj.dir, "import_pars.R"))
+    value.ifr <- value.ifr[1:lv]
 }
-
 source(file.path(proj.dir, "par_check.R"))

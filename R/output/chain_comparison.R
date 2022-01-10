@@ -24,10 +24,9 @@ Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
 
 
+colcode.fl <- "./Prev585SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210_stable_household_deaths"
+oldcode.fl <- "./Prev585SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210_stable_household_deaths_chain2"
 
-
-colcode.fl <- "./Prev564SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119_timeuse_household_deaths"
-oldcode.fl <- "./Prev564SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119_timeuse_household_deaths_chain2"
 
 
 ## load("mcmc.RData")
@@ -305,7 +304,7 @@ gv <- (rwd %>% ## filter(iter > 450000) %>%
     ggtitle("Random-walk density comparison")) %>%
     ggsave(filename=file.path(colcode.fl, "densitycheck.pdf"), width = 12, height = 10)
 
-gchain <- df.lik.test %>% filter(type == "likelihood") %>%
+gchain <- df.lik.test %>% filter(type == "likelihood") %>% ## mutate(code = fct_reorder(code, desc(code))) %>% ## for re-ordering the plotting order to inspect overlapping traces.
     ggplot(aes(x=iteration, y=value, group=code, color=code)) +
     geom_line() +
     ## facet_wrap(~code) +
