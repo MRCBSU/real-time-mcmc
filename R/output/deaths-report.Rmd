@@ -6,7 +6,7 @@ dth.file <- file.path(out.dir, "deaths_data.RData")
 if (is.null(dth.dat) && file.exists(dth.file)){
    load(dth.file)
 }
-if (!is.null(dth.dat) && !is.null(adm.sam)){
+if (!is.null(dth.dat) && is.null(adm.sam)){
    ## Below chunk is a temporary fix
    if("Region" %in% names(dth.dat)) dth.dat <- rename(dth.dat, region = Region)
    if("Age.Grp" %in% names(dth.dat)) dth.dat <- rename(dth.dat, age = Age.Grp)
