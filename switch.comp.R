@@ -14,14 +14,14 @@ if(Sys.info()["user"]=="aa995")   out.root <- "/home/aa995/rds/hpc-work"
 ## Change location of repo
 in.repo <- "20211001_nth"
 out.repo <- "20210930_nth"
-## in.repo <- "_new_base"
-## out.repo <- ""
+in.repo <- "PrevINLAnew606SeroNHSBT_All_cm6ons_IFR6bp_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_stable_household_admissions_no_deaths"
+out.repo <- "Prev606SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_stable_household_admissions_no_deaths"
 
 ## Change location of output directory
-## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
-## out.base <- "ONS60"
-in.base <- "20211001_1st"
-out.base <- "20210930_1st"
+in.base <- "new_base_"
+out.base <- ""
+## in.base <- "20211001_1st"
+## out.base <- "20210930_1st"
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

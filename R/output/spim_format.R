@@ -5,10 +5,10 @@ require(lubridate)
 
 suppressMessages(extract <- R.utils::extract)
 
-mod.version.no <- 1.4
+mod.version.no <- 1.5
 med.term.flag <- TRUE
 nowcast.flag <- TRUE
-mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, "deaths/ons", "deaths and pillar2"))
+mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
 
@@ -43,11 +43,14 @@ save.text <- "MTP"
 ## projections.file <- "projections_R0.9.RData"
 ## scen.text <- "MTP R0.9"
 ## save.text <- "MTP_R_0.9"
-mtp.filter.date <- lubridate::ymd("20211205") ## ymd(date.data)
+
+mtp.filter.date <- lubridate::ymd("20211219") ## ymd(date.data)
 
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
+mtype <- ifelse(adm.flag, "Admissions", "Deaths")
+mtpcode <- ifelse(adm.flag, "hospital_inc", "type28_death_inc_line")
 
 create.spim.table <- function(data, name, by = NULL) {
   qprobs <- seq(from = 0.05, to = 0.95, by = 0.05)
@@ -316,7 +319,7 @@ if(nowcast.flag){
             Model = mod.name,
             CreationDate = ymd(date.data),
             ValueType = "doubling_time")
-    
+
     tbl.forecast <- bind_rows(## tbl_inf,
                               ## tbl_deaths,
                               tbl_R) %>%
@@ -328,7 +331,7 @@ if(nowcast.flag){
         `Month of Value` = month(date),
         `Year of Value` = year(date),
         Geography = str_replace_all(Geography, "_", " "),
-        `ModelType` = "Deaths",
+        `ModelType` = mtype,
         Scenario = "Nowcast",
         AgeBand = "All"
     ) %>%
@@ -344,7 +347,7 @@ if(nowcast.flag){
             `Year of Value` = year(date),
             Geography = str_replace_all(Geography, "_", " "),
             `Value` = `Quantile 0.5`,
-            `ModelType` = "Deaths",
+            `ModelType` = mtype,
             Scenario = "Nowcast",
             AgeBand = "All"
         ) %>%
@@ -367,7 +370,7 @@ if(nowcast.flag){
                                     year(date)),
             Geography = str_replace_all(Geography, "_", " "),
             `Value` = `Quantile 0.5`,
-            `ModelType` = "Deaths",
+            `ModelType` = mtype,
             Scenario = "Nowcast",
             AgeBand = "All"
         ) %>%
@@ -404,7 +407,10 @@ if(med.term.flag){
     deaths <- trim_forecast_days(deaths)
     infections <- trim_forecast_days(infections)
     tbl_proj <- create.spim.table(infections, "infections_inc", by = "age") %>% mutate(age = recode(age, '<1yr' = "0-4"))
-    tbl_dproj <- create.spim.table(deaths, "type28_death_inc_line", by = "age") %>% mutate(age = recode(age, '<1yr' = "0-4"))
+    tbl_dproj <- create.spim.table(deaths,
+                                   mtpcode,
+                                   by = "age") %>%
+        mutate(age = recode(age, '<1yr' = "0-4"))
     if(prev.flag){
         prevalence <- trim_forecast_days(prevalence)
         tbl_aproj <- create.spim.table(prevalence, "prevalence_mtp", by = "age") %>% mutate(age = recode(age, '<1yr' = "0-4")) %>%
@@ -418,7 +424,7 @@ if(med.term.flag){
     tbl_midterm_forecast <- bind_rows(tbl_proj, tbl_dproj, tbl_aproj) %>%
         filter(date >= mtp.filter.date) %>%
         mutate(
-            `ModelType` = "Deaths",
+            `ModelType` = mtype,
             `Creation Day` = day(CreationDate),
             `Creation Month` = month(CreationDate),
             `Creation Year` = year(CreationDate),
@@ -434,7 +440,7 @@ if(med.term.flag){
     ##           row.names = FALSE)
     
     tbl_all_proj <- create.spim.table(infections, "infections_inc")
-    tbl_all_dproj <- create.spim.table(deaths, "type28_death_inc_line")
+    tbl_all_dproj <- create.spim.table(deaths, mtpcode)
     if(prev.flag){
         tbl_all_aproj <- create.spim.table(prevalence, "prevalence_mtp") %>%
             left_join(population_reg)
@@ -450,7 +456,7 @@ if(med.term.flag){
     tbl_midterm_all <- bind_rows(tbl_all_proj, tbl_all_dproj, tbl_all_aproj) %>%
         filter(date > ymd(date.data)) %>%
         mutate(
-            `ModelType` = "Deaths",
+            `ModelType` = mtype,
             `Creation Day` = day(CreationDate),
             `Creation Month` = month(CreationDate),
             `Creation Year` = year(CreationDate),

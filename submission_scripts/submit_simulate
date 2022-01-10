@@ -28,22 +28,9 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-<<<<<<< HEAD
 
-#SBATCH --array=1-4
+#SBATCH --array=0,3
 
-
-#SBATCH -p skylake
-#SBATCH --qos=covid0
-
-#! sbatch directives end here (put any additional directives above this line)
-
-#SBATCH --output=simulate_model_runs_20201127_%a.out
-#SBATCH --error=simulate_model_runs_20201127_%a.err
-
-
-=======
-#SBATCH --array=5
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
@@ -52,7 +39,7 @@
 
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
->>>>>>> origin/hosp_cov_restart
+
 
 forecast_switch="midterm"
 
@@ -80,16 +67,14 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 # module load rhel8/default-icl ## remove if not using icelake
 
 #! Insert additional module load commands after this line if needed:
-<<<<<<< HEAD
-#module load pandoc                         # Need this to generate the STAN model code
-#module load R/3.6
-#module load gsl
-=======
+
+module load rhel8/default-icl
+
 module load pandoc
 
->>>>>>> origin/hosp_cov_restart
+
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
-module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
+# module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
 
 
 
