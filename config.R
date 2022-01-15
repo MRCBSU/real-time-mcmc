@@ -73,7 +73,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220107"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220114"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
@@ -84,7 +84,7 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
-time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
+time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 sdpar <- 100
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
 
@@ -141,7 +141,7 @@ deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified b
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 611
+num.prev.days <- 620
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -165,7 +165,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- "28"
+	str.cutoff <- ifelse(deaths.flag, "60", "")
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -196,15 +196,15 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220101", paste0(c("Prev606SeroNHSBT_All_NHS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231",
-                                                                                          "Prev606SeroNHSBT_All_NHS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220107", paste0(c("Prev611SeroNHSBT_All_NHS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107",
+                                                                                          "Prev611SeroNHSBT_All_NHS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220101", paste0(c("Prev606SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231",
-                                                                                           "Prev606SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220107", paste0(c("Prev611SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107",
+                                                                                           "Prev611SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107"), matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220101", paste0(c("Prev606SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231", # _stable_household_deaths_chain2",
-                                                                                      "Prev606SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231") # _stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220107", paste0(c("Prev611SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107", # _stable_household_deaths_chain2",
+                                                                                      "Prev611SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107") # _stable_household_deaths")
                                                                                   , matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
@@ -242,10 +242,10 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 3
+prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220103")
+date.prev <- lubridate::ymd("20220112")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -278,7 +278,7 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220106" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220113" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
