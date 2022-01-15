@@ -33,7 +33,9 @@ if (external && exists("dth.dat")) {
 }
 if (!exists("prev.dat")) prev.dat <- NULL
 external <- external.bak
-
+dta.text <- ifelse(deaths.flag, "deaths", "admissions")
+Dta.text <- ifelse(deaths.flag, "Deaths", "Admissions")
+str.hover <- ifelse(deaths.flag, "Observed deaths", "Observed admissions")
 ```
 
 
@@ -132,10 +134,11 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     if (is.null(data)) {
       return(plot)
     } else {
+    str.hover <- ifelse(deaths.flag
       if (external) {
-        data.hover <- "%{x} <extra>Observed deaths</extra>"
+        data.hover <- paste0("%{x} <extra>", str.hover, "</extra>")
       } else {
-        data.hover <- "%{x}: %{y:.3s}<extra>Observed deaths</extra>"
+        data.hover <- paste0("%{x}: %{y:.3s}<extra>", str.hover, "</extra>")
       }
       plot %>%
         add_markers(
