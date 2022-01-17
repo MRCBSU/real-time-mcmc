@@ -572,9 +572,6 @@ if(use.previous.run.for.start) {
     source(file.path(proj.dir, "import_pars.R"))
     value.ifr <- value.ifr[1:lv]
 }
-<<<<<<< HEAD
 
 print(beta.rw.vals)
-=======
->>>>>>> e86404bcb4c44db9b7f42a01256e26898c0470b7
 source(file.path(proj.dir, "par_check.R"))
