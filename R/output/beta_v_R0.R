@@ -6,9 +6,9 @@ library(cubelyr)
 
 load("mcmc.RData")
 
-fl.eval <- "dominant_eigenvalues.rds"
+fl.eval <- file.path(matrix.dir, "dominant_eigenvalues.rds")
 if(file.exists(fl.eval))
-    Rs <- readRDS("dominant_eigenvalues.rds") %>%
+    Rs <- readRDS(fl.eval) %>%
         dplyr::filter(Region == "England",
                       Date >= ymd("20200323"),
                       Date < today(),

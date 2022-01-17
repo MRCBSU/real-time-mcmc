@@ -18,12 +18,29 @@
 #SBATCH --output=submit_save_endstates_%a_%j.out
 #SBATCH --error=submit_save_endstates_%a_%j.err
 
+<<<<<<< HEAD
 module load R gcc openmp intel_compiler OpenBLAS openmpi slurm
+=======
+#SBATCH --array=0-11
+#SBATCH -p icelake
+#!SBATCH --qos=covid0
+
+
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
+
+module purge
+module load rhel8/default-icl
+>>>>>>> e86404bcb4c44db9b7f42a01256e26898c0470b7
 
 dirs=(*/)
 pwd
 application="Rscript"
+<<<<<<< HEAD
 options="~/mcmc/real-time-mcmc/R/output/save_end_state.R"
+=======
+options="/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/R/output/save_end_state.R"
+>>>>>>> e86404bcb4c44db9b7f42a01256e26898c0470b7
 CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
 # echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
 # if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then

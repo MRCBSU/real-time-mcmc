@@ -1,4 +1,4 @@
----
+```---
 title: 'COVID-19: nowcast and forecast'
 author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
 date: "`r lubridate::today()`"
@@ -35,7 +35,11 @@ results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
 	results_hash = NULL
-}
+ } else if (exists("adm.sam") && !is.null(adm.sam)) {
+ dth.dat <- adm.sam %>% rename(age = ages, value = admissions)
+ if(external) dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
+	results_hash = NULL
+ }
 if (!exists("prev.dat")) prev.dat <- NULL
 external <- external.bak
 extract <- R.utils::extract
@@ -492,7 +496,7 @@ deaths.growth.rates %>%
   select(Region, Median, `95% CrI (lower)`, `95% CrI (upper)`) %>%
   knitr::kable(digits = 2, aligh = 'lccc')
 
-cat("The execution of the prevalence code block will proceed if\n prev.dat exists and this is", !is.null(prev.dat), "\n it is not and external report and this is", !external, "\n") 
+cat("The execution of the prevalence code block will proceed if\n prev.dat exists and this is", !is.null(prev.dat), "\n it is not an external report and this is", !external, "\n") 
 ```
 
 ## Infections and deaths {.tabset}

@@ -118,7 +118,7 @@ ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
 start.prev <- 1
-end.hosp <- ifelse(hosp.flag, ndays, 1)
+end.hosp <- ifelse(hosp.flag | adm.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
 end.vac <- ifelse(vacc.flag, ndays, 1)
@@ -167,16 +167,7 @@ if(gp.flag)
         cases.files[reg] <- repeat.last.row(cases.files[reg], paste0("dummy_cases_", reg))
         denoms.files[reg] <- repeat.last.row(denoms.files[reg], paste0("dummy_denoms_", reg))
     }
-# print(hosp.flag)
-# print(prev.flag)
-# if (hosp.flag) print("flag 1")
-# if (prev.flag) print("flag 2")
-# print("Got here 3e")
-# print(hosp.data)
-# print(prev.data$lmeans)
-# print(prev.data$lsds)
-names(hosp.data) <- names(prev.data$lmeans)
-if(hosp.flag)
+if(hosp.flag | adm.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag){
@@ -310,7 +301,7 @@ if(!smc.outs){
         save.list <- c(save.list, "vacc.infections")
         dimnames(vacc.infections) <- dim.list
     }
-    if(hosp.flag) {
+    if(hosp.flag | adm.flag) {
         deaths <- melt.list(Deaths);rm(Deaths)
         save.list <- c(save.list, "deaths")
         dimnames(deaths) <- dim.list
