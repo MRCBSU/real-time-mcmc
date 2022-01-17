@@ -154,13 +154,18 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 2592000
-burnin <- 259200
+num.iterations <- 700000
+burnin <- 300000
 adaptive.phase <- burnin / 2
-thin.outputs <- 720## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 360 ## After how many iterations to output each set of parameters
+# num.iterations <- 300000
+# burnin <- 100000
+# adaptive.phase <- burnin / 2
+thin.outputs <- 200## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 100 ## After how many iterations to output each set of parameters
+# thin.outputs <- 50## After how many iterations to output each set of NNI, deaths etc.
+# thin.params <- 25 ## After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
-
+num.global.updates <- 15
 
 
 ############ NOTHING BELOW THIS LINE SHOULD NEED AMENDING WITH ANY REGULARITY ############

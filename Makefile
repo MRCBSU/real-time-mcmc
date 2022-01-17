@@ -14,10 +14,10 @@ LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/p
 CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
-	$(CXX) $(RTM_DEBUG_OBJS) -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
+	$(CXX) $(RTM_DEBUG_OBJS)  -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
 
 rtm_intel_debug: $(RTM_INTEL_DEBUG_OBJS) $(HEADERS)
-	icpc $(RTM_INTEL_DEBUG_OBJS) -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_intel_debug
+	icpc -pg -g $(RTM_INTEL_DEBUG_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_intel_debug
 
 rtm: $(RTM_OBJS) $(HEADERS)
 	$(CXX) $(RTM_OBJS) $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm
@@ -48,7 +48,7 @@ build/rtm_debug/%.o: src/%.cc
 
 build/rtm_intel_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_intel_debug
-	icpc -g -std=c++11 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
+	icpc -pg -g -std=c++11 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
 
 build/rtm/%.o: src/%.cc
 	@mkdir -p build/rtm
@@ -68,6 +68,6 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -xHOST -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 ## g++ -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

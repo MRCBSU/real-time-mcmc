@@ -34,8 +34,8 @@ typedef enum { EGR_HYPER_INDEX, LPL0_HYPER_INDEX, PROP_SUS_HYPER_INDEX, LBETA_RW
 
 // PARAMETERS OF THE MCMC SIMULATION
 
-#define MCMC_PARAMETER_NAMES " num_iterations : output_type : thin_output_every : thin_stats_every : adaptive_phase : adapt_every : burn_in : num_progress_reports : mixing_threshold_ub : mixing_threshold_lb : prop_var_inflation : prop_var_shrinkage : maximum_block_size : random_seed : max_threads"
+#define MCMC_PARAMETER_NAMES " num_iterations : output_type : thin_output_every : thin_stats_every : adaptive_phase : adapt_every : burn_in : read_covar : global_updates : num_progress_reports : mixing_threshold_ub : mixing_threshold_lb : prop_var_inflation : prop_var_shrinkage : maximum_block_size : random_seed : max_threads"
 
-#define MCMC_PARAMETER_DEFAULT_VALUES " 1100000 : 0 : 100 : 10000 : 50000 : 100 : 100000 : 10 : 0.3 : 0.2 : 1.1 : 0.9 : 32 : 32 : 1"
+#define MCMC_PARAMETER_DEFAULT_VALUES " 1100000 : 0 : 100 : 10000 : 50000 : 100 : 100000 : 0 : 1 : 10 : 0.3 : 0.2 : 1.1 : 0.9 : 32 : 32 : 1"
 
 #endif

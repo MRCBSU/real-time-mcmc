@@ -163,6 +163,10 @@ adapt_every	     100
 
 burn_in		     `r burnin`
 
+read_cover	     0
+
+global_updates	     `r num.global.updates`
+
 num_progress_reports 10
 
 mixing_threshold_ub  0.3

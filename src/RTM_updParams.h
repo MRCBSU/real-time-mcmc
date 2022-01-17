@@ -80,6 +80,8 @@ public:
   glikelihood lfx;
   
   int numRegions;
+
+  std::ofstream covarfile;
   
   updParamSet() :
     params(UMP_FINAL_NUM_PARAMS) { }
@@ -93,7 +95,7 @@ public:
   void insertAndRegister(updateable_model_parameter& inPar, int num_instances, bool local, int numRegions_);
 
   // Initialise blocks. Called once after all params created.
-  void init(const string& outdir = "pars");
+  void init(const string& covarin = "", const string& outdir = "pars");
 
   // Return a view for the given parameter, i.e. a sub-vector
   // Warning: View is only valid as long as parameter exists, and is not moved etc
@@ -118,6 +120,7 @@ public:
   void outputPars();
   void outputProposals();
   void printAcceptRates(int numIters);
+  void printCovar(int iter);
 
   // - - - - - - -
   // Future work: Initialise pars directly from input file rather than copying

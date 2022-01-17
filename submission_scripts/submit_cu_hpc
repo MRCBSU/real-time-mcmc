@@ -2,7 +2,7 @@
 #SBATCH --job_name=testrunRTM
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --time=38:00:00
+#SBATCH --time=96:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL,TIME_LIMIT,END
 #SBATCH --mail-user=joel.kandiah@phe.gov.uk
@@ -30,9 +30,9 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # module list
 # echo $LD_LIBRARY_PATH
 
-# ## dirs=(*/)
-# ## cd ${dirs[SLURM_ARRAY_TASK_ID]}
-# ## pwd
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
+# pwd
 
 
 ~/mcmc/real-time-mcmc/rtm_hpc2

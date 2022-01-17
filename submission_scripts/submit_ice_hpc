@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-11
+#SBATCH --array=14
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
@@ -21,6 +21,7 @@
 #SBATCH --output=model_runs_20210120regjobs_%a.out
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 module purge
 module load rhel8/default-icl
 # module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
