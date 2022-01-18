@@ -98,7 +98,7 @@ if(prev.flag){
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
-print("before formatting")
+
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
     if(vac.n_doses ==3) {
@@ -108,18 +108,15 @@ if(vacc.flag){
         vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
     }
 } else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
-print("after vacc formatting")
+
 if(format.inputs){
     if(deaths.flag){
         if(data.desc == "reports") {
             source(file.path(proj.dir, "R/data/format_death_reports.R"))
-            print("after death reports")
         } else if (grepl("adjusted", data.desc)) {
             source(file.path(proj.dir, "R/data/format_adjusted_deaths.R"))
-            print("after adj deaths")
         } else if (running.England) {
             source(file.path(proj.dir, "R/data/format_deaths.R"))
-            print("after format formatting")
         }
         if ("Scotland" %in% regions) {
             source(file.path(proj.dir, "R/data/format_Scottish_deaths.R"))
@@ -131,32 +128,22 @@ if(format.inputs){
             source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
         }
     }
-    print("After Deaths Flag")
     if(adm.flag) {
-        print("before adm")
         source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
-        print("after adm")
     }
-    print("After Adm flag")
     if(prev.flag){
         source(file.path(proj.dir, "R", "data", "format_prev.R"))
-        print("after prev formatting")
     }
     if(sero.flag){    ## Setup serology inputs
         source(file.path(proj.dir, "R/data/format_sero.R"))
-        print("after sero formatting")
     }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
-        print("after vacc formatting")
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
-        print("after gp formatting")
     }
 }
-print("made it through")
-
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
@@ -165,7 +152,6 @@ if(compile.code) {
     system("make rtm_hpc2")
 }
 
-print("made it through")
 
 ## Set up a requisite number of chains
 startwd <- getwd()
