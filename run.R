@@ -101,8 +101,13 @@ if(prev.flag){
 print("before formatting")
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
-} else vac1.files <- vacn.files <- NULL
+    if(vac.n_doses ==3) {
+        vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))
+        vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+    } else {
+        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+    }
+} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 print("after vacc formatting")
 if(format.inputs){
     if(deaths.flag){

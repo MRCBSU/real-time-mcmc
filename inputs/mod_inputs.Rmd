@@ -17,6 +17,8 @@ Prev_data_flag	     `r prev.flag`
 
 Vacc_data_flag	     `r vacc.flag`
 
+Vacc_num_doses       `r vac.n_doses`
+
 \#\# file names have template along the lines of DATATYPE_REGION_VARIABLE.txt, possible DATATYPE values are Reported_GP_Consultations, Reported_QSurvCoverage, Reported_Hospitalisations, Reported_Seropositives, Reported_Serosamples, Reported_Positivity
 
 \#\# values for REGION specified in the REGIONAL INFORMATION section
@@ -135,8 +137,9 @@ study_region = { regions_used = `r paste(regions, collapse = ", ")`;
 		 regions_logprevalence_sd = `r ifelse(prev.flag, paste(prev.data$lsds, collapse = ", "), "NULL")`;
 
 		 regions_1stvaccination_data = `r ifelse(vacc.flag, paste(vac1.files, collapse = ", "), "NULL")`;
-		 regions_nthvaccination_data = `r ifelse(vacc.flag, paste(vacn.files, collapse = ", "), "NULL")`;
-	       
+		 regions_nthvaccination_data = `r ifelse(vacc.flag, ifelse(vac.n_doses == 3, paste(vac2.files, collapse = ", "), paste(vacn.files, collapse = ", ")), "NULL")`;
+	     regions_3rdvaccination_data = `r ifelse(vacc.flag & vac.n_doses == 3, paste(vac3.files, collapse = ", "), "NULL")`;
+		   
 	       }
 
 

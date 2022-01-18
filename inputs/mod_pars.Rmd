@@ -100,7 +100,25 @@ prior_distribution = `r prior.vac.alpha2`;
 
 `r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.alpha.bps, "regression_design = vac.alphan.design.txt;", "")`
+`r ifelse(vacc.flag & vacc.alpha.bps, ifelse( vac.n_doses == 3, "regression_design = vac.alpha2.design.txt;", "regression_design = vac.alphan.design.txt;"), "")`
+
+}
+
+vacc_3rd_disease = { param_value = `r value.vac.alpha3`;
+
+prior_distribution = `r prior.vac.alpha3`;
+
+`r ifelse(vacc.flag & (prior.alpha3 > 1) & vac.n_doses == 3, paste0("prior_parameters = ", paste(pars.alpha3, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha3 > 1) & vac.n_doses == 3, "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps & vac.n_doses == 3, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps & vac.n_doses == 3, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps & vac.n_doses == 3, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.alpha.bps & vac.n_doses == 3, "regression_design = vac.alpha3.design.txt;", "")`
 
 }
 
@@ -136,7 +154,25 @@ prior_distribution = `r prior.vac.pi2`;
 
 `r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pin.design.txt;", "")`
+`r ifelse(vacc.flag & vacc.pi.bps, ifelse(vac.n_doses == 3, "regression_design = vac.pi2.design.txt;", "regression_design = vac.pin.design.txt;"), "")`
+
+}
+
+vacc_3rd_infect = { param_value = `r value.vac.pi3`;
+
+prior_distribution = `r prior.vac.pi3`;
+
+`r ifelse(vacc.flag & (prior.pi3 > 1) & vac.n_doses == 3, paste0("prior_parameters = ", paste(pars.pi3, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi3 > 1) & vac.n_doses == 3, "proposal_variance = 0.007562;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps & vac.n_doses == 3, "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps & vac.n_doses == 3, "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps & vac.n_doses == 3, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & vacc.pi.bps & vac.n_doses == 3, "regression_design = vac.pi3.design.txt;", "")`
 
 }
 

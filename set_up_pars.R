@@ -94,12 +94,53 @@ prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
 if(efficacies == "PHE"){
-    vn.design <- cbind(vn.design, 0, 0)
-    vn.design[delta, 3:4] <- vn.design[delta, 1:2]
-    vn.design[delta, 1:2] <- 0
+    if(vac.n_doses == 3) {
+        v2.design <- cbind(v2.design, 0, 0)
+        v2.design[delta, 3:4] <- v2.design[delta, 1:2]
+        v2.design[delta, 1:2] <- 0
+    } else {
+        vn.design <- cbind(vn.design, 0, 0)
+        vn.design[delta, 3:4] <- vn.design[delta, 1:2]
+        vn.design[delta, 1:2] <- 0
+    }
 }
-vn.design <- vn.design[include, ]
-write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
+if(vac.n_doses == 3) {
+    v2.design <- v2.design[include, ]
+    write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.alpha2.design.txt"), col_names = FALSE)
+} else {
+    vn.design <- vn.design[include, ]
+    write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.alphan.design.txt"), col_names = FALSE)
+}
+
+
+## Efficacy against disease from third vaccine dose
+
+if(deaths.flag){
+    if(efficacies == "Nick"){
+        value.vac.alpha3 <- c(0.95, 0.70)
+    } else if(efficacies == "Jamie"){
+        value.vac.alpha3 <- c(2/3,6/7)
+    } else if(efficacies == "PHE"){
+        ## value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
+        value.vac.alpha3 <- c(17/20, 19/45, 17/20, 11/14) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+    } else {
+        value.vac.alpha3 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+    }
+} else if(adm.flag){
+    value.vac.alpha3 <- c(13/20, 43/57, 4/5, 4/5)
+}
+prior.vac.alpha3 <- rep(1, length(value.vac.alpha3)) ## ifelse(vacc.flag, 3, 1)
+prior.alpha3 <- max(prior.vac.alpha3)
+if(vacc.flag & (prior.alpha3 > 1)) pars.alpha3 <- c(4, 1)
+if (vac.n_doses == 3) {
+    if(efficacies == "PHE"){
+        v3.design <- cbind(v3.design, 0, 0)
+        v3.design[delta, 3:4] <- v3.design[delta, 1:2]
+        v3.design[delta, 1:2] <- 0
+    }
+    v3.design <- v3.design[include, ]
+    write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.alpha3.design.txt"), col_names = FALSE)
+}
 
 ## Efficacy against infection from one vaccine dose - can be derived from vaccine surveillance report 26 (alpha)
 if(efficacies == "Nick"){
@@ -134,7 +175,31 @@ prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
 if(vacc.pi.bps)
-    write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
+    if(vac.n_doses == 3) {
+        write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.pi2.design.txt"), col_names = FALSE)
+    } else {
+        write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
+    }
+
+## Efficacy against infection from three vaccine doses  - can be derived from vaccine surveillance report 26 (alpha)
+
+if(efficacies == "Nick"){
+    value.vac.pi3 <- 0.6
+} else if(efficacies == "Jamie"){
+    value.vac.pi3 <- c(0.85, 0.65)
+} else if(efficacies == "PHE"){
+    ## value.vac.pi2 <- c(0.8, 0.715, 0.8, 0.8)  ## Based on vaccine surveillance report wk 26
+    value.vac.pi3 <- c(0.8, 0.775, 0.8, 0.65) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+} else {
+    value.vac.pi3 <- 0.6
+}
+prior.vac.pi3 <- rep(1, length(value.vac.pi3)) ## ifelse(vacc.flag, 3, 1)
+prior.pi3 <- max(prior.vac.pi3)
+if(vac.n_doses == 3) {
+    if(vacc.flag & (prior.pi3 > 1)) pars.pi3 <- c(4, 1)
+    if(vacc.pi.bps)
+        write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.pi3.design.txt"), col_names = FALSE)
+}
 
 ## Exponential growth rate
 value.egr <- c(0.281224110810985, 0.246300679874443, 0.230259384150778, 0.307383663711624, 0.249492140587071, 0.224509782739688, 0.234528728809235, 0.2, 0.2)[1:nr]

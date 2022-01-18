@@ -4,9 +4,9 @@
 library(lubridate)
 library(tidyr)
 
-deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20220114 COVID19 Deaths.csv"
-vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20220113 immunisations SPIM.csv"
-str.date.vacc <- "20220113"
+deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20220117 COVID19 Deaths.csv"
+vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20220117 immunisations SPIM.csv"
+str.date.vacc <- "20220117"
 
 # Either ONS or NHS
 region.type <- "ONS"
@@ -289,15 +289,17 @@ threads.per.regions <- 1
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220113" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220117" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- F
 if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
+vac.n_doses <- 2L ## Number of doses in preprocessed data (Either 3 or 2)
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- c(0.12, rep(0.12, 10)) * 10 ^ 6  * 55.98 / 66.65
+future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
+future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
