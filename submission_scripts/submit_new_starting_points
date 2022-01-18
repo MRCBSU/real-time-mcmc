@@ -13,25 +13,28 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-19
+#SBATCH --array=4,5
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 
-#SBATCH --output=model_runs_20210120regjobs_%a.out
-#SBATCH --error=model_runs_20210120regjobs_%a.err
+#SBATCH --output=restart_pars_%a.out
+#SBATCH --error=restart_pars_%a.err
 
-module purge
-module load rhel8/default-icl
+. /etc/profile.d/modules.sh
+module load pandoc
 
 dirs=(*/)
 pwd
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
 application="Rscript"
-options="/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/R/output/save_end_state.R"
-CMD="$application $options ${dirs[SLURM_ARRAY_TASK_ID]}"
+options="/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/R/output/restart_pars.R"
+CMD="$application $options"
 # echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
 # if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
 #     echo "Running $CMD"
   eval $CMD
   # sbatch 
 # fi
+  mv mod_pars_new.txt mod_pars.txt
+  rm posterior_report10

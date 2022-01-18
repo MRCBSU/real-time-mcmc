@@ -1,4 +1,4 @@
-```---
+---
 title: 'COVID-19: nowcast and forecast'
 author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
 date: "`r lubridate::today()`"

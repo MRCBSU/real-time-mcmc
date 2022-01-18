@@ -11,10 +11,8 @@ if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
 
 ## Change location of repo
-in.repo <- "20211001_nth"
-out.repo <- "20210930_nth"
-in.repo <- "PrevINLAnew606SeroNHSBT_All_cm6ons_IFR6bp_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_stable_household_admissions_no_deaths"
-out.repo <- "Prev606SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_stable_household_admissions_no_deaths"
+out.repo <- "Prev611SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107_stable_household_deaths"
+in.repo <- "Prev611SeroNHSBT_All_ONS60cutoff_IFRtiming_18wk2_prev14-0PHE_matrices_20220107_stable_household_deaths"
 
 ## Change location of output directory
 in.base <- "new_base_"
