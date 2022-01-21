@@ -68,7 +68,7 @@ matrix.suffix <- "_timeuse_household_new_base"
 
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
-sus_seb_combination <- 1L
+sus_seb_combination <- 3L #number 3 to use the old sus data
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
@@ -81,6 +81,12 @@ adm.sus.region_col <- "RGN19NM"
 adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
+
+# File names for files in
+preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
+names(preprocessed_sus_names) <- regions
+print(preprocessed_sus_names)
+preprocessed_sus_csv_name <- "admissions_data.csv"
 
 ## ##Admissions flags/dates
 ## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
@@ -108,7 +114,7 @@ age.labs <- c("<1yr","1-4","5-14","15-24","25-44","45-64","65-74", "75+") ## "Al
 nA <- length(age.labs)
 
 #! Added age groupings for the sitrep data
-#summarise_classes_sus <- list("[0,25)" = c("[0,1)", "[1,5)", "[5,15)", "[15,25)"))
+summarise_classes_sus <- list("[0,25)" = c("[0,1)", "[1,5)", "[5,15)", "[15,25)"))
 
 summarise_classes_seb <- list("0_25" = c("0_5", "6_17", "18_24"),
                               "25_45"= c("25_34", "35_44"),
@@ -146,7 +152,7 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
@@ -271,7 +277,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 2
+prev.cutoff.days <- 3
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 

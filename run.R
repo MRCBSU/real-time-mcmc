@@ -145,8 +145,14 @@ if(format.inputs){
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
     }
-}else if (vacc.flag) {                                                                                                                      
-  load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))              } 
+}else{
+    if (vacc.flag) {                                                                                                                      
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))
+    }
+        if(adm.flag) {
+        file.copy(file.path("data", "RTM_format", region.type, "admissions", "admissions_data.csv"), out.dir)
+    }
+ }
 
 
 ## Set up the model specification.
