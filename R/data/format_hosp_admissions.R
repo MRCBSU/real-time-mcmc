@@ -518,6 +518,7 @@ if(sus_seb_combination == 3) {
 
 # Save the data
 write_csv(adm.sam, file.path(out.dir, "admissions_data.csv"))
+write_csv(adm.sam, file.path(data.dirs["adm"], "admissions_data.csv"))
 
 
 ## Create a quick plot of the data
