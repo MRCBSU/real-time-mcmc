@@ -339,6 +339,7 @@ if(single.ifr){
         write_tsv(as.data.frame(model.matrix(lm.TA2)), file.path(out.dir, "ifr.design.txt"), col_names = FALSE)
     }
 }
+## stop()
 
 ## Day of the week effects in the reporting of `deaths'.
 if(gp.flag){
