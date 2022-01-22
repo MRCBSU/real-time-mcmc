@@ -165,7 +165,7 @@ prev.dat <- prev.dat %>%
     get.region() %>%
     filter(region %in% regions)
 
-# Check correct number of days
+## Check correct number of days
 stopifnot(
   (
     prev.dat %>%

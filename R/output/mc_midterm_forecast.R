@@ -95,7 +95,7 @@ combine.rtm.output <- function(x, strFld){
 ## ## ## --------------------
 
 if(!file.exists(projections.basedir))
-    dir.create(projections.basedir)
+    dir.create(projections.basedir, recursive = T)
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_inputs-LIKE SPECIFICATIONS
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
@@ -110,7 +110,7 @@ end.vac <- ifelse(vacc.flag, ndays, 1)
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date_and_suff.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
@@ -119,7 +119,7 @@ cm.lockdown <- c(cm.lockdown,
 cm.mults <- c(cm.mults,
               file.path(proj.dir,
                         "contact_mats",
-                        paste0("ag", nA, "_mult_mod", ifelse(contact.model!=6, contact.model, "All"), "Levels", mult.order, ".txt"))
+                        paste0("ag", nA, "_mult_mod", ifelse(contact.model != 6, contact.model, "All"), "Levels", mult.order, ".txt"))
               )
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1

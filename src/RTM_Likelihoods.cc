@@ -84,6 +84,14 @@ void initialising_Deterministic_SE1E2I1I2R_AG_RF_CIN2(regional_model_params in_d
   gsl_vector_free(sigma);
 }
 
+// Collapsing age- and vaccination state-specific vectors into an age only-dependent quantity.
+void collapse_vac(gsl_vector* vec_age, const gsl_vector* vec_vac_age){
+  gsl_vector_set_zero(vec_age);
+  for(int intA = 0; intA < NUM_AGE_GROUPS; ++intA)
+    for(int intV = 0; intV <= MAX_VAC_DOSES; ++intV)
+      gsl_vector_set(vec_age, intA, gsl_vector_get(vec_age, intA) + gsl_vector_get(vec_vac_age, STATE_IDX(intV, intA)));
+}
+
 void prob_infection_RF_MA(
 			  gsl_vector* prob_infection,
 			  gsl_vector* I, // above two vectors are outputs
@@ -100,6 +108,9 @@ void prob_infection_RF_MA(
   gsl_vector_mul(I, epsilon);
   gsl_vector_add(I, I_1);
 
+  gsl_vector* Iages = gsl_matrix_alloc(NUM_AGE_GROUPS);
+  collapse_vac(Iages, I);
+  
   if(tk == cREEDFROST){
     for (int a = 0; a < prob_infection->size; ++a)
       {
@@ -107,7 +118,7 @@ void prob_infection_RF_MA(
 	double lprod = 0;
 	for (int b = 0; b < prob_infection->size; ++b)
 	  {
-	    lprod += gsl_vector_get(I, b) * gsl_sf_log(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b));
+	    lprod += gsl_vector_get(Iages, b) * gsl_sf_log(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b));
 	    // gsl_vector_set(p_beta,
 	    // 		   b,
 	    // 		   pow(1 - gsl_matrix_get(force_infectious_contact_matrix, a, b), gsl_vector_get(I, b)));
@@ -118,10 +129,11 @@ void prob_infection_RF_MA(
       }
   } else if(tk == cMASSACTION){
     
-    gsl_blas_dsymv(CblasLower, 1.0, force_infectious_contact_matrix, I, 0.0, prob_infection);
+    gsl_blas_dsymv(CblasLower, 1.0, force_infectious_contact_matrix, Iages, 0.0, prob_infection);
 
   }
-
+  gsl_vector_free(Iages);
+  
   // Allow for outside importations and scale according to the time-step size.
   gsl_vector_add(prob_infection, importations);
   gsl_vector_scale(prob_infection, delta_t);
@@ -130,13 +142,13 @@ void prob_infection_RF_MA(
 
 void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PARAMETERS THAT ARE PASSED BY REFERENCE AND ARE NOT CONSTANT
 					 gsl_matrix* l_S,
-					 gsl_matrix* l_SV1,
-					 gsl_matrix* l_SVn,
 					 gsl_matrix* l_E_1, 
 					 gsl_matrix* l_E_2, 
 					 gsl_matrix* l_I_1, 
 					 gsl_matrix* l_I_2, 
-					 gsl_matrix* l_R, 
+					 gsl_matrix* l_R_pos, 
+					 gsl_matrix* l_R_neg,
+					 gsl_matrix* l_W,
 					 gsl_matrix* l_NNI,
 					 gsl_matrix* l_Delta_Dis,
 					 gsl_matrix* l_Seropositivity,
@@ -152,50 +164,61 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 					 const gsl_vector* I2_0,
 					 const global_model_instance_parameters& gmip,
 					 const mixing_model& l_MIXMOD_ADJUSTED2,
-					 const rtmData* Vaccination)
+					 const rtmData* Vaccination,
+					 const rtmData* VBooster)
 {
   // FUNCTION DEFINITION 
   int timestepsperday = gmip.l_transmission_time_steps_per_day;
   int time_points = l_S->size1; 
-  gsl_matrix* Number_New_Infected = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
+  gsl_matrix* Number_New_Infected = gsl_matrix_calloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* Delta_Disease = (Vaccination) ? gsl_matrix_alloc(time_points, NUM_AGE_GROUPS) : Number_New_Infected;
   gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
   gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
-  gsl_vector* I = gsl_vector_alloc(NUM_AGE_GROUPS);
+  gsl_vector* I = gsl_vector_alloc(STATE_DIM);
   int mix_interval;
 
   // INITIALISING: SEIR view variables
+  // CHECK EVERYTHING HAS BEEN INITIALISED TO ZERO!
   gsl_vector_view S_view = gsl_matrix_row(l_S, 0);
-  gsl_vector_view SV1_view, SVn_view;
-  if(Vaccination){
-    SV1_view = gsl_matrix_row(l_SV1, 0);
-    SVn_view = gsl_matrix_row(l_SVn, 0);
-  }
-  // gsl_vector_view SVn_view = (Vaccination) ? gsl_matrix_row(l_SVn, 0) : NULL;
   gsl_vector_view I1_view = gsl_matrix_row(l_I_1, 0);
-  gsl_vector_memcpy(&I1_view.vector, I1_0);
   gsl_vector_view I2_view = gsl_matrix_row(l_I_2, 0);
-  gsl_vector_memcpy(&I2_view.vector, I2_0);
   gsl_vector_view E1_view = gsl_matrix_row(l_E_1, 0);
-  gsl_vector_memcpy(&E1_view.vector, E1_0);
   gsl_vector_view E2_view = gsl_matrix_row(l_E_2, 0);
-  gsl_vector_memcpy(&E2_view.vector, E2_0);
-  gsl_vector_view R1_view = gsl_matrix_row(l_R, 0);
-  gsl_vector_set_all(&R1_view.vector, 0);
+  gsl_vector_view R_pos_view = gsl_matrix_row(l_R_pos, 0);
+  // gsl_vector_set_all(&R_pos_view.vector, 0);
+  gsl_vector_view R_neg_view = gsl_matrix_row(l_R_neg, 0);
+  // gsl_vector_set_all(&R_neg_view.vector, 0);
+  gsl_vector_view W_view = gsl_matrix_row(l_W, 0);
+  // gsl_vector_set_all(&W_pos_view.vector, 0);
+
   // INITIALISING: Other view variables needed
   gsl_vector_view P_view;
   gsl_vector_view dA_view;
 
+  // ASSUME ONLY UNVACCINATED STATES ARE INITIALLY NON-ZERO  
+
   // SELECT THE CORRECT MIXING MATRIX
   gsl_matrix_memcpy(P, l_MIXMOD_ADJUSTED2.MIXMAT_scaled[0]);
+
+  // GET SOME UNVACCINATED VIEWS OF THE FIRST ROW OF THE STATE MATRICES
+  gsl_vector_view S_V0_view = gsl_vector_subvector(&S_view.vector, 0, NUM_AGE_GROUPS);
+  gsl_vector_view E1_V0_view = gsl_vector_subvector(&E1_view.vector, 0, NUM_AGE_GROUPS);
+  gsl_vector_memcpy(&E1_V0_view.vector, E1_0);
+  gsl_vector_view E2_V0_view = gsl_vector_subvector(&E2_view.vector, 0, NUM_AGE_GROUPS);
+  gsl_vector_memcpy(&E2_V0_view.vector, E2_0);
+  gsl_vector_view I1_V0_view = gsl_vector_subvector(&I1_view.vector, 0, NUM_AGE_GROUPS);
+  gsl_vector_memcpy(&I1_V0_view.vector, I1_0);
+  gsl_vector_view I2_V0_view = gsl_vector_subvector(&I2_view.vector, 0, NUM_AGE_GROUPS);
+  gsl_vector_memcpy(&I2_V0_view.vector, I2_0);
   for (int a = 0; a < NUM_AGE_GROUPS; ++a)
     {
       gsl_matrix_set(l_S, 0, a, gsl_vector_get(regional_population_by_age, a) * gsl_vector_get(in_dmp.l_init_prop_sus, a));
-      if(l_SV1){
-	gsl_matrix_set(l_SV1, 0, a, 0);
-	gsl_matrix_set(l_SVn, 0, a, 0);
-      }
-      gsl_matrix_set(l_R, 0, a, 0);
+      gsl_matrix_set(l_R_neg, 0, a, gsl_vector_get(regional_population_by_age, a) -
+		     gsl_matrix_get(l_S, 0, a) -
+		     gsl_matrix_get(l_I1, 0, a) -
+		     gsl_matrix_get(l_E1, 0, a) -
+		     gsl_matrix_get(l_I2, 0, a) -
+		     gsl_matrix_get(l_E2, 0, a));
       // gsl_matrix_set(l_R, 0, a, gsl_vector_get(regional_population_by_age, a) * (1 - gsl_vector_get(in_dmp.l_init_prop_sus, a))); // OLD CODE, l_R WAS IGNORED, SO HOPEFULLY CAN RE-PURPOSE IT FOR THE NEW SWAB POSITIVE STATE
       P_view = gsl_matrix_row(P, a);
       dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
@@ -220,7 +243,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 		       1 / ((double) timestepsperday));
   
   // Get number of new infections.. probability of infection multiplied by number of susceptibles.
-  gsl_matrix_set_row(Number_New_Infected, 0, &S_view.vector);
+  gsl_matrix_set_row(Number_New_Infected, 0, &S_V0_view.vector);
   gsl_vector_mul(&Number_New_Infected_view.vector, &p_lambda_view.vector);
   if(Vaccination) gsl_matrix_set_row(Delta_Disease, 0, &Number_New_Infected_view.vector);
   
@@ -228,6 +251,9 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
   // UPDATING THE MODEL:
   int nday = 0;
+  // RE-SETTING COUNTERS OF SEROPOSITIVITY (MEASURED AS THE FRACTION CURRENTLY UNSUSCEPTIBLE) AND INFECTION ATTACK RATE
+  gsl_matrix_set_all(l_Seropositivity, 1.0);
+  gsl_matrix_set_zero(l_internal_AR);
   
   for (int t = 0; t < time_points - 1; ++t)// YOU PUT -1 BECAUSE YOUR VECTORS HAVE LENGTHS UP TO TIME_POINTS AND WE ARE WORKING WITH t+1
     { 
@@ -238,42 +264,79 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
       for (int a = 0; a < NUM_AGE_GROUPS; ++a)
 	{
+	  for(int v = 0; v <= MAX_VAX_DOSES; ++v)
+	    {
+	      double pi = (v == 0) ? 0 :
+		((v == 1) ? gsl_matrix_get(in_dmp.l_vacc1_infect, t, a) :
+		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) : gsl_matrix_get(in_dmp.l_vaccb_infect, t, a)
+		  )
+		 );
+	      double alpha = (v == 0) ? 0 :
+		((v == 1) ? gsl_matrix_get(in_dmp.l_vacc1_disease, t, a) :
+		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_disease, t, a) : gsl_matrix_get(in_dmp.l_vaccb_disease, t, a)
+		  )
+		 );
+	      double vacc_in = ((v == 0) ? 0 :
+				((v == 1) ? Vaccination->getCount(nday, a) :
+				 ((v == 2) ? Vaccination->getDenom(nday, a) : VBooster->getCount(nday, a)
+				  )
+				 )) / timestepsperday;
+	      double vacc_out = ((v == 0) ? Vaccination->getCount(nday, a) :
+				 ((v == 1) ? Vaccination->getDenom(nday, a) :
+				  ((v == 2) ? VBooster->getCount(nday, a) : 0
+				   )
+				  )) / timestepsperday;
+
+	      // NUMBER OF NEW INFECTIONS FROM CURRENT SUSCEPTIBLE GROUP DEFINED BY (v,a)
+	      double adj_S = (1 - pi) * (1 - vacc_out) *
+		gsl_matrix_get(l_S, t, STATE_IDX(v, a)) * gsl_matrix_get(p_lambda, t, a);
+
+	      gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(Number_New_Infected, t + 1, a) + adj_S);
+	      gsl_matrix_set(Delta_Disease, t + 1, a, gsl_matrix_get(Delta_Disease, t + 1, a) + (1 - alpha) * adj_S);
+
+	      gsl_matrix_set(l_S, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_S, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     gsl_matrix_get(l_S, t, STATE_IDX(v, a)) - adj_S +
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * (2 / gsl_matrix_get(in_dmp.l_waning_rate, t, a)) / timestepsperday)
+			     );
+
+	      gsl_matrix_set(l_E_1, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_E_1, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_E_1, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)))) +
+			     adj_S);
+
+	      gsl_matrix_set(l_E_2, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_E_2, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_E_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
+
+	      gsl_matrix_set(l_I_1, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_I_1, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
+
+	      gsl_matrix_set(l_I_2, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_I_2, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
+	      
+	      gsl_matrix_set(l_R_pos, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (1 / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
+
+	      gsl_matrix_set(l_R_neg, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc.out) / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)));
+
+	      gsl_matrix_set(l_W, t + 1, STATE_IDX(v, a),
+			     (gsl_matrix_get(l_W, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc.out) / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)));
+
+	    } // FOR v
 	  
-	  gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(p_lambda, t, a) * gsl_matrix_get(l_S, t, a));
-
-	  gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)));
-
-	  if(Vaccination){
-
-	    gsl_matrix_set(Delta_Disease, t + 1, a, gsl_matrix_get(Number_New_Infected, t + 1, a) + gsl_matrix_get(p_lambda, t, a) * (
-																      ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vacc1_disease, t, a)) * gsl_matrix_get(l_SV1, t, a)) +
-																      ((1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * (1 - gsl_matrix_get(in_dmp.l_vaccn_disease, t, a)) * gsl_matrix_get(l_SVn, t, a))));
-
-	    double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(l_SV1, t, a) +
-	      (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(l_SVn, t, a);
-	    
-	    gsl_matrix_set(Number_New_Infected, t + 1, a, gsl_matrix_get(Number_New_Infected, t + 1, a) + gsl_matrix_get(p_lambda, t, a) * adj_S);
-
-	    gsl_matrix_set(l_S, t + 1, a, gsl_matrix_get(l_S, t + 1, a) * (1 - Vaccination->getCount(nday, a) / timestepsperday));
-
-	    gsl_matrix_set(l_SV1, t + 1, a, (gsl_matrix_get(l_S, t, a) * (1 - gsl_matrix_get(p_lambda, t, a)) * Vaccination->getCount(nday, a) / timestepsperday) +
-			   gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * (1 - Vaccination->getDenom(nday, a) / timestepsperday));
-
-	    gsl_matrix_set(l_SVn, t + 1, a, (gsl_matrix_get(l_SV1, t, a) * (1 - ((1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t, a)) * gsl_matrix_get(p_lambda, t, a))) * Vaccination->getDenom(nday, a) / timestepsperday) +
-			   gsl_matrix_get(l_SVn, t, a) * (1 - (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t, a)) * gsl_matrix_get(p_lambda, t, a)));
-  
-	  }
-
-	  gsl_matrix_set(l_E_1, t + 1, a, gsl_matrix_get(l_E_1, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + gsl_matrix_get(Number_New_Infected, t + 1, a));
-     
-	  gsl_matrix_set(l_E_2, t + 1, a, gsl_matrix_get(l_E_2, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday))) + (2/(gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)) * gsl_matrix_get(l_E_1, t, a));
-	
-	  gsl_matrix_set(l_I_1, t + 1, a, gsl_matrix_get(l_I_1, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday))) +  (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)) * gsl_matrix_get(l_E_2, t, a));
-	
-	  gsl_matrix_set(l_I_2, t + 1, a, gsl_matrix_get(l_I_2, t, a) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday))) + (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)) * gsl_matrix_get(l_I_1, t, a));
-
-	  gsl_matrix_set(l_R, t + 1, a, (gsl_matrix_get(l_R, t, a) * (1 - (1 / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)))) + (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)) * gsl_matrix_get(l_I_2, t, a));
-
 	  if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 	    gsl_matrix_set(l_Seropositivity, t / timestepsperday, a, 1 - (gsl_matrix_get(l_S, t + 1, a) / gsl_vector_get(regional_population_by_age, a)));
 	    if(Vaccination){
@@ -281,8 +344,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 			     t / timestepsperday,
 			     a,
 			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (gsl_matrix_get(l_SV1, t + 1, a) + gsl_matrix_get(l_SVn, t + 1, a)) / gsl_vector_get(regional_population_by_age, a));
-	    double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t + 1, a)) * gsl_matrix_get(l_SV1, t + 1, a) +
-	      (1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t + 1, a)) * gsl_matrix_get(l_SVn, t + 1, a);
+	      double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t + 1, a)) * gsl_matrix_get(l_SV1, t + 1, a) +
+		(1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t + 1, a)) * gsl_matrix_get(l_SVn, t + 1, a);
 	      gsl_matrix_set(l_Seropositivity,
 			     t / timestepsperday,
 			     a,
@@ -296,7 +359,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	  dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
 	  gsl_vector_div(&P_view.vector, &dA_view.vector);
 
-	} // FOR
+	   
+	} // FOR a
 
       // UPDATE THE PROBABILITY OF INFECTION
 
@@ -334,22 +398,22 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
     }// FOR
 
   if(Vaccination){
-  l_end_state->fill(&S_view.vector,
-		    &SV1_view.vector,
-		    &SVn_view.vector,
-		    &E1_view.vector,
-		    &E2_view.vector,
-		    &I1_view.vector,
-		    &I2_view.vector,
-		    &R1_view.vector,
-		    &p_lambda_view.vector);
+    l_end_state->fill(&S_view.vector,
+		      &SV1_view.vector,
+		      &SVn_view.vector,
+		      &E1_view.vector,
+		      &E2_view.vector,
+		      &I1_view.vector,
+		      &I2_view.vector,
+		      &R1_view.vector,
+		      &p_lambda_view.vector);
   } else l_end_state->fill(&S_view.vector,
-		    &E1_view.vector,
-		    &E2_view.vector,
-		    &I1_view.vector,
-		    &I2_view.vector,
-		    &R1_view.vector,
-		    &p_lambda_view.vector);
+			   &E1_view.vector,
+			   &E2_view.vector,
+			   &I1_view.vector,
+			   &I2_view.vector,
+			   &R1_view.vector,
+			   &p_lambda_view.vector);
 
   // AGGREGATE THE NUMBER_NEW_INFECTED MATRIX TO THE TIME STEPS USED BY THE REPORTING MODEL
   output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Number_New_Infected, l_NNI);
@@ -379,30 +443,33 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 		      const gsl_vector* I1_0, const gsl_vector* I2_0,
 		      gsl_matrix* d_NNI, gsl_matrix* d_Delta_Dis, gsl_matrix* d_Seropositivity, gsl_matrix* d_internal_AR, gsl_matrix* d_Prevalence,
 		      model_state* d_end_state,
-		      const rtmData* vaccination)
+		      const rtmData* vaccination,
+		      const rtmData* vbooster)
 {
   int num_days = global_params.l_duration_of_runs_in_days, step_size = global_params.l_transmission_time_steps_per_day;
 
   const mixing_model l_MIXMOD_ADJUSTED2 = in_dmp.l_MIXMOD;
 
-  gsl_matrix* S = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* SV1 = (vaccination) ? gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS) : NULL;
-  gsl_matrix* SVn = (vaccination) ? gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS) : NULL;
-  gsl_matrix* E_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* E_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* I_1 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* I_2 = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS); 
-  gsl_matrix* R = gsl_matrix_alloc(num_days * step_size, NUM_AGE_GROUPS);
+  int narr_rows = num_days * step_size;
+  int narr_cols = (MAX_VAX_DOSES + 1) * NUM_AGE_GROUPS;
+  gsl_matrix* S = gsl_matrix_calloc(narr_rows, narr_cols); 
+  gsl_matrix* E_1 = gsl_matrix_calloc(narr_rows, narr_cols); 
+  gsl_matrix* E_2 = gsl_matrix_calloc(narr_rows, narr_cols); 
+  gsl_matrix* I_1 = gsl_matrix_calloc(narr_rows, narr_cols); 
+  gsl_matrix* I_2 = gsl_matrix_calloc(narr_rows, narr_cols); 
+  gsl_matrix* R_pos = gsl_matrix_calloc(narr_rows, narr_cols);
+  gsl_matrix* R_neg = gsl_matrix_calloc(narr_rows, narr_cols);
+  gsl_matrix* W = gsl_matrix_calloc(narr_rows, narr_cols);
 
   Deterministic_S_E1_E2_I1_I2_R_AG_RF( // OUTPUTS THE NUMBER OF NEW INFECTEDS, THE INPUT TO THE REPORTING MODEL
 				      S,
-				      SV1,
-				      SVn,
 				      E_1, 
 				      E_2, 
 				      I_1, 
 				      I_2, 
-				      R,
+				      R_pos,
+				      R_neg,
+				      W,
 				      d_NNI,
 				      d_Delta_Dis,
 				      d_Seropositivity,
@@ -418,18 +485,17 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 				      I2_0, 
 				      global_params,
 				      l_MIXMOD_ADJUSTED2,
-				      vaccination);
+				      vaccination,
+				      vbooster);
 
   gsl_matrix_free(S);
-  if(vaccination){
-    gsl_matrix_free(SV1);
-    gsl_matrix_free(SVn);
-  }
   gsl_matrix_free(E_1);
   gsl_matrix_free(E_2);
   gsl_matrix_free(I_1);
   gsl_matrix_free(I_2);
-  gsl_matrix_free(R);
+  gsl_matrix_free(R_pos);
+  gsl_matrix_free(R_neg);
+  gsl_matrix_free(W);
 
 }
 
@@ -437,7 +503,8 @@ void fn_transmission_model(regional_model_params in_dmp,
 			   global_model_instance_parameters global_params,
 			   const gsl_vector* regional_population_by_age,
 			   model_statistics& mod_stats,
-			   const rtmData* vaccination)
+			   const rtmData* vaccination,
+			   const rtmData* vbooster)
 {
 
   // WRITE DOWN THE FLUCTUATION IN R_0 OVER TIME
@@ -452,6 +519,7 @@ void fn_transmission_model(regional_model_params in_dmp,
   gsl_vector* l_I1_0 = gsl_vector_alloc(NUM_AGE_GROUPS);
   gsl_vector* l_I2_0 = gsl_vector_alloc(NUM_AGE_GROUPS);
 
+  // This will initialise the top, unvaccinated layer
   initialising_Deterministic_SE1E2I1I2R_AG_RF_CIN2(in_dmp, global_params,
 						   *in_dmp.l_MIXMOD.evector_MIXMAT_normalised,
 						   l_E1_0, l_E2_0, l_I1_0, l_I2_0);
@@ -460,7 +528,8 @@ void fn_transmission_model(regional_model_params in_dmp,
 		   R0_t, l_E1_0, l_E2_0,
 		   l_I1_0, l_I2_0, mod_stats.d_NNI, mod_stats.d_Delta_Dis, mod_stats.d_seropositivity, mod_stats.d_internal_AR, mod_stats.d_prevalence,
 		   mod_stats.d_end_state,
-		   vaccination);
+		   vaccination,
+		   vbooster);
 
   ///////////////////////////////////////////////
   // free whatever isn't kept
@@ -772,283 +841,284 @@ void fn_log_likelihood_region(rlikelihood& llhood,
   double temp_log_likelihood = 0;
   //double lfx_increment = 0;
       
-      // Does the transmission model need to be re-evaluated?
-      // (Not necessary when updating parameters of the reporting model)
-      if(flag_update_transmission_model)
-	fn_transmission_model(meta_region[int_region].det_model_params,
-			      gmip,
-			      meta_region[int_region].population,
-			      meta_region[int_region].region_modstats,
-			      meta_region[int_region].Vaccination_data);
+  // Does the transmission model need to be re-evaluated?
+  // (Not necessary when updating parameters of the reporting model)
+  if(flag_update_transmission_model)
+    fn_transmission_model(meta_region[int_region].det_model_params,
+			  gmip,
+			  meta_region[int_region].population,
+			  meta_region[int_region].region_modstats,
+			  meta_region[int_region].Vaccination_data,
+			  meta_region[int_region].VBoosting_data);
       
-      // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
-      if(gmip.l_Sero_data_flag &&
-	 (flag_update_transmission_model || flag_update_Sero_likelihood)
-	 ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
-	    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
-	    // This proportion is age, but not time dependent.
-	gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_internal_AR->size1, meta_region[int_region].region_modstats.d_internal_AR->size2);
-	gsl_matrix* test_sens_scaling = gsl_matrix_alloc(test_positivity->size1, test_positivity->size2);
-	gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_internal_AR);
-	gsl_matrix_memcpy(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_sensitivity);
+  // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
+  if(gmip.l_Sero_data_flag &&
+     (flag_update_transmission_model || flag_update_Sero_likelihood)
+     ){ // HERE!!! NEED TO ADD A CONDITION INTO HERE && (flag_update_transmission_model || new_flag_for_updating_serology)
+    // Get the seropositivity at the HI>32 level - subtract the initial portion who are positive at HI>8 but not HI>32
+    // This proportion is age, but not time dependent.
+    gsl_matrix* test_positivity = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_internal_AR->size1, meta_region[int_region].region_modstats.d_internal_AR->size2);
+    gsl_matrix* test_sens_scaling = gsl_matrix_alloc(test_positivity->size1, test_positivity->size2);
+    gsl_matrix_memcpy(test_positivity, meta_region[int_region].region_modstats.d_internal_AR);
+    gsl_matrix_memcpy(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_sensitivity);
 	
-	gsl_vector* prop_immune_baseline_nonseropositive = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
-	gsl_vector* temp_vec = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
-	gsl_vector_memcpy(prop_immune_baseline_nonseropositive, meta_region[int_region].det_model_params.l_init_prop_sus);
-	gsl_vector_memcpy(temp_vec, meta_region[int_region].det_model_params.l_init_prop_sus_HI_geq_32);
-	gsl_vector_add_constant(prop_immune_baseline_nonseropositive, -1.0);
-	gsl_vector_add_constant(temp_vec, -1.0);
-	gsl_vector_mul(prop_immune_baseline_nonseropositive, temp_vec);
-	gsl_vector_free(temp_vec);
+    gsl_vector* prop_immune_baseline_nonseropositive = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
+    gsl_vector* temp_vec = gsl_vector_alloc(meta_region[int_region].det_model_params.l_init_prop_sus->size);
+    gsl_vector_memcpy(prop_immune_baseline_nonseropositive, meta_region[int_region].det_model_params.l_init_prop_sus);
+    gsl_vector_memcpy(temp_vec, meta_region[int_region].det_model_params.l_init_prop_sus_HI_geq_32);
+    gsl_vector_add_constant(prop_immune_baseline_nonseropositive, -1.0);
+    gsl_vector_add_constant(temp_vec, -1.0);
+    gsl_vector_mul(prop_immune_baseline_nonseropositive, temp_vec);
+    gsl_vector_free(temp_vec);
 
-	for(int int_t = 0; int_t < test_positivity->size1; int_t++)
-	  {
-	    gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
-	    gsl_vector_sub(&seropos_row.vector, prop_immune_baseline_nonseropositive);
-	  }
-	gsl_vector_free(prop_immune_baseline_nonseropositive);
-
-	// ** Some account for test sensitivity and specificity. Will have to move from here
-	// ** if these two quantities are ever to be allowed to vary by time, region or age.
-	gsl_matrix_add(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_specificity);
-	gsl_matrix_add_constant(test_sens_scaling, -1.0);
-	gsl_matrix_mul_elements(test_positivity, test_sens_scaling);
-	gsl_matrix_sub(test_positivity, meta_region[int_region].det_model_params.l_sero_specificity);
-	gsl_matrix_add_constant(test_positivity, 1.0);
-	gsl_matrix_free(test_sens_scaling);
-	
-	// ** Is there any missing data - if dataset is of dimension less than the number of strata
-	if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
-	  // ** Yes: Aggregate seropositivities using a weighted mean
-	  gsl_matrix* weighted_positivity = gsl_matrix_calloc(meta_region[int_region].Serology_data->getDim1(),
-							      meta_region[int_region].Serology_data->getDim2());
-	  for(int int_t = 0; int_t < test_positivity->size1; int_t++)
-	    {
-	      gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
-	      gsl_vector_mul(&seropos_row.vector, meta_region[int_region].Serology_data->access_weights());
-	      gsl_vector_view seropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
-	      R_by_sum_gsl_vector_mono_idx(&seropos_out_row.vector,
-					   NULL,
-					   &seropos_row.vector,
-					   meta_region[int_region].Serology_data->access_groups());
-	    }
-	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(weighted_positivity, NULL);
-	  gsl_matrix_free(weighted_positivity);  
-	} else // ** Just calculate the likelihood based on the already computed positivities
-	  temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
-	// CCS
-	lfx_region += (temp_log_likelihood - llhood.Sero_lfx);
-	llhood.Sero_lfx = temp_log_likelihood;
-	gsl_matrix_free(test_positivity);
+    for(int int_t = 0; int_t < test_positivity->size1; int_t++)
+      {
+	gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
+	gsl_vector_sub(&seropos_row.vector, prop_immune_baseline_nonseropositive);
       }
+    gsl_vector_free(prop_immune_baseline_nonseropositive);
 
-      if(gmip.l_Prev_data_flag && (flag_update_transmission_model || flag_update_Prev_likelihood))
-	{
-	  gsl_matrix* summed_prevalence = gsl_matrix_calloc(meta_region[int_region].region_modstats.d_prevalence->size1,
-							    meta_region[int_region].Prevalence_data->getDim2());
-	  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_prevalence) > DBL_EPSILON)
-	    {
-	      // ** Is there any missing data - if dataset is of dimension less than the number of strata
-	      if(meta_region[int_region].region_modstats.d_prevalence->size2 != meta_region[int_region].Prevalence_data->getDim2()){
-		// ** Aggregate total prevalence (we work with numbers prevalent, not a proportion)
-		for(int int_k = 0; int_k < summed_prevalence->size1; int_k++)
-		  {
-		    gsl_vector_view full_strata_prev = gsl_matrix_row(meta_region[int_region].region_modstats.d_prevalence, int_k);
-		    gsl_vector_view agg_strata_prev = gsl_matrix_row(summed_prevalence, int_k);
-		    R_by_sum_gsl_vector_mono_idx(&agg_strata_prev.vector,
-						 NULL,
-						 &full_strata_prev.vector,
-						 meta_region[int_region].Prevalence_data->access_groups());
-		  }
-	      } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
-	      temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
-	      // CCS
-	      lfx_region += (temp_log_likelihood - llhood.Prev_lfx);
-	      //if (debug) cout << int_region << " Prev prev " << gsl_vector_get(*llhood.Prev_lfx, int_region) << " curr " << temp_log_likelihood << endl;
-	      llhood.Prev_lfx = temp_log_likelihood;
-	    }
-	  gsl_matrix_free(summed_prevalence);
-	}
-      
-      double lfx_sub_increment = 0.0;
-      // #pragma omp parallel default(shared) num_threads(2) reduction(+:lfx_sub_increment)
-      //       {
-
-      //        	// Have assigned two processors to this scope - first processor deals with GP related data
-      //        	if(omp_get_thread_num() == 0)
-      //        	  {
-      if((flag_update_GP_likelihood || flag_update_Viro_likelihood) && (((bool) gmip.l_GP_consultation_flag) || ((bool) gmip.l_Viro_data_flag)))
-	{
-	  if(flag_update_reporting_model)
-	    {
-	      fn_reporting_model(meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
-				 meta_region[int_region].region_modstats.d_Delta_Dis,
-				 meta_region[int_region].det_model_params.l_pr_symp,
-				 meta_region[int_region].det_model_params.l_pr_onset_to_GP,
-				 gmip,
-				 gmip.l_GP_likelihood.upper,
-				 meta_region[int_region].population,
-				 *gp_distribution_function /*, num_subthread_teams */ );
-	    }
+    // ** Some account for test sensitivity and specificity. Will have to move from here
+    // ** if these two quantities are ever to be allowed to vary by time, region or age.
+    gsl_matrix_add(test_sens_scaling, meta_region[int_region].det_model_params.l_sero_specificity);
+    gsl_matrix_add_constant(test_sens_scaling, -1.0);
+    gsl_matrix_mul_elements(test_positivity, test_sens_scaling);
+    gsl_matrix_sub(test_positivity, meta_region[int_region].det_model_params.l_sero_specificity);
+    gsl_matrix_add_constant(test_positivity, 1.0);
+    gsl_matrix_free(test_sens_scaling);
 	
-	  // ADD THE BACKGROUND AND CALCULATE THE UPDATED POSITIVITY
-	  fn_background_model(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
-			      meta_region[int_region].region_modstats.d_viropositivity,
-			      meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
-			      meta_region[int_region].det_model_params.l_background_gps_counts,
-			      gmip,
-			      true,
-			      meta_region[int_region].det_model_params.l_sensitivity,
-			      meta_region[int_region].det_model_params.l_specificity);
-	  
-	  // Q-SURVEILLANCE DATA DOESN'T HAVE 100% COVERAGE OF THE POPULATION.
-	  // SCALE THE EXPECTED COUNTS BY THE DAILY % COVERAGE BY AGE (the latter is done inside likelihood functions
-	  if(gmip.l_GP_consultation_flag || flag_update_GP_likelihood)
-	    {
-
-	      gsl_matrix_mul_elements(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
-				      meta_region[int_region].det_model_params.l_day_of_week_effect);
-
-	      if(gmip.l_GP_consultation_flag && flag_update_GP_likelihood)
-		{
-		  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_GP_Consultations) >= 0)
-		    {
-		      gsl_matrix* mu_gp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size1,
-								  meta_region[int_region].GP_data->getDim2());
-		      if(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size2 != meta_region[int_region].GP_data->getDim2()){
-			// Yes: we have missing data
-			for(int int_t = 0; int_t < mu_gp_counts->size1; int_t++)
-			  {
-			    gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
-			    gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_gp_counts, int_t);
-			    R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
-							 NULL,
-							 &full_strata_counts.vector,
-							 meta_region[int_region].GP_data->access_groups());
-			  }
-		      } else gsl_matrix_memcpy(mu_gp_counts, meta_region[int_region].region_modstats.d_Reported_GP_Consultations);
-		      data_type dlfx = meta_region[int_region].GP_data->get_likelihood_type();
-		      if(dlfx == cPOISSON_LIK)
-			temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts, NULL);
-		      else if(dlfx == cNEGBIN_LIK)
-			temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts,
-										   meta_region[int_region].det_model_params.l_gp_negbin_overdispersion);
-		      else {
-			perror("Unrecognised likelihood selected\n");
-			exit(2);
-		      }
-		      lfx_sub_increment += (temp_log_likelihood - llhood.GP_lfx);
-		      llhood.GP_lfx = temp_log_likelihood;
-		      gsl_matrix_free(mu_gp_counts);
-		    }
-		  else {
-		    lfx_sub_increment += GSL_NEGINF;
-		    llhood.GP_lfx = GSL_NEGINF;
-		  }
-		}
-	    }
-	  if(gmip.l_Viro_data_flag && flag_update_Viro_likelihood)
-	    {
-	      // Viropositivity already calculated by each modelled strata.. if there is missing data we need to take a weighted average of the positivities.
-	      // Where the weights are proportional to the number of consultations in each strata.
-
-	      // If missing data...
-	      if(meta_region[int_region].region_modstats.d_viropositivity->size2 != meta_region[int_region].Virology_data->getDim2()){
-
-		// Aggregate viropositivities using a weighted mean
-		gsl_matrix* weighted_positivity = gsl_matrix_alloc(meta_region[int_region].Virology_data->getDim1(),
-								   meta_region[int_region].Virology_data->getDim2());
-
-		for(int int_t = 0; int_t < meta_region[int_region].Virology_data->getDim1(); int_t++)
-		  {
-		    gsl_vector_view viropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
-		    gsl_vector_view viropos_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_viropositivity, int_t);
-		    gsl_vector_view gp_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
-		    meta_region[int_region].Virology_data->data_population_sizes(&gp_row.vector);
-		    gsl_vector_mul(&viropos_row.vector, meta_region[int_region].Virology_data->access_weights());
-		    R_by_sum_gsl_vector_mono_idx(&viropos_out_row.vector,
-						 NULL,
-						 &viropos_row.vector,
-						 meta_region[int_region].Virology_data->access_groups());
-		  }
-		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(weighted_positivity, NULL);
-		gsl_matrix_free(weighted_positivity);
-	      } else
-		temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
-
-	      lfx_sub_increment += (temp_log_likelihood - llhood.Viro_lfx);
-	      llhood.Viro_lfx = temp_log_likelihood;
-	      
-	    }
-	  
-	}
-      // 	  }
-      
-      
-      // Have second processor assigned to hospitalisations
-      //        	if(omp_get_thread_num() == 1)
-      //        	  {
-      if(flag_update_Hosp_likelihood && ((bool) gmip.l_Hospitalisation_flag))
+    // ** Is there any missing data - if dataset is of dimension less than the number of strata
+    if(test_positivity->size2 != meta_region[int_region].Serology_data->getDim2()){
+      // ** Yes: Aggregate seropositivities using a weighted mean
+      gsl_matrix* weighted_positivity = gsl_matrix_calloc(meta_region[int_region].Serology_data->getDim1(),
+							  meta_region[int_region].Serology_data->getDim2());
+      for(int int_t = 0; int_t < test_positivity->size1; int_t++)
 	{
-	  fn_reporting_model(meta_region[int_region].region_modstats.d_Reported_Hospitalisations,
+	  gsl_vector_view seropos_row = gsl_matrix_row(test_positivity, int_t);
+	  gsl_vector_mul(&seropos_row.vector, meta_region[int_region].Serology_data->access_weights());
+	  gsl_vector_view seropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
+	  R_by_sum_gsl_vector_mono_idx(&seropos_out_row.vector,
+				       NULL,
+				       &seropos_row.vector,
+				       meta_region[int_region].Serology_data->access_groups());
+	}
+      temp_log_likelihood = meta_region[int_region].Serology_data->lfx(weighted_positivity, NULL);
+      gsl_matrix_free(weighted_positivity);  
+    } else // ** Just calculate the likelihood based on the already computed positivities
+      temp_log_likelihood = meta_region[int_region].Serology_data->lfx(test_positivity, NULL);
+    // CCS
+    lfx_region += (temp_log_likelihood - llhood.Sero_lfx);
+    llhood.Sero_lfx = temp_log_likelihood;
+    gsl_matrix_free(test_positivity);
+  }
+
+  if(gmip.l_Prev_data_flag && (flag_update_transmission_model || flag_update_Prev_likelihood))
+    {
+      gsl_matrix* summed_prevalence = gsl_matrix_calloc(meta_region[int_region].region_modstats.d_prevalence->size1,
+							meta_region[int_region].Prevalence_data->getDim2());
+      if(gsl_matrix_min(meta_region[int_region].region_modstats.d_prevalence) > DBL_EPSILON)
+	{
+	  // ** Is there any missing data - if dataset is of dimension less than the number of strata
+	  if(meta_region[int_region].region_modstats.d_prevalence->size2 != meta_region[int_region].Prevalence_data->getDim2()){
+	    // ** Aggregate total prevalence (we work with numbers prevalent, not a proportion)
+	    for(int int_k = 0; int_k < summed_prevalence->size1; int_k++)
+	      {
+		gsl_vector_view full_strata_prev = gsl_matrix_row(meta_region[int_region].region_modstats.d_prevalence, int_k);
+		gsl_vector_view agg_strata_prev = gsl_matrix_row(summed_prevalence, int_k);
+		R_by_sum_gsl_vector_mono_idx(&agg_strata_prev.vector,
+					     NULL,
+					     &full_strata_prev.vector,
+					     meta_region[int_region].Prevalence_data->access_groups());
+	      }
+	  } else gsl_matrix_memcpy(summed_prevalence, meta_region[int_region].region_modstats.d_prevalence);
+	  temp_log_likelihood = meta_region[int_region].Prevalence_data->meld_lfx(summed_prevalence);
+	  // CCS
+	  lfx_region += (temp_log_likelihood - llhood.Prev_lfx);
+	  //if (debug) cout << int_region << " Prev prev " << gsl_vector_get(*llhood.Prev_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+	  llhood.Prev_lfx = temp_log_likelihood;
+	}
+      gsl_matrix_free(summed_prevalence);
+    }
+      
+  double lfx_sub_increment = 0.0;
+  // #pragma omp parallel default(shared) num_threads(2) reduction(+:lfx_sub_increment)
+  //       {
+
+  //        	// Have assigned two processors to this scope - first processor deals with GP related data
+  //        	if(omp_get_thread_num() == 0)
+  //        	  {
+  if((flag_update_GP_likelihood || flag_update_Viro_likelihood) && (((bool) gmip.l_GP_consultation_flag) || ((bool) gmip.l_Viro_data_flag)))
+    {
+      if(flag_update_reporting_model)
+	{
+	  fn_reporting_model(meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
 			     meta_region[int_region].region_modstats.d_Delta_Dis,
 			     meta_region[int_region].det_model_params.l_pr_symp,
-			     meta_region[int_region].det_model_params.l_pr_onset_to_Hosp,
+			     meta_region[int_region].det_model_params.l_pr_onset_to_GP,
 			     gmip,
-			     gmip.l_Hosp_likelihood.upper,
+			     gmip.l_GP_likelihood.upper,
 			     meta_region[int_region].population,
-			     *hosp_distribution_function);
-	  
-	  gsl_matrix* mu_hosp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size1,
-							meta_region[int_region].Hospitalisation_data->getDim2());
-
-	  if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_Hospitalisations) >= 0)
-	    {
-
-	      if(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size2 != meta_region[int_region].Hospitalisation_data->getDim2()){
-		// Yes: again we have missing data
-		for(int int_t = 0; int_t < mu_hosp_counts->size1; int_t++)
-		  {
-		    gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_Hospitalisations, int_t);
-		    gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_hosp_counts, int_t);
-		    R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
-						 NULL,
-						 &full_strata_counts.vector,
-						 meta_region[int_region].Hospitalisation_data->access_groups());
-		  }
-	      } else gsl_matrix_memcpy(mu_hosp_counts, meta_region[int_region].region_modstats.d_Reported_Hospitalisations);
-	      data_type dlfx = meta_region[int_region].Hospitalisation_data->get_likelihood_type();
-	      if(dlfx == cPOISSON_LIK)
-		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
-											NULL);
-	      else if(dlfx == cNEGBIN_LIK)
-		temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
-											meta_region[int_region].det_model_params.l_hosp_negbin_overdispersion);
-	      else {
-		perror("Unrecognised likelihood selected\n");
-		exit(2);
-	      }
-	    } else temp_log_likelihood = GSL_NEGINF;
-	  
-	  lfx_sub_increment += (temp_log_likelihood - llhood.Hosp_lfx);
-
-	  //if (debug) cout << int_region << " Hosp prev " << gsl_vector_get(*llhood.Hosp_lfx, int_region) << " curr " << temp_log_likelihood << endl;
-
-	  llhood.Hosp_lfx = temp_log_likelihood;
-
-	  
-	  gsl_matrix_free(mu_hosp_counts);	  
+			     *gp_distribution_function /*, num_subthread_teams */ );
 	}
+	
+      // ADD THE BACKGROUND AND CALCULATE THE UPDATED POSITIVITY
+      fn_background_model(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
+			  meta_region[int_region].region_modstats.d_viropositivity,
+			  meta_region[int_region].region_modstats.d_H1N1_GP_Consultations,
+			  meta_region[int_region].det_model_params.l_background_gps_counts,
+			  gmip,
+			  true,
+			  meta_region[int_region].det_model_params.l_sensitivity,
+			  meta_region[int_region].det_model_params.l_specificity);
+	  
+      // Q-SURVEILLANCE DATA DOESN'T HAVE 100% COVERAGE OF THE POPULATION.
+      // SCALE THE EXPECTED COUNTS BY THE DAILY % COVERAGE BY AGE (the latter is done inside likelihood functions
+      if(gmip.l_GP_consultation_flag || flag_update_GP_likelihood)
+	{
 
-      lfx_region += lfx_sub_increment;
+	  gsl_matrix_mul_elements(meta_region[int_region].region_modstats.d_Reported_GP_Consultations,
+				  meta_region[int_region].det_model_params.l_day_of_week_effect);
 
-      // Save the regional likelihood component for AMGS blocks
-      llhood.region_lfx = lfx_region;
+	  if(gmip.l_GP_consultation_flag && flag_update_GP_likelihood)
+	    {
+	      if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_GP_Consultations) >= 0)
+		{
+		  gsl_matrix* mu_gp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size1,
+							      meta_region[int_region].GP_data->getDim2());
+		  if(meta_region[int_region].region_modstats.d_Reported_GP_Consultations->size2 != meta_region[int_region].GP_data->getDim2()){
+		    // Yes: we have missing data
+		    for(int int_t = 0; int_t < mu_gp_counts->size1; int_t++)
+		      {
+			gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
+			gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_gp_counts, int_t);
+			R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
+						     NULL,
+						     &full_strata_counts.vector,
+						     meta_region[int_region].GP_data->access_groups());
+		      }
+		  } else gsl_matrix_memcpy(mu_gp_counts, meta_region[int_region].region_modstats.d_Reported_GP_Consultations);
+		  data_type dlfx = meta_region[int_region].GP_data->get_likelihood_type();
+		  if(dlfx == cPOISSON_LIK)
+		    temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts, NULL);
+		  else if(dlfx == cNEGBIN_LIK)
+		    temp_log_likelihood = meta_region[int_region].GP_data->lfx(mu_gp_counts,
+									       meta_region[int_region].det_model_params.l_gp_negbin_overdispersion);
+		  else {
+		    perror("Unrecognised likelihood selected\n");
+		    exit(2);
+		  }
+		  lfx_sub_increment += (temp_log_likelihood - llhood.GP_lfx);
+		  llhood.GP_lfx = temp_log_likelihood;
+		  gsl_matrix_free(mu_gp_counts);
+		}
+	      else {
+		lfx_sub_increment += GSL_NEGINF;
+		llhood.GP_lfx = GSL_NEGINF;
+	      }
+	    }
+	}
+      if(gmip.l_Viro_data_flag && flag_update_Viro_likelihood)
+	{
+	  // Viropositivity already calculated by each modelled strata.. if there is missing data we need to take a weighted average of the positivities.
+	  // Where the weights are proportional to the number of consultations in each strata.
 
-      // cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
+	  // If missing data...
+	  if(meta_region[int_region].region_modstats.d_viropositivity->size2 != meta_region[int_region].Virology_data->getDim2()){
 
-      // lfx_increment += lfx_region;
-      // if (debug) cout << int_region << " end incr " << lfx_increment << endl;
+	    // Aggregate viropositivities using a weighted mean
+	    gsl_matrix* weighted_positivity = gsl_matrix_alloc(meta_region[int_region].Virology_data->getDim1(),
+							       meta_region[int_region].Virology_data->getDim2());
+
+	    for(int int_t = 0; int_t < meta_region[int_region].Virology_data->getDim1(); int_t++)
+	      {
+		gsl_vector_view viropos_out_row = gsl_matrix_row(weighted_positivity, int_t);
+		gsl_vector_view viropos_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_viropositivity, int_t);
+		gsl_vector_view gp_row = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_GP_Consultations, int_t);
+		meta_region[int_region].Virology_data->data_population_sizes(&gp_row.vector);
+		gsl_vector_mul(&viropos_row.vector, meta_region[int_region].Virology_data->access_weights());
+		R_by_sum_gsl_vector_mono_idx(&viropos_out_row.vector,
+					     NULL,
+					     &viropos_row.vector,
+					     meta_region[int_region].Virology_data->access_groups());
+	      }
+	    temp_log_likelihood = meta_region[int_region].Virology_data->lfx(weighted_positivity, NULL);
+	    gsl_matrix_free(weighted_positivity);
+	  } else
+	    temp_log_likelihood = meta_region[int_region].Virology_data->lfx(meta_region[int_region].region_modstats.d_viropositivity, NULL);
+
+	  lfx_sub_increment += (temp_log_likelihood - llhood.Viro_lfx);
+	  llhood.Viro_lfx = temp_log_likelihood;
+	      
+	}
+	  
+    }
+  // 	  }
+      
+      
+  // Have second processor assigned to hospitalisations
+  //        	if(omp_get_thread_num() == 1)
+  //        	  {
+  if(flag_update_Hosp_likelihood && ((bool) gmip.l_Hospitalisation_flag))
+    {
+      fn_reporting_model(meta_region[int_region].region_modstats.d_Reported_Hospitalisations,
+			 meta_region[int_region].region_modstats.d_Delta_Dis,
+			 meta_region[int_region].det_model_params.l_pr_symp,
+			 meta_region[int_region].det_model_params.l_pr_onset_to_Hosp,
+			 gmip,
+			 gmip.l_Hosp_likelihood.upper,
+			 meta_region[int_region].population,
+			 *hosp_distribution_function);
+	  
+      gsl_matrix* mu_hosp_counts = gsl_matrix_alloc(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size1,
+						    meta_region[int_region].Hospitalisation_data->getDim2());
+
+      if(gsl_matrix_min(meta_region[int_region].region_modstats.d_Reported_Hospitalisations) >= 0)
+	{
+
+	  if(meta_region[int_region].region_modstats.d_Reported_Hospitalisations->size2 != meta_region[int_region].Hospitalisation_data->getDim2()){
+	    // Yes: again we have missing data
+	    for(int int_t = 0; int_t < mu_hosp_counts->size1; int_t++)
+	      {
+		gsl_vector_view full_strata_counts = gsl_matrix_row(meta_region[int_region].region_modstats.d_Reported_Hospitalisations, int_t);
+		gsl_vector_view agg_strata_counts = gsl_matrix_row(mu_hosp_counts, int_t);
+		R_by_sum_gsl_vector_mono_idx(&agg_strata_counts.vector,
+					     NULL,
+					     &full_strata_counts.vector,
+					     meta_region[int_region].Hospitalisation_data->access_groups());
+	      }
+	  } else gsl_matrix_memcpy(mu_hosp_counts, meta_region[int_region].region_modstats.d_Reported_Hospitalisations);
+	  data_type dlfx = meta_region[int_region].Hospitalisation_data->get_likelihood_type();
+	  if(dlfx == cPOISSON_LIK)
+	    temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+										    NULL);
+	  else if(dlfx == cNEGBIN_LIK)
+	    temp_log_likelihood = meta_region[int_region].Hospitalisation_data->lfx(mu_hosp_counts,
+										    meta_region[int_region].det_model_params.l_hosp_negbin_overdispersion);
+	  else {
+	    perror("Unrecognised likelihood selected\n");
+	    exit(2);
+	  }
+	} else temp_log_likelihood = GSL_NEGINF;
+	  
+      lfx_sub_increment += (temp_log_likelihood - llhood.Hosp_lfx);
+
+      //if (debug) cout << int_region << " Hosp prev " << gsl_vector_get(*llhood.Hosp_lfx, int_region) << " curr " << temp_log_likelihood << endl;
+
+      llhood.Hosp_lfx = temp_log_likelihood;
+
+	  
+      gsl_matrix_free(mu_hosp_counts);	  
+    }
+
+  lfx_region += lfx_sub_increment;
+
+  // Save the regional likelihood component for AMGS blocks
+  llhood.region_lfx = lfx_region;
+
+  // cout << "Set region " << int_region << ": " << llhood.region_lfx[int_region] << endl;
+
+  // lfx_increment += lfx_region;
+  // if (debug) cout << int_region << " end incr " << lfx_increment << endl;
 
   // }
   

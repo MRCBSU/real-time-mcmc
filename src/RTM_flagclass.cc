@@ -60,10 +60,14 @@ string flagclass::UPItoRMP(const int& iUPI_index)
     return "l_vacc1_disease";
   case VACN_DISEASE_INDEX :
     return "l_vaccn_disease";
+  case VACB_DISEASE_INDEX :
+    return "l_vaccb_disease";
   case VAC1_INFECT_INDEX :
     return "l_vacc1_infect";
   case VACN_INFECT_INDEX :
     return "l_vaccn_infect";
+  case VACB_INFECT_INDEX :
+    return "l_vaccb_infect";
   case REL_INFECT_INDEX :
     return "l_relative_infectiousness_I2_wrt_I1";
   case LBETA_RW_INDEX :
@@ -102,6 +106,8 @@ string flagclass::UPItoRMP(const int& iUPI_index)
     return "l_sero_sensitivity";
   case SSPEC_INDEX :
     return "l_sero_specificity";
+  case IWAN_INDEX :
+    return "l_waning_rate";
   case DOW_EFFECTS_INDEX :
     return "l_day_of_week_effect";
   default :

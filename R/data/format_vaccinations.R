@@ -19,10 +19,20 @@ run.all <- TRUE
 if(exists("str.date.vacc")){
     ## Substitute this into the names of the intended data file names
     vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
-    vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+    if(vac.n_doses == 3) {
+        vac2.files <- gsub("date.vacc", str.date.vacc, vac2.files, fixed = TRUE)
+        vac3.files <- gsub("date.vacc", str.date.vacc, vac3.files, fixed = TRUE)
+    } else {
+        vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+    }
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
     vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
-    if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
+    
+    if(vac.n_doses == 3) {
+        if(all(file.exists(c(vac1.files, vac2.files, vac3.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
+    } else {
+        if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
+    }
 }
 
 if(run.all){
@@ -43,7 +53,6 @@ if(run.all){
             ## Pick up the most recently added
             input.loc <- rnames[which.max(vacc.loc$ctime)]
             ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
-            str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
         }
     } else {
         if(is.null(vacc.loc)){
@@ -53,6 +62,7 @@ if(run.all){
             else input.loc <- build.data.filepath(subdir = "raw", "vaccination", vacc.loc)
         }
     }
+    str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
     
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
     vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".Rdata")
@@ -162,11 +172,19 @@ if(run.all){
     
     ## Substitute this into the names of the intended data file names
     vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
-    vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+    if(vac.n_doses == 3) {
+        vac2.files <- gsub("date.vacc", str.date.vacc, vac2.files, fixed = TRUE)
+        vac3.files <- gsub("date.vacc", str.date.vacc, vac3.files, fixed = TRUE)
+    } else {
+        vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
+    }
     
-    ## If these files exist and we don't want to overwrite them: do nothing
-    if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
-        ## if(TRUE){
+   ## If these files exist and we don't want to overwrite them: do nothing
+    if(vac.overwrite || ifelse(vac.n_doses == 3, !all(file.exists(c(vac1.files, vac2.files, vac3.files))), !all(file.exists(c(vac1.files, vacn.files))))){
+        if(vac.n_doses == 3) {
+            stop("Third dose data not processed here, check correct data left in the RTM_format folder")
+        }
+
         ## Extract file from archive
         if(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc))))){
             file.copy(input.loc, file.path("data", basename(input.loc)))

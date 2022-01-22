@@ -178,6 +178,7 @@ void read_global_fixed_parameters(global_model_instance_parameters& fixed_pars,
   fixed_pars.l_Viro_data_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Prev_data_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Vacc_data_flag = READ_NEXT_VARIABLE_VALUE;
+  fixed_pars.l_VBoost_data_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_GP_patch_flag = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_Sero_delay = READ_NEXT_VARIABLE_VALUE;
   fixed_pars.l_GP_likelihood.lower = READ_NEXT_VARIABLE_VALUE;
@@ -208,6 +209,10 @@ void read_global_fixed_parameters(global_model_instance_parameters& fixed_pars,
   fixed_pars.l_Vacc_date_range.upper = READ_NEXT_VARIABLE_VALUE;
   if(fixed_pars.l_Vacc_date_range.upper > fixed_pars.l_duration_of_runs_in_days)
     printf("Vaccination date range extends beyond the total number of days\n");
+  fixed_pars.l_VBoost_date_range.lower = READ_NEXT_VARIABLE_VALUE;
+  fixed_pars.l_VBoost_date_range.upper = READ_NEXT_VARIABLE_VALUE;
+  if(fixed_pars.l_VBoost_date_range.upper > fixed_pars.l_duration_of_runs_in_days)
+    printf("Booster vaccination date range extends beyond the total number of days\n");
   
   // ALLOC MEMORY FOR ARRAYS WITHIN THE fixed.pars STRUCTURE
   alloc_global_model_instance(fixed_pars);
@@ -1412,7 +1417,7 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
 	meta_data_type[int_i] = meta_region[int_i].Vaccination_data;
       read_metaregion_datatype(meta_data_type, tempmat, countfiles, denomfiles, num_regions,
 			       "regions_1stvaccination_data",
-			       "regions_nthvaccination_data",
+			       "regions_2ndvaccination_data",
 			       "regions_vaccination_aggregation", str_var, cFALSE); // set last variable to false if using actual numbers of vaccines given.
       // for(int_i = 0; int_i < num_regions; int_i++)
       // 	{ // extra normalisation: read_metaregion_datatype gives the second vaccinations as a proportion of the population
@@ -1422,6 +1427,15 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
       // 	  meta_data_type[int_i]->normalise(&pop_row.vector);
       // 	  meta_data_type[int_i]->switchData();
       // 	}
+    }
+  if(meta_region->VBooster_data != 0)
+    {
+      for(int_i = 0; int_i < num_regions; int_i++)
+	meta_data_type[int_i] = meta_region[int_i].VBooster_data;
+      read_metaregion_datatype(meta_data_type, tempmat, countfiles, denomfiles, num_regions,
+			       "regions_boostvaccination_data",
+			       "",
+			       "regions_boostvaccination_aggregation", str_var, cFALSE);
     }
   // Free all allocated memory
   delete [] countfiles;

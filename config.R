@@ -51,7 +51,7 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
-sus_seb_combination <- 1L
+sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
@@ -65,7 +65,13 @@ adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
-## ##Admissions flags/dates
+## File names for files in
+preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
+names(preprocessed_sus_names) <- regions
+print(preprocessed_sus_names)
+preprocessed_sus_csv_name <- "admissions_data.csv"
+
+## ## Admissions flags/dates
 ## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
 adm_sus.end.date <- ymd(20201014)
 ## adm_seb.start.date <- ymd(20201014)
@@ -285,8 +291,11 @@ if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
+vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- (c(rep(0.18, 2), 0.16, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
+future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
+future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")

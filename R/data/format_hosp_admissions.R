@@ -32,6 +32,19 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
     }
 }
 
+## Are we using SUS data that has been pre-processed once before?
+if(sus_seb_combination == 3) {
+    old_input_adm <- "data/previous_run_input/"
+    if(region.type == "NHS") {
+        old_adm.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_names)
+        old_adm_csv.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_csv_name)
+    } else {
+        old_adm.loc <- file.path(old_input_adm, "ONS", "admissions", preprocessed_sus_names)
+        old_adm_csv.loc <- file.path(old_input_adm, "ONS", "admissions", preprocessed_sus_csv_name)
+    }
+    names(old_adm.loc) <- names(preprocessed_sus_names)
+}
+
 ## What is the date of publication of these data? If not specified, try to extract from filename
 #! Note get peter to output sus data in this format going forwards
 if(!exists("date.adm_sus")){
@@ -47,7 +60,7 @@ if(!exists("date.adm_seb")){
 
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
-if(sus_seb_combination == 1) {
+if(sus_seb_combination %in% c(1, 3)) {
     latest_sus.date <- adm_sus.end.date
     earliest_seb.date <- adm_sus.end.date + 1
 }
@@ -67,7 +80,7 @@ nA_adm <- length(age_adm.labs)
 
 ## Read in sebs data if it is needed
 ## Note data is stored in an rds so we must initially read in all data
-if(sus_seb_combination %in% c(1, 2)) {
+if(sus_seb_combination %in% c(1, 2, 3)) {
 
     # Only list the values with age data for admissions and diagnoses
     possible.col.names.seb <- list(
@@ -107,7 +120,7 @@ if(sus_seb_combination %in% c(1, 2)) {
     col.names.seb <- lapply(possible.col.names.seb, first.valid.col.name.seb)
     invalid.col.names <- sapply(col.names.seb, is.null)
     if (any(invalid.col.names)) {
-        names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+        names.invalid.cols <- paste0(names(possible.col.names.seb)[invalid.col.names], collapse = ", ")
         stop(paste("No valid column name for:", names.invalid.cols))
     }
 }
@@ -127,7 +140,7 @@ if(sus_seb_combination %in% c(0,1)) {
     col.names.sus <- lapply(possible.col.names.sus, first.valid.col.name.sus)
     invalid.col.names <- sapply(col.names.sus, is.null)
     if (any(invalid.col.names)) {
-        names.invalid.cols <- paste0(names(possible.col.names)[invalid.col.names], collapse = ", ")
+        names.invalid.cols <- paste0(names(possible.col.names.sus)[invalid.col.names], collapse = ", ")
         stop(paste("No valid column name for:", names.invalid.cols))
     }
 }
@@ -299,7 +312,7 @@ if(sus_seb_combination %in% c(0, 1)){
 
 
 ## Construct sebs data into a useful format if necessary (date, age, region, admissions)
-if(sus_seb_combination %in% c(1, 2)) {
+if(sus_seb_combination %in% c(1, 2, 3)) {
     # Rearrange sebs data to summarise across the ages (grab ages from the columns)
     adm.dat.seb <- adm.dat.seb  %>%
         select_if(!(names(.) %in% c("n_beds_mechanical_non_cov_ns", "n_beds_mechanical_suspected", "n_beds_noninvasive_non_cov_ns", "n_beds_noninvasive_suspected", "n_beds_oxygenation_non_cov_ns", "n_beds_oxygenation_suspected", "n_beds_other_3_non_cov_ns", "n_beds_other_3_suspected", "suspected_prev", "non_cov_nsid_prev", "non_cov_ns_prev", "n_staff_absent_caring", "n_staff_absent_positive", "n_care_home_admitted"))) %>% 
@@ -418,13 +431,18 @@ if(sus_seb_combination == 0) {
                 filter(date <= latest_sus.date)  %>%
                 bind_rows(adm.dat.seb  %>%
                             filter(date >= earliest_seb.date)  %>%
-                            filter(date <= date.adm_seb -adm_seb.strip_days)  %>%
+                            filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
                             filter(date <= latest.date)
                 )
-} else {
+} else if(sus_seb_combination == 2){
     adm.sam <- adm.dat.seb  %>%
         filter(date >= earliest.date)  %>%
-        filter(date <= date.adm_seb -adm_seb.strip_days)  %>%
+        filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
+        filter(date <= latest.date)
+} else if(sus_seb_combination == 3) {
+    adm.sam <- adm.dat.seb %>%
+        filter(date >= earliest_seb.dat) %>%
+        filter(date <= date.adm_seb - adm_seb.strip_days) %>%
         filter(date <= latest.date)
 }
 
@@ -453,6 +471,22 @@ for(reg in regions) {
         ungroup() %>%
         select(-region)
 
+    if(sus_seb_combination == 3) {
+        tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
+        colnames(tmp_sus) <- colnames(region.sam)
+        
+        tmp_sus <- tmp_sus %>%
+            mutate(date = as_date(date)) %>%
+            filter(date <= ymd(latest_sus.date))
+        
+        region.sam <- tmp_sus %>%
+            bind_rows(
+                region.sam %>% 
+                filter(date >= latest_sus.date)
+            )
+        
+    }
+
     tmpFile <- admsam.files[reg]
 
     print(paste("Writing to", tmpFile))
@@ -466,6 +500,19 @@ for(reg in regions) {
 
 # Create missing directory
 if(!file.exists(out.dir)) dir.create(out.dir, recursive = T)
+
+if(sus_seb_combination == 3) {
+    tmp_sus <- read_csv(old_adm_csv.loc) %>%
+        mutate(date = as_date(date)) %>%
+        filter(date <= ymd(latest_sus.date))
+
+    adm.sam <- tmp_sus %>%
+            bind_rows(
+                adm.sam %>% 
+                    filter(date >= latest_sus.date)
+            ) %>%
+            arrange(region, date, ages, admissions)
+}
 
 # Save the data
 write_csv(adm.sam, file.path(out.dir, "admissions_data.csv"))

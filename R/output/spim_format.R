@@ -397,7 +397,6 @@ if(med.term.flag){
     fl.proj <- file.path(out.dir, projections.file)
     if(!file.exists(fl.proj))
         stop("Missing projections file")
-    stop()
     load(fl.proj)
     if(exists("prevalence"))
         if(all(dim(prevalence) == dim(infections)))

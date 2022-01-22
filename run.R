@@ -99,8 +99,14 @@ if(prev.flag){
 }
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
-} else vac1.files <- vacn.files <- NULL
+    if(vac.n_doses == 3) {
+        vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))
+        vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+    } else {
+        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+    }
+} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
+
 if(format.inputs){
     if(deaths.flag){
         if(data.desc == "reports") {
@@ -141,7 +147,8 @@ if(format.inputs){
 source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
 if(compile.code) {
-    system("make rtm_optim")
+    system("make clean")
+    system("make rtm_hpc2")
 }
 
 ## Set up a requisite number of chains
