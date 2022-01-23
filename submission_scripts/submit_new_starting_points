@@ -1,0 +1,40 @@
+#!/bin/bash
+#SBATCH -J trial_hpc_batch
+#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=00:10:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --array=4,5
+#SBATCH -p icelake
+#!SBATCH --qos=covid0
+
+
+#SBATCH --output=restart_pars_%a.out
+#SBATCH --error=restart_pars_%a.err
+
+. /etc/profile.d/modules.sh
+module load pandoc
+
+dirs=(*/)
+pwd
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+application="Rscript"
+options="/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus/real-time-mcmc/R/output/restart_pars.R"
+CMD="$application $options"
+# echo "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10"
+# if [ -e "${dirs[SLURM_ARRAY_TASK_ID]}/posterior_report10" ]; then
+#     echo "Running $CMD"
+  eval $CMD
+  # sbatch 
+# fi
+  mv mod_pars_new.txt mod_pars.txt
+  rm posterior_report10

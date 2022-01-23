@@ -401,6 +401,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	for (int reg = 1; reg <= nregions; reg++) {
 	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
 
+
 	  // if (int_iter > 199)
 	  // paramSet.blocks[reg].adaptiveUpdate(int_iter);
 	    
@@ -416,6 +417,9 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	  }
 
 	  if (paramSet.blocks[reg].doAdaptation && simulation_parameters.adapt_every > 0 && int_iter % simulation_parameters.adapt_every == 0)
+
+
+
 	    paramSet.blocks[reg].adaptiveUpdate(int_iter);
 	}
       }

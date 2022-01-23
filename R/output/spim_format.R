@@ -7,7 +7,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.5
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -37,14 +37,16 @@ load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
 
-projections.file <- "projections_midterm.RData"
-scen.text <- "MTP"
-save.text <- "MTP"
-## projections.file <- "projections_R0.9.RData"
-## scen.text <- "MTP R0.9"
-## save.text <- "MTP_R_0.9"
 
-mtp.filter.date <- lubridate::ymd("20211219") ## ymd(date.data)
+
+
+## projections.file <- "projections_midterm.RData"
+## scen.text <- "MTP"
+## save.text <- "MTP"
+projections.file <- "projections_R1.3.RData"
+scen.text <- "MTP R1.3"
+save.text <- "MTP_R_1.3"
+mtp.filter.date <- lubridate::ymd("20220102") ## ymd(date.data)
 
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
@@ -400,6 +402,7 @@ if(med.term.flag){
     fl.proj <- file.path(out.dir, projections.file)
     if(!file.exists(fl.proj))
         stop("Missing projections file")
+    stop()
     load(fl.proj)
     if(exists("prevalence"))
         if(all(dim(prevalence) == dim(infections)))

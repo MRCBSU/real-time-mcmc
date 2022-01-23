@@ -325,7 +325,10 @@ if(single.ifr){
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
         if(bp.flag){ ## Expand the actual breakpoints and tweak the design
             if(!exists("tbreaks.interval")) tbreaks.interval <- min(tbreaks.ifr)
-            tbreaks2 <- round(tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*tbreaks.interval) - 1)
+            tbreaks.round <- rep(1:(num.bp - 1), each = length(tbreaks.ifr))
+            tbreaks2 <- round(tbreaks.ifr + (tbreaks.round*tbreaks.interval) - 1)
+            ## small adjustment to coincide with omicron
+            tbreaks2[tbreaks.round >= 5] <- tbreaks2[tbreaks.round >= 5] + 21
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
             reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
             for(per in 1:num.bp){
