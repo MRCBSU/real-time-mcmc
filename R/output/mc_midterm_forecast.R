@@ -16,18 +16,20 @@ load("mcmc.RData")
 load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
-## Number of weeks to forecast ahead
-nweeks.ahead <-9
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_midterm"
+projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
 projections.basedir <- file.path(out.dir, projections.basename)
 print(projections.basedir)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
-# print("Got here 0")
+## Number of weeks to forecast ahead - depends on aim of simulation
+if(projections.basename == "projections_snapshot"){
+    nweeks.ahead <- 0
+} else nweeks.ahead <- 9
+
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 # print("Got here 0.5")
 # print(start.date)
@@ -38,6 +40,8 @@ nforecast.weeks <- nweeks.ahead - nforecast.weeks
 # print(start.date + (1:nforecast.weeks * days(7)))
 mm.breaks <- start.date - 1 + as.numeric(max(cm.breaks)) + (1:nforecast.weeks * days(7))
 # print("Got here 1")
+google.data.date.str <- google.data.date
+print(google.data.date.str)
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
@@ -193,7 +197,7 @@ thin.outputs <- 1
 adaptive.phase <- 0
 burnin <- 0
 num.threads <- 1
-# print("Got here 3f")
+if(projections.basename == "projections_snapshot") mcmc.outs <- smc.outs <- 1 else mcmc.outs <- smc.outs <- 0
 
 print(inputs.template.loc)
 ## The mod_inputs.txt file wont change with each projections so can render it now
@@ -232,6 +236,7 @@ if(gp.flag)
 if(rw.flag)
     symlink.design("m.design.txt")
 if(beta.rw.flag)
+    ## Can we use the pre-existing matrix?
     symlink.design("beta.design.txt")
 if(!single.ifr)
     symlink.design("ifr.design.txt")
@@ -245,14 +250,6 @@ out.dir <- out.dir.tmp
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP
-
-## ## Set-up output quantities
-NNI <- NNI.files <- vector("list", nr)
-Sero <- Sero.files <- vector("list", nr)
-if(vacc.flag) DNNI <- DNNI.files <- vector("list", nr)
-if(hosp.flag) Deaths <- Deaths.files <- vector("list", nr)
-if(gp.flag) Cases <- Cases.files <- vector("list", nr)
-if(prev.flag) Prevs <- Prev.files <- vector("list", nr)
 
 ## ## Get number of iterations
 niter <- min(sapply(params, nrow))
@@ -274,11 +271,15 @@ xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
 print("ending parallel region")
 # print(xtmp)
 NNI <- lapply(xtmp, function(x) x$NNI)
-Sero <- lapply(xtmp, function(x) x$Sero)
-if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
-Deaths <- lapply(xtmp, function(x) x$Deaths)
-Cases <- lapply(xtmp, function(x) x$Cases)
-Prevs <- lapply(xtmp, function(x) x$Prevs)
+if(smc.outs){
+    state <- lapply(xtmp, function(x) x$state)
+} else {
+    Sero <- lapply(xtmp, function(x) x$Sero)
+    if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
+    Deaths <- lapply(xtmp, function(x) x$Deaths)
+    Cases <- lapply(xtmp, function(x) x$Cases)
+    Prevs <- lapply(xtmp, function(x) x$Prevs)
+}
 rm(xtmp)
 
 ## names(NNI) <- regions
@@ -293,48 +294,67 @@ melt.list <- function(xlist)
           along = 0)
 
 ## ## ## SAVE SOME OUTPUTS
-dim.list <- list(iteration = 1:niter,
-                 age = age.labs,
-                 date = start.date + 0:(ndays - 1),
-                 region = regions
-                 )
-print("dim.list")
-print(dim.list)
-
-
-infections <- melt.list(NNI);rm(NNI)
-dim(infections)
-dimnames(infections) <- dim.list
-seropos <- melt.list(Sero);rm(Sero)
-print("seropos")
-print(seropos)
-dimnames(seropos) <- dim.list
-save.list <- c("infections", "seropos")
-if(vacc.flag) {
-    vacc.infections <- melt.list(DNNI);rm(DNNI)
-    save.list <- c(save.list, "vacc.infections")
-    dimnames(vacc.infections) <- dim.list
+if(!smc.outs){
+    dim.list <- list(iteration = 1:niter,
+                     age = age.labs,
+                     date = start.date + 0:(ndays - 1),
+                     region = regions
+                     )
+    infections <- melt.list(NNI);rm(NNI)
+    dimnames(infections) <- dim.list
+    seropos <- melt.list(Sero);rm(Sero)
+    dimnames(seropos) <- dim.list
+    save.list <- c("infections", "seropos")
+    if(vacc.flag) {
+        vacc.infections <- melt.list(DNNI);rm(DNNI)
+        save.list <- c(save.list, "vacc.infections")
+        dimnames(vacc.infections) <- dim.list
+    }
+    if(hosp.flag) {
+        deaths <- melt.list(Deaths);rm(Deaths)
+        save.list <- c(save.list, "deaths")
+        dimnames(deaths) <- dim.list
+    }
+    if(gp.flag){
+        cases <- melt.list(Cases);rm(Cases)
+        save.list <- c(save.list, "cases")
+        dimnames(cases) <- dim.list
+    }
+    if(prev.flag){
+        prevalence <- melt.list(Prevs);rm(Prevs)
+        save.list <- c(save.list, "prevalence")
+        dimnames(prevalence) <- dim.list
+    }
+    save(list = save.list, file = paste0(projections.basename, ".RData"))
+    
+    ## ## ## Housekeeping
+    lapply(hosp.data, file.remove)
+    if(prev.flag)
+        lapply(prev.data, file.remove)
+} else {
+    dim.list <- list(iteration = 1:niter,
+                     age = age.labs,
+                     date = paste0("t", seq(0,as.integer(ndays) - 0.5,by = 0.5)),
+                     region = regions
+                     )
+    infections <- melt.list(NNI);rm(NNI)
+    dimnames(infections) <- dim.list
+    state <- do.call(bind_rows, state) %>%
+        inner_join(expand_grid(regions, age.labs) %>% mutate(popn = pop.input) %>% rename(region = regions))
+    state <- bind_rows(state,
+                       state %>% group_by(iteration, region, age.labs) %>%
+                       summarise(unrecovered = sum(value), popn = median(popn)) %>%
+                       mutate(value = popn - unrecovered,
+                              state.names = "R-") %>%
+                       select(-unrecovered)
+                       )
+    state.lkup <- tibble(state.names = c("S", "SV1", "SV2", "E1", "E2", "I1", "I2", "R+", "R-", "plambda"), state.text = c("Fully susceptible", "Never infected, incomplete immunisation", "Never infected, complete immunisation", "Latent infection", "Latent infection", "Prevalent infection", "Prevalent infection", "Prevalent infection", "Infection-acquired immunity", "Infectious pressure"))
+    state <- state %>%
+        inner_join(state.lkup)
+    save(list = c("infections", "state"), file = paste0(projections.basename, ".RData"))
+    
+        ## group_by(region, state.names, age.labs) %>%
+        ## summarise(mlo = quantile(value, probs = 0.025),
+        ##           med = median(value),
+        ##           mhi = quantile(value, probs = 0.975)) %>%
 }
-if(hosp.flag) {
-    deaths <- melt.list(Deaths);rm(Deaths)
-    save.list <- c(save.list, "deaths")
-    dimnames(deaths) <- dim.list
-}
-if(gp.flag){
-    cases <- melt.list(Cases);rm(Cases)
-    save.list <- c(save.list, "cases")
-    dimnames(cases) <- dim.list
-}
-if(prev.flag){
-    prevalence <- melt.list(Prevs);rm(Prevs)
-    save.list <- c(save.list, "prevalence")
-    dimnames(prevalence) <- dim.list
-}
-save(list = save.list, file = paste0(projections.basename, ".RData"))
-
-## ## ## Housekeeping
-lapply(hosp.data, file.remove)
-lapply(cases.files, file.remove)
-lapply(denoms.files, file.remove)
-if(prev.flag)
-    lapply(prev.data, file.remove)

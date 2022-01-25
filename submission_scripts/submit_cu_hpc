@@ -9,7 +9,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --partition=hpc
+#SBATCH --partition=htc
 
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
@@ -25,6 +25,9 @@
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
+echo $SLURM_CPUS_PER_TASK
+echo "= No. CPUs"
+
 
 # ls -a
 # module list
@@ -35,7 +38,7 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # ## pwd
 
 
-~/real-time-mcmc/rtm_hpc2
+~/real-time-mcmc/rtm_htc_con_login
 
   # sbatch ../../../submit_post_process_correct_dir
 

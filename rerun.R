@@ -26,11 +26,26 @@ file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 Rfile.loc <- file.path(file.loc, "R/output")
 
-print("made it here")
-
 if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
 }
+
+# suppressMessages(library(knitr))
+# suppressMessages(library(DT))
+# suppressMessages(library(lubridate))
+# suppressMessages(library(plotly))
+# suppressMessages(library(tidyverse))
+# suppressMessages(extract <- R.utils::extract)
+# cat(Rfile.loc)
+# if(exists("Rfile.loc")) {
+#   source(file.path(Rfile.loc, "results_api.R"))
+#   source(file.path(Rfile.loc, "plot_funcs.R"))
+# } else {
+#   proj.dir <- "~/RTM"
+#   source("results_api.R")
+#   source("plot_funcs.R")
+# }
+
 
 render(
 	file.path(Rfile.loc, 'report-updated.Rmd'),
