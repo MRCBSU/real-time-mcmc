@@ -33,7 +33,7 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
 }
 
 if(sus_seb_combination == 3) {
-    old_input_adm <- "data/previous_run_input/"
+    old_input_adm <- "data/previous_run_input"
     if(region.type == "NHS") {
         old_adm.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_names)
         old_adm_csv.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_csv_name)
