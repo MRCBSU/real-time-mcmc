@@ -54,15 +54,20 @@ if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
 } else stop("Unknown region type for population")
 
+
 # Moved serology calls to the top of the run script
 if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
     serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
     seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+    if(!format.inputs) {
+        file.copy(file.path(data.dirs["sero"], "sero_samples_data.csv"), out.dir)
+        file.copy(file.path(data.dirs["sero"], "sero_positives_data.csv"), out.dir)
+        names(serosam.files) <- names(seropos.files) <- regions
+    }
 } else {
   serosam.files <- seropos.files <- NULL
 }
-
 
 ## If these files don't already exits, make them
 if(deaths.flag){
@@ -100,16 +105,29 @@ if(prev.flag){
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_INLA_")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) names(prev.mean.files) <- names(prev.sd.files) <- regions
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt")) 
+    if(!format.inputs) {    
+        vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))                                                                                                               
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
+        names(vac1.files) <- names(vacn.files) <- regions
+    }
 } else vac1.files <- vacn.files <- NULL
-
+if(adm.flag){
+    if(!format.inputs) {
+        file.copy(file.path(data.dirs["adm"], "admissions_data.csv"), out.dir)
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
+    }
+}
 if(format.inputs){
 
     if(deaths.flag){
@@ -145,15 +163,7 @@ if(format.inputs){
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
     }
-}else{
-    if (vacc.flag) {                                                                                                                      
-        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData"))
-    }
-        if(adm.flag) {
-        file.copy(file.path("data", "RTM_format", region.type, "admissions", "admissions_data.csv"), out.dir)
-    }
- }
-
+} 
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))

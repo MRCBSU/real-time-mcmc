@@ -33,7 +33,7 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
 }
 
 if(sus_seb_combination == 3) {
-    old_input_adm <- "data/previous_run_input/"
+    old_input_adm <- "data/previous_run_input"
     if(region.type == "NHS") {
         old_adm.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_names)
         old_adm_csv.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_csv_name)
@@ -45,17 +45,38 @@ if(sus_seb_combination == 3) {
 }
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
-#! Note get peter to output sus data in this format going forwards
 if(!exists("date.adm_sus")){
-    fl.name <- basename(input.loc)
+    fl.name <- basename(input_sus.loc)
     date.adm_sus.str <- str_match(rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)],"([0-9]+)\\.csv$")[,2]
     date.adm_sus <- ymd(date.adm_sus.str)
+} else {
+    date.adm_sus.str <- str_match(rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)],"([0-9]+)\\.csv$")[,2]
+    if(date.adm_sus != ymd(date.adm_sus.str)) {
+        warning("Input date doesn't match most recent date of sus data file in input directory")
+        print("Read in data from matching sus date string instead:")
+        list_dates <- map_chr(rownames(adm_sus.loc), ~str_match(.,"([0-9]+)\\.rds$")[,2]) %>%
+            map(~ymd(.))
+        index_tmp <- which(list_dates %>% map_lgl(~(. == date.adm_sus)))
+        input_sus.loc <- rownames(adm_sus.loc)[max(index_tmp)]
+    }
 }
+
 if(!exists("date.adm_seb")){
-    fl.name <- basename(input.loc)
+    fl.name <- basename(input_seb.loc)
     date.adm_seb.str <- str_match(rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)],"([0-9]+)\\.rds$")[,2]
     date.adm_seb <- ymd(date.adm_seb.str)
+} else {
+    date.adm_seb.str <- str_match(rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)],"([0-9]+)\\.rds$")[,2]
+    if(date.adm_seb != ymd(date.adm_seb.str)) {
+        warning("Input date doesn't match most recent date of seb's data file in input directory")
+        print("Read in data from matching sebs date string instead:")
+        list_dates <- map_chr(rownames(adm_seb.loc), ~str_match(.,"([0-9]+)\\.rds$")[,2]) %>%
+            map(~ymd(.))
+        index_tmp <-which(list_dates %>% map_lgl(~(. == date.adm_seb)))
+        input_seb.loc <- rownames(adm_seb.loc)[max(index_tmp)]
+    }
 }
+
 
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
@@ -519,6 +540,7 @@ if(sus_seb_combination == 3) {
 # Save the data
 write_csv(adm.sam, file.path(out.dir, "admissions_data.csv"))
 write_csv(adm.sam, file.path(data.dirs["adm"], "admissions_data.csv"))
+
 
 ## Create a quick plot of the data
 require(ggplot2)
