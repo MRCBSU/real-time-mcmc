@@ -61,6 +61,7 @@ if(sero.flag){
     if(!format.inputs) {
         file.copy(file.path(data.dirs["sero"], "sero_samples_data.csv"), out.dir)
         file.copy(file.path(data.dirs["sero"], "sero_positives_data.csv"), out.dir)
+        names(serosam.files) <- names(seropos.files) <- regions
     }
 } else {
   serosam.files <- seropos.files <- NULL
@@ -93,20 +94,27 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) {
+        prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+    }
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
-    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) names(prev.mean.files) <- names(prev.sd.files) <- regions
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
-    if(!format.inputs) {                                                                                                                   
+    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt")) 
+    if(!format.inputs) {    
+        vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))                                                                                                               
         load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
+        names(vac1.files) <- names(vacn.files) <- regions
     }
 } else vac1.files <- vacn.files <- NULL
 if(adm.flag){
