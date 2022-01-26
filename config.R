@@ -54,8 +54,11 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
+# Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
+# Initially uses a Naive implementation
+admissions_only.flag <- T
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
-sus_seb_combination <- 3L
+sus_seb_combination <- 1L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L

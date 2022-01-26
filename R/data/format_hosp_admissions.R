@@ -118,9 +118,11 @@ if(sus_seb_combination %in% c(1, 2, 3)) {
         admissions_ages_55_64 = c("n_patients_admitted_age_55_64"),
         admissions_ages_65_74 = c("n_patients_admitted_age_65_74"),
         admissions_ages_75_84 = c("n_patients_admitted_age_75_84"),
-        admissions_ages_85 = c("n_patients_admitted_age_85"),
+        admissions_ages_85 = c("n_patients_admitted_age_85")
         # diagnoses = c("n_inpatients_diagnosed"),
-        diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
+    )
+
+    if(!admissions_only.flag) possible.col.names.seb <- append(possible.col.names.seb, list(diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
         diagnoses_ages_6_17 = c("n_inpatients_diagnosed_age_6_17"),
         diagnoses_ages_18_24 = c("n_inpatients_diagnosed_age_18_24"),
         diagnoses_ages_25_34 = c("n_inpatients_diagnosed_age_25_34"),
@@ -129,8 +131,7 @@ if(sus_seb_combination %in% c(1, 2, 3)) {
         diagnoses_ages_55_64 = c("n_inpatients_diagnosed_age_55_64"),
         diagnoses_ages_65_74 = c("n_inpatients_diagnosed_age_65_74"),
         diagnoses_ages_75_84 = c("n_inpatients_diagnosed_age_75_84"),
-        diagnoses_ages_85 = c("n_inpatients_diagnosed_age_85")
-    )
+        diagnoses_ages_85 = c("n_inpatients_diagnosed_age_85")))
 
     # Ensure all the useful pieces of data have been grabbed
     adm.dat.seb <- read_rds(input_seb.loc)
@@ -233,24 +234,34 @@ if(sus_seb_combination %in% c(0, 1)){
     print(paste0("Reading in data from ", input.loc))
 
     adm.dat.sus <- read_csv(input_sus.loc, col_types = fields, na = "")  %>%
-          rename(!!!col.names.sus)  %>%
+          rename(!!!col.names.sus) %>%
         pivot_longer(where(is.numeric), names_to = "region", values_to = "admissions") %>%
-        ungroup()  %>%
-        group_by(date, ages, region)  %>%
+        ungroup() %>%
+        group_by(date, ages, region, nosocomial)  %>%
         summarise(across(where(is.numeric), ~sum(., na.rm = T)))  %>%
-        pivot_wider(id_cols = c(date, region), names_from = ages, values_from = admissions)
+        pivot_wider(id_cols = c(date, region, nosocomial), names_from = ages, values_from = admissions)
 
     # Combine ages as defined in the config file
     for(i in seq_along(summarise_classes_sus)) {
         adm.dat.sus <- adm.dat.sus %>%
-                group_by(date, region)  %>%
+                group_by(date, region, nosocomial)  %>%
                 mutate(!!names(summarise_classes_sus)[[i]] := sum(!!!syms(summarise_classes_sus[[i]]), na.rm = T), .keep = "unused")
     }
 
     # Give ages correct names (match with both dfs)
     adm.dat.sus <- adm.dat.sus  %>%
         pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions")  %>%
-        mutate(ages = factor(ages, levels = age_adm_sus.oldlabs))
+        mutate(ages = factor(ages, levels = age_adm_sus.oldlabs)) 
+    
+    if(admissions_only.flag) {
+        adm.dat.sus <- adm.dat.sus %>%
+            filter(nosocomial == "non-nosocomial") %>%
+            select(-nosocomial)
+    } else {
+        adm.dat.sus <- adm.dat.sus %>%
+            group_by(date, region, ages) %>%
+            summarise(admissions = sum(admissions))
+    }
 
     levels(adm.dat.sus$ages) <- age_adm.labs
 
