@@ -23,7 +23,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 
 system(paste("mkdir -p", out.dir))
 ## do we need to do formatting?
-format.inputs <- TRUE
+format.inputs <- F
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -58,6 +58,10 @@ if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
     serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
     seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+    if(!format.inputs) {
+        file.copy(file.path(data.dirs["sero"], "sero_samples_data.csv"), out.dir)
+        file.copy(file.path(data.dirs["sero"], "sero_positives_data.csv"), out.dir)
+    }
 } else {
   serosam.files <- seropos.files <- NULL
 }
@@ -89,7 +93,7 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
@@ -99,9 +103,18 @@ if(prev.flag){
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+    vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+    if(!format.inputs) {                                                                                                                   
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
+    }
 } else vac1.files <- vacn.files <- NULL
+if(adm.flag){
+    if(!format.inputs) {
+        file.copy(file.path(data.dirs["adm"], "admissions_data.csv"), out.dir)
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
+    }
+}
 if(format.inputs){
     if(deaths.flag){
         if(data.desc == "reports") {
@@ -121,7 +134,6 @@ if(format.inputs){
             source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
         }
     }
-    print("After Deaths Flag")
     if(adm.flag) {
         source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
     }
@@ -138,11 +150,7 @@ if(format.inputs){
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
     }
-} else {
-    if(adm.flag) {
-        file.copy(file.path("data", "RTM_format", region.type, "admissions", "admissions_data.csv"), out.dir)
-    }
-}
+} 
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))

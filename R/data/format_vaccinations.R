@@ -196,7 +196,6 @@ if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
         }
         df
     }
-    cat("Got here 2a\n")
     ## stop()
     ## ## vacc.dat <- vacc.dat %>%
     ## ##     mutate(sdate = fuzzy_date_parse(sdate))

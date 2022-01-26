@@ -294,7 +294,9 @@ if(!file.exists(out.dir))
 
 ## Save the data
 write_csv(rtm.sam, file.path(out.dir, "sero_samples_data.csv"))
+write_csv(rtm.sam, file.path(data.dirs["sero"], "sero_samples_data.csv"))
 write_csv(rtm.pos, file.path(out.dir, "sero_positives_data.csv"))
+write_csv(rtm.pos, file.path(data.dirs["sero"], "sero_positives_data.csv"))
 
 ## Save a quick plot of the data..
 require(ggplot2)

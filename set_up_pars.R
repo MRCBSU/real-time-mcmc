@@ -1,3 +1,5 @@
+library(stringr)
+
 beta.params.from.mean.sd <- function(mean, sd){
  a <- c(0,0)
  a[1] <- ((mean^2 * (1 - mean)) - (mean * (sd^2))) / (sd^2)
