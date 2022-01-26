@@ -10,7 +10,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-
+#SBATCH --array=0,3,4,7,8,11,12,15
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
 
@@ -30,9 +30,9 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # module list
 # echo $LD_LIBRARY_PATH
 
-# dirs=(*/)
-# cd ${dirs[SLURM_ARRAY_TASK_ID]}
-# pwd
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
 
 
 ~/mcmc/real-time-mcmc/rtm_hpc2
