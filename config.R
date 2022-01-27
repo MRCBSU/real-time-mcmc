@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -65,6 +65,7 @@ google.data.date <- format(ymd("2022-01-21"), format = "%Y%m%d")
 #matrix.suffix <- "_timeuse_household_new_base"
 matrix.suffix <- "_stable_household_new_base"
 
+matrix.suffix_paul <- "_stable_household"
 
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
@@ -181,7 +182,7 @@ vacc.flag <- 1
 vac.date.fmt <- "%Y-%m-%d"
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
@@ -238,10 +239,10 @@ if(use.previous.run.for.start){
         if(str.cutoff == "60")
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20220119", paste0("Prev627SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220119", paste0("Prev627SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220114", paste0("Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", "_chain2"))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220119", paste0("Prev627SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220122", paste0("Prev627SeroNHSBT_All_ONScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
     
 }

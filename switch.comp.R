@@ -16,7 +16,7 @@ out.repo <- "Prev611SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_
 in.repo <- "Prev611SeroNHSBT_All_ONS60cutoff_IFRtiming_18wk2_prev14-0PHE_matrices_20220107_stable_household_deaths"
 
 ## Change location of output directory
-in.base <- "new_base_"
+in.base <- ""
 out.base <- ""
 ## in.base <- "20211001_1st"
 ## out.base <- "20210930_1st"

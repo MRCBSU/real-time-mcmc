@@ -9,7 +9,7 @@
 
 #! sbatch directives begin here ###############################
 #! Name of the job:
-#SBATCH -J RTM_simulate
+#SBATCH -J process_hpc_batch
 #! Which project should be charged:
 #SBATCH -A MRC-BSU-SL2-CPU
 #! How many whole nodes should be allocated?
@@ -28,9 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-
-
-#SBATCH --array=0
+#SBATCH --array=13
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
@@ -40,10 +38,7 @@
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
 
-
-
 forecast_switch="midterm"
-
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -56,7 +51,6 @@ numnodes=$SLURM_JOB_NUM_NODES
 numtasks=$SLURM_NTASKS
 mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).*$/\1/')
 
-
 #! ############################################################
 #! Modify the settings below to specify the application's environment, location 
 #! and launch method:
@@ -68,80 +62,24 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 # module load rhel8/default-icl ## remove if not using icelake
 
 #! Insert additional module load commands after this line if needed:
-
 module load rhel8/default-icl
-
 module load pandoc
 
-
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
-# module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
+#module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
 
-
-
-
-# Navigate to the correct working directory
-bp="IFR3bp"
-enddays="25"
-if [ $SLURM_ARRAY_TASK_ID -lt 3 ]; then
-    prev="NoPrev"
-    gap=""
-    pdays=""
-else
-    prev="PrevCevik"
-    if [ $SLURM_ARRAY_TASK_ID -lt 9 ]; then
-	pdays="319"
-	if (( $SLURM_ARRAY_TASK_ID % 3 == 0 )); then
-	    gap="_prev7-5"
-	elif (( $SLURM_ARRAY_TASK_ID % 3 == 1 )); then
-	    gap="_prev14-5"
-	else
-	    gap="_prev28-5"
-	fi
-    else
-	pdays="57"
-	if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-	    gap="_prev7-5"
-	else
-	    gap="_prev14-5"
-	fi
-    fi
-fi
-cm="ons"
-eff="Nick"
-geog="NHS"
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    days="60"
-else
-    days="28"
-fi
-
-workdir="$SLURM_SUBMIT_DIR/model_runs/20210319/${prev}${pdays}_cm4${cm}_${bp}_${geog}${days}cutoff_${enddays}wk2${gap}${eff}_matrices_20210319_timeuse_household_deaths"
-
-module load gcc/9 intel/compilers/2020.2
-
-echo -e $workdir
-#=======Following 5 lines suggested by Paul's merge
 # # Navigate to the correct working directory
-
-
-
-
-
-
-
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-workdir="Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114_stable_household_admissions_no_deaths_chain2"
+#workdir="Prev564SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119_timeuse_household_deaths_chain2"
 echo $workdir
-
 
 #! Full path to application executable: 
 application="Rscript"
 
 #! Run options for the application:
 # options="--vanilla R/output/SPIMask.R"
-options="--vanilla ../../R/output/mc_${forecast_switch}_forecast_Paul.R"
+options="--vanilla ../../R/output/mc_${forecast_switch}_forecast.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -182,16 +120,15 @@ CMD="$application $options ${workdir}"
 ###############################################################
 
 
-
 JOBID=$SLURM_JOB_ID
 
 echo -e "JobID: $JOBID\n======"
 echo "Time: `date`"
 
-dirs=(*/)
-cd ${dirs[SLURM_ARRAY_TASK_ID]}
-Rscript ../../../R/output/mc_${forecast_switch}_forecast.R
-Rscript ../../../R/output/plot_projections.R projections_midterm.RData
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
+eval $CMD
+# Rscript ../../../R/output/plot_projections.R projections_midterm.RData
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"

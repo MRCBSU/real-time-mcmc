@@ -13,15 +13,20 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=2,3
-#SBATCH -p cclake
+#SBATCH --array=0,1,4,5,8,9,10,11
+#SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 
 #SBATCH --output=model_runs_20210120regjobs_%a.out
 #SBATCH --error=model_runs_20210120regjobs_%a.err
 
-module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
+###module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
+
+./etc/profile.d/modules.sh
+module purge
+module load rhel8/default-icl
+
 
 dirs=(*/)
 cd ${dirs[SLURM_ARRAY_TASK_ID]}

@@ -25,7 +25,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- TRUE
+format.inputs <- FALSE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -124,6 +124,7 @@ if(vacc.flag){
 } else vac1.files <- vacn.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
+        adm.sam <- read_csv(file.path(data.dirs["adm"], "admissions_data.csv"))
         file.copy(file.path(data.dirs["adm"], "admissions_data.csv"), out.dir)
         admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
     }
@@ -177,12 +178,16 @@ startwd <- getwd()
 setwd(out.dir)
 if(exists("outpp"))
     rm(outpp)
+
+cat(c(out.dir,'here'),'\n')
 save.image("tmp.RData")
 out.dir.orig <- out.dir
+
 if(use.previous.run.for.start & length(previous.run.to.use) > 1){
     nchains <- length(previous.run.to.use)
     for(ichain in 2:nchains){
         new.dir <- paste0(out.dir, "_chain", ichain)
+        cat(c(new.dir,'here_new'),'\n')
         if(dir.exists(new.dir))
             unlink(new.dir, recursive = TRUE)
         R.utils::copyDirectory(out.dir, new.dir)

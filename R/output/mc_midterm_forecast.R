@@ -6,6 +6,7 @@ require(parallel)
 require(knitr)
 
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
+#out.dir <- getwd()
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 if (!is.na(out.dir)) setwd(out.dir)
@@ -15,13 +16,17 @@ load("mcmc.RData")
 load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
+#out.dir <- getwd()
 
 counterfactual <- FALSE
 
 
 projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
 
+cat(out.dir, "\n")
 projections.basedir <- file.path(out.dir, projections.basename)
+cat(projections.basedir,'\n')
+
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -109,7 +114,7 @@ combine.rtm.output <- function(x, strFld){
     }
 
 ## ## ## --------------------
-
+cat(projections.basedir,'\n')
 if(!file.exists(projections.basedir))
     dir.create(projections.basedir)
 
@@ -164,6 +169,9 @@ if(gp.flag)
         denoms.files[reg] <- repeat.last.row(denoms.files[reg], paste0("dummy_denoms_", reg))
     }
 if(hosp.flag | adm.flag)
+       if (is.null(names(hosp.data))) {
+        names(hosp.data) <- regions
+    }
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag){
