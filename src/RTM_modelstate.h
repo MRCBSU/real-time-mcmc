@@ -21,6 +21,7 @@ class model_state
   vector<double> R_pos;
   vector<double> R_neg;
   vector<double> W;
+  vector<double> WS;
   vector<double> p_lambda;
  public:
   model_state();
@@ -28,7 +29,7 @@ class model_state
   model_state(const model_state&);
   model_state& operator=(const model_state&);
   void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*,
-	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
+	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
   bool write(ofstream&);
 };
 
