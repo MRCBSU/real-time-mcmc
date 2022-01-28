@@ -61,11 +61,11 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 
-google.data.date <- format(ymd("2022-01-21"), format = "%Y%m%d")
+google.data.date <- format(ymd("2022-01-28"), format = "%Y%m%d")
 #matrix.suffix <- "_timeuse_household_new_base"
 matrix.suffix <- "_stable_household_new_base"
 
-matrix.suffix_paul <- "_stable_household"
+#matrix.suffix_paul <- "_stable_household"
 
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
@@ -74,7 +74,7 @@ sus_seb_combination <- 3L #number 3 to use the old sus data
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220122)
+date.adm_seb <- ymd(20220129)
 date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -169,7 +169,7 @@ deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified b
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
-num.prev.days <- 627
+num.prev.days <- 634
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -239,10 +239,10 @@ if(use.previous.run.for.start){
         if(str.cutoff == "60")
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20220119", paste0("Prev627SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220114", paste0("Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", "_chain2"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220114", paste0("Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", "_chain2"))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220122", paste0("Prev627SeroNHSBT_All_ONScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220122", paste0("Prev627SeroNHSBT_All_ONScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
     
 }
@@ -285,7 +285,7 @@ prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 
 
-date.prev <- lubridate::ymd("20220119")
+date.prev <- lubridate::ymd("20220126")
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -327,7 +327,7 @@ threads.per.regions <- 1
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 
-str.date.vacc <- "20220120" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220127" ## Optional: if not specified will take the most recent data file.
 
 vacc.lag <- 21
 vac.overwrite <- FALSE
