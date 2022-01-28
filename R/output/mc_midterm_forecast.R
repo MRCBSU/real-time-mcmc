@@ -216,8 +216,9 @@ if(gp.flag){
 
 ## Copy to projection directory other design matrices
 out.dir.tmp <- out.dir 
+print("out.dir =")
+print(out.dir)
 #! Modified needs fix
-out.dir <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/model_runs/20210924/Prev508_cm6ons_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_deaths"
 print("Symlink locs")
 print(out.dir)
 print(projections.basedir)

@@ -119,6 +119,7 @@ if(vacc.flag){
 } else vac1.files <- vacn.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
+        adm.sam <- read_csv(file.path(data.dirs["adm"], "admissions_data.csv"))
         file.copy(file.path(data.dirs["adm"], "admissions_data.csv"), out.dir)
         admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
     }
