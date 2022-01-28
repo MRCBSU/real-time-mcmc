@@ -1,5 +1,3 @@
-library(stringr)
-
 beta.params.from.mean.sd <- function(mean, sd){
  a <- c(0,0)
  a[1] <- ((mean^2 * (1 - mean)) - (mean * (sd^2))) / (sd^2)
@@ -314,7 +312,10 @@ if(single.ifr){
         TA$age.grad <- factor(TA$age.grad);TA$age <- factor(TA$age)
         if(bp.flag){ ## Expand the actual breakpoints and tweak the design
             if(!exists("tbreaks.interval")) tbreaks.interval <- min(tbreaks.ifr)
-            tbreaks2 <- round(tbreaks.ifr + (rep(1:(num.bp-1), each=length(tbreaks.ifr))*tbreaks.interval) - 1)
+            tbreaks.round <- rep(1:(num.bp - 1), each = length(tbreaks.ifr))
+            tbreaks2 <- round(tbreaks.ifr + (tbreaks.round*tbreaks.interval) - 1)
+            ## small adjustment to coincide with omicron
+            tbreaks2[tbreaks.round >= 5] <- tbreaks2[tbreaks.round >= 5] + 21
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
             reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
             for(per in 1:num.bp){
@@ -493,11 +494,7 @@ beta.rw.vals <- c(
     0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 )[1:(nbetas.full*nr)]
-print("beta.rw.vals")
-print(beta.rw.vals)
 beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
-print("beta.rw.vals")
-print(beta.rw.vals)
 if(length(beta.rw.vals) > nbetas*nr)
     beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
@@ -574,6 +571,4 @@ if(use.previous.run.for.start) {
     source(file.path(proj.dir, "import_pars.R"))
     value.ifr <- value.ifr[1:lv]
 }
-
-print(beta.rw.vals)
 source(file.path(proj.dir, "par_check.R"))
