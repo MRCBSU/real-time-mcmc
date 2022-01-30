@@ -255,7 +255,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   int nday = 0;
   // RE-SETTING COUNTERS OF SEROPOSITIVITY (MEASURED AS THE FRACTION CURRENTLY UNSUSCEPTIBLE) AND INFECTION ATTACK RATE
   gsl_matrix_set_all(l_Seropositivity, 1.0);
-  gsl_matrix_set_zero(l_internal_AR);
+  gsl_matrix_set_all(l_internal_AR, 1.0);
+  gsl_matrix_set_all(l_Prevalence, 0.0);
   
   for (int t = 0; t < time_points - 1; ++t)// YOU PUT -1 BECAUSE YOUR VECTORS HAVE LENGTHS UP TO TIME_POINTS AND WE ARE WORKING WITH t+1
     { 
@@ -339,28 +340,19 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	      gsl_matrix_set(l_WS, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - ((1 - pi) * gsl_matrix_get(p_lambda, t, a)))) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_rate, t, a)));			      
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_rate, t, a)));
 
+	      if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
+		int tindex = t / timestepsperday;
+		// Serology
+		gsl_matrix_set(l_internal_AR, tindex, a, gsl_matrix_get(l_internal_AR, tindex, a) - (gsl_matrix_get(l_S, t + 1, STATE_IDX(v, a)) / gsl_vector_get(regional_population_by_age, a)));
+		gsl_matrix_set(l_Seropositivity, tindex, a, gsl_matrix_get(l_Seropositivity, tindex, a) - ((1 - pi) * gsl_matrix_get(l_S, t + 1, STATE_IDX(v, a)) / gsl_vector_get(regional_population_by_age, a)));
+		// Virological positivity
+		gsl_matrix_set(l_Prevalence, tindex, a, gsl_matrix_get(l_Prevalence, tindex, a) + gsl_matrix_get(l_I_1, t + 1, STATE_IDX(v, a)) + gsl_matrix_get(l_I_2, t + 1, STATE_IDX(v, a)) + gsl_matrix_get(l_R_pos, t + 1, STATE_IDX(v, a)));
+
+	      }
+	      
 	    } // FOR v
-
-	  // HERE 20220128
-	  if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
-	    gsl_matrix_set(l_Seropositivity, t / timestepsperday, a, gsl_vector_get(in_dmp.l_init_prop_sus, a) - (gsl_matrix_get(l_S, t + 1, a) / gsl_vector_get(regional_population_by_age, a)));
-	    if(Vaccination){
-	      gsl_matrix_set(l_internal_AR,
-			     t / timestepsperday,
-			     a,
-			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (gsl_matrix_get(l_SV1, t + 1, a) + gsl_matrix_get(l_SVn, t + 1, a)) / gsl_vector_get(regional_population_by_age, a));
-	      // double adj_S = (1 - gsl_matrix_get(in_dmp.l_vacc1_infect, t + 1, a)) * gsl_matrix_get(l_SV1, t + 1, a) +
-	      // 	(1 - gsl_matrix_get(in_dmp.l_vaccn_infect, t + 1, a)) * gsl_matrix_get(l_SVn, t + 1, a);
-	      gsl_matrix_set(l_Seropositivity,
-			     t / timestepsperday,
-			     a,
-			     gsl_matrix_get(l_Seropositivity, t / timestepsperday, a) - (adj_S / gsl_vector_get(regional_population_by_age, a)));
-	    }
-	    gsl_matrix_set(l_Prevalence, t / timestepsperday, a, gsl_matrix_get(l_I_1, t + 1, a) + gsl_matrix_get(l_I_2, t + 1, a) + gsl_matrix_get(l_R, t + 1, a));
-
-	  }
 
 	  P_view = gsl_matrix_row(P, a);
 	  dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
