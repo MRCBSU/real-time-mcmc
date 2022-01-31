@@ -200,7 +200,7 @@ if(flg.confirmed)
 if(flg.cutoff){
     if(str.cutoff == "60"){
         dth.dat <- dth.dat %>%
-            mutate(death60 = ifelse(tt_death_cat != "3",
+            mutate(death60 = ifelse(tt_death_cat != "61+",
                                     "1",
                                     "0")
                    )
