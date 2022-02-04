@@ -15,14 +15,14 @@ if(Sys.info()["user"] == "joel.kandiah@phe.gov.uk" ) out.root <- "/home/phe.gov.
 ## Change location of repo
 # in.repo <- "2022"
 # out.repo <- "20211210"
-## in.repo <- "_new_base"
-## out.repo <- ""
+in.repo <- "_new_base"
+out.repo <- ""
 
 ## Change location of output directory
-## in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
-## out.base <- "ONS60"
-# in.base <- "Prev585SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211210_timeuse_household_deaths"
-# out.base <- "ONS60"
+in.base <- "PrevINLAnew515_cm6ons_IFR5bp_ONS60cutoff_18wk2_prev14-0PHE_matrices_20211001_timeuse_household_new_base_deaths"
+out.base <- "ONS60"
+# in.base <- ""
+# out.base <- ""
 
 ## Get all variable names
 var.list <- eapply(setup.env, typeof)

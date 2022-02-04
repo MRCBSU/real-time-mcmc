@@ -131,10 +131,10 @@ vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
 vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
 
 
-print(vac1.files)
-print(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc)))))
-print(gsub(".zip", ".csv", file.path("data", basename(input.loc))))
-print(input.loc)
+# print(vac1.files)
+# print(!file.exists(gsub(".zip", ".csv", file.path("data", basename(input.loc)))))
+# print(gsub(".zip", ".csv", file.path("data", basename(input.loc))))
+# print(input.loc)
 
 ## If these files exist and we don't want to overwrite them: do nothing
 if(vac.overwrite || !all(file.exists(c(vac1.files, vacn.files)))){
