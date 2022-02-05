@@ -21,7 +21,7 @@ model_state::model_state(const unsigned int iSize) :
 {}
 model_state::model_state(const model_state& oC) : 
   S(oC.S), E_1(oC.E_1), E_2(oC.E_2), I_1(oC.I_1), I_2(oC.I_2),
-  R_pos(oC.R_pos), R_neg(oC.R_neg), W(oC.W), WS(oc.WS), p_lambda(oC.p_lambda)
+  R_pos(oC.R_pos), R_neg(oC.R_neg), W(oC.W), WS(oC.WS), p_lambda(oC.p_lambda)
 {}
 model_state& model_state::operator=(const model_state& oC)
 {

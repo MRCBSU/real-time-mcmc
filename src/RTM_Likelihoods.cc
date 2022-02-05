@@ -88,13 +88,12 @@ void initialising_Deterministic_SE1E2I1I2R_AG_RF_CIN2(regional_model_params in_d
 void collapse_vac(gsl_vector* vec_age, const gsl_vector* vec_vac_age){
   gsl_vector_set_zero(vec_age);
   for(int intA = 0; intA < NUM_AGE_GROUPS; ++intA)
-    for(int intV = 0; intV <= MAX_VAC_DOSES; ++intV)
+    for(int intV = 0; intV <= MAX_VAX_DOSES; ++intV)
       gsl_vector_set(vec_age, intA, gsl_vector_get(vec_age, intA) + gsl_vector_get(vec_vac_age, STATE_IDX(intV, intA)));
 }
 
 void prob_infection_RF_MA(
-			  gsl_vector* prob_infection,
-			  gsl_vector* I, // above two vectors are outputs
+			  gsl_vector* prob_infection, // This is an output
 			  gsl_matrix* force_infectious_contact_matrix,
 			  const gsl_vector* epsilon,
 			  const gsl_vector* importations,
@@ -104,11 +103,12 @@ void prob_infection_RF_MA(
 			  const double delta_t)
 {
 
+  gsl_vector* I = gsl_vector_alloc(I_2->size);
   gsl_vector_memcpy(I, I_2);
   gsl_vector_mul(I, epsilon);
   gsl_vector_add(I, I_1);
 
-  gsl_vector* Iages = gsl_matrix_alloc(NUM_AGE_GROUPS);
+  gsl_vector* Iages = gsl_vector_calloc(NUM_AGE_GROUPS);
   collapse_vac(Iages, I);
   
   if(tk == cREEDFROST){
@@ -133,6 +133,7 @@ void prob_infection_RF_MA(
 
   }
   gsl_vector_free(Iages);
+  gsl_vector_free(I);
   
   // Allow for outside importations and scale according to the time-step size.
   gsl_vector_add(prob_infection, importations);
@@ -170,12 +171,14 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 {
   // FUNCTION DEFINITION 
   int timestepsperday = gmip.l_transmission_time_steps_per_day;
-  int time_points = l_S->size1; 
+  int time_points = l_S->size1;
+  // ARRAYS USED TO STORE THE CALCULATIONS OF SUMMARY STATISTICS
   gsl_matrix* Number_New_Infected = gsl_matrix_calloc(time_points, NUM_AGE_GROUPS);
-  gsl_matrix* Delta_Disease = (Vaccination) ? gsl_matrix_alloc(time_points, NUM_AGE_GROUPS) : Number_New_Infected;
-  gsl_matrix* p_lambda = gsl_matrix_alloc(time_points, NUM_AGE_GROUPS);
+  gsl_matrix* Delta_Disease = (Vaccination) ? gsl_matrix_calloc(time_points, NUM_AGE_GROUPS) : Number_New_Infected;
+  gsl_matrix* p_lambda = gsl_matrix_calloc(time_points, NUM_AGE_GROUPS);
+  // ARRAY TO HOLD SELECTED CONTACT MATRICES AT TIME t.
   gsl_matrix* P = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
-  gsl_vector* I = gsl_vector_alloc(STATE_DIM);
+  
   int mix_interval;
 
   // INITIALISING: SEIR view variables
@@ -197,12 +200,18 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   gsl_vector_view P_view;
   gsl_vector_view dA_view;
 
+  // RE-SETTING COUNTERS OF POSITIVITY (MEASURED AS THE FRACTION CURRENTLY UNSUSCEPTIBLE) AND INFECTION ATTACK RATE
+  gsl_matrix_set_all(l_Seropositivity, 1.0);
+  gsl_matrix_set_all(l_internal_AR, 1.0);
+  gsl_matrix_set_all(l_Prevalence, 0.0);
+
   // ASSUME ONLY UNVACCINATED STATES ARE INITIALLY NON-ZERO  
 
-  // SELECT THE CORRECT MIXING MATRIX
+  // SELECT THE CORRECT (time-0) SCALED MIXING MATRIX
   gsl_matrix_memcpy(P, l_MIXMOD_ADJUSTED2.MIXMAT_scaled[0]);
 
   // GET SOME UNVACCINATED VIEWS OF THE FIRST ROW OF THE STATE MATRICES
+  // AND FILL THOSE ROWS FOR THE E1, E2, I1, I2 STATES // HERE!! 20220131
   gsl_vector_view S_V0_view = gsl_vector_subvector(&S_view.vector, 0, NUM_AGE_GROUPS);
   gsl_vector_view E1_V0_view = gsl_vector_subvector(&E1_view.vector, 0, NUM_AGE_GROUPS);
   gsl_vector_memcpy(&E1_V0_view.vector, E1_0);
@@ -217,10 +226,10 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
       gsl_matrix_set(l_S, 0, a, gsl_vector_get(regional_population_by_age, a) * gsl_vector_get(in_dmp.l_init_prop_sus, a));
       gsl_matrix_set(l_R_neg, 0, a, gsl_vector_get(regional_population_by_age, a) -
 		     gsl_matrix_get(l_S, 0, a) -
-		     gsl_matrix_get(l_I1, 0, a) -
-		     gsl_matrix_get(l_E1, 0, a) -
-		     gsl_matrix_get(l_I2, 0, a) -
-		     gsl_matrix_get(l_E2, 0, a));
+		     gsl_matrix_get(l_I_1, 0, a) -
+		     gsl_matrix_get(l_E_1, 0, a) -
+		     gsl_matrix_get(l_I_2, 0, a) -
+		     gsl_matrix_get(l_E_2, 0, a));
       // gsl_matrix_set(l_R, 0, a, gsl_vector_get(regional_population_by_age, a) * (1 - gsl_vector_get(in_dmp.l_init_prop_sus, a))); // OLD CODE, l_R WAS IGNORED, SO HOPEFULLY CAN RE-PURPOSE IT FOR THE NEW SWAB POSITIVE STATE
       P_view = gsl_matrix_row(P, a);
       dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
@@ -235,7 +244,6 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   gsl_vector_view Number_New_Infected_view = gsl_matrix_row(Number_New_Infected, 0);
 
   prob_infection_RF_MA(&p_lambda_view.vector,
-		       I,
 		       P,
 		       &epsilon_view.vector,
 		       &importations_view.vector,
@@ -247,16 +255,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   // Get number of new infections.. probability of infection multiplied by number of susceptibles.
   gsl_matrix_set_row(Number_New_Infected, 0, &S_V0_view.vector);
   gsl_vector_mul(&Number_New_Infected_view.vector, &p_lambda_view.vector);
-  if(Vaccination) gsl_matrix_set_row(Delta_Disease, 0, &Number_New_Infected_view.vector);
+  gsl_matrix_set_row(Delta_Disease, 0, &Number_New_Infected_view.vector);
   
   // NEED TO AVOID THIS LOOP IF S(t) has any negative values
 
   // UPDATING THE MODEL:
   int nday = 0;
-  // RE-SETTING COUNTERS OF SEROPOSITIVITY (MEASURED AS THE FRACTION CURRENTLY UNSUSCEPTIBLE) AND INFECTION ATTACK RATE
-  gsl_matrix_set_all(l_Seropositivity, 1.0);
-  gsl_matrix_set_all(l_internal_AR, 1.0);
-  gsl_matrix_set_all(l_Prevalence, 0.0);
   
   for (int t = 0; t < time_points - 1; ++t)// YOU PUT -1 BECAUSE YOUR VECTORS HAVE LENGTHS UP TO TIME_POINTS AND WE ARE WORKING WITH t+1
     { 
@@ -309,38 +313,38 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
 	      gsl_matrix_set(l_E_2, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_E_2, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_E_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_E_1, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_I_1, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_I_1, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_E_2, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_latent_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_I_2, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_I_2, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_I_1, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
 	      
 	      gsl_matrix_set(l_R_pos, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (1 / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (1 / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_I_2, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_average_infectious_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_R_neg, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc.out) / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_W, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_W, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc.out) / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_WS, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_WS, t, STATE_IDX(v, a)) * (1 - vacc.out) * (1 - ((1 - pi) * gsl_matrix_get(p_lambda, t, a)))) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc.out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_rate, t, a)));
+			     (gsl_matrix_get(l_WS, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - ((1 - pi) * gsl_matrix_get(p_lambda, t, a)))) +
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_rate, t, a)));
 
 	      if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 		int tindex = t / timestepsperday;
@@ -355,12 +359,11 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	    } // FOR v
 
 	  P_view = gsl_matrix_row(P, a);
-	  dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
+	  dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);  // Time-0 for the infectious period to ensure standardisation
 	  gsl_vector_div(&P_view.vector, &dA_view.vector);
-
 	   
 	} // FOR a
-
+    
       // UPDATE THE PROBABILITY OF INFECTION
 
       // scaled mixing matrix
@@ -370,20 +373,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
       p_lambda_view = gsl_matrix_row(p_lambda, t + 1);
       epsilon_view = gsl_matrix_row(in_dmp.l_relative_infectiousness_I2_wrt_I1, t + 1);
       importations_view = gsl_matrix_row(in_dmp.l_importation_rate, t + 1);
-      S_view = gsl_matrix_row(l_S, t + 1);
-      if(Vaccination){
-	SV1_view = gsl_matrix_row(l_SV1, t + 1);
-	SVn_view = gsl_matrix_row(l_SVn, t + 1);
-      }
-      E1_view = gsl_matrix_row(l_E_1, t + 1);
-      E2_view = gsl_matrix_row(l_E_2, t + 1);      
+
       I1_view = gsl_matrix_row(l_I_1, t + 1);
       I2_view = gsl_matrix_row(l_I_2, t + 1);
-      R1_view = gsl_matrix_row(l_R, t + 1);
       
       // update probability of infection
       prob_infection_RF_MA(&p_lambda_view.vector,
-			   I,
 			   P,
 			   &epsilon_view.vector,
 			   &importations_view.vector,
@@ -396,30 +391,30 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
       nday = nday + ((t % timestepsperday) == 0 ? 1 : 0);
     } // FOR t
 
-  if(Vaccination){
-    l_end_state->fill(&S_view.vector,
-		      &SV1_view.vector,
-		      &SVn_view.vector,
-		      &E1_view.vector,
-		      &E2_view.vector,
-		      &I1_view.vector,
-		      &I2_view.vector,
-		      &R1_view.vector,
-		      &p_lambda_view.vector);
-  } else l_end_state->fill(&S_view.vector,
-			   &E1_view.vector,
-			   &E2_view.vector,
-			   &I1_view.vector,
-			   &I2_view.vector,
-			   &R1_view.vector,
-			   &p_lambda_view.vector);
+  S_view = gsl_matrix_row(l_S, time_points - 1);
+  E1_view = gsl_matrix_row(l_E_1, time_points - 1);
+  E2_view = gsl_matrix_row(l_E_2, time_points - 1);      
+  // I1_view = gsl_matrix_row(l_I_1, time_points - 1); // should already be set
+  // I2_view = gsl_matrix_row(l_I_2, time_points - 1); // should already be set
+  R_pos_view = gsl_matrix_row(l_R_pos, time_points - 1);
+  R_neg_view = gsl_matrix_row(l_R_neg, time_points - 1);
+  W_view = gsl_matrix_row(l_W, time_points - 1);
+  WS_view = gsl_matrix_row(l_WS, time_points - 1);
+
+  l_end_state->fill(&S_view.vector,
+		    &E1_view.vector,
+		    &E2_view.vector,
+		    &I1_view.vector,
+		    &I2_view.vector,
+		    &R_pos_view.vector,
+		    &R_neg_view.vector,
+		    &W_view.vector,
+		    &WS_view.vector,
+		    &p_lambda_view.vector);
 
   // AGGREGATE THE NUMBER_NEW_INFECTED MATRIX TO THE TIME STEPS USED BY THE REPORTING MODEL
   output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Number_New_Infected, l_NNI);
-  if(Vaccination)
-    output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Delta_Disease, l_Delta_Dis);
-  else
-    gsl_matrix_memcpy(l_Delta_Dis, l_NNI);
+  output_per_selected_period(timestepsperday / gmip.l_reporting_time_steps_per_day, Delta_Disease, l_Delta_Dis);
   
   double dbl_isnan_check = gsl_matrix_max(l_NNI);
   if(std::isnan(dbl_isnan_check)){
@@ -428,11 +423,10 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
     gsl_matrix_set_all(l_internal_AR, -1.0);
   }
 
-  if(Vaccination) gsl_matrix_free(Delta_Disease);
+  gsl_matrix_free(Delta_Disease);
   gsl_matrix_free(Number_New_Infected);
   gsl_matrix_free(p_lambda);
   gsl_matrix_free(P);
-  gsl_vector_free(I);
 
 }
 
@@ -525,9 +519,19 @@ void fn_transmission_model(regional_model_params in_dmp,
 						   *in_dmp.l_MIXMOD.evector_MIXMAT_normalised,
 						   l_E1_0, l_E2_0, l_I1_0, l_I2_0);
 
-  propagate_SEEIIR(in_dmp, regional_population_by_age, global_params,
-		   R0_t, l_E1_0, l_E2_0,
-		   l_I1_0, l_I2_0, mod_stats.d_NNI, mod_stats.d_Delta_Dis, mod_stats.d_seropositivity, mod_stats.d_internal_AR, mod_stats.d_prevalence,
+  propagate_SEEIIR(in_dmp,
+		   regional_population_by_age,
+		   global_params,
+		   R0_t,
+		   l_E1_0,
+		   l_E2_0,
+		   l_I1_0,
+		   l_I2_0,
+		   mod_stats.d_NNI,
+		   mod_stats.d_Delta_Dis,
+		   mod_stats.d_seropositivity,
+		   mod_stats.d_internal_AR,
+		   mod_stats.d_prevalence,
 		   mod_stats.d_end_state,
 		   vaccination,
 		   vbooster);
@@ -570,8 +574,7 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   // so far, have assumed that all infections are symptomatic. not so. multiply by the proportion of symptomatics
   gsl_matrix_mul_elements(NNI_rep_model_input, prop_symp);
 
-  gsl_matrix* modelled_events = gsl_matrix_alloc(in_gmip.l_reporting_time_steps_per_day * in_gmip.l_duration_of_runs_in_days, NUM_AGE_GROUPS);
-  gsl_matrix_set_zero(modelled_events);
+  gsl_matrix* modelled_events = gsl_matrix_calloc(in_gmip.l_reporting_time_steps_per_day * in_gmip.l_duration_of_runs_in_days, NUM_AGE_GROUPS);
 
   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
   // #pragma omp parallel for default(shared) schedule(static) num_threads(int_num_threads)
@@ -582,16 +585,13 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
 	  double modelled_out = 0;
 	  for (int m = 0; m <= FN_MIN(distribution_function->size - 1, k); ++m)
 	    {
-	      modelled_out += gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
+	      modelled_out += gsl_matrix_get(severity_ratio, k - m, j) * gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
 	      // gsl_matrix_set(modelled_events,
 	      // 		     k,
 	      // 		     j,
 	      // 		     gsl_matrix_get(modelled_events, k, j) + (gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m))); // severity_ratio[k - m, j] HAS BEEN USED IN THE PAST - THIS GIVES THE PROPORTION OF SYMPTOMATIC CASES WHO 
 	    }// FOR
-	  gsl_matrix_set(modelled_events,
-			 k,
-			 j,
-			 modelled_out * gsl_matrix_get(severity_ratio, k, j));
+	  gsl_matrix_set(modelled_events, k, j, modelled_out);
 	}// FOR
     }// FOR
 

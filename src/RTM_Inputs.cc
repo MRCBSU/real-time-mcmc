@@ -1428,10 +1428,10 @@ void read_data_inputs(Region* meta_region, const string str_input_filename,
       // 	  meta_data_type[int_i]->switchData();
       // 	}
     }
-  if(meta_region->VBooster_data != 0)
+  if(meta_region->VBoosting_data != 0)
     {
       for(int_i = 0; int_i < num_regions; int_i++)
-	meta_data_type[int_i] = meta_region[int_i].VBooster_data;
+	meta_data_type[int_i] = meta_region[int_i].VBoosting_data;
       read_metaregion_datatype(meta_data_type, tempmat, countfiles, denomfiles, num_regions,
 			       "regions_boostvaccination_data",
 			       "",
