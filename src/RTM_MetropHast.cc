@@ -4,6 +4,10 @@
 #include "gsl_vec_ext.h"
 #include "string_fns.h"
 
+#include <chrono>
+#include <ctime>
+#include <unistd.h>
+
 #include "RTM_updParams.h"
 
 using namespace std;
@@ -394,7 +398,22 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 	for (int reg = 1; reg <= nregions; reg++) {
 	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-	  if (int_iter > 199)
+
+	  // if (int_iter > 199)
+	  // paramSet.blocks[reg].adaptiveUpdate(int_iter);
+	    
+	  // New adaptive update:
+	  // Check acceptance every 1000 iters.
+	  // Don't adapt for first 1000 iters, or after burn-in ends.
+	  if (int_iter % 1000 == 0 && int_iter > 0 && int_iter < simulation_parameters.burn_in) {
+	    int acceptance = paramSet.blocks[reg].numAccept / (double) paramSet.blocks[reg].numProposed;
+	    if (acceptance < 0.225 || acceptance > 0.245)
+	      paramSet.blocks[reg].doAdaptation = true;
+	    else
+	      paramSet.blocks[reg].doAdaptation = false;
+	  }
+
+	  if (paramSet.blocks[reg].doAdaptation && simulation_parameters.adapt_every > 0 && int_iter % simulation_parameters.adapt_every == 0)
 	    paramSet.blocks[reg].adaptiveUpdate(int_iter);
 	}
       }
@@ -408,7 +427,20 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 	  paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
 	}
 	
-	if (int_iter > 199)
+	// if (int_iter > 199)
+	//paramSet.blocks[0].adaptiveUpdate(int_iter);
+
+	// New adaptive update
+	if (int_iter % 1000 == 0 && int_iter > 0 && int_iter < simulation_parameters.burn_in) {
+	  int acceptance = paramSet.blocks[0].numAccept / (double) paramSet.blocks[0].numProposed;
+
+	  if (acceptance < 0.225 || acceptance > 0.245)
+	    paramSet.blocks[0].doAdaptation = true;
+	  else
+	    paramSet.blocks[0].doAdaptation = false;
+	}
+
+	if (paramSet.blocks[0].doAdaptation && simulation_parameters.adapt_every > 0 && int_iter % simulation_parameters.adapt_every == 0)
 	  paramSet.blocks[0].adaptiveUpdate(int_iter);
       }
 
@@ -509,8 +541,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Output MCMC sampler progress reports
       if (int_progress_report < simulation_parameters.num_progress_reports) {
 	//if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-	  // This refers to the old random walk M-H adaptation
-	  // write_progress_report("adaptive_report", ...
+	// This refers to the old random walk M-H adaptation
+	// write_progress_report("adaptive_report", ...
 
 	if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
 	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
@@ -646,7 +678,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					    gmip,
 					    theta.gp_delay.distribution_function,
 					    theta.hosp_delay.distribution_function
-			    );
+					    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 			}
@@ -809,8 +841,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // UPDATE LIKELIHOOD POSTERIOR STATISTICS..
       if(int_iter >= simulation_parameters.burn_in)
-      {
-	lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
+	{
+	  lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
 	  lfx.sumsq_lfx += gsl_pow_2(lfx.total_lfx) / ((double) CHAIN_LENGTH);
 	  prop_lfx.bar_lfx = lfx.bar_lfx;
 	  prop_lfx.sumsq_lfx = lfx.sumsq_lfx;
@@ -839,7 +871,28 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       
     } // END FOR(int_iter < num_iterations)
 
-    for(int int_i = 0; int_i < nregions; int_i++){
+  // CCS: Print save/resume info to file
+  string savefilename = "covariance_final.txt";
+  ofstream savefile(savefilename, std::ofstream::out);
+  if (! savefile.is_open()) {
+    std::cerr << "Error: Unable to open output file " << savefilename << "\n";
+    exit(1);
+  }
+
+  // Yes, it takes three function calls and two include files to print the current time...
+  auto end = std::chrono::system_clock::now();
+  std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+  
+  savefile << "Dir: " << get_current_dir_name() << " ; End: " << std::ctime(&end_time);
+  savefile << "Total iters: " << simulation_parameters.num_iterations << "; burn-in: " << simulation_parameters.burn_in << endl;
+
+  for (auto &block : paramSet.blocks) {
+    savefile << block.beta << " " << block.mu << endl;
+    block.sigma.printLine(savefile);
+  }
+
+  
+  for(int int_i = 0; int_i < nregions; int_i++){
     gsl_matrix_free(output_NNI[int_i]);
     gsl_matrix_free(output_Delta_Dis[int_i]);
     // TERMINATE STATISTIC OUTPUT FILES
