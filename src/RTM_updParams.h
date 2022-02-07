@@ -181,6 +181,9 @@ public:
   int numAccept;    // Acceptance rate
   int numProposed;
 
+  bool doAdaptation;  // Whether to adapt the covariance using AMGS
+  int adapt_every;    // Local copy of global setting used for calculating AMGS eta
+
   // Extract the number of components in block
   int size() const;
   
