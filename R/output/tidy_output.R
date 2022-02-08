@@ -104,9 +104,11 @@ if (!exists("conv")) {
 
 int_iter <- 0:(num.iterations - 1)
 ## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+parameter.iterations.raw <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= min.iteration]
 ## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
-outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+outputs.iterations.raw <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= min.iteration]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 ## save.image("tmptmp.RData")
@@ -135,12 +137,13 @@ print('Formatting time series')
 
 
 ## Extract length of dimensions
+iterations.to.chop <- length(outputs.iterations.raw) - length(outputs.iterations)
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
 num.ages <- dim(NNI[[1]])[1]
 stopifnot(num.ages == length(age.labs))
 num.days <- dim(NNI[[1]])[2]
-num.NNI.iterations <- dim(NNI[[1]])[3]
+num.NNI.iterations <- dim(NNI[[1]])[3] - iterations.to.chop
 stopifnot(length(outputs.iterations) == num.NNI.iterations)
 output.quantity.dims <- c(num.ages,
                           num.days, num.NNI.iterations, num.regions)
@@ -158,8 +161,11 @@ output.dimnames <- list(
 )
 
 ## Get parameters
-tbl_params <- as_tibble(params)
-tbl_params$iteration <- parameter.iterations
+tbl_params <- as_tibble(params) %>%
+	mutate(iteration = parameter.iterations.raw) %>%
+	filter(iteration >= min.iteration)
+stopifnot(unique(tbl_params$iteration) == parameter.iterations)
+
 
 ## Get Rt into nice format
 Rt.old <- Rt
@@ -176,10 +182,11 @@ Rt <- array(
 ## Get NNI into nice format
 nice.array <- function(x)
     array(
-        unlist(x),
+        unlist(lapply(x, function(x) x[,,-(1:iterations.to.chop)])),
         dim = output.quantity.dims,
         dimnames = output.dimnames)
-infections <- nice.array(NNI); rm(NNI)
+infections <- nice.array(NNI)
+rm(NNI)
 sero <- nice.array(sero)
 if(vacc.flag){
     vacc.infections <- nice.array(DNNI); rm(DNNI)
