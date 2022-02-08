@@ -8,12 +8,18 @@ prev_plot <- R.utils::extract(prevalence, indices = list(start.prev:ndate.data),
 prev.dat.plot <- prev.dat %>%
     filter(lsd > 0) %>%
     mutate(value = exp(lmean), date = sample_date)
-make.plots(prev_plot, by = "region", data = prev.dat.plot)
+reg_deonm = population %>%
+	group_by(name=region) %>%
+	summarise(denom=sum(value))
+age_deonm = population %>%
+	group_by(name=age) %>%
+	summarise(denom=sum(value))
+make.plots(prev_plot, by = "region", data = prev.dat.plot, denom = reg_deonm)
 ```
 
 #### By age
 ```{r age-prevalence}}
-make.plots(prev_plot, by = "age", data = prev.dat.plot)
+make.plots(prev_plot, by = "age", data = prev.dat.plot, denom = age_deonm)
 ```
 
 #### Goodness-of-fit
