@@ -95,15 +95,12 @@ if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
-if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
 load(file.path(out.dir, "mcmc.RData"))
 rm(dth.dat)
 if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
 }
-if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
-if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
 
 int_iter <- 0:(num.iterations - 1)
 ## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
@@ -351,7 +348,8 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
 print('Saving results')
 save.objs <- c("infections", "cum_infections", "vacc.infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
-     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")
+     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat",
+	 "int_iter", "parameter.iterations", "parameter.to.outputs", "iterations.for.Rt")
 save(list = save.objs[sapply(save.objs, exists)],
      file = file.path(out.dir, "output_matrices.RData"))
 save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))
