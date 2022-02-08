@@ -22,7 +22,7 @@ thisFile <- function() {
 }
 
 ## Where are various directories?
-file.loc <- dirname(thisFile())
+file.loc <- dirname(dirname(dirname(thisFile())))
 proj.dir <- file.loc
 Rfile.loc <- file.path(file.loc, "R/output")
 
