@@ -179,7 +179,7 @@ if(run.all){
         vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
     }
     
-   ## If these files exist and we don't want to overwrite them: do nothing
+    ## If these files exist and we don't want to overwrite them: do nothing
     if(vac.overwrite || ifelse(vac.n_doses == 3, !all(file.exists(c(vac1.files, vac2.files, vac3.files))), !all(file.exists(c(vac1.files, vacn.files))))){
         if(vac.n_doses == 3) {
             stop("Third dose data not processed here, check correct data left in the RTM_format folder")

@@ -675,14 +675,23 @@ void block_regional_parameters(regional_model_params& out_rmp,
       regional_matrix_parameter(out_rmp.l_latent_period, updPars.lookup(upd::ALP, region_index), updPars[upd::ALP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_latent_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
+  if(update_flags.getFlag("l_waning_rate"))
+    {
+      regional_matrix_parameter(out_rmp.l_waning_rate, updPars.lookup(upd::IWAN, region_index), updPars[upd::IWAN].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      gsl_matrix_add_constant(out_rmp.l_waning_rate, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
+    }
   if(update_flags.getFlag("l_vacc1_disease"))
     regional_matrix_parameter(out_rmp.l_vacc1_disease, updPars.lookup(upd::VAC1_DISEASE, region_index), updPars[upd::VAC1_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccn_disease"))
     regional_matrix_parameter(out_rmp.l_vaccn_disease, updPars.lookup(upd::VACN_DISEASE, region_index), updPars[upd::VACN_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vaccb_disease"))
+    regional_matrix_parameter(out_rmp.l_vaccb_disease, updPars.lookup(upd::VACB_DISEASE, region_index), updPars[upd::VACB_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vacc1_infect"))
     regional_matrix_parameter(out_rmp.l_vacc1_infect, updPars.lookup(upd::VAC1_INFECT, region_index), updPars[upd::VAC1_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccn_infect"))
     regional_matrix_parameter(out_rmp.l_vaccn_infect, updPars.lookup(upd::VACN_INFECT, region_index), updPars[upd::VACN_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vaccB_infect"))
+    regional_matrix_parameter(out_rmp.l_vaccb_infect, updPars.lookup(upd::VACB_INFECT, region_index), updPars[upd::VACB_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookup(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
@@ -692,38 +701,38 @@ void block_regional_parameters(regional_model_params& out_rmp,
       gsl_vector_scale(out_rmp.l_lbeta_rw, 1 / gsl_vector_get(out_rmp.l_lbeta_rw, 0)); // Random-walk necessarily centred on 0.
   }
   if(update_flags.getFlag("l_sensitivity"))
-  { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookup(upd::SENS, region_index);
+    { // STRICTLY A SCALAR QUANTITY
+      gsl_vector_const_view view = updPars.lookup(upd::SENS, region_index);
       fixed_quantity(out_rmp.l_sensitivity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SENS].param_name,
 		     updPars[upd::SENS].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_specificity"))
-  { // STRICTLY A SCALAR QUANTITY
-    gsl_vector_const_view view = updPars.lookup(upd::SPEC, region_index);
+    { // STRICTLY A SCALAR QUANTITY
+      gsl_vector_const_view view = updPars.lookup(upd::SPEC, region_index);
       fixed_quantity(out_rmp.l_specificity,
 		     gsl_vector_get(&view.vector, 0),
 		     updPars[upd::SPEC].param_name,
 		     updPars[upd::SPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_sensitivity"))
-  { // NO LONGER STRICTLY A SCALAR QUANTITY
-    regional_matrix_parameter(out_rmp.l_sero_sensitivity, updPars.lookup(upd::SSENS, region_index), updPars[upd::SSENS].map_to_regional, region_index, 1);
-    // gsl_vector_const_view view = updPars.lookup(upd::SSENS, region_index);
-    //   fixed_quantity(out_rmp.l_sero_sensitivity,
-    // 		     gsl_vector_get(&view.vector, 0),
-    // 		     updPars[upd::SSENS].param_name,
-    // 		     updPars[upd::SSENS].map_to_regional.design_matrix[region_index]);
+    { // NO LONGER STRICTLY A SCALAR QUANTITY
+      regional_matrix_parameter(out_rmp.l_sero_sensitivity, updPars.lookup(upd::SSENS, region_index), updPars[upd::SSENS].map_to_regional, region_index, 1);
+      // gsl_vector_const_view view = updPars.lookup(upd::SSENS, region_index);
+      //   fixed_quantity(out_rmp.l_sero_sensitivity,
+      // 		     gsl_vector_get(&view.vector, 0),
+      // 		     updPars[upd::SSENS].param_name,
+      // 		     updPars[upd::SSENS].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_sero_specificity"))
-  { // NO LONGER STRICTLY A SCALAR QUANTITY
-    regional_matrix_parameter(out_rmp.l_sero_specificity, updPars.lookup(upd::SSPEC, region_index), updPars[upd::SSPEC].map_to_regional, region_index, 1);
-    // gsl_vector_const_view view = updPars.lookup(upd::SSPEC, region_index);
-    //   fixed_quantity(out_rmp.l_sero_specificity,
-    // 		     gsl_vector_get(&view.vector, 0),
-    // 		     updPars[upd::SSPEC].param_name,
-    // 		     updPars[upd::SSPEC].map_to_regional.design_matrix[region_index]);
+    { // NO LONGER STRICTLY A SCALAR QUANTITY
+      regional_matrix_parameter(out_rmp.l_sero_specificity, updPars.lookup(upd::SSPEC, region_index), updPars[upd::SSPEC].map_to_regional, region_index, 1);
+      // gsl_vector_const_view view = updPars.lookup(upd::SSPEC, region_index);
+      //   fixed_quantity(out_rmp.l_sero_specificity,
+      // 		     gsl_vector_get(&view.vector, 0),
+      // 		     updPars[upd::SSPEC].param_name,
+      // 		     updPars[upd::SSPEC].map_to_regional.design_matrix[region_index]);
     }
   if(update_flags.getFlag("l_pr_symp"))
     regional_matrix_parameter(out_rmp.l_pr_symp, updPars.lookup(upd::PROP_SYMP, region_index), updPars[upd::PROP_SYMP].map_to_regional, region_index, in_gmip.l_reporting_time_steps_per_day);
@@ -763,9 +772,9 @@ void block_regional_parameters(regional_model_params& out_rmp,
       out_rmp.l_R0_peakday = updPars.lookup0(upd::R0_PEAKDAY, region_index);
     }
   if(update_flags.getFlag("l_EGR"))
-  {
-    // gsl_vector_const_view view = updPars.lookupValue(upd::EGR, region_index);
-    regional_scalar_parameter(out_rmp.l_EGR, updPars, upd::EGR, region_index);
+    {
+      // gsl_vector_const_view view = updPars.lookupValue(upd::EGR, region_index);
+      regional_scalar_parameter(out_rmp.l_EGR, updPars, upd::EGR, region_index);
       //      int temp_region_index = (updPars.lookup(upd::EGR).map_to_regional.region_breakpoints == 0) ? 0 : region_index;
       //      out_rmp.l_EGR = gsl_vector_get(updPars.lookup(upd::EGR, region_index), temp_region_index);
 

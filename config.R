@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -51,7 +51,7 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
-sus_seb_combination <- 3L
+sus_seb_combination <- 1L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
@@ -65,7 +65,7 @@ adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
-## File names for files in
+## ## File names of pre-processed SUS data if it is to be used.
 preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
 names(preprocessed_sus_names) <- regions
 print(preprocessed_sus_names)
@@ -138,12 +138,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "admissions"
+data.desc <- "deaths"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -171,7 +171,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- ifelse(deaths.flag, "28", "")
+	str.cutoff <- ifelse(deaths.flag, "60", "")
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -202,12 +202,12 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220129", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220129", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220129", paste0("Prev634SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -265,19 +265,6 @@ scenario.name <- paste0(scenario.name, efficacies)
 ## ## temporary line - for adding ad hoc names to the scenario
 ## scenario.name <- paste0(scenario.name, "_manufacturer")
 
-## ## Choose the name of the subdirectory in model_runs to use
-out.dir <- file.path(proj.dir,
-                     "model_runs",
-                     date.data,
-                     paste0(
-                         scenario.name,
-                         "_matrices_", google.data.date, matrix.suffix,
-                         "_", data.desc))	# Value actually used
-if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
-if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
-
-threads.per.regions <- 1
-
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
 str.date.vacc <- "20220203" ## Optional: if not specified will take the most recent data file.
@@ -292,6 +279,20 @@ vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
 ## - this is mostly set for the benefit of projections rather than model fitting.
 future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
 future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
 ## Approximate data at which delta became dominant strain
 delta.date <- ymd("20210510")
+
+## ## Choose the name of the subdirectory in model_runs to use
+out.dir <- file.path(proj.dir,
+                     "model_runs",
+                     date.data,
+                     paste0(
+                         scenario.name,
+                         "_matrices_", google.data.date, matrix.suffix,
+                         "_", data.desc))	# Value actually used
+if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
+if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
+
+threads.per.regions <- 1

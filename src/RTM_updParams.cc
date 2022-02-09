@@ -17,8 +17,10 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "r1_period", AR1 },
   { "vacc_1st_disease", VAC1_DISEASE },
   { "vacc_nth_disease", VACN_DISEASE },  //10
+  { "vacc_boost_disease", VACB_DISEASE },
   { "vacc_1st_infect", VAC1_INFECT },
   { "vacc_nth_infect", VACN_INFECT },
+  { "vacc_boost_infect", VACB_INFECT },
   { "relative_infectiousness", REL_INFECT },
   { "prop_symptomatic", PROP_SYMP },
   { "contact_parameters", CONTACT },  // 15
@@ -38,7 +40,8 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "test_specificity", SPEC },
   { "day_of_week_effects", DOW_EFFECTS },  // 30
   { "sero_test_sensitivity", SSENS },
-  { "sero_test_specificity", SSPEC }
+  { "sero_test_specificity", SSPEC },
+  { "immunity_waning", IWAN }
 };
 
 
@@ -647,20 +650,20 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   if (global) {
     blockflags.regional_update_flags[2] = true;
     blockflags.regional_update_flags[4] = true;
-    blockflags.regional_update_flags[12] = true;
     blockflags.regional_update_flags[14] = true;
-    blockflags.regional_update_flags[15] = true;
-    blockflags.regional_update_flags[18] = true;
-    blockflags.regional_update_flags[27] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[17] = true;
+    blockflags.regional_update_flags[19] = true;
     blockflags.regional_update_flags[29] = true;
     blockflags.regional_update_flags[30] = true;
+    blockflags.regional_update_flags[32] = true;
   } else {
-    blockflags.regional_update_flags[10] = true;
-    blockflags.regional_update_flags[11] = true;
     blockflags.regional_update_flags[12] = true;
+    blockflags.regional_update_flags[13] = true;
     blockflags.regional_update_flags[14] = true;
-    blockflags.regional_update_flags[15] = true;
-    blockflags.regional_update_flags[22] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[17] = true;
+    blockflags.regional_update_flags[24] = true;
   }
   
   // Copy proposal to paramSet to evaluate region

@@ -180,7 +180,7 @@ if(vacc.pi.bps)
     }
 
 ## Efficacy against infection from three vaccine doses - can be derived from vaccine surveillance report ??
-if(vacc.n_doses == 3) {
+if(vac.n_doses == 3) {
     if(efficacies == "Nick"){
         value.vac.pi3 <- 0.6
     } else if(efficacies == "Jamie"){
