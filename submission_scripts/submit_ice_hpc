@@ -13,7 +13,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=20
+#SBATCH --array=1,2,8,11,13,14,17,19
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
