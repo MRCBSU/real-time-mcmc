@@ -223,7 +223,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
   new_rmp.d_R0_phase_differences = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
   new_rmp.l_sero_sensitivity = gsl_matrix_calloc(num_days, num_ages);
   new_rmp.l_sero_specificity = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_waning_rate = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+  new_rmp.l_waning_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   
   int num_mix_breakpoints = (src_mixing_pars.breakpoints == 0) ? 0 : src_mixing_pars.breakpoints->size;
 
@@ -264,7 +264,7 @@ void regional_model_params_alloc(regional_model_params& dest_rmp,
   dest_rmp.d_R0_phase_differences = gsl_vector_calloc(src_rmp.d_R0_phase_differences->size);
   dest_rmp.l_sero_sensitivity = gsl_matrix_calloc(src_rmp.l_sero_sensitivity->size1, src_rmp.l_sero_sensitivity->size2);
   dest_rmp.l_sero_specificity = gsl_matrix_calloc(src_rmp.l_sero_specificity->size1, src_rmp.l_sero_specificity->size2);
-  dest_rmp.l_waning_rate = gsl_matrix_calloc(src_rmp.l_waning_rate->size1, src_rmp.l_waning_rate->size2);
+  dest_rmp.l_waning_period = gsl_matrix_calloc(src_rmp.l_waning_period->size1, src_rmp.l_waning_period->size2);
   
   mixing_model_alloc(dest_rmp.l_MIXMOD,
 		     src_rmp.l_MIXMOD.num_breakpoints,
@@ -305,7 +305,7 @@ void regional_model_params_free(regional_model_params& old_rmp)
   gsl_matrix_free(old_rmp.l_day_of_week_effect);
   gsl_matrix_free(old_rmp.l_sero_sensitivity);
   gsl_matrix_free(old_rmp.l_sero_specificity);
-  gsl_matrix_free(old_rmp.l_waning_rate);
+  gsl_matrix_free(old_rmp.l_waning_period);
 }
 
 void regional_model_params_memcpy(regional_model_params& rmp_dest, const regional_model_params& rmp_src, flagclass& update_flags)
@@ -318,8 +318,8 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     gsl_matrix_memcpy(rmp_dest.l_average_infectious_period, rmp_src.l_average_infectious_period);
   if(update_flags.getFlag("l_r1_period"))
     gsl_matrix_memcpy(rmp_dest.l_r1_period, rmp_src.l_r1_period);
-  if(update_flags.getFlag("l_waning_rate"))
-    gsl_matrix_memcpy(rmp_dest.l_waning_rate, rmp_src.l_waning_rate);
+  if(update_flags.getFlag("l_waning_period"))
+    gsl_matrix_memcpy(rmp_dest.l_waning_period, rmp_src.l_waning_period);
   if(update_flags.getFlag("l_vacc1_disease"))
     gsl_matrix_memcpy(rmp_dest.l_vacc1_disease, rmp_src.l_vacc1_disease);
   if(update_flags.getFlag("l_vaccn_disease"))

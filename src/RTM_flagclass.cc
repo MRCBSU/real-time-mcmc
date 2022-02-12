@@ -107,7 +107,7 @@ string flagclass::UPItoRMP(const int& iUPI_index)
   case SSPEC_INDEX :
     return "l_sero_specificity";
   case IWAN_INDEX :
-    return "l_waning_rate";
+    return "l_waning_period";
   case DOW_EFFECTS_INDEX :
     return "l_day_of_week_effect";
   default :

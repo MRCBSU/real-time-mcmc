@@ -41,7 +41,7 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "day_of_week_effects", DOW_EFFECTS },  // 30
   { "sero_test_sensitivity", SSENS },
   { "sero_test_specificity", SSPEC },
-  { "immunity_waning", IWAN }
+  { "immunity_period", IWAN }
 };
 
 
@@ -653,9 +653,9 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
     blockflags.regional_update_flags[14] = true;
     blockflags.regional_update_flags[16] = true;
     blockflags.regional_update_flags[17] = true;
-    blockflags.regional_update_flags[19] = true;
+    blockflags.regional_update_flags[20] = true;
     blockflags.regional_update_flags[29] = true;
-    blockflags.regional_update_flags[30] = true;
+    blockflags.regional_update_flags[31] = true;
     blockflags.regional_update_flags[32] = true;
   } else {
     blockflags.regional_update_flags[12] = true;

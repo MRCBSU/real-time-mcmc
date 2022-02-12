@@ -675,10 +675,10 @@ void block_regional_parameters(regional_model_params& out_rmp,
       regional_matrix_parameter(out_rmp.l_latent_period, updPars.lookup(upd::ALP, region_index), updPars[upd::ALP].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_latent_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
-  if(update_flags.getFlag("l_waning_rate"))
+  if(update_flags.getFlag("l_waning_period"))
     {
-      regional_matrix_parameter(out_rmp.l_waning_rate, updPars.lookup(upd::IWAN, region_index), updPars[upd::IWAN].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
-      gsl_matrix_add_constant(out_rmp.l_waning_rate, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
+      regional_matrix_parameter(out_rmp.l_waning_period, updPars.lookup(upd::IWAN, region_index), updPars[upd::IWAN].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      gsl_matrix_add_constant(out_rmp.l_waning_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
   if(update_flags.getFlag("l_vacc1_disease"))
     regional_matrix_parameter(out_rmp.l_vacc1_disease, updPars.lookup(upd::VAC1_DISEASE, region_index), updPars[upd::VAC1_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
@@ -856,10 +856,10 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
       regional_matrix_parameter(out_rmp.l_latent_period, in_umps[ALP_INDEX].param_value, in_umps[ALP_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
       gsl_matrix_add_constant(out_rmp.l_latent_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
-  if(update_flags.getFlag("l_waning_rate"))
+  if(update_flags.getFlag("l_waning_period"))
     {
-      regional_matrix_parameter(out_rmp.l_waning_rate, in_umps[IWAN_INDEX].param_value, in_umps[IWAN_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
-      gsl_matrix_add_constant(out_rmp.l_waning_rate, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
+      regional_matrix_parameter(out_rmp.l_waning_period, in_umps[IWAN_INDEX].param_value, in_umps[IWAN_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+      gsl_matrix_add_constant(out_rmp.l_waning_period, MIN_DELTA_T_TO_LENGTH_OF_STAY_RATIO / ((double) in_gmip.l_transmission_time_steps_per_day));
     }
   if(update_flags.getFlag("l_vacc1_disease"))
     regional_matrix_parameter(out_rmp.l_vacc1_disease, in_umps[VAC1_DISEASE_INDEX].param_value, in_umps[VAC1_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);

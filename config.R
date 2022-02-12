@@ -79,7 +79,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220204"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220211"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
@@ -202,12 +202,12 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220204", paste0("Prev641SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220204", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220204", paste0("Prev641SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220204", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220128", paste0("Prev634SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220128", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220204", paste0("Prev641SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220204", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -281,8 +281,10 @@ future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
 future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
 scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
-## Approximate data at which delta became dominant strain
-delta.date <- ymd("20210510")
+## Approximate date at which delta became dominant strain (- one week)
+delta.date <- ymd("20210503")
+## Approximate date at which omicron became dominant strain (- one week)
+omicron.date <- ymd("20211205")
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,

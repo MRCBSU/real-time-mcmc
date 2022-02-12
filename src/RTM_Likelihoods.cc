@@ -333,18 +333,18 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 
 	      gsl_matrix_set(l_R_neg, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)))) +
 			     (gsl_matrix_get(l_R_pos, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_r1_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_W, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_W, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_waning_rate, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)))) +
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_WS, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - ((1 - pi) * gsl_matrix_get(p_lambda, t, a)))) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_rate, t, a)));
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_period, t, a)));
 
 	      if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 		int tindex = t / timestepsperday;

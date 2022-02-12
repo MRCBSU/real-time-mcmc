@@ -68,6 +68,21 @@ prior_distribution = `r prior.r1`;
 
 }
 
+immunity_period = { param_value = `r value.wr`;
+
+prior_distribution `r 1 + prior.wr`;
+
+`r ifelse(prior.wr > 1, paste0("prior_parameters = ", paste(pars.wr, collapse = ", "), ";"), "")`
+
+`r ifelse(prior.wr > 1, paste0("proposal_variance = 0.1;", "")`
+
+`r ifelse(!is.null(breaks.wr), paste0("time_breakpoints = ", breaks.wr, ";"), "")`
+
+`r ifelse(!is.null(design.wr), "regression_design = wr_design_file.txt;", "")`
+
+}
+
+
 vacc_1st_disease = { param_value = `r value.vac.alpha1`;
 
 prior_distribution = `r prior.vac.alpha1`;
@@ -104,6 +119,24 @@ prior_distribution = `r prior.vac.alpha2`;
 
 }
 
+vacc_boost_disease = { param_value = `r value.vac.alpha3`;
+
+prior_distribution = `prior.vac.alpha3`;
+
+`r ifelse(vacc.flag & (prior.alpha3 > 1), paste0("prior_parameters = ", paste(pars.alpha3, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.alpha3 > 1), "proposal_variance = 0.01;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.r.breaks), "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.a.breaks), "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.t.breaks), paste("time_breakpoints =", paste(vacb.t.breaks, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.design), "regression_design = vac.alpha3.design.txt;", "")`
+
+}
+
 vacc_1st_infect = { param_value = `r value.vac.pi1`;
 
 prior_distribution = `r prior.vac.pi1`;
@@ -137,6 +170,24 @@ prior_distribution = `r prior.vac.pi2`;
 `r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
 `r ifelse(vacc.flag & vacc.pi.bps, "regression_design = vac.pin.design.txt;", "")`
+
+}
+
+vacc_boost_infect = { param_value = `r value.vac.pi3`;
+
+prior_distribution = `prior.vac.pi3`;
+
+`r ifelse(vacc.flag & (prior.pi3 > 1), paste0("prior_parameters = ", paste(pars.pi3, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & (prior.pi3 > 1), "proposal_variance = 0.01;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.r.breaks), "region_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.a.breaks), "age_breakpoints = true;", "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.t.breaks), paste("time_breakpoints = ", paste(vacb.t.breaks, collapse = ", "), ";"), "")`
+
+`r ifelse(vacc.flag & !is.null(vacb.design), "regression_design = vac.pi3.design.txt;", "")`
 
 }
 
