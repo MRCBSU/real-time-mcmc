@@ -644,7 +644,7 @@ value.wr <- c(mean.wr, omi.wr)
 fac.wr <- as.factor(c(1, 2, 1))
 prior.wr <- 0
 pars.wr <- NULL
-design.wr <- model.matrix(~0+ff) %>% as.data.frame()
+(design.wr <- model.matrix(~0+fac.wr) %>% as_tibble()) %>%
 write_tsv(file.path(out.dir, "wr_design_file.txt"), col_names = FALSE)
 ## 
 

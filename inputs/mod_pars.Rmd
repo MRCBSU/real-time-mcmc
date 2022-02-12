@@ -74,9 +74,9 @@ prior_distribution `r 1 + prior.wr`;
 
 `r ifelse(prior.wr > 1, paste0("prior_parameters = ", paste(pars.wr, collapse = ", "), ";"), "")`
 
-`r ifelse(prior.wr > 1, paste0("proposal_variance = 0.1;", "")`
+`r ifelse(prior.wr > 1, "proposal_variance = 0.1;", "")`
 
-`r ifelse(!is.null(breaks.wr), paste0("time_breakpoints = ", breaks.wr, ";"), "")`
+`r ifelse(!is.null(breaks.wr), paste0("time_breakpoints = ", paste(breaks.wr, collapse = ", "), ";"), "")`
 
 `r ifelse(!is.null(design.wr), "regression_design = wr_design_file.txt;", "")`
 
@@ -121,7 +121,7 @@ prior_distribution = `r prior.vac.alpha2`;
 
 vacc_boost_disease = { param_value = `r value.vac.alpha3`;
 
-prior_distribution = `prior.vac.alpha3`;
+prior_distribution = `r prior.vac.alpha3`;
 
 `r ifelse(vacc.flag & (prior.alpha3 > 1), paste0("prior_parameters = ", paste(pars.alpha3, collapse = ", "), ";"), "")`
 
@@ -175,7 +175,7 @@ prior_distribution = `r prior.vac.pi2`;
 
 vacc_boost_infect = { param_value = `r value.vac.pi3`;
 
-prior_distribution = `prior.vac.pi3`;
+prior_distribution = `r prior.vac.pi3`;
 
 `r ifelse(vacc.flag & (prior.pi3 > 1), paste0("prior_parameters = ", paste(pars.pi3, collapse = ", "), ";"), "")`
 
