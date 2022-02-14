@@ -17,7 +17,7 @@ model_state::model_state() :
   p_lambda(NUM_AGE_GROUPS)
 {}
 model_state::model_state(const unsigned int iSize) :
-  S(iSize), E_1(iSize), E_2(iSize), I_1(iSize), I_2(iSize), R_pos(iSize), R_neg(iSize), W(iSize), WS(iSize), p_lambda(iSize)
+  S(iSize), E_1(iSize), E_2(iSize), I_1(iSize), I_2(iSize), R_pos(iSize), R_neg(iSize), W(iSize), WS(iSize), p_lambda(NUM_AGE_GROUPS)
 {}
 model_state::model_state(const model_state& oC) : 
   S(oC.S), E_1(oC.E_1), E_2(oC.E_2), I_1(oC.I_1), I_2(oC.I_2),

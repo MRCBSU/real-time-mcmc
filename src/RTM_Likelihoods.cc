@@ -103,13 +103,16 @@ void prob_infection_RF_MA(
 			  const double delta_t)
 {
 
-  gsl_vector* I = gsl_vector_alloc(I_2->size);
-  gsl_vector_memcpy(I, I_2);
-  gsl_vector_mul(I, epsilon);
-  gsl_vector_add(I, I_1);
-
+  
+  gsl_vector* Itemp = gsl_vector_calloc(NUM_AGE_GROUPS);
   gsl_vector* Iages = gsl_vector_calloc(NUM_AGE_GROUPS);
-  collapse_vac(Iages, I);
+
+  collapse_vac(Itemp, I_1);
+  collapse_vac(Iages, I_2);
+  
+  // gsl_vector_memcpy(I, I_2);
+  gsl_vector_mul(Iages, epsilon);
+  gsl_vector_add(Iages, Itemp);
   
   if(tk == cREEDFROST){
     for (int a = 0; a < prob_infection->size; ++a)
@@ -133,7 +136,7 @@ void prob_infection_RF_MA(
 
   }
   gsl_vector_free(Iages);
-  gsl_vector_free(I);
+  gsl_vector_free(Itemp);
   
   // Allow for outside importations and scale according to the time-step size.
   gsl_vector_add(prob_infection, importations);

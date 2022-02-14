@@ -382,7 +382,7 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
 
 void model_statistics_alloc(model_statistics &ms, const int times, const int age_classes, const int reporting_timesteps)
 {
-  ms.d_end_state = new model_state(age_classes);
+  ms.d_end_state = new model_state(STATE_DIM);
   ms.d_NNI = gsl_matrix_alloc(times * reporting_timesteps, age_classes);
   ms.d_Delta_Dis = gsl_matrix_alloc(times * reporting_timesteps, age_classes);
   ms.d_H1N1_GP_Consultations = gsl_matrix_alloc(times, age_classes);
