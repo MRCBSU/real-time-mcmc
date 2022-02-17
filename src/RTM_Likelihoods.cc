@@ -353,7 +353,7 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 		int tindex = t / timestepsperday;
 		// Serology
 		gsl_matrix_set(l_internal_AR, tindex, a, gsl_matrix_get(l_internal_AR, tindex, a) - (gsl_matrix_get(l_S, t + 1, STATE_IDX(v, a)) / gsl_vector_get(regional_population_by_age, a)));
-		gsl_matrix_set(l_Seropositivity, tindex, a, gsl_matrix_get(l_Seropositivity, tindex, a) - ((1 - pi) * gsl_matrix_get(l_S, t + 1, STATE_IDX(v, a)) / gsl_vector_get(regional_population_by_age, a)));
+		gsl_matrix_set(l_Seropositivity, tindex, a, gsl_matrix_get(l_Seropositivity, tindex, a) - ((1 - pi) * (gsl_matrix_get(l_S, t + 1, STATE_IDX(v, a)) + gsl_matrix_get(l_WS, t + 1, STATE_IDX(v, a))) / gsl_vector_get(regional_population_by_age, a)));
 		// Virological positivity
 		gsl_matrix_set(l_Prevalence, tindex, a, gsl_matrix_get(l_Prevalence, tindex, a) + gsl_matrix_get(l_I_1, t + 1, STATE_IDX(v, a)) + gsl_matrix_get(l_I_2, t + 1, STATE_IDX(v, a)) + gsl_matrix_get(l_R_pos, t + 1, STATE_IDX(v, a)));
 
