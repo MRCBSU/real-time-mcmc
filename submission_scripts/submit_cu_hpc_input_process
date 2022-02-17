@@ -11,6 +11,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 #SBATCH --mem=20G
+#SBATCH --partition=standard-wp
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
 

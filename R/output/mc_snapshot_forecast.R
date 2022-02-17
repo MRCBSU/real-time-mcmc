@@ -19,7 +19,7 @@ projections.basename <- "projections_snapshot"
 projections.basedir <- file.path(out.dir, projections.basename)
 
 ## Enter the date for which we need the snapshot
-snap.date <- ymd("20211026")
+snap.date <- ymd("20220211")
 
 ## ---------------- IDEALLY CODE BELOW HERE SHOULD NOT BE CHANGED BETWEEN RUNS
 if(!file.exists(projections.basedir))
@@ -179,7 +179,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51", "joel.kandiah@phe.gov.uk")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")

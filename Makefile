@@ -9,6 +9,7 @@ RTM_INTEL_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_intel_debug/%.o)
 RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc2/%.o)
+RTM_HPC_OBJS3 = $(SRC:src/%.cc=build/rtm_hpc3/%.o)
 
 LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/usr/local/packages/gsl/2.7/lib -lgsl -lgslcblas -lgfortran -lm -lpthread
 ## LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
@@ -38,8 +39,11 @@ rtm_morricone: $(RTM_MORRICONE_OBJS) $(HEADERS)
 rtm_hpc2: $(RTM_HPC_OBJS) $(HEADERS)
 	icpc $(RTM_HPC_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc2
 
+rtm_hpc3: $(RTM_HPC_OBJS3) $(HEADERS)
+	icpc $(RTM_HPC_OBJS3) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc2
+
 .PHONY: all
-all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2 rtm_intel_debug rtm_prof_debug
+all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2 rtm_hpc3 rtm_intel_debug rtm_prof_debug
 
 .PHONY: clean
 clean:
@@ -77,6 +81,10 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -xHOST -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -march=core-avx2 -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	
+build/rtm_hpc3/%.o: src/%.cc
+	@mkdir -p build/rtm_hpc3
+	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -march=core-avx2 -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 ## g++ -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

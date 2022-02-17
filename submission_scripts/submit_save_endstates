@@ -14,12 +14,12 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0,3,4,7,8,11,12,15
+#SBATCH --array=1,3,5,7
 #SBATCH --output=submit_save_endstates_%a_%j.out
 #SBATCH --error=submit_save_endstates_%a_%j.err
 #SBATCH --partition=standard-wp
 
-module load R gcc openmp intel_compiler OpenBLAS openmpi slurm
+module load R gcc/gcc-9.4.0 openmp intel_compiler OpenBLAS openmpi slurm
 
 dirs=(*/)
 pwd

@@ -50,6 +50,12 @@ SMC.output <- FALSE
 ## a <- nages  ## number of age classes
 ## d <- ndays  ## length in days of the run
 
+##! Modify
+# num.iterations <- 2.6e6
+# burnin <- 1e6
+# thin.params <- 5e2
+# thin.outputs<- 1e3
+
 i.saved <- floor((num.iterations - burnin) / thin.params) ## number of iterations saved in coda files
 i.summary <- floor((num.iterations - burnin) / thin.outputs) ## number of iterations of summary statistics stored on file
 

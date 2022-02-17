@@ -4,6 +4,7 @@ rtm_hpc
 rtm_hpc2
 rtm_debug
 rtm_morricone
+maps/**
 **.swp
 **.swo
 build/**

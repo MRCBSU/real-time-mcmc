@@ -5,7 +5,7 @@ require(lubridate)
 
 suppressMessages(extract <- R.utils::extract)
 
-mod.version.no <- 1.5
+mod.version.no <- 1.4
 med.term.flag <- TRUE
 nowcast.flag <- TRUE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
@@ -42,7 +42,7 @@ save.text <- "MTP"
 ## projections.file <- "projections_R0.9.RData"
 ## scen.text <- "MTP R0.9"
 ## save.text <- "MTP_R_0.9"
-mtp.filter.date <- lubridate::ymd("20211219") ## ymd(date.data)
+mtp.filter.date <- lubridate::ymd("20220130") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11

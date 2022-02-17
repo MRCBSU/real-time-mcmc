@@ -26,9 +26,10 @@ file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 Rfile.loc <- file.path(file.loc, "R/output")
 
-if (!file.exists("mcmc.RData")) {
+# if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
-}
+# }
+
 
 # suppressMessages(library(knitr))
 # suppressMessages(library(DT))

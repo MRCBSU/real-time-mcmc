@@ -13,7 +13,7 @@ output:
 if (!exists("external")) external = T
 external.bak <- external
 message(external.bak)
-knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+knitr::opts_chunk$set(echo = FALSE, cache = T, cache.path = "~/tmp/cache")
 knitr::opts_chunk$set(error=TRUE)
 
 suppressMessages(library(knitr))
