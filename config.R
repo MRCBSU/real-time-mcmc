@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
@@ -79,7 +79,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220211"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220218"), format = "%Y%m%d")
 matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
@@ -171,7 +171,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- ifelse(deaths.flag, "60", "")
+	str.cutoff <- ifelse(deaths.flag, "28", "")
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
