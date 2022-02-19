@@ -165,45 +165,73 @@ The percentage of a given group that has been infected.
 #### By region
 
 ```{r attack-region}
-bind_rows(
-  tbl_ar_Eng,
-  tbl_pop %>%
-    left_join(tbl_cum_inf_region, by = c('region' = 'region'))
-  ) %>%
-  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`, population) %>%
-  mutate(
-    Median = Median / population,
-    `95% CrI (lower)` = `95% CrI (lower)` / population,
-    `95% CrI (upper)` = `95% CrI (upper)` / population
-    ) %>%
-  select(-population) %>%
-  datatable() %>%
-  formatPercentage(2:4)
+df.AR <- as.tbl_cube(AR, met_name = "value") %>%
+      as_tibble() %>%
+      mutate(date = lubridate::as_date(date)) %>%
+      filter(date == lubridate::as_date(date.data)) %>%
+      left_join(population, by = c('age' = 'age', 'region' = 'region')) %>%
+      rename(AR = value.x, population = value.y)
+df.AR.Eng <- df.AR %>%
+	  group_by(age, iteration) %>%
+	  summarise(AR = weighted.mean(AR, w = population), population = sum(population)) %>%
+	  mutate(region = "England")
+
+tbl.AR.by.region <- bind_rows(df.AR %>%
+      group_by(iteration, region) %>%
+      summarise(AR = weighted.mean(AR, w = population)),
+      df.AR.Eng %>%
+      group_by(iteration, region) %>%
+      summarise(AR = weighted.mean(AR, w = population))
+      ) %>%
+      group_by(region) %>%
+      summarise(value = quantile(AR, probs = c(0.025, 0.5, 0.975))) %>%
+      mutate(quantile = c(0.025, 0.5, 0.975), value = paste0(signif(100 * value, 3), "%")) %>%
+      pivot_wider(region, names_from = quantile) %>%
+      rename(Region = region) %>%
+      transmute(`Attack rate` = paste0(`0.5`, "(", `0.025`, "--", `0.975`, ")"))
+
+bind_rows(filter(tbl.AR.by.region, region == "England"), filter(tbl.AR.by.region, region != "England")) %>%
+		 datatable()
 ```
 
 
 #### By age
 
 ```{r attack-age}
-tbl_cum_inf_age <-
-  get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
-  pivot_wider(names_from = quantile) %>%
-  filter(date == ymd(date.data)) %>%
-  select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+tbl.AR.by.age <- df.AR %>%
+	      group_by(iteration, age) %>%
+	      summarise(AR = weighted.mean(AR, w = population)) %>%
+	      group_by(age) %>%
+	      summarise(value = quantile(AR, probs = c(0.025, 0.5, 0.975))) %>%
+      	      mutate(quantile = c(0.025, 0.5, 0.975), value = paste0(signif(100 * value, 3), "%")) %>%
+      	      pivot_wider(age, names_from = quantile) %>%
+      	      transmute(`Attack rate` = paste0(`0.5`, "(", `0.025`, "--", `0.975`, ")")) %>%
+	      mutate(Age = factor(age, levels = age.labs, labels = age.labs, ordered = TRUE)) %>%
+	      ungroup() %>%
+	      select(Age, `Attack rate`) %>%
+	      arrange(Age)
 
-population %>%
-  group_by(age) %>%
-  summarise(population = sum(value)) %>%
-  left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
-  mutate(
-    Median = Median / population,
-    `95% CrI (lower)` = `95% CrI (lower)` / population,
-    `95% CrI (upper)` = `95% CrI (upper)` / population
-    ) %>%
-  select(-population) %>%
-  arrange(match(age, age.labs)) %>%
-  datatable() %>%
-  formatPercentage(2:4)
+datatable(tbl.AR.by.age)	      
+
+## tbl_cum_inf_age <-
+##   get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
+##   pivot_wider(names_from = quantile) %>%
+##   filter(date == ymd(date.data)) %>%
+##   select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+
+## population %>%
+##   group_by(age) %>%
+##   summarise(population = sum(value)) %>%
+##   left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
+##   mutate(
+##     Median = Median / population,
+##     `95% CrI (lower)` = `95% CrI (lower)` / population,
+##     `95% CrI (upper)` = `95% CrI (upper)` / population
+##     ) %>%
+##   select(-population) %>%
+##   arrange(match(age, age.labs)) %>%
+##   datatable() %>%
+##   formatPercentage(2:4)
 ```
 
 ### Current `r severity.measure`
