@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=4,6
+#SBATCH --array=4-7
 
 #SBATCH -p cclake-himem
 
