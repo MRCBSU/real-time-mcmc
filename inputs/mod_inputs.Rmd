@@ -168,7 +168,7 @@ thin_stats_every     `r thin.outputs`
 
 adaptive_phase	     `r adaptive.phase`
 
-adapt_every	     100
+adapt_every	     `r adapt.every`
 
 burn_in		     `r burnin`
 
