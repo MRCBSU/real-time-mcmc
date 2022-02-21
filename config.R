@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -202,9 +202,9 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220211", paste0("Prev648SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220211", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220217", paste0("Prev648SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220211", paste0("Prev648SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220211", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220217", paste0("Prev648SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220211", paste0("Prev648SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220211", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
