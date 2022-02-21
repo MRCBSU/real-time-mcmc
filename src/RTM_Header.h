@@ -42,8 +42,8 @@
 #define MAX_VAX_DOSES (3)
 #define DAYS_IN_YEAR 365.25
 
-#define NUM_AGE_GROUPS (8)
-#define NUM_AGE_GROUPS (8)
+#define STATE_DIM (MAX_VAX_DOSES + 1) * NUM_AGE_GROUPS
+#define STATE_IDX(v, a) ((a) + ((v) * (NUM_AGE_GROUPS)))
 
 // USEFUL INLINE FUNCTIONS
 #define FN_MAX(a, b) (((a) > (b)) ? (a) : (b))
