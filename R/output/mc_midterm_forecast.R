@@ -202,10 +202,19 @@ if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
-    symlink.design("vac.pin.design.txt")
     symlink.design("vac.alpha1.design.txt")
-    symlink.design("vac.alphan.design.txt")
+    if(vac.n_doses == 3){
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+    } else {
+        symlink.design("vac.pin.design.txt")
+        symlink.design("vac.alphan.design.txt")
+    }
 }
+if(!is.null(design.wr))
+    symlink.design("wr_design_file.txt")
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP
