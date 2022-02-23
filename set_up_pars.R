@@ -55,12 +55,12 @@ if(deaths.flag){
     } else if(efficacies == "PHE"){
         ## Based on a combination of vaccine surveillance reports, wk 26, 36, 46
         ## With results for omicron and boosting impacts based on vaccine surveillance report wk 6 (2022)
-        value.vac.alpha1 <- c(2/5, 7/15, 31/46, 31/46, 369/769, 9/20) 
+        value.vac.alpha1 <- c(7/15, 7/15, 49/69, 49/69, 369/769, 9/20)
     } else {
         value.vac.alpha1 <- c(0.88, 0.70) ## efficacy against disease of Pfizer and AZ vaccines respectively.
     }
 } else if(adm.flag){
-    value.vac.alpha1 <- c(31/75, 13/35, 49/69, 49/69, 249/769, 3/10) 
+    value.vac.alpha1 <- c(31/75, 7/15, 49/69, 49/69, 249/769, 3/10) 
 }
 
 prior.vac.alpha1 <- rep(1, length(value.vac.alpha1)) ## ifelse(vacc.flag, 3, 1)
@@ -87,12 +87,12 @@ if(deaths.flag){
         value.vac.alpha2 <- c(2/3,6/7)
     } else if(efficacies == "PHE"){
         ## value.vac.alpha2 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
-        value.vac.alpha2 <- c(17/20, 19/45, 17/20, 11/14, 5/9, 11/20) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+        value.vac.alpha2 <- c(17/20, 3/5, 4/5, 28/35, 5/9, 11/20) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
     } else {
         value.vac.alpha2 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
     }
 } else if(adm.flag){
-    value.vac.alpha2 <- c(13/20, 43/57, 4/5, 4/5, 7/18, 2/5)
+    value.vac.alpha2 <- c(29/40, 53/135, 4/5, 82/105, 7/18, 2/5)
 }
 prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
