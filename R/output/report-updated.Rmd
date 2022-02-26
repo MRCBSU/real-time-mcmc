@@ -190,7 +190,7 @@ tbl.AR.by.region <- bind_rows(df.AR %>%
       rename(Region = region) %>%
       transmute(`Attack rate` = paste0(`0.5`, "(", `0.025`, "--", `0.975`, ")"))
 
-bind_rows(filter(tbl.AR.by.region, region == "England"), filter(tbl.AR.by.region, region != "England")) %>%
+bind_rows(filter(tbl.AR.by.region, Region == "England"), filter(tbl.AR.by.region, Region != "England")) %>%
 		 datatable()
 ```
 
