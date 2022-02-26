@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -79,7 +79,7 @@ adm_sus.end.date <- ymd(20201014)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220218"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220225"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -147,7 +147,7 @@ deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified b
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 655
+num.prev.days <- 662
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -207,7 +207,7 @@ if(use.previous.run.for.start){
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220218", paste0("Prev655SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220218", paste0("Prev655SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220223", paste0("Prev655SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 1 ## 6400
@@ -247,7 +247,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220216")
+date.prev <- lubridate::ymd("20220223")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -267,7 +267,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220217" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220221" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
