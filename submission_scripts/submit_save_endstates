@@ -14,7 +14,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1,3,5,7
+#SBATCH --array=0-15
 #SBATCH --output=submit_save_endstates_%a_%j.out
 #SBATCH --error=submit_save_endstates_%a_%j.err
 #SBATCH --partition=standard-wp

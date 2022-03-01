@@ -12,7 +12,7 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
-message(external.bak)
+# message(external.bak)
 knitr::opts_chunk$set(echo = FALSE, cache = T, cache.path = "~/tmp/cache")
 knitr::opts_chunk$set(error=TRUE)
 
@@ -22,15 +22,15 @@ suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 suppressMessages(extract <- R.utils::extract)
-cat(Rfile.loc)
-if(exists("Rfile.loc")) {
+# cat(Rfile.loc)
+# if(exists("Rfile.loc")) {
   source(file.path(Rfile.loc, "results_api.R"))
   source(file.path(Rfile.loc, "plot_funcs.R"))
-} else {
-  proj.dir <- "~/RTM"
-  source("results_api.R")
-  source("plot_funcs.R")
-}
+# } else {
+#   proj.dir <- "~/RTM"
+#   source("results_api.R")
+#   source("plot_funcs.R")
+# }
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
@@ -405,7 +405,7 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-# infections.growth.rates <- calc.growth.rate(infections)
+infections.growth.rates <- calc.growth.rate(infections)
 if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
 infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
 						Egt,

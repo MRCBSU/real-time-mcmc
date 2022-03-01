@@ -163,7 +163,7 @@ adapt_every	     100
 
 burn_in		     `r burnin`
 
-read_cover	     `r stored.covar`
+read_covar	     `r stored.covar`
 
 global_updates	     `r global.per.iter`
 

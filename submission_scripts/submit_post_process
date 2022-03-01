@@ -21,9 +21,9 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=3
-#SBATCH --output=process_model_runs_20201206_%a_%j.out
-#SBATCH --error=process_model_runs_20201206_%a_%j.err
+#SBATCH --array=9
+#SBATCH --output=post_process_model_runs_20201206_%a_%j.out
+#SBATCH --error=post_process_model_runs_20201206_%a_%j.err
 #SBATCH --mem-per-cpu=8G
 #SBATCH --partition=standard-wp
 #! sbatch directives end here (put any additional directives above this line)
