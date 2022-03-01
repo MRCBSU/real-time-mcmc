@@ -37,6 +37,7 @@ if(exists("var.priors")){
   ## ## OPEN FILE CONNECTIONS ## ##
   NNI <- NNI.files <- vector("list", r)
   sero <- sero.files <- vector("list", r)
+  ar <- ar.files <- vector("list", r)
   if(vacc.flag) DNNI <- DNNI.files <- vector("list", r)
   dths.flag <- FALSE
   if((hosp.flag | adm.flag) & !SMC.output) {
@@ -58,6 +59,7 @@ if(exists("var.priors")){
     {
         NNI.files[[intr]] <- file(file.path(target.dir, paste0("NNI_", regions[intr])), "rb")
         sero.files[[intr]] <- file(file.path(target.dir, paste0("Sero_", regions[intr])), "rb")
+        ar.files[[intr]] <- file(file.path(target.dir, paste0("AR__", regions[intr])), "rb")
         if(vacc.flag)
             DNNI.files[[intr]] <- file(file.path(target.dir, paste0("Delta_Dis_", regions[intr])), "rb")
         if(dths.flag)
@@ -70,7 +72,7 @@ if(exists("var.priors")){
             ## state files
             state.files[[intr]] <- file(file.path(target.dir, paste0("state_", regions[intr])), "rb")
     }
-  names(NNI.files) <- names(sero.files) <- regions
+  names(NNI.files) <- names(sero.files) <- names(ar.files) <- regions
   if(vacc.flag) names(DNNI.files) <- regions
   if(dths.flag) names(Deaths.files) <- regions
   if(cases.flag) names(Cases.files) <- regions
@@ -92,6 +94,8 @@ if(exists("var.priors")){
       NNI[[intr]] <- array(NNI[[intr]], dim = c(nA, ndays, i.summary))
       sero[[intr]] <- readBin(sero.files[[intr]], double(), n = i.summary * ndays * nA) %>%
           array(dim = c(nA, ndays, i.summary))
+      ar[[intr]] <- readBin(ar.files[[intr]], double(), n = i.summary * ndays * nA) %>%
+          array(dim = c(nA, ndays, i.summary))
       if(vacc.flag){
           DNNI[[intr]] <- readBin(DNNI.files[[intr]], double(), n = i.summary * ndays * nA)
           DNNI[[intr]] <- array(DNNI[[intr]], dim = c(nA, ndays, i.summary))
@@ -109,7 +113,7 @@ if(exists("var.priors")){
               array(dim = c(nA, ndays, i.summary))
       }
     }
-  names(NNI) <- names(sero) <- regions
+  names(NNI) <- names(sero) <- names(ar) <- regions
   if(vacc.flag) names(DNNI) <- regions
   if(dths.flag) names(Deaths) <- regions
   if(cases.flag) names(Cases) <- regions
@@ -156,6 +160,7 @@ if(exists("var.priors")){
   for(intr in 1:r){
       close(NNI.files[[intr]])
       close(sero.files[[intr]])
+      close(ar.files[[intr]])
       if(vacc.flag) close(DNNI.files[[intr]])
       if(dths.flag) close(Deaths.files[[intr]])
       if(cases.flag) close(Cases.files[[intr]])

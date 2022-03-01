@@ -304,22 +304,25 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Outputs
   ofstream* output_codas = new ofstream[num_component_updates->size];
   ofstream output_coda_lfx("coda_lfx", ios::out|ios::trunc|ios::binary);
-  ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
-  
+
+  ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state, *file_AR;
+
   fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, country2);
   fstream_model_statistics_open(file_Delta_Dis, "Delta_Dis", gmip.l_num_regions, country2);
   if(simulation_parameters.oType == cMCMC)
-  {
-    fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, country2);
-    if(gmip.l_GP_consultation_flag){
-      fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, country2);
-      fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, country2);
+    {
+      fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, country2);
+      fstream_model_statistics_open(file_AR, "AR_", gmip.l_num_regions, country2);
+      if(gmip.l_GP_consultation_flag){
+	fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, country2);
+	fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, country2);
+      }
+      if(gmip.l_Hospitalisation_flag) 
+	fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, country2);
+      if(gmip.l_Prev_data_flag)
+	fstream_model_statistics_open(file_Prev, "Prev", gmip.l_num_regions, country2);
     }
-    if(gmip.l_Hospitalisation_flag) 
-      fstream_model_statistics_open(file_Hosp, "Hosp", gmip.l_num_regions, country2);
-    if(gmip.l_Prev_data_flag)
-      fstream_model_statistics_open(file_Prev, "Prev", gmip.l_num_regions, country2);
-  }
+   }
   if(simulation_parameters.oType == cSMC)
     fstream_model_statistics_open(file_state, "state", gmip.l_num_regions, country2);
   
@@ -392,32 +395,34 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       }
       
 #pragma omp parallel for default(shared) schedule(static)
-      for (int reg = 1; reg <= nregions; reg++) {
-        paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+
+	for (int reg = 1; reg <= nregions; reg++) {
+	  paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+	}
+
+	for (int reg = 1; reg <= nregions; reg++) {
+	  paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
+
+	  // if (int_iter > 199)
+	  // paramSet.blocks[reg].adaptiveUpdate(int_iter);
+	    
+	  // New adaptive update:
+	  // Check acceptance every 1000 iters.
+	  // Don't adapt for first 1000 iters, or after burn-in ends.
+	  if (int_iter % 1000 == 0 && int_iter > 0 && int_iter < simulation_parameters.burn_in) {
+	    int acceptance = paramSet.blocks[reg].numAccept / (double) paramSet.blocks[reg].numProposed;
+	    if (acceptance < 0.225 || acceptance > 0.275)
+	      paramSet.blocks[reg].doAdaptation = true;
+	    else
+	      paramSet.blocks[reg].doAdaptation = false;
+	  }
+
+	  if (paramSet.blocks[reg].doAdaptation && simulation_parameters.adapt_every > 0 && int_iter % simulation_parameters.adapt_every == 0)
+	    paramSet.blocks[reg].adaptiveUpdate(int_iter);
+	}
+
       }
-      
-      for (int reg = 1; reg <= nregions; reg++) {
-        paramSet.blocks[reg].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
-        
-        // if (int_iter > 199)
-        // paramSet.blocks[reg].adaptiveUpdate(int_iter);
-        
-        // New adaptive update:
-        // Check acceptance every 1000 iters.
-        // Don't adapt for first 1000 iters, or after burn-in ends.
-        if (int_iter % 1000 == 0 && int_iter > 0 && int_iter < simulation_parameters.burn_in) {
-          int acceptance = paramSet.blocks[reg].numAccept / (double) paramSet.blocks[reg].numProposed;
-          if (acceptance < 0.225 || acceptance > 0.245)
-            paramSet.blocks[reg].doAdaptation = true;
-          else
-            paramSet.blocks[reg].doAdaptation = false;
-        }
-        
-        if (paramSet.blocks[reg].doAdaptation && simulation_parameters.adapt_every > 0 && int_iter % simulation_parameters.adapt_every == 0)
-          paramSet.blocks[reg].adaptiveUpdate(int_iter);
-      }
-    }
-    
+           
     // Global
     if(paramSet.blocks[0].size() > 0) {
       
@@ -434,7 +439,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if (int_iter % 1000 == 0 && int_iter > 0 && int_iter < simulation_parameters.burn_in) {
         int acceptance = paramSet.blocks[0].numAccept / (double) paramSet.blocks[0].numProposed;
         
-        if (acceptance < 0.225 || acceptance > 0.245)
+        if (acceptance < 0.225 || acceptance > 0.275)
           paramSet.blocks[0].doAdaptation = true;
         else
           paramSet.blocks[0].doAdaptation = false;
@@ -444,34 +449,35 @@ void metrop_hast(const mcmcPars& simulation_parameters,
         paramSet.blocks[0].adaptiveUpdate(int_iter);
     }
     
+
     // Output
     
     if (int_iter >= simulation_parameters.burn_in) {	
       int newiters = int_iter - simulation_parameters.burn_in;
       int step = simulation_parameters.thin_output_every * 1000;
-      
+
+
       if (newiters % step == 0 || int_iter == simulation_parameters.num_iterations - 1)
         paramSet.printCovar(int_iter);
     }
-    
-    
-    if (debug) {
+
+      if (debug) {
       paramSet.outputPars();
       if (int_iter % 100 == 0 && int_iter > 0)
         paramSet.printAcceptRates(int_iter);
-    }
-    
-    
-    // Update Posterior mean and sumsq on a per-parameter basis
+    }  
+
+
+    // Update Posterior mean and sumsq on a per-parameter basis                                                                                                               
     if (int_iter >= simulation_parameters.burn_in) {
       for (updParam& par : paramSet.params) {
-        // mean/subsq only defined if flag_update = true
+        // mean/subsq only defined if flag_update = true                                                                                                                      
         if (par.flag_update) {
           if (int_iter >= simulation_parameters.burn_in) {
             for (int i = 0; i < par.size; i++) {
               par.posterior_mean[i] += par.values[i] / CHAIN_LENGTH;
               par.posterior_sumsq[i] += gsl_pow_2(par.values[i]) / CHAIN_LENGTH;
-              
+
               if (!((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
                 output_codas[par.index].write(reinterpret_cast<char const*>(par.values.ptr(i)), sizeof(double));
               }
@@ -480,43 +486,61 @@ void metrop_hast(const mcmcPars& simulation_parameters,
         }
       }
     }
-    
-    // Output likelihood
+
+    // Output likelihood                                                                                                                                                      
     if (int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_output_every)) {
       output_coda_lfx.write(reinterpret_cast<char const*>(&(paramSet.lfx.total_lfx)), sizeof(double));
     }
+
+      
+      
+      // Output model statistics
+      if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_stats_every)) {
+	for (int reg = 0; reg < nregions; reg++) {
+	  model_statistics_aggregate(output_NNI[reg],
+				     output_Delta_Dis[reg],
+				     country2[reg].region_modstats, gmip.l_reporting_time_steps_per_day);
+	  
+	  if(simulation_parameters.oType == cMCMC) {	 
+	    for(int i = 0; i < output_NNI[reg]->size1; i++)
+	      for(int j = 0; j < output_NNI[reg]->size2; j++) {
+
+		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[reg], i, j)), sizeof(double));
+		file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[reg], i, j)), sizeof(double));
+		file_Sero[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_seropositivity, i, j)), sizeof(double));
+		file_AR[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_internal_AR, i, j)), sizeof(double));
+		
+		if(gmip.l_GP_consultation_flag) {
+		  file_GP[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_GP_Consultations, i, j)), sizeof(double));
+		  file_Viro[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_viropositivity, i, j)), sizeof(double));
+		}
+		if(gmip.l_Hospitalisation_flag)
+		  file_Hosp[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_Hospitalisations, i, j)), sizeof(double));
+		if(gmip.l_Prev_data_flag)
+		  file_Prev[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_prevalence, i, j)), sizeof(double));
+	      }
+	    
+	  } else if(simulation_parameters.oType == cSMC) {
+	    for(int i = 0; i < country2[reg].region_modstats.d_NNI->size1; i++)
+	      for(int j = 0; j < country2[reg].region_modstats.d_NNI->size2; j++){
+		file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Delta_Dis, i, j)), sizeof(double));
+		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_NNI, i, j)), sizeof(double));
+	      }
+	    country2[reg].region_modstats.d_end_state->write(file_state[reg]);
+	  }
+	}
+      }
     
-    // Output model statistics
-    if(int_iter >= simulation_parameters.burn_in && !((int_iter + 1 - simulation_parameters.burn_in) % simulation_parameters.thin_stats_every)) {
-      for (int reg = 0; reg < nregions; reg++) {
-        model_statistics_aggregate(output_NNI[reg],
-                                   output_Delta_Dis[reg],
-                                                   country2[reg].region_modstats, gmip.l_reporting_time_steps_per_day);
-        
-        if(simulation_parameters.oType == cMCMC) {	 
-          for(int i = 0; i < output_NNI[reg]->size1; i++)
-            for(int j = 0; j < output_NNI[reg]->size2; j++) {
-              
-              file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[reg], i, j)), sizeof(double));
-              file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[reg], i, j)), sizeof(double));
-              file_Sero[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_seropositivity, i, j)), sizeof(double));
-              
-              if(gmip.l_GP_consultation_flag) {
-                file_GP[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_GP_Consultations, i, j)), sizeof(double));
-                file_Viro[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_viropositivity, i, j)), sizeof(double));
-              }
-              if(gmip.l_Hospitalisation_flag)
-                file_Hosp[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_Hospitalisations, i, j)), sizeof(double));
-              if(gmip.l_Prev_data_flag)
-                file_Prev[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_prevalence, i, j)), sizeof(double));
-            }
-            
-        } else if(simulation_parameters.oType == cSMC) {
-          for(int i = 0; i < country2[reg].region_modstats.d_NNI->size1; i++)
-            for(int j = 0; j < country2[reg].region_modstats.d_NNI->size2; j++)
-              file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_NNI, i, j)), sizeof(double));
-          country2[reg].region_modstats.d_end_state->write(file_state[reg]);
-        }
+ 
+      // Output MCMC sampler progress reports
+      if (int_progress_report < simulation_parameters.num_progress_reports) {
+	//if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
+	// This refers to the old random walk M-H adaptation
+	// write_progress_report("adaptive_report", ...
+
+	if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
+	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
+				paramSet, true, true, false);
       }
     }
     
@@ -833,6 +857,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
             }
             state_country[int_reg].region_modstats.d_end_state->write(file_state[int_reg]);
         }
+
       }
     }
     
@@ -933,6 +958,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
     if(simulation_parameters.oType == cMCMC)
     {
       fstream_model_statistics_close(file_Sero, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
+      fstream_model_statistics_close(file_AR, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
       if(gmip.l_GP_consultation_flag){
         fstream_model_statistics_close(file_GP, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
         fstream_model_statistics_close(file_Viro, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);

@@ -114,14 +114,30 @@ if(prev.flag){
 }
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt")) 
-    if(!format.inputs) {    
-        vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
-        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))                                                                                                               
-        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
-        names(vac1.files) <- names(vacn.files) <- regions
+
+    if(vac.n_doses == 3) {
+       vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))
+       vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+    } else {
+        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt")) 
     }
-} else vac1.files <- vacn.files <- NULL
+
+    if(!format.inputs) {    
+    if(vac.n_doses == 3) {                                                                                                                                                   
+        vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))                                                                    
+        vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))                                 
+        names(vac1.files) <- names(vac2.files)<- names(vac3.files) <- regions  
+
+    } else {
+        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+        
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))                            
+        names(vac1.files) <- names(vacn.files) <- regions  
+    } 
+    }
+} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
         adm.sam <- read_csv(file.path(data.dirs["adm"], "admissions_data.csv"))
@@ -129,6 +145,8 @@ if(adm.flag){
         admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
     }
 }
+
+
 if(format.inputs){
 
     if(deaths.flag){
@@ -170,7 +188,8 @@ if(format.inputs){
 source(file.path(proj.dir, "set_up.R"))
 ## Compile the code
 if(compile.code) {
-    system("make rtm_optim")
+    system("make clean")
+    system("make rtm_hpc2")
 }
 
 ## Set up a requisite number of chains

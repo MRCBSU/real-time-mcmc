@@ -32,6 +32,7 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
     }
 }
 
+
 if(sus_seb_combination == 3) {
     old_input_adm <- "data/previous_run_input"
     if(region.type == "NHS") {
@@ -80,7 +81,9 @@ if(!exists("date.adm_seb")){
 
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
-if(sus_seb_combination == 1 | sus_seb_combination == 3) {
+
+if(sus_seb_combination %in% c(1, 3)) {
+
     latest_sus.date <- adm_sus.end.date
     earliest_seb.date <- adm_sus.end.date + 1
 }
@@ -454,15 +457,21 @@ if(sus_seb_combination == 0) {
                             filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
                             filter(date <= latest.date)
                 )
-} else if(sus_seb_combination == 2) {
+
+
+
+} else if(sus_seb_combination == 2){
+
     adm.sam <- adm.dat.seb  %>%
         filter(date >= earliest.date)  %>%
         filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
         filter(date <= latest.date)
 } else if(sus_seb_combination == 3) {
-    adm.sam <- adm.dat.seb  %>%
-        filter(date >= earliest_seb.date)  %>%
-        filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
+
+    adm.sam <- adm.dat.seb %>%
+        filter(date >= earliest_seb.dat) %>%
+        filter(date <= date.adm_seb - adm_seb.strip_days) %>%
+
         filter(date <= latest.date)
 }
 
@@ -496,16 +505,17 @@ for(reg in regions) {
     if(sus_seb_combination == 3) {
         tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
         colnames(tmp_sus) <- colnames(region.sam)
-
+        
         tmp_sus <- tmp_sus %>%
             mutate(date = as_date(date)) %>%
             filter(date <= ymd(latest_sus.date))
-
+        
         region.sam <- tmp_sus %>%
             bind_rows(
                 region.sam %>% 
-                    filter(date > latest_sus.date)
+                filter(date >= latest_sus.date)
             )
+        
 
     }
 
@@ -533,6 +543,7 @@ if(sus_seb_combination == 3) {
             bind_rows(
                 adm.sam %>% 
                     filter(date > latest_sus.date)
+
             ) %>%
             arrange(region, date, ages, admissions)
 }

@@ -88,21 +88,24 @@ adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
-# File names for files in
+## ## File names of pre-processed SUS data if it is to be used.
+
 preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
 names(preprocessed_sus_names) <- regions
 print(preprocessed_sus_names)
 preprocessed_sus_csv_name <- "admissions_data.csv"
 
+
 ## ##Admissions flags/dates
+
+
+
 ## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
 adm_sus.end.date <- ymd(20201014)
 ## adm_seb.start.date <- ymd(20201014)
 ## ## IF THE BELOW ARE NOT SPECIFIED, THE MOST RECENT FILE WILL BE CHOSEN
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
-
-
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
 start.date <- lubridate::as_date("20200217")
@@ -237,16 +240,18 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220119", paste0("Prev627SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220218", paste0("Prev655SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
+
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220114", paste0("Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", "_chain2"))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220122", paste0("Prev627SeroNHSBT_All_ONScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220121", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+
                                          )
-    
+   
 }
-iteration.number.to.start.from <- 4000
+iteration.number.to.start.from <- 3000
 
 ## From where will the various datasets be sourced?
 #! Added admissions to data directories
@@ -287,6 +292,7 @@ prev.days.to.lose <- 0
 
 date.prev <- lubridate::ymd("20220223")
 
+
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -311,6 +317,27 @@ scenario.name <- paste0(scenario.name, efficacies)
 ## ## temporary line - for adding ad hoc names to the scenario
 ## scenario.name <- paste0(scenario.name, "_manufacturer")
 
+########### VACCINATION OPTIONS ###########
+vacc.flag <- 1 ## Do we have any vaccination data
+str.date.vacc <- "20220221" ## Optional: if not specified will take the most recent data file.
+vacc.lag <- 21
+vac.overwrite <- FALSE
+if(vacc.flag){
+    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
+}
+vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
+## How many vaccinations can we expect in the coming weeks
+## - this is mostly set for the benefit of projections rather than model fitting.
+future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
+future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
+
+## Approximate date at which delta became dominant strain (- one week)
+delta.date <- ymd("20210503")
+## Approximate date at which omicron became dominant strain (- one week)
+omicron.date <- ymd("20211205")
+
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
@@ -324,25 +351,11 @@ if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 1
 
-########### VACCINATION OPTIONS ###########
-vacc.flag <- 1 ## Do we have any vaccination data
-
-str.date.vacc <- "20220221" ## Optional: if not specified will take the most recent data file.
-
-vacc.lag <- 21
-vac.overwrite <- FALSE
-if(vacc.flag){
-    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
-    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
-}
-## How many vaccinations can we expect in the coming weeks
-## - this is mostly set for the benefit of projections rather than model fitting.
 
 
 
-future.n <- (c(0.12,0.12,0.12, rep(0.12, 8)) * 10^6) * (55.98 / 66.65)
 
 
 
-## Approximate data at which delta became dominant strain
-delta.date <- ymd("20210510")
+
+

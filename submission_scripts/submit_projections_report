@@ -17,20 +17,13 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-<<<<<<< HEAD
 
 
-
-
-#SBATCH --cpus-per-task=14
-#SBATCH --array=13
-
-
-
-=======
 #SBATCH --cpus-per-task=15
-#SBATCH --array=13,15,17,19
->>>>>>> origin/hosp_cov_restart
+
+
+#SBATCH --array=0,4
+
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?

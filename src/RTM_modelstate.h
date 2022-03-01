@@ -14,13 +14,14 @@ class model_state
 {
  private:
   vector<double> S;
-  vector<double> SV1;
-  vector<double> SVn;
   vector<double> E_1;
   vector<double> E_2;
   vector<double> I_1;
   vector<double> I_2;
-  vector<double> R_1;
+  vector<double> R_pos;
+  vector<double> R_neg;
+  vector<double> W;
+  vector<double> WS;
   vector<double> p_lambda;
  public:
   model_state();
@@ -28,9 +29,7 @@ class model_state
   model_state(const model_state&);
   model_state& operator=(const model_state&);
   void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*,
-	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
-  void fill(const gsl_vector*, const gsl_vector*, const gsl_vector*,
-	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
+	    const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*, const gsl_vector*);
   bool write(ofstream&);
 };
 

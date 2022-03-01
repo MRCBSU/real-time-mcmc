@@ -30,8 +30,8 @@
 #SBATCH --verbose
 
 
-#SBATCH --array=0
-
+#SBATCH --array=0,4
+>>>>>>> origin/booster_waning_fast
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
@@ -39,8 +39,6 @@
 
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
-
-
 
 forecast_switch="midterm"
 
@@ -132,7 +130,7 @@ echo -e $workdir
 
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-workdir="Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114_stable_household_admissions_no_deaths_chain2"
+# workdir="Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114_stable_household_admissions_no_deaths_chain2"
 echo $workdir
 
 
