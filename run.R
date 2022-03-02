@@ -178,6 +178,7 @@ if(format.inputs){
     }
     if(vacc.flag){
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+    print('format_vacc.R sourced')
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))

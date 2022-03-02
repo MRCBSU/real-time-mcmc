@@ -82,7 +82,7 @@ if(!exists("date.adm_seb")){
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
 
-if(sus_seb_combination %in% c(1, 3)) {
+if(sus_seb_combination == 1 | sus_seb_combination == 3) {
 
     latest_sus.date <- adm_sus.end.date
     earliest_seb.date <- adm_sus.end.date + 1
@@ -469,7 +469,7 @@ if(sus_seb_combination == 0) {
 } else if(sus_seb_combination == 3) {
 
     adm.sam <- adm.dat.seb %>%
-        filter(date >= earliest_seb.dat) %>%
+        filter(date >= earliest_seb.date) %>%
         filter(date <= date.adm_seb - adm_seb.strip_days) %>%
 
         filter(date <= latest.date)

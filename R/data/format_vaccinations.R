@@ -16,6 +16,7 @@ require(cubelyr)
 require(lubridate)
 
 run.all <- TRUE
+#print(vac.n_doses)
 if(exists("str.date.vacc")){
   ## Substitute this into the names of the intended data file names
   vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)

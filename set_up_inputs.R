@@ -251,11 +251,31 @@ if(prev.flag == 1){
 	}
     if(is.null(end.prev)) end.prev <- set.end.date(end.prev, prev.data)
 }
-if(vacc.flag == 1){
-    if(!all(file.exists(vac1.files)) || !all(file.exists(vacn.files))) {
-        stop("One of the specified vaccination data files does not exist")
-	}
+
+
+if(vacc.flag == 1) {
+
+    if(vac.n_doses == 2) {
+
+                    if(!all(file.exists(vac1.files)) || !all(file.exists(vacn.files))) {
+
+                stop("One of the specified vaccination data files does not exist")
+
+            }
+
+    } else if(vac.n_doses == 3) {
+
+            if(!all(file.exists(vac1.files)) || !all(file.exists(vac2.files)) || !all(file.exists(vac3.files))) {
+
+                stop("One of the specified vaccination data files does not exist")
+
+            }
+
+    }
+
 }
+
+
 ## Contact Model
 if(!exists("cm.breaks")) {cm.breaks <- c(9, 16, 58, 72, 107, 114, 163, 212, 261, 268, 317)
     cm.bases <- file.path(proj.dir, "contact_mats", cm.bases)
