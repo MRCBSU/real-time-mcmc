@@ -5,12 +5,12 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
 
-if (length(args) == 0) args <- c((today() - days(7)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))#Paul's line
 
@@ -62,8 +62,8 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 google.data.date <- format(ymd("2022-02-25"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-#matrix.suffix <- "_stable_household_new_base"
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 matrix.suffix_paul <- "_stable_household"
 
@@ -209,7 +209,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- 28
+	str.cutoff <- 60
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -319,7 +319,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220224" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220221" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
