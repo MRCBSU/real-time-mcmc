@@ -61,7 +61,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 
-google.data.date <- format(ymd("2022-02-25"), format = "%Y%m%d")
+google.data.date <- format(ymd("2022-03-04"), format = "%Y%m%d")
 #matrix.suffix <- "_timeuse_household_new_base"
 matrix.suffix <- "_stable_household_new_base"
 
@@ -74,7 +74,7 @@ sus_seb_combination <- 3L #number 3 to use the old sus data
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220226)
+date.adm_seb <- ymd(20220304)
 date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -319,7 +319,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220221" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220303" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
