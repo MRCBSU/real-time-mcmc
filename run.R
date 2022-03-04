@@ -3,7 +3,7 @@ library(tidyverse)
 
 ## Location of this script
 thisFile <- function() {
-#        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
         needle <- "--file="
         match <- grep(needle, cmdArgs)
         if (length(match) > 0) {

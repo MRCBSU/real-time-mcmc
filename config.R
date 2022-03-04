@@ -62,8 +62,8 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 
 google.data.date <- format(ymd("2022-02-25"), format = "%Y%m%d")
-#matrix.suffix <- "_timeuse_household_new_base"
-matrix.suffix <- "_stable_household_new_base"
+matrix.suffix <- "_timeuse_household_new_base"
+#matrix.suffix <- "_stable_household_new_base"
 
 matrix.suffix_paul <- "_stable_household"
 
