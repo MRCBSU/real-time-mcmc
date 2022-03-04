@@ -153,23 +153,14 @@ if(efficacies == "Nick"){
     ## Results for omicron and boosting impacts based on vaccine surveillance report wk 6 (2022)
     value.vac.pi1 <- c(5/8, 5/8, 31/100, 31/100, 31/800, 0)  ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
 } else {
-  value.vac.pi1 <- 0.48
+    value.vac.pi1 <- 0.48
 }
 prior.vac.pi1 <- rep(1, length(value.vac.pi1)) ## ifelse(vacc.flag, 3, 1)
 prior.pi1 <- max(prior.vac.pi1)
 if(vacc.flag & (prior.pi1 > 1)) pars.pi1 <- c(4, 1)
 vacc.pi.bps <- efficacies %in% c("Jamie", "PHE")
 if(vacc.pi.bps)
-
-
-
     write_tsv(as.data.frame(v1.design), file.path(out.dir, "vac.pi1.design.txt"), col_names = FALSE)
-
-
-
-
-
-
 
 ## Efficacy against infection from two vaccine doses  - can be derived from vaccine surveillance report 26 (alpha)
 if(efficacies == "Nick"){
@@ -181,7 +172,7 @@ if(efficacies == "Nick"){
     ## Results for omicron and boosting impacts based on vaccine surveillance report wk 6, 2022
     value.vac.pi2 <- c(4/5, 31/40, 4/5, 13/20, 1/10, 0) 
 } else {
-  value.vac.pi2 <- 0.6
+    value.vac.pi2 <- 0.6
 }
 prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
@@ -334,13 +325,10 @@ if(single.ifr){
         ifr <- rbeta(7000000, shape1 = pars.ifr[seq(1, length(pars.ifr), by = 2)], shape2 = pars.ifr[seq(2, length(pars.ifr), by = 2)])
         ifr <- matrix(ifr, nrow = 1000000, ncol = 7, byrow = TRUE)
         pars.ifr <- as.vector(rbind(apply(logit(ifr), 2, mean), apply(logit(ifr), 2, sd)));rm(ifr) ## base parameters - transformed from the informative beta distributions
-
-
         if((!adm.flag) & NHS28.alt.ifr.prior){
             mean.indices <- seq(1, length(pars.ifr), by = 2)
             pars.ifr[mean.indices] <- pars.ifr[mean.indices] - (0.8 * exp(pars.ifr[mean.indices])) + log(0.8)
         }
-
         ## gradients from Brian's Co-CIN analysis
         if(deaths.flag){
             grad.samp <- cbind(

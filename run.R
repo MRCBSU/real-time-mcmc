@@ -3,7 +3,7 @@ library(tidyverse)
 
 ## Location of this script
 thisFile <- function() {
-        cmdArgs <- commandArgs(trailingOnly = FALSE)
+#        cmdArgs <- commandArgs(trailingOnly = FALSE)
         needle <- "--file="
         match <- grep(needle, cmdArgs)
         if (length(match) > 0) {
@@ -25,7 +25,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- TRUE
+format.inputs <- FALSE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -113,29 +113,30 @@ if(prev.flag){
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
 
     if(vac.n_doses == 3) {
-       vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))
-       vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+       vac2.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_2ndvaccinations_", regions, ".txt"))
+       vac3.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_3rdvaccinations_", regions, ".txt"))
     } else {
-        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt")) 
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_nthvaccinations_", regions, ".txt")) 
     }
-
+#print("got here")
     if(!format.inputs) {    
     if(vac.n_doses == 3) {                                                                                                                                                   
-        vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))                                                                    
-        vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+        vac2.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_2ndvaccinations_", regions, ".txt"))                                                                    
+        vac3.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_3rdvaccinations_", regions, ".txt"))
 
         load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))                                 
         names(vac1.files) <- names(vac2.files)<- names(vac3.files) <- regions  
 
     } else {
-        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc,"_nthvaccinations_", regions, ".txt"))
         
         load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))                            
         names(vac1.files) <- names(vacn.files) <- regions  
-    } 
+    }
+#    print("got here 2")
     }
 } else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 if(adm.flag){
@@ -185,8 +186,10 @@ if(format.inputs){
     }
 } 
 
+print('got here')
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
+print('got here 2')
 ## Compile the code
 if(compile.code) {
     system("make clean")
