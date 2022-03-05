@@ -17,10 +17,9 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=15
-#SBATCH --array=0
+#SBATCH --cpus-per-task=25
 #! How much wallclock time will be required?
-#SBATCH --time=2:00:00
+#SBATCH --time=4:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -29,14 +28,16 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+#SBATCH --array=4-7
 
-#SBATCH -p cclake
+#SBATCH -p icelake-himem
+
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=process_model_runs_20201015_%a.out
-#SBATCH --error=process_model_runs_20201015_%a.err
+#SBATCH --output=process_model_runs_20201206_%a.out
+#SBATCH --error=process_model_runs_20201206_%a.err
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -57,27 +58,24 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 #! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
-module load pandoc                         # Need this to generate the STAN model code
-if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
-# PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
+# module load pandoc                         # Need this to generate the STAN model code
+# # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
-# Navigate to the correct working directory
-#SBATCH --output=model_runs_20210120regjobs_%a.out
-#SBATCH --error=model_runs_20210120regjobs_%a.err
+# module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
+module load rhel8/default-icl
+module load pandoc
 
 # Navigate to the correct working directory
 dirs=(*/)
 # echo ${dirs[SLURM_ARRAY_TASK_ID]}
 cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
 
-echo -e $workdir
 
 #! Full path to application executable: 
 application="Rscript"
 
-
-#! Run options for the application:
-options="../../../R/output/plot_projections.R projections_midterm.RData"
+options="../../../PostProcess.R"
 
 # #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 # #! safe value to no more than 16:
@@ -130,8 +128,13 @@ fi
 echo "Current directory: `pwd`"
 echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo -e "\nExecuting command:\n==================\n$CMD\n"
-
-eval $CMD
+echo -e "\nIn working directory\n${workdir}\n"
+if [ -f "posterior_report10" ]; then
+    if [ -f "mcmc.RData" ]; then
+	rm mcmc.RData output_matrices.RData
+    fi
+    eval $CMD
+fi
 
 # echo -e "JobID: $JOBID\n======"
 # echo "Time: `date`"
