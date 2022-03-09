@@ -227,13 +227,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
   for (int a = 0; a < NUM_AGE_GROUPS; ++a)
     {
       gsl_matrix_set(l_S, 0, a, gsl_vector_get(regional_population_by_age, a) * gsl_vector_get(in_dmp.l_init_prop_sus, a));
-      gsl_matrix_set(l_R_neg, 0, a, gsl_vector_get(regional_population_by_age, a) -
-		     gsl_matrix_get(l_S, 0, a) -
+      gsl_matrix_set(l_S, 0, a, gsl_matrix_get(l_S, 0, a) -
 		     gsl_matrix_get(l_I_1, 0, a) -
 		     gsl_matrix_get(l_E_1, 0, a) -
 		     gsl_matrix_get(l_I_2, 0, a) -
 		     gsl_matrix_get(l_E_2, 0, a));
-      // gsl_matrix_set(l_R, 0, a, gsl_vector_get(regional_population_by_age, a) * (1 - gsl_vector_get(in_dmp.l_init_prop_sus, a))); // OLD CODE, l_R WAS IGNORED, SO HOPEFULLY CAN RE-PURPOSE IT FOR THE NEW SWAB POSITIVE STATE
+      gsl_matrix_set(l_R_neg, 0, a, gsl_vector_get(regional_population_by_age, a) * (1 - gsl_vector_get(in_dmp.l_init_prop_sus, a))); // OLD CODE, l_R WAS IGNORED, SO HOPEFULLY CAN RE-PURPOSE IT FOR THE NEW SWAB POSITIVE STATE
       P_view = gsl_matrix_row(P, a);
       dA_view = gsl_matrix_row(in_dmp.l_average_infectious_period, 0);
       gsl_vector_div(&P_view.vector, &dA_view.vector);

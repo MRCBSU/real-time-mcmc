@@ -18,7 +18,8 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
         Deaths.files <- Sero.files <- Prev.files <- Cases.files <- vector("list", nr)
     } else {
         state <- state.files <- vector("list", nr)
-        state.names <- c("S", "SV1", "SV2", "E1", "E2", "I1", "I2", "R+", "plambda")
+        state.names <- c("S", "E1", "E2", "I1", "I2", "R+", "R-", "W", "WS", "plambda")
+        if(!exists("dose.numbers")) dose.numbers <- 0:3
     }
     
     ## Set-up output objects
@@ -105,10 +106,20 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
                 close(Prev.files[[intr]])
             }
         } else {
-            state[[intr]] <- readBin(state.files[[intr]], double(), n = num.iterations * nA * 9) %>%  ## 9 is the number of quantities in the state vector
+            design.array <- expand_grid(state.names, dose.numbers, age.labs)
+            design.array <- bind_rows(design.array %>%
+                                      filter(state.names != "plambda"),
+                                      design.array %>%
+                                      filter(state.names == "plambda") %>%
+                                      select(state.names, age.labs) %>%
+                                      mutate(dose.numbers = NA)
+                                      ) %>%
+                distinct()
+                
+            state[[intr]] <- readBin(state.files[[intr]], double(), n = num.iterations * nA * length(dose.numbers) * length(state.names)) %>%
                 as_tibble() %>%
                 mutate(iteration = iter, region = regions[intr]) %>%
-                bind_cols(expand_grid(state.names, age.labs))
+                bind_cols(design.array)
             close(state.files[[intr]])
         }
     }

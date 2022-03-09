@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=4
+#SBATCH --array=17
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
@@ -38,7 +38,7 @@
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
 
-forecast_switch="midterm"
+forecast_switch="snapshot"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
