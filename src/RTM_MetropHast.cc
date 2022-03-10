@@ -304,13 +304,14 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   // Outputs
   ofstream* output_codas = new ofstream[num_component_updates->size];
   ofstream output_coda_lfx("coda_lfx", ios::out|ios::trunc|ios::binary);
-  ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state;
+  ofstream *file_NNI, *file_Delta_Dis, *file_GP, *file_Hosp, *file_Sero, *file_Viro, *file_Prev, *file_state, *file_AR;
 
   fstream_model_statistics_open(file_NNI, "NNI", gmip.l_num_regions, country2);
   fstream_model_statistics_open(file_Delta_Dis, "Delta_Dis", gmip.l_num_regions, country2);
   if(simulation_parameters.oType == cMCMC)
     {
       fstream_model_statistics_open(file_Sero, "Sero", gmip.l_num_regions, country2);
+      fstream_model_statistics_open(file_AR, "AR_", gmip.l_num_regions, country2);
       if(gmip.l_GP_consultation_flag){
 	fstream_model_statistics_open(file_GP, "GP", gmip.l_num_regions, country2);
 	fstream_model_statistics_open(file_Viro, "Viro", gmip.l_num_regions, country2);
@@ -500,6 +501,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		file_NNI[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[reg], i, j)), sizeof(double));
 		file_Delta_Dis[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[reg], i, j)), sizeof(double));
 		file_Sero[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_seropositivity, i, j)), sizeof(double));
+		file_AR[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_internal_AR, i, j)), sizeof(double));
 		
 		if(gmip.l_GP_consultation_flag) {
 		  file_GP[reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(country2[reg].region_modstats.d_Reported_GP_Consultations, i, j)), sizeof(double));
@@ -539,8 +541,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       // Output MCMC sampler progress reports
       if (int_progress_report < simulation_parameters.num_progress_reports) {
 	//if(int_iter + 1 == gsl_vector_int_get(adaptive_progress_report_iterations, int_progress_report))
-	  // This refers to the old random walk M-H adaptation
-	  // write_progress_report("adaptive_report", ...
+	// This refers to the old random walk M-H adaptation
+	// write_progress_report("adaptive_report", ...
 
 	if(int_iter + 1 == gsl_vector_int_get(chain_progress_report_iterations, int_progress_report))
 	  write_progress_report("posterior_report", ++int_progress_report, int_iter + 1 - simulation_parameters.burn_in, CHAIN_LENGTH,
@@ -676,7 +678,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 					    gmip,
 					    theta.gp_delay.distribution_function,
 					    theta.hosp_delay.distribution_function
-			    );
+					    );
 
 			  log_accep += prop_lfx.total_lfx - lfx.total_lfx;
 			}
@@ -813,6 +815,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			file_NNI[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_NNI[int_reg], int_i, int_j)), sizeof(double));
 			file_Delta_Dis[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(output_Delta_Dis[int_reg], int_i, int_j)), sizeof(double));			
 			file_Sero[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_seropositivity, int_i, int_j)), sizeof(double));
+			file_AR[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_internal_AR, int_i, int_j)), sizeof(double));
 			if(gmip.l_GP_consultation_flag)
 			  {
 			    file_GP[int_reg].write(reinterpret_cast<const char*>(gsl_matrix_ptr(state_country[int_reg].region_modstats.d_Reported_GP_Consultations, int_i, int_j)), sizeof(double));
@@ -839,8 +842,8 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
       // UPDATE LIKELIHOOD POSTERIOR STATISTICS..
       if(int_iter >= simulation_parameters.burn_in)
-      {
-	lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
+	{
+	  lfx.bar_lfx += lfx.total_lfx / ((double) CHAIN_LENGTH);
 	  lfx.sumsq_lfx += gsl_pow_2(lfx.total_lfx) / ((double) CHAIN_LENGTH);
 	  prop_lfx.bar_lfx = lfx.bar_lfx;
 	  prop_lfx.sumsq_lfx = lfx.sumsq_lfx;
@@ -933,6 +936,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
   if(simulation_parameters.oType == cMCMC)
     {
       fstream_model_statistics_close(file_Sero, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
+      fstream_model_statistics_close(file_AR, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
       if(gmip.l_GP_consultation_flag){
 	fstream_model_statistics_close(file_GP, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);
 	fstream_model_statistics_close(file_Viro, nregions, NUM_AGE_GROUPS, gmip.l_duration_of_runs_in_days, (CHAIN_LENGTH) / simulation_parameters.thin_stats_every);

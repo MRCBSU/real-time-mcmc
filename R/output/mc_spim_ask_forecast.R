@@ -111,7 +111,7 @@ end.vac <- ifelse(vacc.flag, ndays, 1)
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date_and_suff.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,

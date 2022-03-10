@@ -154,11 +154,11 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 2.6e6L
-burnin <- 1e6L
-adaptive.phase <- 1e6L
-thin.outputs <- 1e3L ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 500L ## After how many iterations to output each set of parameters
+num.iterations <- 5.2e6L
+burnin <- 2e6L
+adaptive.phase <- 2e6L
+thin.outputs <- 2e3L ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 1000L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
 # burnin <- 5e5L
 # adaptive.phase <- 5e5L
@@ -266,3 +266,15 @@ if (grepl("adjusted", data.desc)) {
 
 ## DO WE WANT MCMC-STYLE CHAINS (0), OR SMC-STYLE PARTICLES (1)
 mcmc.outs <- 0
+
+# if(vacc.flag == 1) {
+#     if(vac.n_doses == 2) {
+#                     if(!all(file.exists(vac1.files)) || !all(file.exists(vacn.files))) {
+#                 stop("One of the specified vaccination data files does not exist")
+#             }
+#     } else if(vac.n_doses == 3) {
+#             if(!all(file.exists(vac1.files)) || !all(file.exists(vac2.files)) || !all(file.exists(vac3.files))) {
+#                 stop("One of the specified vaccination data files does not exist")
+#             }
+#     }
+# }

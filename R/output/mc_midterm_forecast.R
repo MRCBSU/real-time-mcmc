@@ -126,7 +126,7 @@ end.vac <- ifelse(vacc.flag, ndays, 1)
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date_and_suff.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
@@ -234,11 +234,20 @@ if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
-    symlink.design("vac.pin.design.txt")
     symlink.design("vac.alpha1.design.txt")
-    symlink.design("vac.alphan.design.txt")
+    if(vac.n_doses == 3){
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+    } else {
+        symlink.design("vac.pin.design.txt")
+        symlink.design("vac.alphan.design.txt")
+    }
 }
 out.dir <- out.dir.tmp
+if(!is.null(design.wr))
+    symlink.design("wr_design_file.txt")
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP

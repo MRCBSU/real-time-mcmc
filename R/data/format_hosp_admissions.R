@@ -534,7 +534,6 @@ for(reg in regions) {
 # Create missing directory
 if(!file.exists(out.dir)) dir.create(out.dir, recursive = T)
 
-
 if(sus_seb_combination == 3) {
     tmp_sus <- read_csv(old_adm_csv.loc) %>%
         mutate(date = as_date(date)) %>%

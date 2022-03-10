@@ -19,7 +19,7 @@ projections.basename <- "projections_snapshot"
 projections.basedir <- file.path(out.dir, projections.basename)
 
 ## Enter the date for which we need the snapshot
-snap.date <- ymd("20220218")
+snap.date <- ymd("20220304")
 
 ## ---------------- IDEALLY CODE BELOW HERE SHOULD NOT BE CHANGED BETWEEN RUNS
 if(!file.exists(projections.basedir))

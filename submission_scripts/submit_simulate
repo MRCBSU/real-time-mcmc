@@ -67,12 +67,17 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
+<<<<<<< HEAD
 # # workdir="Prev487_cm6ons_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210903_timeuse_household_deaths"
 # echo $workdir
 
 pwd
 # workdir="Prev550SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211105_timeuse_household_deaths_chain2"
 # echo $workdir
+=======
+# workdir="Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114_stable_household_admissions_no_deaths_chain2"
+echo $workdir
+>>>>>>> 2600cc6815033b58f5c4a23d36c0854fe3c5cb6c
 
 #! Full path to application executable: 
 application="Rscript"
