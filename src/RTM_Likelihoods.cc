@@ -341,12 +341,12 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	      gsl_matrix_set(l_W, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_W, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
 			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - (2 / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)))) +
-			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)));
+			     (gsl_matrix_get(l_R_neg, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)));
 
 	      gsl_matrix_set(l_WS, t + 1, STATE_IDX(v, a),
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(FN_MAX(v - 1, 0), a)) * vacc_in) +
 			     (gsl_matrix_get(l_WS, t, STATE_IDX(v, a)) * (1 - vacc_out) * (1 - ((1 - pi) * gsl_matrix_get(p_lambda, t, a)))) +
-			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 * timestepsperday / gsl_matrix_get(in_dmp.l_waning_period, t, a)));
+			     (gsl_matrix_get(l_W, t, STATE_IDX(v, a)) * (1 - vacc_out) * 2 / (gsl_matrix_get(in_dmp.l_waning_period, t, a) * timestepsperday)));
 
 	      if((t + 1) % timestepsperday){ // THESE ARE OUTPUT MATRICES AND ARE NOT CALCULATED EVERY (DELTA T) DAYS.. THESE MATRICES ARE DESIGNED FOR DAILY VALUES
 		int tindex = t / timestepsperday;
@@ -393,6 +393,28 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
       nday = nday + ((t % timestepsperday) == 0 ? 1 : 0);
     } // FOR t
 
+  // // DEBUGGING //
+  // // ofstream output_debug("debug.txt", ios::out | ios::trunc | ios::binary);
+  // gsl_matrix* tempmat = gsl_matrix_calloc(l_S->size1, l_S->size2);
+  // gsl_vector* tempvec = gsl_vector_calloc(l_S->size1);
+  // gsl_matrix_add(tempmat, l_S);
+  // gsl_matrix_add(tempmat, l_E_1);
+  // gsl_matrix_add(tempmat, l_E_2);
+  // gsl_matrix_add(tempmat, l_I_1);
+  // gsl_matrix_add(tempmat, l_I_2);
+  // gsl_matrix_add(tempmat, l_R_pos);
+  // gsl_matrix_add(tempmat, l_R_neg);
+  // gsl_matrix_add(tempmat, l_W);
+  // gsl_matrix_add(tempmat, l_WS);
+  // for(int inti = 0; inti < tempmat->size1; inti++){
+  //   for(int inta = 0; inta < tempmat->size2; inta++)
+  //     gsl_vector_set(tempvec, inti, gsl_vector_get(tempvec, inti) + gsl_matrix_get(tempmat, inti, inta));
+  //   std::cout << "t = " << inti << "; people in model = " << gsl_vector_get(tempvec, inti) << std::endl;
+  // }
+  // gsl_matrix_free(tempmat);
+  // gsl_vector_free(tempvec);
+  // // END DEBUGGING //
+  
   S_view = gsl_matrix_row(l_S, time_points - 1);
   E1_view = gsl_matrix_row(l_E_1, time_points - 1);
   E2_view = gsl_matrix_row(l_E_2, time_points - 1);      
