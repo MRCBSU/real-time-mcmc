@@ -20,9 +20,7 @@
 
 
 #SBATCH --cpus-per-task=15
-
-
-#SBATCH --array=0,4
+#SBATCH --array=12,17
 
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00

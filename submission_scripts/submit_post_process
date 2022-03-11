@@ -29,9 +29,8 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
+#SBATCH --array=0-11
 
-
-#SBATCH --array=0
 
 
 #SBATCH -p cclake-himem
@@ -132,6 +131,9 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 echo -e "\nIn working directory\n${workdir}\n"
 if [ -f "posterior_report10" ]; then
+    if [ -f "mcmc.RData" ]; then
+	rm mcmc.RData output_matrices.RData
+    fi
     eval $CMD
 fi
 

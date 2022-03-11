@@ -30,8 +30,9 @@
 #SBATCH --verbose
 
 
-#SBATCH --array=0,4
->>>>>>> origin/booster_waning_fast
+#SBATCH --array=17
+
+
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
@@ -40,7 +41,7 @@
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
 
-forecast_switch="midterm"
+forecast_switch="snapshot"
 
 
 #! Notes:

@@ -235,8 +235,6 @@ if(vacc.flag){
     if(vac.n_doses == 3){
         symlink.design("vac.pi2.design.txt")
         symlink.design("vac.alpha2.design.txt")
-        symlink.design("vac.pi2.design.txt")
-        symlink.design("vac.alpha2.design.txt")
     } else {
         symlink.design("vac.pin.design.txt")
         symlink.design("vac.alphan.design.txt")

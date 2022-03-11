@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -240,14 +240,14 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220218", paste0("Prev655SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220218", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220225", "20220226"), paste0("Prev662SeroNHSBT_All_NHS", "28", "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
+
 
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220225", paste0("Prev662SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220225", paste0("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
-
                                          )
    
 }
