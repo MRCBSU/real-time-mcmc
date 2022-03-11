@@ -152,20 +152,33 @@ if(!single.ifr){
 }
 if(vacc.flag){
     ## Can we use the pre-existing design matrix?
+    if(vac.n_doses == 3){
+        pi.str <- "vac.pi2.design.txt"
+        al.str <- "vac.alpha2.design.txt"
+    } else {
+        pi.str <- "vac.pin.design.txt"
+        al.str <- "vac.alphan.design.txt"
+    }
     if(max(vac.effec.bp) < ndays){
         symlink.design("vac.pi1.design.txt")
-        symlink.design("vac.pin.design.txt")
         symlink.design("vac.alpha1.design.txt")
-        symlink.design("vac.alphan.design.txt")
+        symlink.design(pi.str)
+        symlink.design(al.str)
     } else {
         mat1 <- select.design("vac.pi1.design.txt", vac.effec.bp, ndays, nr, nA)
-        matn <- select.design("vac.pin.design.txt", vac.effec.bp, ndays, nr, nA)
+        matn <- select.design(pi.str, vac.effec.bp, ndays, nr, nA)
         write_tsv(mat1, path = file.path(projections.basedir, "vac.pi1.design.txt"), col_names = FALSE)
         write_tsv(mat1, path = file.path(projections.basedir, "vac.alpha1.design.txt"), col_names = FALSE)
-        write_tsv(matn, path = file.path(projections.basedir, "vac.pin.design.txt"), col_names = FALSE)
-        write_tsv(matn, path = file.path(projections.basedir, "vac.alphan.design.txt"), col_names = FALSE)
+        write_tsv(matn, path = file.path(projections.basedir, pi.str), col_names = FALSE)
+        write_tsv(matn, path = file.path(projections.basedir, al.str), col_names = FALSE)
         vac.effec.bp <- vac.effec.bp[vac.effec.bp < ndays]
     }
+}
+if(!is.null(design.wr)){
+    mat.wr <- select.design("wr_design_file.txt", breaks.wr, ndays, 1, 1)
+    write_tsv(mat.wr, path = file.path(projections.basedir, "wr_design_file.txt"), col_names = FALSE)
+    breaks.wr <- breaks.wr[breaks.wr < ndays]
+    if(length(breaks.wr) == 0) breaks.wr <- NULL
 }
 ## ## -------------------------------------
 
@@ -179,7 +192,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] %in% c("jbb50", "pjb51", "joel.kandiah@phe.gov.uk")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
@@ -214,14 +227,14 @@ infections <- melt.list(NNI)## ;rm(NNI)
 dimnames(infections) <- dim.list
 state <- do.call(bind_rows, state) %>%
     inner_join(expand_grid(regions, age.labs) %>% mutate(popn = pop.input) %>% rename(region = regions))
-state <- bind_rows(state,
-                   state %>% group_by(iteration, region, age.labs) %>%
-                   summarise(unrecovered = sum(value), popn = median(popn)) %>%
-                   mutate(value = popn - unrecovered,
-                          state.names = "R-") %>%
-                   select(-unrecovered)
-                   )
-state.lkup <- tibble(state.names = c("S", "SV1", "SV2", "E1", "E2", "I1", "I2", "R+", "R-", "plambda"), state.text = c("Fully susceptible", "Never infected, incomplete immunisation", "Never infected, complete immunisation", "Latent infection", "Latent infection", "Prevalent infection", "Prevalent infection", "Prevalent infection", "Infection-acquired immunity", "Infectious pressure"))
+## state <- bind_rows(state,
+##                    state %>% group_by(iteration, region, age.labs) %>%
+##                    summarise(unrecovered = sum(value), popn = median(popn)) %>%
+##                    mutate(value = popn - unrecovered,
+##                           state.names = "R-") %>%
+##                    select(-unrecovered)
+##                    )
+state.lkup <- tibble(state.names = c("S", "E1", "E2", "I1", "I2", "R+", "R-", "W", "WS", "plambda"), state.text = c("Fully susceptible", "Latent infection", "Latent infection", "Prevalent infection", "Prevalent infection", "Prevalent infection", "Infection-acquired immunity", "Infection-acquired immunity", "Susceptible, previously infected", "Infectious pressure"))
 state <- state %>%
     inner_join(state.lkup)
 

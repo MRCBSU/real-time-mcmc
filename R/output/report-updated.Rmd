@@ -12,8 +12,7 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
-# message(external.bak)
-knitr::opts_chunk$set(echo = FALSE, cache = T, cache.path = "~/tmp/cache")
+knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 knitr::opts_chunk$set(error=TRUE)
 
 suppressMessages(library(knitr))
@@ -22,15 +21,14 @@ suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 suppressMessages(extract <- R.utils::extract)
-# cat(Rfile.loc)
-# if(exists("Rfile.loc")) {
+if(exists("Rfile.loc")) {
   source(file.path(Rfile.loc, "results_api.R"))
   source(file.path(Rfile.loc, "plot_funcs.R"))
-# } else {
-#   proj.dir <- "~/RTM"
-#   source("results_api.R")
-#   source("plot_funcs.R")
-# }
+} else {
+  proj.dir <- "~/RTM"
+  source("results_api.R")
+  source("plot_funcs.R")
+}
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
@@ -89,7 +87,6 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
 Value of $R_t$, the average number of secondary infections due to a typical infection today.
 
 ```{r Rt-table}
-
 get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
@@ -433,19 +430,17 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-infections.growth.rates <- calc.growth.rate(infections)
+## infections.growth.rates <- calc.growth.rate(infections)
 if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
 infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
 						Egt,
 						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
-
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
 NB: negative growth rates are rates of decline. Values are daily changes.
 
 `r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
-
 
 #### Halving times
 
