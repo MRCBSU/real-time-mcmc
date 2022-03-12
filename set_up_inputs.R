@@ -214,6 +214,7 @@ if(deaths.flag | adm.flag){
 
 sero.data <- list(sample = "NULL",
                   positive = "NULL")
+
 if (sero.flag == 1) {
     sero.data <- list(sample = serosam.files, positive = seropos.files)
     if(!all(sapply(sero.data, function(x) all(file.exists(x)))))
