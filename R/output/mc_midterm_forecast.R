@@ -148,6 +148,9 @@ if(gp.flag)
         denoms.files[reg] <- repeat.last.row(denoms.files[reg], paste0("dummy_denoms_", reg))
     }
 if(hosp.flag | adm.flag)
+    if (is.null(names(hosp.data))) {
+       names(hosp.data) <- regions
+    }
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag){
@@ -223,7 +226,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51","aa995")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
