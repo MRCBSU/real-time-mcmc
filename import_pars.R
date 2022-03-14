@@ -1,7 +1,7 @@
 prev.env <- new.env()
 load.from <- file.path(previous.loc, "tmp.RData")
 load(load.from, env = prev.env)
-load.from <- file.path(previous.loc, "endstate.RData")
+load.from <- file.path(previous.loc, "mcmc.RData")
 load(load.from, env = prev.env)
 prev.params <- prev.env$params
 

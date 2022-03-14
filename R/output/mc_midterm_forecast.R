@@ -6,7 +6,6 @@ require(parallel)
 require(knitr)
 
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
-#out.dir <- getwd()
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 if (!is.na(out.dir)) setwd(out.dir)
@@ -16,17 +15,11 @@ load("mcmc.RData")
 load("tmp.RData")
 source(file.path(Rfile.loc, "sim_func.R"))
 ## ## mod_inputs.Rmd items that will change in the projections.
-#out.dir <- getwd()
 
 counterfactual <- FALSE
 
-
 projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
-
-cat(out.dir, "\n")
 projections.basedir <- file.path(out.dir, projections.basename)
-cat(projections.basedir,'\n')
-
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -40,38 +33,24 @@ mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
-if(prev.flag && any(prev.data$lmeans == "NULL")){
-	stop("No prev files specified")
-}
 prev.flag <- 1 ## prev.flag ## Are we interested in simulating prevalence outputs?
 if(prev.flag && any(prev.data$lmeans == "NULL")){
-#This HEAD up to COVID_vacc_amgs was the suggestion from Colin's/Paul's branch but seems that my/Josh's version is proper to use.
-#<<<<<<< HEAD
-#=======
     ## if (!exists("date.prev")) {
 		## Get the date of the prevalence data
-
-
-
-
-
-
-
-
 		date.prev <- ymd("20210324")
 		## Convert that to an analysis day number
 		prev.end.day <- 395
 		last.prev.day <- 395
 		first.prev.day <- 75
 		if(!exists("days.between.prev")) days.between.prev <- 7
-
 		## Default system for getting the days on which the likelihood will be calculated.
-#		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
+		prev.lik.days <- rev(seq(from = last.prev.day, to = first.prev.day, by = -days.between.prev))
 	## }
-#>>>>>>> COVID_vacc_amgs
     for(r in 1:nr){
-      prev.data$lmeans[r] <- file.path(data.dirs["prev"], "dummy_meanlogprev.txt")
-      prev.data$lsds[r] <- file.path(data.dirs["prev"], "dummy_sdlogprev.txt")
+	  prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", paste(prev.lik.days, collapse = "_"), "_", regions[r], "ons_") ## , paste0(prev.lik.days, collapse = "_"), "_")
+          prev.file.suffix <- paste0("logprev.txt")
+      prev.data$lmeans[r] <- paste0(prev.file.prefix, "mean", prev.file.suffix)
+      prev.data$lsds[r] <- paste0(prev.file.prefix, "sd", prev.file.suffix)
     }
     names(prev.data$lmeans) <- names(prev.data$lsds) <- regions
 }
@@ -110,11 +89,11 @@ symlink.design <- function(design)
 combine.rtm.output <- function(x, strFld){
     oList <- lapply(x, function(x) do.call(abind, args = list(x[[strFld]], along = 3)))
     oList <- do.call(abind, args = list(oList, along = 0))
-    
+
     }
 
 ## ## ## --------------------
-cat(projections.basedir,'\n')
+
 if(!file.exists(projections.basedir))
     dir.create(projections.basedir, recursive = T)
 
@@ -169,9 +148,6 @@ if(gp.flag)
         denoms.files[reg] <- repeat.last.row(denoms.files[reg], paste0("dummy_denoms_", reg))
     }
 if(hosp.flag | adm.flag)
-       if (is.null(names(hosp.data))) {
-        names(hosp.data) <- regions
-    }
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag){
@@ -227,11 +203,6 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
     symlink.design("vac.alpha1.design.txt")
-<<<<<<< HEAD
-    symlink.design("vac.alphan.design.txt")
-    symlink.design("vac.pi1.design.txt")
-    symlink.design("vac.pin.design.txt")
-=======
     if(vac.n_doses == 3){
         symlink.design("vac.pi2.design.txt")
         symlink.design("vac.alpha2.design.txt")
@@ -239,7 +210,6 @@ if(vacc.flag){
         symlink.design("vac.pin.design.txt")
         symlink.design("vac.alphan.design.txt")
     }
->>>>>>> origin/booster_waning_fast
 }
 if(!is.null(design.wr))
     symlink.design("wr_design_file.txt")
@@ -253,8 +223,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-
-if(Sys.info()["user"] %in% c("jbb50", "pjb51","aa995")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")

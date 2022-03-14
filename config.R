@@ -65,7 +65,7 @@ google.data.date <- format(ymd("2022-03-11"), format = "%Y%m%d")
 #matrix.suffix <- "_timeuse_household_new_base"
 matrix.suffix <- "_stable_household_new_base"
 
-matrix.suffix_paul <- "_stable_household"
+#matrix.suffix_paul <- "_stable_household"
 
 
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
@@ -167,7 +167,7 @@ data.desc <- "deaths"
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <-1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -185,7 +185,7 @@ vacc.flag <- 1
 vac.date.fmt <- "%Y-%m-%d"
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
@@ -209,7 +209,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- 60
+	str.cutoff <- 28
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -240,18 +240,17 @@ use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220225", "20220226"), paste0("Prev662SeroNHSBT_All_NHS", "28", "cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+            previous.run.to.use <- file.path(proj.dir, "model_runs","20220311", paste0("PrevINLA676SeroNHSBT_All_cm6ons_IFR6bp_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220311", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
 
-
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220225", paste0("Prev662SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220311", paste0("PrevINLA676SeroNHSBT_All_cm6ons_IFR6bp_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220311", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220225", paste0("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225", matrix.suffix_paul, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220311", paste0("PrevINLA676SeroNHSBT_All_cm6ons_IFR6bp_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220311", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
    
 }
-iteration.number.to.start.from <- 1
+iteration.number.to.start.from <- 3000
 
 ## From where will the various datasets be sourced?
 #! Added admissions to data directories

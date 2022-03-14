@@ -30,7 +30,7 @@
 #SBATCH --verbose
 
 
-#SBATCH --array=17
+#SBATCH --array=12,16
 
 
 #SBATCH -p icelake
@@ -41,7 +41,7 @@
 #SBATCH --output=simulate_cclake_20211203_%a.out
 #SBATCH --error=simulate_cclake_20211203_%a.err
 
-forecast_switch="snapshot"
+forecast_switch="midterm"
 
 
 #! Notes:
