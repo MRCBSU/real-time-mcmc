@@ -1,0 +1,724 @@
+---
+title: "Snapshot Analysis"
+author: "Paul Birrell, Joshua Blake, Edwin van Leeuwen, Joel Kandiah, MRC Biostatistics Unit COVID-19 Working Group, Daniela De Angelis."
+date:   "`r Sys.time()`"
+output: 
+    html_document:
+        code_folding: hide
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    fig.width = 12,
+    fig.height = 8,
+    warning = FALSE,
+    error = FALSE
+)
+    
+# Load in necessary libraries
+library(tidyverse)
+library(lubridate)
+
+# setwd("~/Snapshot Analysis/results_20220218/Prev655SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices2_20220218_timeuse_household_admissions_no_deaths_chain2")
+theme <- theme(
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 16, face = "bold"),
+        axis.text = element_text(size = 14),
+        title = element_text(size = 18, face = "bold"),
+        strip.text = element_text(size = 14),
+        strip.placement = "outside"
+      )
+
+age.levels <- c(
+  "<1yr",
+  "1-4",
+  "5-14",
+  "15-24",
+  "25-44",
+  "45-64",
+  "65-74",
+  "75+"
+)
+
+state <- state |> 
+  mutate(age.labs = factor(age.labs, levels = age.levels, labels = age.levels, ordered = T))
+
+```
+
+## Plots of Proportions of Individuals in each Class
+
+## {.tabset}
+
+### By Age
+
+```{r}
+state.levels <- c(
+   "Never Infected, No Immunisation" = "Fully susceptible",
+  "Susceptible, previously infected" = "Susceptible, previously infected",
+  "Latent Infection" = "Latent infection",
+  "Prevalent Infection" = "Prevalent infection",
+  "Infection-Acquired Immunity" = "Infection-acquired immunity"
+  )
+
+summary_simple_state_ages <- state |> 
+  filter(!is.na(state.names), state.names != "plambda") |> 
+  mutate(state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+  unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
+  mutate(state.text = paste0(state.text, " vaccine doses")) |> 
+  group_by(age.labs, iteration, state.names, state.text) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(age.labs, popn, state.text, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(age.labs, popn, state.text) |> 
+  summarise(value = mean(value)) |>  
+  ungroup()
+
+p1 <- summary_simple_state_ages |> 
+  ggplot(aes(x = age.labs, y = value / popn * 100, colour = state.text, text = paste0("State: ", state.text, "\nAge: ", age.labs, "\nProportion of Population: ", value / popn * 100))) +
+  geom_col(aes(fill = after_scale(alpha(colour, 0.8))))  +
+  theme +
+  labs(x = "Age", y = "Proportion of Population (%)", colour = "State")
+
+plotly::ggplotly(p1, tooltip = "text")
+
+state |>
+  filter(state.names != "plambda") |>
+  group_by(iteration, region, age.labs, popn, dose.numbers) |>
+  summarise(sum = sum(value))
+```
+
+### By Region
+
+```{r}
+summary_simple_state_ages <- state |> 
+  filter(!is.na(state.names), state.names != "plambda") |> 
+  mutate(state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+    unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
+  mutate(state.text = paste0(state.text, " vaccine doses")) |> 
+  mutate(region = str_replace_all(region, "_", " ")) |> 
+  group_by(region, iteration, state.names, state.text) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(region, popn, state.text, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, popn, state.text) |> 
+  summarise(value = mean(value)) |>  
+  ungroup()
+
+p1 <- summary_simple_state_ages |> 
+  ggplot(aes(x = region, y = value / popn * 100, colour = state.text, text = paste0("State: ", state.text, "\nRegion: ", region, "\nProportion of Population: ", value / popn * 100))) +
+  geom_col(aes(fill = after_scale(alpha(colour, 0.8))))  +
+  theme +
+  labs(x = "Region", y = "Proportion of Population (%)", colour = "State") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+### By Age and Region
+
+```{r, fig.height=16}
+summary_simple_state_ages <- state |> 
+  filter(!is.na(state.names), state.names != "plambda") |> 
+  mutate(state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+  unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
+  mutate(state.text = paste0(state.text, " vaccine doses")) |> 
+  mutate(region = str_replace_all(region, "_", " ")) |> 
+  group_by(age.labs, region, iteration, state.names, state.text) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(age.labs, region, popn, state.text, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(age.labs, region, popn, state.text) |> 
+  summarise(value = mean(value)) |>  
+  ungroup()
+
+p1 <- summary_simple_state_ages |> 
+  ggplot(aes(x = age.labs, y = value / popn * 100, colour = state.text, text = paste0("State: ", state.text, "\nRegion: ", region, "\nAge: ", age.labs, "\nProportion of Population: ", value / popn * 100))) +
+  geom_col(aes(fill = after_scale(alpha(colour, 0.8))))  +
+  theme +
+  labs(x = "Age", y = "Proportion of Population (%)", colour = "State") +
+  facet_wrap(~region, ncol = 2) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+
+##{-}
+
+
+
+## Plots of Proportions in each Susceptible Class
+
+## {.tabset}
+
+### By Age
+
+```{r, echo = FALSE}
+summary_simple_state_ages <- state |> 
+  filter(!is.na(state.names)) |> 
+  group_by(state.names, state.text,age.labs, iteration, dose.numbers) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(state.names, state.text, age.labs, popn, dose.numbers) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(state.names, state.text, popn, age.labs, dose.numbers), values_from = v, names_from = q)
+
+susceptible_list <- c("S", "WS")
+vacc_levels <- c(
+  "No Vaccination" = 0,
+  "1 Vaccine Dose" = 1,
+  "2 Vaccine Doses" = 2,
+  "3+ Vaccine Doses" = 3
+  
+)
+
+combined_state_levels <- c(
+  "Never Infected, No Immunisation No Vaccination",
+  "Never Infected, No Immunisation 1 Vaccine Dose",
+  "Never Infected, No Immunisation 2 Vaccine Doses",
+  "Never Infected, No Immunisation 3+ Vaccine Doses" ,
+  "Susceptible, previously infected No Vaccination",
+  "Susceptible, previously infected 1 Vaccine Dose",
+  "Susceptible, previously infected 2 Vaccine Doses",
+  "Susceptible, previously infected 3+ Vaccine Doses"
+)
+
+p1 <- summary_simple_state_ages |> 
+  filter(state.names %in% susceptible_list) |> 
+  mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |> 
+  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> arrange(state.names, dose.numbers) |> 
+  mutate(ce = ce / popn * 100, low_ci95 = low_ci95 / popn * 100, upp_ci95 = upp_ci95 / popn * 100) |> 
+ggplot(aes(x = age.labs, y = ce, ymin = low_ci95, ymax = upp_ci95, color = age.labs, group = age.labs, text = paste0("State: ", state.names, "\nAge: ", age.labs, "\nProportion of Population: ", ce, "%\nUpper Estimate: ", upp_ci95, "%\nLower Estimate: ", low_ci95, "%"))) +
+    geom_col(aes(fill = after_scale(alpha(colour, 0.6)))) +
+    geom_errorbar(width = 0.2, colour = "black") +
+    facet_grid(dose.numbers~state.names, scales = "free_x") +
+    labs(x = "Susceptible Population", y = "Proportion of Population (%)", color = "Age Classes") +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+  theme
+    
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+### By Region
+
+```{r, echo = FALSE}
+summary_simple_state_region <- state |> 
+  filter(!is.na(state.names)) |> 
+  group_by(state.names, state.text, region, iteration, dose.numbers) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(state.names, state.text, region, popn, dose.numbers) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(state.names, state.text, popn, region, dose.numbers), values_from = v, names_from = q)
+
+p1 <- summary_simple_state_region |> 
+  filter(state.names %in% susceptible_list) |> 
+  mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |> 
+  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> arrange(state.names, dose.numbers) |> 
+  mutate(ce = ce / popn * 100, low_ci95 = low_ci95 / popn * 100, upp_ci95 = upp_ci95 / popn * 100) |> 
+  ggplot(aes(x = region, y = ce, ymin = low_ci95, ymax = upp_ci95, color = region, group = region, text = paste0("State: ", state.names, "\nRegion: ", region, "\nProportion of Population: ", ce, "%\nUpper Estimate: ", upp_ci95, "%\nLower Estimate: ", low_ci95, "%"))) +
+    geom_col(aes(fill = after_scale(alpha(colour, 0.6)))) +
+    geom_errorbar(width = 0.2, colour = "black") +
+    facet_grid(dose.numbers~state.names, scales = "free_x") +
+    labs(x = "Susceptible Population", y = "Proportion of Population (%)", color = "Age Classes") +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+  theme
+    
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+## {-}
+
+## Plots of Proportions in each Infected Class
+
+## {.tabset}
+
+### By Age
+
+```{r, echo = FALSE}
+alt_state_levels <-
+  c(
+    E = "E1",
+    E = "E2",
+    I = "I1",
+    I = "I2"
+    )
+
+summary_simple_state_ages <- state |> 
+  mutate(state.names = factor(state.names, levels = alt_state_levels, labels = names(alt_state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(state.names, age.labs, iteration, dose.numbers) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(state.names, age.labs, popn, dose.numbers) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(state.names, popn, age.labs, dose.numbers), values_from = v, names_from = q)
+
+infected_list <- c("E", "I")
+state_levels <- c(
+  "Infected Non-infectious" = "E",
+  "Infected Infectious" = "I"
+)
+
+vacc_levels <- c(
+  "No Vaccination" = 0,
+  "1 Vaccine Dose" = 1,
+  "2 Vaccine Doses" = 2,
+  "3+ Vaccine Doses" = 3
+  
+)
+
+combined_state_levels <- c(
+  "Infected Non-infectious No Vaccination",
+  "Infected Non-infectious 1 Vaccine Dose",
+  "Infected Non-infectious 2 Vaccine Doses",
+  "Infected Non-infectious 3+ Vaccine Doses" ,
+  "Infected Infectious No Vaccination",
+  "Infected Infectious 1 Vaccine Dose",
+  "Infected Infectious 2 Vaccine Doses",
+  "Infected Infectious 3+ Vaccine Doses"
+)
+
+
+p1 <- summary_simple_state_ages |> 
+  filter(state.names %in% infected_list) |> 
+  mutate(state.names = factor(state.names, levels = state_levels, labels = names(state_levels), ordered = T)) |> 
+  mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |> 
+  mutate(ce = ce / popn * 100, low_ci95 = low_ci95 / popn * 100, upp_ci95 = upp_ci95 / popn * 100) |> 
+  ggplot(aes(x = age.labs, y = ce, ymin = low_ci95, ymax = upp_ci95, color = age.labs, group = age.labs, text = paste0("State: ", state.names, "\nAge: ", age.labs, "\nProportion of Population: ", ce, "%\nUpper Estimate: ", upp_ci95, "%\nLower Estimate: ", low_ci95, "%"))) +
+    geom_col(aes(fill = after_scale(alpha(colour, 0.6)))) +
+    geom_errorbar(width = 0.2, colour = "black") +
+    facet_grid(dose.numbers~state.names, scales = "free_x") +
+    labs(x = "Susceptible Population", y = "Proportion of Population (%)", color = "Age Classes") +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+  theme
+    
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+### By Region
+
+```{r, echo = FALSE}
+
+summary_simple_state_region <- state |> 
+  mutate(state.names = factor(state.names, levels = alt_state_levels, labels = names(alt_state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(state.names, region, iteration, dose.numbers) |> 
+  summarise(value = sum(value), popn = sum(popn)) |> 
+  group_by(state.names, region, popn, dose.numbers) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(state.names, popn, region, dose.numbers), values_from = v, names_from = q)
+
+p1 <- summary_simple_state_region |> 
+  filter(state.names %in% infected_list) |> 
+  mutate(state.names = factor(state.names, levels = state_levels, labels = names(state_levels), ordered = T)) |> 
+  mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |>  
+  mutate(ce = ce / popn * 100, low_ci95 = low_ci95 / popn * 100, upp_ci95 = upp_ci95 / popn * 100) |> 
+  ggplot(aes(x = region, y = ce, ymin = low_ci95, ymax = upp_ci95, color = region, group = region, text = paste0("State: ", state.names, "\nRegion: ", region, "\nProportion of Population: ", ce, "%\nUpper Estimate: ", upp_ci95, "%\nLower Estimate: ", low_ci95, "%"))) +
+    geom_col(aes(fill = after_scale(alpha(colour, 0.6)))) +
+    geom_errorbar(width = 0.2, colour = "black") +
+    facet_grid(dose.numbers~state.names, scales = "free_x") +
+    labs(x = "Susceptible Population", y = "Proportion of Population (%)", color = "Age Classes") +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+  theme
+    
+plotly::ggplotly(p1, tooltip = "text")
+```
+
+## {-}
+
+```{r, echo = FALSE}
+library(sf)
+
+if (region.type == "NHS")  {
+  sf_df <- read_rds(nhs_file)
+} else {
+  sf_df <- read_rds(ons_file)
+}
+
+state$state.names |> unique()
+
+state_levels <-
+  c(S = "S",
+    S = "WS",
+    I = "E1",
+    I = "E2",
+    I = "I1",
+    I = "I2",
+    R = "R-",
+    R = "R+",
+    W = "W"
+    )
+
+alt_state_levels <-
+  c(S = "S",
+    S = "WS",
+    E = "E1",
+    E = "E2",
+    I = "I1",
+    I = "I2",
+    R = "R-",
+    R = "R+",
+    W = "W"
+    )
+
+summary_simple_state <- state |> 
+    mutate(state.names = factor(state.names, levels = state_levels, labels = names(state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+summary_simple_state_unvaxxed <- state |> 
+  filter(dose.numbers == 0) |> 
+    mutate(state.names = factor(state.names, levels = state_levels, labels = names(state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+summary_simple_state_vaxxed <- state |> 
+  filter(dose.numbers != 0) |> 
+    mutate(state.names = factor(state.names, levels = state_levels, labels = names(state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+alt_summary_simple_state <- state |> 
+    mutate(state.names = factor(state.names, levels = alt_state_levels, labels = names(alt_state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+alt_summary_simple_state_unvaxxed <- state |> 
+  filter(dose.numbers == 0) |> 
+    mutate(state.names = factor(state.names, levels = alt_state_levels, labels = names(alt_state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+alt_summary_simple_state_vaxxed <- state |> 
+    filter(dose.numbers != 0) |> 
+    mutate(state.names = factor(state.names, levels = alt_state_levels, labels = names(alt_state_levels))) |> 
+  filter(!is.na(state.names)) |> 
+  group_by(region, state.names, age.labs, popn, iteration) |> 
+  summarise(value = sum(value)) |> 
+  group_by(region, state.names, age.labs, popn) |> 
+  summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975), mean = mean(value)) |> 
+  mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
+  ungroup() |> 
+  pivot_wider(id_cols = c(region, mean, state.names, popn, age.labs), values_from = v, names_from = q)
+
+# sf_df |> 
+#   full_join(y = summary_simple_state |> filter(age.labs == "75+") |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "S") |>  mutate(low_ci95 = low_ci95 /popn * 100, ce = ce / popn * 100, upp_ci95 = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+# simplevis::leaf_sf_col(col_var = ce, alpha_fill = 0.6)
+# sf_df |> 
+#   full_join(y = summary_simple_state |> filter(age.labs == "75+") |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(low_ci95 = low_ci95 /popn * 100, ce = ce / popn * 100, upp_ci95 = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+# simplevis::leaf_sf_col(col_var = ce, alpha_fill = 0.6)
+# sf_df |> 
+#   full_join(y = summary_simple_state |> filter(age.labs == "75+") |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "R") |>  mutate(low_ci95 = low_ci95 /popn * 100, ce = ce / popn * 100, upp_ci95 = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+# simplevis::leaf_sf_col(col_var = ce, alpha_fill = 0.6)
+
+```
+
+## {.tabset}
+
+### Susceptibles
+
+```{r, echo = FALSE}
+ p1 <- sf_df |> 
+  full_join(y = summary_simple_state |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "S") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Susceptible", colour = "Proportion Susceptible") +
+  ggtitle("Proportion of Population Susceptible by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p1, tooltip = c("text"))
+```
+
+### Unvaccinated Susceptibles
+
+```{r, echo = FALSE}
+p1 <- sf_df |> 
+  full_join(y = alt_summary_simple_state_unvaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "S") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Susceptible", colour = "Proportion Susceptible") +
+  ggtitle("Proportion of Population Susceptible by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p1, tooltip = c("text"))
+```
+
+### Vaccinated Susceptibles
+
+```{r, echo = FALSE}
+p1 <- sf_df |> 
+  full_join(y = alt_summary_simple_state_vaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "S") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Susceptible", colour = "Proportion Susceptible") +
+  ggtitle("Proportion of Population Susceptible by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p1, tooltip = c("text"))
+```
+
+
+### Infectious Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = alt_summary_simple_state |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infectious") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Unvaccinated Infectious Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = alt_summary_simple_state_unvaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infectious") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Unvaccinated Infectious Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = alt_summary_simple_state_vaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infectious") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Infected Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = summary_simple_state |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infected") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Unvaccinated Infected Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = summary_simple_state_unvaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infected") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Vaccinated Infected Individuals
+
+```{r, echo = FALSE}
+p2 <- sf_df |> 
+  full_join(y = summary_simple_state_vaxxed |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "I") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Infected", colour = "Proportion Infected") +
+  ggtitle("Proportion of Population Infected by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p2, tooltip = c("text"))
+```
+
+### Recovered Individuals
+
+```{r, echo = FALSE}
+p3 <- sf_df |> 
+  full_join(y = summary_simple_state |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "R") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+# simplevis::gg_sf_col(col_var = ce_pn, alpha_fill = 0.6, col_title = "Proportion Recovered (%)", text_var= paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", ce, "\nPopn: ", popn, "\nProportion: ", ce_pn, "%" )) +format
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Recovered", colour = "Proportion Recovered") +
+  ggtitle("Proportion of Population Recovered by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p3, tooltip = c("text"))
+
+```
+
+### Individuals with Infection Acquired Immunity
+
+```{r, echo = FALSE}
+p3 <- sf_df |> 
+  full_join(y = summary_simple_state |> mutate(region = gsub("_", " ", region)) |> filter(state.names == "W") |>  mutate(mean_pn = mean / popn * 100, low_ci95_pn = low_ci95 /popn * 100, ce_pn = ce / popn * 100, upp_ci95_pn = upp_ci95 /popn * 100), by = c("RGN20NM" = "region")) |> 
+# simplevis::gg_sf_col(col_var = ce_pn, alpha_fill = 0.6, col_title = "Proportion Recovered (%)", text_var= paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", ce, "\nPopn: ", popn, "\nProportion: ", ce_pn, "%" )) +format
+  ggplot(aes(colour = mean_pn, text = paste0("Region: ", RGN20NM, "\nAge: ", age.labs, "\nNo. of Individuals: ", format(round(mean), nsmall = 0L), "\nPopulation: ", popn, "\nProportion: ", format(mean_pn, digits = 4), "%" ))) +
+  geom_sf(aes(fill = after_scale(alpha(color, 0.6)))) +
+  viridis::scale_color_viridis() +
+  facet_wrap(~age.labs) +
+  theme_classic() +
+  theme +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill = "Proportion Recovered", colour = "Proportion Recovered") +
+  ggtitle("Proportion of Population Recovered by Age and Region") +
+  expand_limits(colour = 0)
+
+plotly::ggplotly(p3, tooltip = c("text"))
+
+```
+
+## {-}
