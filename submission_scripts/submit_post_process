@@ -24,7 +24,7 @@
 #SBATCH --array=0-11
 #SBATCH --output=post_process_model_runs_20201206_%a_%j.out
 #SBATCH --error=post_process_model_runs_20201206_%a_%j.err
-#SBATCH --mem=65G
+#SBATCH --mem-per-cpu=10G
 #SBATCH --partition=standard-wp
 #! sbatch directives end here (put any additional directives above this line)
 
