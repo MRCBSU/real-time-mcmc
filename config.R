@@ -12,7 +12,7 @@ str.date.vacc <- "20220310"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -183,8 +183,8 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	# str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "28"), "")
-	str.cutoff <- "60"
+	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "60"), "")
+	# str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -215,11 +215,11 @@ use.previous.run.for.start <- T
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304",paste0(c("Prev662SeroNHSBT_All_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths",
-                                                                                           "Prev662SeroNHSBT_All_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_chain2"))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "old_20220311",paste0(c("Prev676SeroNHSBT_All_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220311_timeuse_household_deaths",
+                                                                                           "Prev676SeroNHSBT_All_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220311_timeuse_household_deaths_chain2"))
                                               )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "pauls_endstates", "20220225",paste0(c("Prev662SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225_timeuse_household_deaths",
-                                                                                           "Prev662SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225_timeuse_household_deaths_chain2"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "old_20220311",paste0(c("Prev676SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220311_stable_household_deaths",
+                                                                                           "Prev676SeroNHSBT_All_NHS28cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220311_stable_household_deaths_chain2"))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "pauls_endstates", "20220226", c("Prev662SeroNHSBT_All_ONScutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220225_timeuse_household_admissions_no_deaths", # _stable_household_deaths_chain2",

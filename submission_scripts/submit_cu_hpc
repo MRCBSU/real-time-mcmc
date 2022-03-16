@@ -13,7 +13,7 @@
 
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
-#SBATCH --array=0-19
+#SBATCH --array=0-11
 
 #SBATCH --partition=standard-wp
 
