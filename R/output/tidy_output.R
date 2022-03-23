@@ -95,21 +95,22 @@ if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
-if (!exists("out.dir")) source(file.path(proj.dir, "config.R"))
+
 load(file.path(out.dir, "mcmc.RData"))
 rm(dth.dat)
 if (!exists("conv")) {
   source(file.path(proj.dir, "R", "output", "gamma_fns.R"))
   source(file.path(proj.dir, "R", "output", "convolution.R"))
 }
-if (!exists("num.iterations")) source(file.path(proj.dir, "set_up_inputs.R"))
-if (!exists("ddelay.mean")) source(file.path(proj.dir, "set_up_pars.R"))
+
 
 int_iter <- 0:(num.iterations - 1)
 ## parameter.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.params)
-parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+parameter.iterations.raw <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
+parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= min.iteration]
 ## outputs.iterations <- seq(from = burnin, to = num.iterations-1, by = thin.outputs)
-outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+outputs.iterations.raw <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
+outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= min.iteration]
 parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
 stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
 ## save.image("tmptmp.RData")
@@ -138,12 +139,13 @@ print('Formatting time series')
 
 
 ## Extract length of dimensions
+iterations.to.chop <- length(outputs.iterations.raw) - length(outputs.iterations)
 num.regions <- length(regions)
 stopifnot(length(NNI) == num.regions)
 num.ages <- dim(NNI[[1]])[1]
 stopifnot(num.ages == length(age.labs))
 num.days <- dim(NNI[[1]])[2]
-num.NNI.iterations <- dim(NNI[[1]])[3]
+num.NNI.iterations <- dim(NNI[[1]])[3] - iterations.to.chop
 stopifnot(length(outputs.iterations) == num.NNI.iterations)
 output.quantity.dims <- c(num.ages,
                           num.days, num.NNI.iterations, num.regions)
@@ -161,8 +163,11 @@ output.dimnames <- list(
 )
 
 ## Get parameters
-tbl_params <- as_tibble(params)
-tbl_params$iteration <- parameter.iterations
+tbl_params <- as_tibble(params) %>%
+	mutate(iteration = parameter.iterations.raw) %>%
+	filter(iteration >= min.iteration)
+stopifnot(unique(tbl_params$iteration) == parameter.iterations)
+
 
 ## Get Rt into nice format
 Rt.old <- Rt
@@ -179,7 +184,7 @@ Rt <- array(
 ## Get NNI into nice format
 nice.array <- function(x)
     array(
-        unlist(x),
+        unlist(lapply(x, function(x) x[,,-(1:iterations.to.chop)])),
         dim = output.quantity.dims,
         dimnames = output.dimnames)
 infections <- nice.array(NNI); rm(NNI)
@@ -352,7 +357,9 @@ population <- as_tibble(regions.total.population, rownames = "region") %>%
   pivot_longer(-region, names_to = "age")
 print('Saving results')
 save.objs <- c("infections", "cum_infections", "AR", "vacc.infections", "deaths", "cum_deaths", "prevalence", "params", "dth.dat", "noisy_deaths", "Rt",
-     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat")
+     "case", "noisy_case", "cum_case", "population", "case.dat", "ifr", "prev.dat",
+	 "int_iter", "parameter.iterations", "parameter.to.outputs", "iterations.for.Rt"
+)
 save(list = save.objs[sapply(save.objs, exists)],
      file = file.path(out.dir, "output_matrices.RData"))
 save(Rt, Egt, Vargt, file = file.path(out.dir, "forSPI.RData"))

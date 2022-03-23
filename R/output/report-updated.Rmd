@@ -21,14 +21,10 @@ suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 suppressMessages(extract <- R.utils::extract)
-if(exists("Rfile.loc")) {
-  source(file.path(Rfile.loc, "results_api.R"))
-  source(file.path(Rfile.loc, "plot_funcs.R"))
-} else {
-  proj.dir <- "~/RTM"
-  source("results_api.R")
-  source("plot_funcs.R")
-}
+
+source(file.path(Rfile.loc, "results_api.R"))
+source(file.path(Rfile.loc, "plot_funcs.R"))
+
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
