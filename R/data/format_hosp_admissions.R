@@ -505,7 +505,12 @@ for(reg in regions) {
         select(-region)
 
     if(sus_seb_combination == 3) {
-        tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
+        if(sus_old_tab_sep) {
+            tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
+        } else {
+            tmp_sus <- read_delim(old_adm.loc[reg], col_names = F, delim = " ")
+        }
+
         colnames(tmp_sus) <- colnames(region.sam)
 
         tmp_sus <- tmp_sus %>%
