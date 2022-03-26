@@ -11,6 +11,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 
 
+
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(6)) %>% format("%Y%m%d"))#Paul's line
@@ -18,6 +19,9 @@ if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 #if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+
+
+
 
 if (length(args) < 3) args <- c(args, "All", "England")
 
@@ -174,6 +178,7 @@ deaths.flag <- hosp.flag <-0			# 0 = admissions (by default - can be modified by
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 
+
 num.prev.days <- 690
 
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -218,7 +223,7 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "6bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "7bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
@@ -243,6 +248,7 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
 
+
             previous.run.to.use <- file.path(proj.dir, "model_runs","20220311", paste0("PrevINLA676SeroNHSBT_All_cm6ons_IFR6bp_NHS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220311", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
 
@@ -251,6 +257,8 @@ if(use.previous.run.for.start){
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220311", paste0("PrevINLA676SeroNHSBT_All_cm6ons_IFR6bp_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices_20220311", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
+
+
 }
 iteration.number.to.start.from <- 3000
 

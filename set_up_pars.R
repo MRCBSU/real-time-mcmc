@@ -360,7 +360,7 @@ if(single.ifr){
         }; rm(grad.samp)
         value.ifr <- c(value.ifr, rep(0, (length(pars.ifr) / 2) - length(value.ifr)))
         var.ifr <- c(var.ifr, rep(0.00036, length(value.ifr) - length(var.ifr)))
-        tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June
+        tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June, 2020
         ## Put together the model matrix.
         times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
         ages <- 1:(nA - 1)
@@ -379,7 +379,7 @@ if(single.ifr){
             tbreaks.round <- rep(1:(num.bp - 1), each = length(tbreaks.ifr))
             tbreaks2 <- round(tbreaks.ifr + (tbreaks.round*tbreaks.interval) - 1)
             ## small adjustment to coincide with omicron
-            tbreaks2[tbreaks.round >= 5] <- tbreaks2[tbreaks.round >= 5] + 21
+            tbreaks2[tbreaks.round == 5] <- tbreaks2[tbreaks.round == 5] + 21
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
             reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
             for(per in 1:num.bp){
