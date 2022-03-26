@@ -7,7 +7,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.5
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -36,13 +36,13 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 load(file.path(out.dir, "forSPI.RData"))
 out.dir <- getwd()
 proj.dir <- dirname(dirname(dirname(out.dir)))
-projections.file <- "projections_midterm.RData"
-scen.text <- "MTP"
-save.text <- "MTP"
-## projections.file <- "projections_R1.3.RData"
-## scen.text <- "MTP R1.3"
-## save.text <- "MTP_R_1.3"
-mtp.filter.date <- lubridate::ymd("20220227") ## ymd(date.data)
+## projections.file <- "projections_midterm.RData"
+## scen.text <- "MTP"
+## save.text <- "MTP"
+projections.file <- "projections_R1.4.RData"
+scen.text <- "MTP R1.4"
+save.text <- "MTP_R_1.4"
+mtp.filter.date <- lubridate::ymd("20220306") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11

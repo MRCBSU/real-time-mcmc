@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0-19
+#SBATCH --array=0-7
 
 #SBATCH -p icelake-himem
 
