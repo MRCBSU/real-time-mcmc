@@ -498,9 +498,9 @@ for(i in 1:nm){
     contact.pars[, i, ] <- prior.list$lock
     if((contact.model == 4) & (i %in% c(1, 4)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model %in% c(5, 6)) & (i %in% c(1, 5)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(1, 7)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model %in% c(5, 6)) & (i %in% c(2, 6)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(2, 8)))
         contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
 }
 ## if(nm > 1){

@@ -17,7 +17,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
-#SBATCH --cpus-per-task=55
+#SBATCH --cpus-per-task=75
 #! How much wallclock time will be required?
 #SBATCH --time=1:00:00
 #! What types of email messages do you wish to receive?
@@ -28,17 +28,17 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=1,5
+#SBATCH --array=1,8,13,17
 
-#SBATCH -p cclake
+#SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_cclake_20211203_%a.out
-#SBATCH --error=simulate_cclake_20211203_%a.err
+#SBATCH --output=simulate_icelake_20211203_%a.out
+#SBATCH --error=simulate_icelake_20211203_%a.err
 
-forecast_switch="snapshot"
+forecast_switch="midterm"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -66,7 +66,7 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 module load pandoc
 
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
-module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
+# module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm ## add if not using icelake
 
 # # Navigate to the correct working directory
 dirs=(*/)
