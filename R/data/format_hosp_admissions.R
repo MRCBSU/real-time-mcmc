@@ -509,7 +509,7 @@ if(sus_seb_combination == 3) {
     adm.sam <- tmp_sus %>%
             bind_rows(
                 adm.sam %>% 
-                    filter(date >= latest_sus.date)
+                    filter(date > latest_sus.date)
             ) %>%
             arrange(region, date, ages, admissions)
 }
