@@ -513,7 +513,7 @@ for(reg in regions) {
         region.sam <- tmp_sus %>%
             bind_rows(
                 region.sam %>% 
-                filter(date >= latest_sus.date)
+                filter(date > latest_sus.date)
             )
         
 
