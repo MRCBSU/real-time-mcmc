@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 setwd(out.dir)
 out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-Rscenario <- c(0.7, 0.9, 1.1, 1.3)[out.ind]
+Rscenario <- c(0.9, 1.1, 1.4, 1.7)[out.ind]
 ## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -97,7 +97,7 @@ combine.rtm.output <- function(x, strFld){
 ## ## ## --------------------
 
 if(!file.exists(projections.basedir))
-    dir.create(projections.basedir)
+    dir.create(projections.basedir, recursive = T)
 
 ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
@@ -196,13 +196,21 @@ if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
     symlink.design("vac.alpha1.design.txt")
-    symlink.design("vac.alphan.design.txt")
     symlink.design("vac.pi1.design.txt")
-    symlink.design("vac.pin.design.txt")
+    if(vac.n_doses == 3){
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+    } else {
+        symlink.design("vac.alphan.design.txt")
+        symlink.design("vac.pin.design.txt")
+    }
 }
+if(!is.null(design.wr))
+    symlink.design("wr_design_file.txt")
+
 ## The matrix for the random-walks will need changing to account for an extra breakpoint
 ## Place the new break-point now
-today.break <- ymd("20220126") - start.date + 1
+today.break <- ymd("20220318") - start.date + 1
 beta.breaks <- c(beta.breaks, today.break)
 beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
     rbind(rep(1, nbetas)) %>%
@@ -247,9 +255,7 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51")){
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
 cat("full file path = ", file.path(proj.dir, paste0("../real-time-mcmc-dev/rtm_", exe)), "\n")
-proj.dir <- gsub("amgs", "dev", proj.dir, fixed = TRUE)
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
-proj.dir <- gsub("dev", "amgs", proj.dir, fixed = TRUE)
 NNI <- lapply(xtmp, function(x) x$NNI)
 Sero <- lapply(xtmp, function(x) x$Sero)
 if(vacc.flag) DNNI <- lapply(xtmp, function(x) x$DNNI)
