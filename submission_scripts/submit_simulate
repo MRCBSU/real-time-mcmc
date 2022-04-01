@@ -28,17 +28,17 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=17
+#SBATCH --array=1,8,13,17
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_cclake_20211203_%a.out
-#SBATCH --error=simulate_cclake_20211203_%a.err
+#SBATCH --output=simulate_icelake_20211203_%a.out
+#SBATCH --error=simulate_icelake_20211203_%a.err
 
-forecast_switch="snapshot"
+forecast_switch="midterm"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
@@ -57,12 +57,12 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 
 #! Optionally modify the environment seen by the application
 #! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
-./etc/profile.d/modules.sh                # Leave this line (enables the module command)
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 # module purge ## remove if not using icelake
 # module load rhel8/default-icl ## remove if not using icelake
 
 #! Insert additional module load commands after this line if needed:
-module load rhel8/default-icl
+# module load rhel8/default-icl
 module load pandoc
 
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
@@ -71,7 +71,7 @@ module load pandoc
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
-# workdir="Prev620SeroNHSBT_All_NHScutoff_IFR6bp_11wk2_prev14-0PHE_matrices_20220114_stable_household_admissions_no_deaths_chain2"
+# workdir="Prev683SeroNHSBT_All_NHS28cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220318_stable_household_deaths"
 echo $workdir
 
 #! Full path to application executable: 

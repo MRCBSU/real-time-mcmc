@@ -68,7 +68,7 @@ if(!exists("Rs")) gqb <- gqb + facet_wrap(~Region, ncol = 1, scales="free_y") +
                       theme_minimal() +
                       theme(legend.position="none")
 
-ggsave("beta_and_Rstar.pdf", gqb, width = 9, height = 12.5)
+ggsave("beta_and_Rstar.pdf", gqb, width = 40/3, height = 5)
 
 pp <- ggplotly(gqb, tooltip = "text")
 
