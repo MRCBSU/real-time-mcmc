@@ -384,7 +384,7 @@ if(single.ifr){
             tbreaks.round <- rep(1:(num.bp - 1), each = length(tbreaks.ifr))
             tbreaks2 <- round(tbreaks.ifr + (tbreaks.round*tbreaks.interval) - 1)
             ## small adjustment to coincide with omicron
-            tbreaks2[tbreaks.round >= 5] <- tbreaks2[tbreaks.round >= 5] + 21
+            tbreaks2[tbreaks.round == 5] <- tbreaks2[tbreaks.round == 5] + 21
             tbreaks.ifr <- c(tbreaks.ifr, tbreaks2)
             reg.form <- "y ~ 0 + age"  ## + age.grad:full.era + age.grad:time:era"
             for(per in 1:num.bp){
@@ -503,9 +503,9 @@ for(i in 1:nm){
     contact.pars[, i, ] <- prior.list$lock
     if((contact.model == 4) & (i %in% c(1, 4)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model %in% c(5, 6)) & (i %in% c(1, 5)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(1, 7)))
         contact.pars[, i, ] <- prior.list[[contact.prior]]
-    if((contact.model %in% c(5, 6)) & (i %in% c(2, 6)))
+    if((contact.model %in% c(5, 6)) & (i %in% c(2, 8)))
         contact.pars[, i, ] <- 0.5 * (prior.list[[contact.prior]] + prior.list$lock)
 }
 ## if(nm > 1){

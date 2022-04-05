@@ -42,11 +42,14 @@ save.text <- "MTP"
 ## projections.file <- "projections_R1.3.RData"
 ## scen.text <- "MTP R1.3"
 ## save.text <- "MTP_R_1.3"
-mtp.filter.date <- lubridate::ymd("20220220") ## ymd(date.data)
+date.data <- "20220320"
+mtp.filter.date <- lubridate::ymd("20220320") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
 mtype <- ifelse(adm.flag, "Admissions", "Deaths")
+
+print(mtype)
 mtpcode <- ifelse(adm.flag, "hospital_inc", "type28_death_inc_line")
 
 create.spim.table <- function(data, name, by = NULL) {

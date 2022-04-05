@@ -30,8 +30,8 @@ Rfile.loc <- file.path(file.loc, "R/output")
 # if (!file.exists("mcmc.RData")) {
 	source(file.path(Rfile.loc, "tracePlots.R"))
         source(file.path(dirname(Rfile.loc), "postprocess", "create_rdatas.R"))
-        print("created_rdatas")
-# }
+#         print("created_rdatas")
+# # }
 
 
 # suppressMessages(library(knitr))

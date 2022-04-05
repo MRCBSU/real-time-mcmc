@@ -25,7 +25,7 @@ if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
-
+load(file.path(out.dir, "mcmc.RData"))
 output.required <- file.path(out.dir, "output_matrices.RData")
 stopifnot(file.exists(output.required))
 load(output.required)

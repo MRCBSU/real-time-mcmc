@@ -134,7 +134,7 @@ make.plots <- function(projections, ylab = "", by = NULL, data = NULL,
     if (is.null(data)) {
       return(plot)
     } else {
-    str.hover <- ifelse(deaths.flag
+    str.hover <- ifelse(deaths.flag)
       if (external) {
         data.hover <- paste0("%{x} <extra>", str.hover, "</extra>")
       } else {

@@ -155,10 +155,10 @@ cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
 num.iterations <- 2e6L
-burnin <- 1.5e6L
-adaptive.phase <- 1.5e6L
-thin.outputs <- 200L ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 100L ## After how many iterations to output each set of parameters
+burnin <- 0.5e6L
+adaptive.phase <- 0.5e6L
+thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 300L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
 # burnin <- 5e5L
 # adaptive.phase <- 5e5L
