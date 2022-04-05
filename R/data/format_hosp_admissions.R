@@ -122,6 +122,7 @@ if(sus_seb_combination %in% c(1, 2, 3)) {
         # diagnoses = c("n_inpatients_diagnosed"),
     )
 
+    # Only read in diagnoses if not admissions only
     if(!admissions_only.flag) possible.col.names.seb <- append(possible.col.names.seb, list(diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
         diagnoses_ages_6_17 = c("n_inpatients_diagnosed_age_6_17"),
         diagnoses_ages_18_24 = c("n_inpatients_diagnosed_age_18_24"),
@@ -201,7 +202,8 @@ if(!exists("admsam.files")){
                                                   date.adm_seb - adm_seb.strip_days,
                                                   date.adm_sus - adm_sus.strip_days))
     } else date.adm.str <- adm.end.date
-    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
+    ## Change file_names if admissions only
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts", ifelse(admissions_only.flag, "_adm_only", ""), ".txt")
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)
@@ -253,6 +255,7 @@ if(sus_seb_combination %in% c(0, 1)){
         pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions")  %>%
         mutate(ages = factor(ages, levels = age_adm_sus.oldlabs)) 
     
+    # Only read in non-nosocomial data from SUS if admissions_only
     if(admissions_only.flag) {
         adm.dat.sus <- adm.dat.sus %>%
             filter(nosocomial == "non-nosocomial") %>%
@@ -505,6 +508,7 @@ for(reg in regions) {
         select(-region)
 
     if(sus_seb_combination == 3) {
+        # Usually use sus_old_tab_sep = F when running admissiosn only
         if(sus_old_tab_sep) {
             tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
         } else {
