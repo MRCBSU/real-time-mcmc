@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Code to run different scripts on any system through an interface rather than direct submission
+
 # Load any necessary modules
 module load slurm
 
@@ -13,11 +15,13 @@ export TOP_PID=$$
 # Store script location for relative path construction
 export SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Guesses for the root of the repository
 export ROOT_DIR_OPT_1="`realpath $SCRIPT_DIR/../`"
 export ROOT_DIR_OPT_2=$START_DIR
 export ROOT_DIR_OPT_3=$(head -n 1 $SCRIPT_DIR/.cache/stored_dir)
 
-echo "Select which of these is the root directory for the  real-time-mcmc repository:"
+# Select the root directory
+echo "Select which of these is the root directory for the  real-time-mcmc repository: (May be multiple, in which case pick any correct directory)"
 select ROOT_DIR_SEL in $ROOT_DIR_OPT_1 $ROOT_DIR_OPT_2 $ROOT_DIR_OPT_3 "Other"
 do
     case $ROOT_DIR_SEL in
@@ -77,7 +81,7 @@ do
     esac
 done
 
-
+# Pick a script to run
 echo "Select an option for a script to run (or select 6 to exit):"
 
 select script_opt in "Pre-process" "Run Model" "Post-process" "Save Endstates" "Restart Runs" "Exit to Shell"
@@ -128,6 +132,8 @@ done
 
 export SLURM_LOC="`realpath $SLURM_LOC`"
 
+
+# Confirm that the script chosen is the one wanted
 echo "Please confirm that you want to run the $RUN_NAME script at $SLURM_LOC:"
 
 select opt_confirm in Yes No
@@ -152,6 +158,7 @@ done
 
 export options=""
 
+# For array based scripts set the array variable
 case $script_opt in
 
     "Run Model" | "Post-process" | "Save Endstates" | "Restart Runs")
@@ -173,6 +180,7 @@ case $script_opt in
 
 esac
 
+# Set working directory
 echo "Where should the script be run from (i.e. for run model needs to be the folder {root}/model_runs/{date})?
 Note: If nothing sent uses current directory $START_DIR
 Start from root by starting directory with /
@@ -204,10 +212,12 @@ case $CWDIR in
 
 esac
 
+# Run the commands
 export CMD="sbatch $options $SLURM_LOC"
 
 echo "CMD = $CMD"
 
 eval $CMD
 
+# Return to starting directory
 cd $START_DIR
