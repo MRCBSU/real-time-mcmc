@@ -206,8 +206,8 @@ case $CWDIR in
         ;;
 
     *)
-        echo "No directory input. Exiting..."
-        exit 0
+        echo "Running from $START_DIR"
+        cd $START_DIR
         ;;
 
 esac
