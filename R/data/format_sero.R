@@ -125,7 +125,9 @@ if(!exists("serosam.files")){
                                          regions,
                                          "_",
                                          nA,
-                                         "ages_samples.txt")
+                                         "ages_samples",
+                                         ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
+                                         ".txt")
     seropos.files <- build.data.filepath("RTM_format/serology",
                                          "sero",
                                          date.sero.str,
@@ -133,7 +135,9 @@ if(!exists("serosam.files")){
                                          regions,
                                          "_",
                                          nA,
-                                         "ages_positives.txt")
+                                         "ages_positives",
+                                         ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
+                                         ".txt")
 }
 ## Which columns are we interested in?
 sero.col.args <- list()
@@ -252,6 +256,11 @@ for(reg in regions){
     
     tmpFile <- serosam.files[reg]
 
+    if(sero_cutoff_flag) {
+        region.sam <- region.sam %>%
+                        filter(date <= sero.end.date)
+    }
+
     print(paste("Writing to",
                 tmpFile,
                 "(",
@@ -294,9 +303,9 @@ if(!file.exists(out.dir))
 
 ## Save the data
 write_csv(rtm.sam, file.path(out.dir, "sero_samples_data.csv"))
-write_csv(rtm.sam, file.path(data.dirs["sero"], "sero_samples_data.csv"))
+write_csv(rtm.sam, file.path(data.dirs["sero"], paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")))
 write_csv(rtm.pos, file.path(out.dir, "sero_positives_data.csv"))
-write_csv(rtm.pos, file.path(data.dirs["sero"], "sero_positives_data.csv"))
+write_csv(rtm.pos, file.path(data.dirs["sero"], paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")))
 
 ## Save a quick plot of the data..
 require(ggplot2)

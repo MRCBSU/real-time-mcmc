@@ -105,7 +105,9 @@ if(!exists("data.files"))
                                       regions,
                                       "_",
                                       nA,
-                                      "ages.txt")
+                                      "ages",
+                                      ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date)),
+                                      ".txt")
 
 ## Which columns are we interested in?
 death.col.args <- list()
@@ -186,7 +188,7 @@ dth.dat %>%
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ymd(date.data) ## - reporting.delay
+latest.date <- ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date)
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
@@ -254,7 +256,7 @@ if(write.deaths){
     rtm.dat %>%
         group_by(Date, Region) %>%
         summarise(count = sum(n)) %>%
-        mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
+        mutate(ignore = !(Date <= ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date))) -> rtm.dat.plot
     
     gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
         geom_line(aes(linetype = ignore)) +
