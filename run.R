@@ -130,7 +130,7 @@ if(adm.flag){
         adm_csv_fname <- ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")
         adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
         file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
-        file.rename(file.path(data.dirs["adm"], adm_csv_fname), file.path(data.dirs["adm"], "admissions_data.csv"))
+        file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
         admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts", ifelse(admissions_only.flag, "_adm_only", ""), ".txt")
     }
 }
