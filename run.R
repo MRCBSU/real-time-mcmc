@@ -87,7 +87,8 @@ if(gp.flag){
 if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
-                            paste0(prev.lik.days, collapse = "_"))
+                            paste(prev.lik.days[1], prev.lik.days[length(prev.lik.days)], paste0("by", mean(diff(prev.lik.days))), sep = "_")
+                            )
     prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
