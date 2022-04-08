@@ -22,8 +22,8 @@ thisFile <- function() {
 }
 Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
-colcode.fl <- "Prev690SeroNHSBT_All_NHS28cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325_timeuse_household_deaths"
-oldcode.fl <- "Prev690SeroNHSBT_All_NHS28cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325_timeuse_household_deaths_chain2"
+colcode.fl <- "Prev697SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220401_timeuse_household_admissions_no_deaths"
+oldcode.fl <- "Prev697SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220401_timeuse_household_admissions_no_deaths_chain2"
 
 ## load("mcmc.RData")
 load(file.path(colcode.fl, "tmp.RData"))
