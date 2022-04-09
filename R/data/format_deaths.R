@@ -46,7 +46,7 @@ possible.col.names <- list(
     utla_name = c("UTLA_name", "utla_name"),
     death_type = "death_type",
     age = "age",
-    pillars = "pillars",
+    #pillars = "pillars",
     death28 = "death_type28",
     death60cod = "death_type60cod",
     tt_death_cat = "tt_death_cat"
@@ -117,7 +117,7 @@ death.col.args[[col.names[["phe_region"]]]] <- col_character()
 death.col.args[[col.names[["utla_name"]]]] <- col_character()
 death.col.args[[col.names[["death_type"]]]] <- col_character()
 death.col.args[[col.names[["age"]]]] <- col_integer()
-death.col.args[[col.names[["pillars"]]]] <- col_character()
+#death.col.args[[col.names[["pillars"]]]] <- col_character()
 death.col.args[[col.names[["death28"]]]] <- col_character()
 death.col.args[[col.names[["death60cod"]]]] <- col_character()
 death.col.args[[col.names[["tt_death_cat"]]]] <- col_character()
