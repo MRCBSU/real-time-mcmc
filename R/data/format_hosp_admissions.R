@@ -32,9 +32,8 @@ if(!exists("adm_seb.loc") | !exists("adm_sus.loc")){ ## Set to default format fo
     }
 }
 
-## Are we using SUS data that has been pre-processed once before?
 if(sus_seb_combination == 3) {
-    old_input_adm <- "data/previous_run_input/"
+    old_input_adm <- "data/previous_run_input"
     if(region.type == "NHS") {
         old_adm.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_names)
         old_adm_csv.loc <- file.path(old_input_adm, "NHS", "admissions", preprocessed_sus_csv_name)
@@ -46,21 +45,42 @@ if(sus_seb_combination == 3) {
 }
 
 ## What is the date of publication of these data? If not specified, try to extract from filename
-#! Note get peter to output sus data in this format going forwards
 if(!exists("date.adm_sus")){
-    fl.name <- basename(input.loc)
+    fl.name <- basename(input_sus.loc)
     date.adm_sus.str <- str_match(rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)],"([0-9]+)\\.csv$")[,2]
     date.adm_sus <- ymd(date.adm_sus.str)
+} else {
+    date.adm_sus.str <- str_match(rownames(adm_sus.loc)[which.max(adm_sus.loc$mtime)],"([0-9]+)\\.csv$")[,2]
+    if(date.adm_sus != ymd(date.adm_sus.str)) {
+        warning("Input date doesn't match most recent date of sus data file in input directory")
+        print("Read in data from matching sus date string instead:")
+        list_dates <- map_chr(rownames(adm_sus.loc), ~str_match(.,"([0-9]+)\\.rds$")[,2]) %>%
+            map(~ymd(.))
+        index_tmp <- which(list_dates %>% map_lgl(~(. == date.adm_sus)))
+        input_sus.loc <- rownames(adm_sus.loc)[max(index_tmp)]
+    }
 }
+
 if(!exists("date.adm_seb")){
-    fl.name <- basename(input.loc)
+    fl.name <- basename(input_seb.loc)
     date.adm_seb.str <- str_match(rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)],"([0-9]+)\\.rds$")[,2]
     date.adm_seb <- ymd(date.adm_seb.str)
+} else {
+    date.adm_seb.str <- str_match(rownames(adm_seb.loc)[which.max(adm_seb.loc$mtime)],"([0-9]+)\\.rds$")[,2]
+    if(date.adm_seb != ymd(date.adm_seb.str)) {
+        warning("Input date doesn't match most recent date of seb's data file in input directory")
+        print("Read in data from matching sebs date string instead:")
+        list_dates <- map_chr(rownames(adm_seb.loc), ~str_match(.,"([0-9]+)\\.rds$")[,2]) %>%
+            map(~ymd(.))
+        index_tmp <-which(list_dates %>% map_lgl(~(. == date.adm_seb)))
+        input_seb.loc <- rownames(adm_seb.loc)[max(index_tmp)]
+    }
 }
+
 
 # Set the dates to start and end the different sections of data (sus vs sus + seb vs seb) )
 earliest.date <- start.date
-if(sus_seb_combination %in% c(1, 3)) {
+if(sus_seb_combination == 1 | sus_seb_combination == 3) {
     latest_sus.date <- adm_sus.end.date
     earliest_seb.date <- adm_sus.end.date + 1
 }
@@ -98,9 +118,12 @@ if(sus_seb_combination %in% c(1, 2, 3)) {
         admissions_ages_55_64 = c("n_patients_admitted_age_55_64"),
         admissions_ages_65_74 = c("n_patients_admitted_age_65_74"),
         admissions_ages_75_84 = c("n_patients_admitted_age_75_84"),
-        admissions_ages_85 = c("n_patients_admitted_age_85"),
+        admissions_ages_85 = c("n_patients_admitted_age_85")
         # diagnoses = c("n_inpatients_diagnosed"),
-        diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
+    )
+
+    # Only read in diagnoses if not admissions only
+    if(!admissions_only.flag) possible.col.names.seb <- append(possible.col.names.seb, list(diagnoses_ages_0_5 = c("n_inpatients_diagnosed_age_0_5"),
         diagnoses_ages_6_17 = c("n_inpatients_diagnosed_age_6_17"),
         diagnoses_ages_18_24 = c("n_inpatients_diagnosed_age_18_24"),
         diagnoses_ages_25_34 = c("n_inpatients_diagnosed_age_25_34"),
@@ -109,8 +132,7 @@ if(sus_seb_combination %in% c(1, 2, 3)) {
         diagnoses_ages_55_64 = c("n_inpatients_diagnosed_age_55_64"),
         diagnoses_ages_65_74 = c("n_inpatients_diagnosed_age_65_74"),
         diagnoses_ages_75_84 = c("n_inpatients_diagnosed_age_75_84"),
-        diagnoses_ages_85 = c("n_inpatients_diagnosed_age_85")
-    )
+        diagnoses_ages_85 = c("n_inpatients_diagnosed_age_85")))
 
     # Ensure all the useful pieces of data have been grabbed
     adm.dat.seb <- read_rds(input_seb.loc)
@@ -180,7 +202,8 @@ if(!exists("admsam.files")){
                                                   date.adm_seb - adm_seb.strip_days,
                                                   date.adm_sus - adm_sus.strip_days))
     } else date.adm.str <- adm.end.date
-    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
+    ## Change file_names if admissions only
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts", ifelse(admissions_only.flag, "_adm_only", ""), ".txt")
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)
@@ -213,24 +236,35 @@ if(sus_seb_combination %in% c(0, 1)){
     print(paste0("Reading in data from ", input.loc))
 
     adm.dat.sus <- read_csv(input_sus.loc, col_types = fields, na = "")  %>%
-          rename(!!!col.names.sus)  %>%
+          rename(!!!col.names.sus) %>%
         pivot_longer(where(is.numeric), names_to = "region", values_to = "admissions") %>%
-        ungroup()  %>%
-        group_by(date, ages, region)  %>%
+        ungroup() %>%
+        group_by(date, ages, region, nosocomial)  %>%
         summarise(across(where(is.numeric), ~sum(., na.rm = T)))  %>%
-        pivot_wider(id_cols = c(date, region), names_from = ages, values_from = admissions)
+        pivot_wider(id_cols = c(date, region, nosocomial), names_from = ages, values_from = admissions)
 
     # Combine ages as defined in the config file
     for(i in seq_along(summarise_classes_sus)) {
         adm.dat.sus <- adm.dat.sus %>%
-                group_by(date, region)  %>%
+                group_by(date, region, nosocomial)  %>%
                 mutate(!!names(summarise_classes_sus)[[i]] := sum(!!!syms(summarise_classes_sus[[i]]), na.rm = T), .keep = "unused")
     }
 
     # Give ages correct names (match with both dfs)
     adm.dat.sus <- adm.dat.sus  %>%
         pivot_longer(where(is.numeric), names_to = "ages", values_to = "admissions")  %>%
-        mutate(ages = factor(ages, levels = age_adm_sus.oldlabs))
+        mutate(ages = factor(ages, levels = age_adm_sus.oldlabs)) 
+    
+    # Only read in non-nosocomial data from SUS if admissions_only
+    if(admissions_only.flag) {
+        adm.dat.sus <- adm.dat.sus %>%
+            filter(nosocomial == "non-nosocomial") %>%
+            select(-nosocomial)
+    } else {
+        adm.dat.sus <- adm.dat.sus %>%
+            group_by(date, region, ages) %>%
+            summarise(admissions = sum(admissions))
+    }
 
     levels(adm.dat.sus$ages) <- age_adm.labs
 
@@ -434,15 +468,15 @@ if(sus_seb_combination == 0) {
                             filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
                             filter(date <= latest.date)
                 )
-} else if(sus_seb_combination == 2){
+} else if(sus_seb_combination == 2) {
     adm.sam <- adm.dat.seb  %>%
         filter(date >= earliest.date)  %>%
         filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
         filter(date <= latest.date)
 } else if(sus_seb_combination == 3) {
-    adm.sam <- adm.dat.seb %>%
-        filter(date >= earliest_seb.dat) %>%
-        filter(date <= date.adm_seb - adm_seb.strip_days) %>%
+    adm.sam <- adm.dat.seb  %>%
+        filter(date >= earliest_seb.date)  %>%
+        filter(date <= date.adm_seb - adm_seb.strip_days)  %>%
         filter(date <= latest.date)
 }
 
@@ -472,19 +506,25 @@ for(reg in regions) {
         select(-region)
 
     if(sus_seb_combination == 3) {
-        tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
+        # Usually use sus_old_tab_sep = F when running admissiosn only
+        if(sus_old_tab_sep) {
+            tmp_sus <- read_tsv(old_adm.loc[reg], col_names = F)
+        } else {
+            tmp_sus <- read_delim(old_adm.loc[reg], col_names = F, delim = " ")
+        }
+
         colnames(tmp_sus) <- colnames(region.sam)
-        
+
         tmp_sus <- tmp_sus %>%
             mutate(date = as_date(date)) %>%
             filter(date <= ymd(latest_sus.date))
-        
+
         region.sam <- tmp_sus %>%
             bind_rows(
                 region.sam %>% 
-                filter(date >= latest_sus.date)
+                    filter(date > latest_sus.date)
             )
-        
+
     }
 
     tmpFile <- admsam.files[reg]
@@ -516,6 +556,7 @@ if(sus_seb_combination == 3) {
 
 # Save the data
 write_csv(adm.sam, file.path(out.dir, "admissions_data.csv"))
+write_csv(adm.sam, file.path(data.dirs["adm"], ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")))
 
 
 ## Create a quick plot of the data
