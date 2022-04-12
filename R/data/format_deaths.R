@@ -106,6 +106,7 @@ if(!exists("data.files"))
                                       "_",
                                       nA,
                                       "ages",
+                                      # Rename files with custom cutoff due to changes in format
                                       ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date)),
                                       ".txt")
 
@@ -188,7 +189,8 @@ dth.dat %>%
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date)
+# Modify latest date calculation to use custom end date
+latest.date <- ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date - reporting.delay)
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
@@ -256,7 +258,8 @@ if(write.deaths){
     rtm.dat %>%
         group_by(Date, Region) %>%
         summarise(count = sum(n)) %>%
-        mutate(ignore = !(Date <= ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date))) -> rtm.dat.plot
+        # Modify the dates to use based on whether or not early cutoff is in the data
+        mutate(ignore = !(Date <= ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date - reporting.delay))) -> rtm.dat.plot
     
     gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
         geom_line(aes(linetype = ignore)) +

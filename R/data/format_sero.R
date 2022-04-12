@@ -126,6 +126,7 @@ if(!exists("serosam.files")){
                                          "_",
                                          nA,
                                          "ages_samples",
+                                         # Rename files if using custom cutoff
                                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                                          ".txt")
     seropos.files <- build.data.filepath("RTM_format/serology",
@@ -136,6 +137,7 @@ if(!exists("serosam.files")){
                                          "_",
                                          nA,
                                          "ages_positives",
+                                         # Rename files if using custom cutoff
                                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                                          ".txt")
 }
@@ -256,6 +258,7 @@ for(reg in regions){
     
     tmpFile <- serosam.files[reg]
 
+    # Filter the dates if using a custom cutoff
     if(sero_cutoff_flag) {
         region.sam <- region.sam %>%
                         filter(date <= sero.end.date)
@@ -303,8 +306,10 @@ if(!file.exists(out.dir))
 
 ## Save the data
 write_csv(rtm.sam, file.path(out.dir, "sero_samples_data.csv"))
+# Rename files if using a custom cutoff
 write_csv(rtm.sam, file.path(data.dirs["sero"], paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")))
 write_csv(rtm.pos, file.path(out.dir, "sero_positives_data.csv"))
+# Rename files if using a custom cutoff
 write_csv(rtm.pos, file.path(data.dirs["sero"], paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")))
 
 ## Save a quick plot of the data..

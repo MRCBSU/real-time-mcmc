@@ -44,14 +44,19 @@ NHSBT.flag <- 1
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
 
+
+# Determine whether or not to run the model with the serology being dropped from a certain date onwards
+# (Note: False -> doesn't drop the data)
 sero_cutoff_flag <- F
 
 if(sero_cutoff_flag) {
+    #If dropping serology
     ## As date chosen, assumed to be chosen at a complete date
-    serology.delay <- 0
+    serology.delay <- 25
     ## Last date for which serology is used
-    sero.end.date <- ymd(20211030) ## ymd(20200522) ## ymd(20210920)
+    sero.end.date <- ymd(20211030) + 25 ## ymd(20200522) ## ymd(20210920)
 } else {
+    #If not dropping serology
     ## Assumed number of days between infection and developing the antibody response
     serology.delay <- 25
     ## Last date for which serology is used
@@ -65,7 +70,7 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
-# Initially uses a Naive implementation
+# Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
 admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
@@ -337,6 +342,7 @@ out.dir <- file.path(proj.dir,
                      date.data,
                      paste0(
                          scenario.name,
+                         ## Modified to rename the runs if cutting off the data early
                          ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          "_matrices2_", google.data.date, matrix.suffix,
@@ -346,23 +352,4 @@ if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 1
 
-# ########### VACCINATION OPTIONS ###########
-# vacc.flag <- 1 ## Do we have any vaccination data
-# str.date.vacc <- "20220303" ## Optional: if not specified will take the most recent data file.
-# vacc.lag <- 21
-# vac.overwrite <- F
-# if(vacc.flag){
-#     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
-#     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
-# }
-# vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
-# ## How many vaccinations can we expect in the coming weeks
-# ## - this is mostly set for the benefit of projections rather than model fitting.
-# future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
-# future.booster.n <- c(0.1, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
-# ## Approximate data at which delta became dominant strain
-# delta.date <- ymd("20210510")
-
-
-###
 adapt.every <- 200
