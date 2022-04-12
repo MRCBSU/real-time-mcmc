@@ -17,7 +17,7 @@ export SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null &&
 
 # Guesses for the root of the repository
 export ROOT_DIR_OPT_1="`realpath $SCRIPT_DIR/../`"
-export ROOT_DIR_OPT_2=$START_DIR
+export ROOT_DIR_OPT_2="$START_DIR"
 export ROOT_DIR_OPT_3=$(head -n 1 $SCRIPT_DIR/.cache/stored_dir)
 
 # Select the root directory
@@ -84,7 +84,7 @@ done
 # Pick a script to run
 echo "Select an option for a script to run (or select 6 to exit):"
 
-select script_opt in "Pre-process" "Run Model" "Post-process" "Save Endstates" "Restart Runs" "Exit to Shell"
+select script_opt in "Pre-process" "Run Model" "Post-process" "Simulate" "Projections Report" "Save Endstates" "Restart Runs" "Exit to Shell"
 do
     case $script_opt in
 
@@ -103,6 +103,18 @@ do
         "Post-process")
             export RUN_NAME="Post-process outputs"
             export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_post_process
+            break
+            ;;
+        
+        "Simulate")
+            export RUN_NAME="Simulate MC forecast"
+            export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_simulate
+            break
+            ;;
+        
+        "Projections Report")
+            export RUN_NAME="Projections Report"
+            export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_projections_report
             break
             ;;
         
@@ -161,7 +173,7 @@ export options=""
 # For array based scripts set the array variable
 case $script_opt in
 
-    "Run Model" | "Post-process" | "Save Endstates" | "Restart Runs")
+    "Run Model" | "Post-process" | "Simulate" | "Projections Report" | "Save Endstates" | "Restart Runs")
         echo "What should be used as the array inputs? (press Enter to use default args from file)"
         read array
         case $array in
@@ -202,12 +214,12 @@ case $CWDIR in
         fi
         CWDIR="`realpath $CWDIR`"
         echo "Using the following as the directory: $CWDIR"
-        cd $CWDIR
+        cd "$CWDIR"
         ;;
 
     *)
         echo "Running from $START_DIR"
-        cd $START_DIR
+        cd "$START_DIR"
         ;;
 
 esac
@@ -215,9 +227,10 @@ esac
 # Run the commands
 export CMD="sbatch $options $SLURM_LOC"
 
+
 echo "CMD = $CMD"
 
 eval $CMD
 
 # Return to starting directory
-cd $START_DIR
+cd "$START_DIR"

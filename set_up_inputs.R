@@ -17,7 +17,7 @@ if(!exists("hosp.flag") & !exists("adm.flag")) hosp.flag <- deaths.flag <- adm.f
 if(deaths.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
-    end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+    end.hosp <- ifelse(use_deaths_up_to_now_flag, lubridate::as_date(date.data) - reporting.delay - start.date + 1, custom_deaths_end_date - start.date + 1)
     if(grepl("adjusted", data.desc)) end.hosp <- end.hosp + date.adj.data - lubridate::as_date(date.data)
 } else if(adm.flag) {
     start.hosp <- 1
@@ -154,9 +154,9 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 2e6L
-burnin <- 0.5e6L
-adaptive.phase <- 0.5e6L
+num.iterations <- 3.5e6L
+burnin <- 2e6L
+adaptive.phase <- 2e6L
 thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 300L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L

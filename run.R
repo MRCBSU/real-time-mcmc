@@ -56,11 +56,14 @@ if (region.type == "NHS") {
 # Moved serology calls to the top of the run script
 if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
-    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
-    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
     if(!format.inputs) {
-        file.copy(file.path(data.dirs["sero"], "sero_samples_data.csv"), out.dir)
-        file.copy(file.path(data.dirs["sero"], "sero_positives_data.csv"), out.dir)
+        # Copy files but take into account possible name differences due to custom cutoff
+        file.copy(file.path(data.dirs["sero"], paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
+        file.rename(file.path(out.dir, paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_samples_data.csv"))
+        file.copy(file.path(data.dirs["sero"], paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
+        file.rename(file.path(out.dir, paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_positives_data.csv"))
         names(serosam.files) <- names(seropos.files) <- regions
     }
 } else {
@@ -75,7 +78,10 @@ if(deaths.flag){
                          regions, "_",
                          nA, "ag",
                          ifelse(flg.confirmed, "CONF", ""),
-                         reporting.delay, "delay")
+                         reporting.delay, "delay",
+                         # Take into account possible name differences due to custom cutoff
+                         ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date))
+                         )
     if (exists("flg.cutoff")){
         if(flg.cutoff)
             data.files <- paste0(data.files, "cutoff", str.cutoff)
@@ -94,7 +100,7 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev", "_")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
     if(!format.inputs) {
         prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
@@ -131,7 +137,7 @@ if(adm.flag){
         adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
         file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
         file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
-        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts", ifelse(admissions_only.flag, "_adm_only", ""), ".txt")
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""),".txt")
     }
 }
 
