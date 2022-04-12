@@ -98,7 +98,7 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev", "_")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
     if(!format.inputs) {
         prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
