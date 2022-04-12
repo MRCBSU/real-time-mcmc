@@ -5,12 +5,9 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-
-
-
 
 
 if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
@@ -20,11 +17,6 @@ if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
 #if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 
 #if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
-
-
-
-
-
 
 
 if (length(args) < 3) args <- c(args, "All", "England")
@@ -68,17 +60,17 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-
-
 google.data.date <- format(ymd("2022-04-08"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household_new_base"
 #matrix.suffix <- "_stable_household_new_base"
 
 #matrix.suffix_paul <- "_stable_household"
 
-
-## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1) or sebs (2)
-sus_seb_combination <- 3L #number 3 to use the old sus data
+# Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
+# Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
+admissions_only.flag <- T
+## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
+sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
@@ -98,19 +90,26 @@ adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
 ## ## File names of pre-processed SUS data if it is to be used.
+if(!admissions_only.flag) { ## Settings for preprocessed all hospitalisations
+    preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
+    sus_old_tab_sep <- T
+    preprocessed_sus_csv_name <- "admissions_data_all_hosp.csv"
+    adm_sus.end.date <- ymd(20201014)
+} else { ## Settings for admissions_only
+    preprocessed_sus_names <- paste0("2022-03-09_", regions, "_6ag_counts.txt")
+    sus_old_tab_sep <- F
+    preprocessed_sus_csv_name <- "admissions_data_admissions_only.csv"
+    adm_sus.end.date <- ymd(20210505)
+}
 
-preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
 names(preprocessed_sus_names) <- regions
 print(preprocessed_sus_names)
-preprocessed_sus_csv_name <- "admissions_data.csv"
 
-
-## ##Admissions flags/dates
-
-
-
+## ## Admissions flags/dates
 ## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
-adm_sus.end.date <- ymd(20201014)
+ ## New date breakpoint
+
+
 ## adm_seb.start.date <- ymd(20201014)
 ## ## IF THE BELOW ARE NOT SPECIFIED, THE MOST RECENT FILE WILL BE CHOSEN
 ## date.adm_sus <- ymd()
@@ -227,7 +226,8 @@ if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
 if(!single.ifr) ifr.mod <- "7bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
+scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""),
+                    "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {

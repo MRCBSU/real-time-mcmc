@@ -95,8 +95,8 @@ if(gp.flag){
 if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             #paste(min(prev.lik.days), "every_day", max(prev.lik.days)-300, sep = "_"),
-                            paste(min(prev.lik.days), "every_day", 407, sep = "_"),
-                            paste0(prev.lik.days[c(1:which(prev.lik.days==407))], collapse = "_"))
+                            paste(min(prev.lik.days), "every_day", 414, sep = "_"),
+                            paste0(prev.lik.days[c(1:which(prev.lik.days==414))], collapse = "_"))
                             #paste0(prev.lik.days, collapse = "_"))
     if (exists("date.prev")) {
 		prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
@@ -143,9 +143,11 @@ if(vacc.flag){
 } else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
-        adm.sam <- read_csv(file.path(data.dirs["adm"], "admissions_data.csv"))
-        file.copy(file.path(data.dirs["adm"], "admissions_data.csv"), out.dir)
-        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
+        adm_csv_fname <- ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")
+        adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
+        file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
+        file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""),".txt")
     }
 }
 
