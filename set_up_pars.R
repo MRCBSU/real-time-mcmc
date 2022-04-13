@@ -110,7 +110,7 @@ if(efficacies == "PHE"){
         vn.design[delta, 1:2] <- 0
     }
 }
-if(vac.n_doses == 3) {
+if(vac.n_doses >= 3) {
     v2.design <- v2.design[include, ]
     write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.alpha2.design.txt"), col_names = FALSE)
 } else {
@@ -119,7 +119,7 @@ if(vac.n_doses == 3) {
 }
 
 ## Efficacy against disease from third vacccine dose
-if(vac.n_doses == 3){
+if(vac.n_doses >= 3){
     if(deaths.flag){
         if(efficacies == "Nick"){
             value.vac.alpha3 <- c(0.95, 0.70)
@@ -142,8 +142,36 @@ if(vac.n_doses == 3){
     vacb.t.breaks <- c(delta.date, omicron.date) - start.date
     vacb.design <- NULL
 
-    # v3.design <- v3.design[include, ]
+    # vac3.design <- v3.design[include, ]
     # write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.alpha3.design.txt"), col_names = FALSE)
+}
+
+## Efficacy against disease from fourth vaccine dose
+if(vac.n_doses >= 4){
+    if(deaths.flag){
+        if(efficacies == "Nick"){
+            value.vac.alpha4 <- c(0.95, 0.70)
+        } else if(efficacies == "Jamie"){
+            value.vac.alpha4 <- c(2/3,6/7)
+        } else if(efficacies == "PHE"){
+            ## value.vac.alpha3 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
+            value.vac.alpha4 <- c(4/5, 2/5, 27/35) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+        } else {
+            value.vac.alpha4 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+        }
+    } else if(adm.flag){
+        value.vac.alpha4 <- c(4/5, 2/5, 9/14)
+    }
+    prior.vac.alpha4 <- rep(1, length(value.vac.alpha4)) ## ifelse(vacc.flag, 3, 1)
+    prior.alpha4 <- max(prior.vac.alpha4)
+    if(vacc.flag & (prior.alpha4 > 1)) pars.alpha4 <- c(4, 1)
+    vac4.r.breaks <- NULL
+    vac4.a.breaks <- NULL
+    vac4.t.breaks <- c(delta.date, omicron.date) - start.date
+    vac4.design <- NULL
+
+    # vac4.design <- v4.design[include, ]
+    # write_tsv(as.data.frame(v4.design), file.path(out.dir, "vac.alpha4.design.txt"), col_names = FALSE)
 }
 
 ## Efficacy against infection from one vaccine dose - can be derived from vaccine surveillance report 26 (alpha)
@@ -181,14 +209,14 @@ prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
 if(vacc.pi.bps)
-    if(vac.n_doses == 3){
+    if(vac.n_doses >= 3){
         write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.pi2.design.txt"), col_names = FALSE)
     } else {
         write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
     }
 
 ## Efficacy against infection from three vaccine doses - can be derived from vaccine surveillance report ??
-if(vac.n_doses == 3) {
+if(vac.n_doses >= 3) {
     if(efficacies == "Nick"){
         value.vac.pi3 <- 0.6
     } else if(efficacies == "Jamie"){
@@ -203,6 +231,23 @@ if(vac.n_doses == 3) {
     if(vacc.flag & (prior.pi3 > 1)) pars.pi3 <- c(4, 1)
 
     # if(vacc.pi.bps) write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.pi3.design.txt"), col_names = FALSE)
+}
+## Efficacy against infection from four vaccine doses - can be derived from vaccine surveillance report ??
+if(vac.n_doses >= 4) {
+    if(efficacies == "Nick"){
+        value.vac.pi4 <- 0.6
+    } else if(efficacies == "Jamie"){
+        value.vac.pi4 <- c(0.85, 0.65)
+    } else if(efficacies == "PHE"){
+        value.vac.pi4 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
+    } else {
+        value.vac.pi4 <- 0.6
+    }
+    prior.vac.pi4 <- rep(1, length(value.vac.pi4))
+    prior.pi4 <- max(prior.vac.pi4)
+    if(vacc.flag & (prior.pi4 > 1)) pars.pi4 <- c(4, 1)
+
+    # if(vacc.pi.bps) write_tsv(as.data.frame(v4.design), file.path(out.dir, "vac.pi4.design.txt"), col_names = FALSE)
 }
 
 ## Exponential growth rate

@@ -12,7 +12,7 @@ str.date.vacc <- "20220407"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -47,14 +47,14 @@ RocheS.flag <- 0
 
 # Determine whether or not to run the model with the serology being dropped from a certain date onwards
 # (Note: False -> doesn't drop the data)
-sero_cutoff_flag <- F
+sero_cutoff_flag <- T
 
 if(sero_cutoff_flag) {
     #If dropping serology
     ## As date chosen, assumed to be chosen at a complete date
     serology.delay <- 25
     ## Last date for which serology is used
-    sero.end.date <- ymd(20211030) + 25 ## ymd(20200522) ## ymd(20210920)
+    sero.end.date <- as_date(ymd(20211030) + 25) ## ymd(20200522) ## ymd(20210920)
 } else {
     #If not dropping serology
     ## Assumed number of days between infection and developing the antibody response
@@ -71,7 +71,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- F
+admissions_only.flag <- T
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -119,7 +119,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20220408"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -247,11 +247,11 @@ use.previous.run.for.start <- T
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "completed_20220401",paste0(c("Prev697SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220401_stable_household_deaths",
-                                                                                           "Prev697SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220401_stable_household_deaths_chain2"))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "completed_20220408",paste0(c("Prev704SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220408_timeuse_household_deaths",
+                                                                                           "Prev704SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220408_timeuse_household_deaths"))
                                               )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "completed_20220401",paste0(c("Prev697SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220401_timeuse_household_admissions_no_deaths",
-                                                                                           "Prev697SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220401_timeuse_household_admissions_no_deaths_chain2"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "completed_20220408",paste0(c("Prev704SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220408_stable_household_admissions_no_deaths",
+                                                                                           "Prev704SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220408_stable_household_admissions_no_deaths_chain2"))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304", c("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths", # _stable_household_deaths_chain2",
@@ -324,11 +324,12 @@ if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
-vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
+vac.n_doses <- 4L ## Number of doses in preprocessed data (Either 4, 3 or 2)
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
 future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+future.fourth.n: "c(1, 1, 1, 0.5, 0.5, rep(0.1, 6))* 10 ^ 6  * 55.98 / 66.65"
 scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
 ## Approximate date at which delta became dominant strain (- one week)
