@@ -95,8 +95,8 @@ if(gp.flag){
 if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             #paste(min(prev.lik.days), "every_day", max(prev.lik.days)-300, sep = "_"),
-                            paste(min(prev.lik.days), "every_day", 414, sep = "_"),
-                            paste0(prev.lik.days[c(1:which(prev.lik.days==414))], collapse = "_"))
+                            paste(min(prev.lik.days), "every_day", 419, sep = "_"),
+                            paste0(prev.lik.days[c(1:which(prev.lik.days==419))], collapse = "_"))
                             #paste0(prev.lik.days, collapse = "_"))
     if (exists("date.prev")) {
 		prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
