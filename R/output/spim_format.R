@@ -42,8 +42,8 @@ save.text <- "MTP"
 ## projections.file <- "projections_R1.3.RData"
 ## scen.text <- "MTP R1.3"
 ## save.text <- "MTP_R_1.3"
-date.data <- "20220327"
-mtp.filter.date <- lubridate::ymd("20220327") ## ymd(date.data)
+date.data <- "20220403"
+mtp.filter.date <- lubridate::ymd("20220403") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11

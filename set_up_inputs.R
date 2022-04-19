@@ -26,6 +26,7 @@ if(deaths.flag){
     start.hosp <- 1
     end.hosp <- 1
 }
+
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 ## if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
@@ -154,9 +155,9 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 3.5e6L
-burnin <- 2e6L
-adaptive.phase <- 2e6L
+num.iterations <- 2.5e6L
+burnin <- 1e6L
+adaptive.phase <- 1e6L
 thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 300L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
