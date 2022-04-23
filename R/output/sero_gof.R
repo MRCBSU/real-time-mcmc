@@ -162,3 +162,18 @@ gg_region2 <- df_infections_late_region %>% ggplot(aes(x = date, y = pos_med, ym
 
 ggsave("gof_byregion_late.pdf", gg_region2, height = 20, width = 25)
 
+## by region -- all time
+gg_region_all <- df_infections_region %>% ggplot(aes(x = date, y = pos_med, ymin = pos_lo, ymax = pos_hi, fill = region)) +
+    geom_line() +
+    geom_ribbon(alpha = 0.5) +
+    ylab("Seroprevalence") +
+    ylim(c(0, 1)) +
+    facet_wrap(~region) +
+    geom_point(aes(x = date, y = prop, size = n / 100, fill = fit), data = df_infections_region %>% filter(n > 0) %>% mutate(prop = y/n, fit = as.integer(ifelse(samp_lo <= y, 1, 0) + ifelse(samp_hi <= y, 1, 0))), shape = 21) +
+    labs(title = "Attack rate and serological goodness-of-fit",
+         subtitle = paste("Sensitivity = ", qsens[2, 1], "(", qsens[1, 1], ",", qsens[3, 1], "); Specificity = ", qspec[2, 1], "(", qspec[1, 1], ", ", qspec[3, 1], ")")) +
+    geom_segment(aes(x = date, xend = date, y = samp_lo, yend = samp_hi),
+                 data = df_infections_region %>% filter(n > 0) %>% mutate(samp_lo = samp_lo / n, samp_hi = samp_hi / n),
+                 colour = "grey")
+
+ggsave("gof_byregion_all.pdf", gg_region_all, height = 20, width = 25)
