@@ -1,5 +1,9 @@
 library(rmarkdown)
 
+# print(commandArgs(trailingOnly = FALSE))
+
+# stop()
+
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
