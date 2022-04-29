@@ -1,0 +1,3 @@
+[submodule "vaccinations_preprocessing"]
+	path = vaccinations_preprocessing
+	url = https://gitlab.com/KandiahJ/vaccination-processing-for-rtm.git
