@@ -38,3 +38,4 @@ contact_mats/**/*.tar.gz
 contact_mats/**/*.html
 git**txt
 spi-forecasts
+model_runs
