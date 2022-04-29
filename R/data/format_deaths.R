@@ -13,7 +13,7 @@ if(!exists("date.data"))
 if(!exists("deaths.loc")) {
 	possible.deaths.locations <- c(
 		file.path(proj.dir, paste0("data/raw/deaths/Dataset Modelling " , date.data, ".csv")),
-		paste(date.data, "COVID19 Deaths.csv"),
+                paste(date.data, "COVID19 Deaths.csv"),
 		paste0("/data/covid-19/data-raw/deaths/", ymd(date.data), ".csv"),
 		paste0("/data/covid-19/data-raw/manual-downloads/deaths/", ymd(date.data), ".csv")
 
@@ -23,7 +23,7 @@ if(!exists("deaths.loc")) {
 		stop(paste('No valid deaths data files, tried:', possible.deaths.locations))
 	}
 }
-
+print(paste0("deaths_loc: ", deaths.loc))
 ## Define an age-grouping
 if(!exists("age.agg")){
     age.agg <- c(0, 1, 5, 15, 25, 45, 65, 75, Inf)

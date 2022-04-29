@@ -60,22 +60,22 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-google.data.date <- format(ymd("2022-04-14"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-#matrix.suffix <- "_stable_household_new_base"
+google.data.date <- format(ymd("2022-04-29"), format = "%Y%m%d")
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 #matrix.suffix_paul <- "_stable_household"
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- F
+admissions_only.flag <- T
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220414)
+date.adm_seb <- ymd(20220429)
 date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -179,7 +179,7 @@ deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified b
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 709
+num.prev.days <- 725
 
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
@@ -294,7 +294,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220411")
+date.prev <- lubridate::ymd("20220427")
 
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
@@ -322,7 +322,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220413" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220428" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
