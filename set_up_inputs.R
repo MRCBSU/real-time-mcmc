@@ -4,7 +4,7 @@ require(lubridate)
 #######################################################################
 ## INPUT SETTINGS
 #######################################################################
-if(gp.flag){
+if(gp.flag) {
     start.gp <- ll.start.date - start.date + 1			## What day to start running the likelihood on
     end.gp <- lubridate::as_date(date.data) - ll.reporting.delay - start.date + 1 ## Total days of data, or NULL to infer from length of file
 } else {
@@ -155,9 +155,9 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 3.5e6L
-burnin <- 2e6L
-adaptive.phase <- 2e6L
+num.iterations <- 2.5e6L
+burnin <- 1e6L
+adaptive.phase <- 1e6L
 thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 300L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
