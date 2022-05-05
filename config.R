@@ -12,7 +12,7 @@ str.date.vacc <- "20220428"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -71,7 +71,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- T
+admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -177,12 +177,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "admissions"
+data.desc <- "deaths"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 1	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -247,8 +247,8 @@ use.previous.run.for.start <- T
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220422",paste0(c("Prev716SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220422_stable_household_deaths",
-                                                                                         "Prev716SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220422_stable_household_deaths_chain2"))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220429",paste0(c("Prev725SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_deaths",
+                                                                                         "Prev725SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_deaths_chain2"))
                                               )
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220429",paste0(c("Prev725SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_admissions_no_deaths_copy",
                                                                                           "Prev725SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_admissions_no_deaths_chain2_copy"))
