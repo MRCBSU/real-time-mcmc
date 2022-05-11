@@ -175,7 +175,9 @@ if(format.inputs){
         source(file.path(proj.dir, "R/data/format_sero.R"))
     }
     if(vacc.flag){
+        print("pre_Vacc")
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+        print("post_Vacc")
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
@@ -190,6 +192,7 @@ if(compile.code) {
     system("make rtm_hpc2")
 }
 
+print("finished chain 1")
 ## Set up a requisite number of chains
 startwd <- getwd()
 setwd(out.dir)

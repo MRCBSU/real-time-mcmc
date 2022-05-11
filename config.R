@@ -12,7 +12,7 @@ str.date.vacc <- "20220505"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -71,7 +71,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- T
+admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -214,7 +214,7 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "28"), "")
+	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "60"), "")
 	# str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
@@ -247,11 +247,11 @@ use.previous.run.for.start <- T
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220429",paste0(c("Prev725SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220429_stable_household_deaths",
-                                                                                         "Prev725SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220429_stable_household_deaths_chain2"))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220506",paste0(c("copy_Prev732SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_deaths",
+                                                                                         "copy_Prev732SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_deaths_chain2"))
                                               )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220429",paste0(c("Prev725SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_admissions_no_deaths_copy",
-                                                                                          "Prev725SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220429_timeuse_household_admissions_no_deaths_chain2_copy"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220506",paste0(c("Prev732SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_admissions_no_deaths_chain1_original",
+                                                                                          "Prev732SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_admissions_no_deaths_chain2_original"))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304", c("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_copy", # _stable_household_deaths_chain2",
@@ -340,6 +340,7 @@ omicron.date <- ymd("20211205")
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
+                     "swap_definition_matrices",
                      paste0(
                          scenario.name,
                          ## Modified to rename the runs if cutting off the data early
