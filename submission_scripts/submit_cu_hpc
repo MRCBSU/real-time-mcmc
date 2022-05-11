@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --time=38:00:00
+#SBATCH --time=96:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL,TIME_LIMIT,END
 #SBATCH --mail-user=joel.kandiah@phe.gov.uk
@@ -33,9 +33,9 @@ echo "= No. CPUs"
 # module list
 # echo $LD_LIBRARY_PATH
 
-# ## dirs=(*/)
-# ## cd ${dirs[SLURM_ARRAY_TASK_ID]}
-# ## pwd
+# dirs=(*/)
+# cd ${dirs[SLURM_ARRAY_TASK_ID]}
+# pwd
 
 
 ~/real-time-mcmc/rtm_htc_con_login

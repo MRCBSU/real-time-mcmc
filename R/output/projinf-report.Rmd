@@ -4,7 +4,11 @@ knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 if (!exists("projections_file")) projections_file <- "projections.RData"
 if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
 load(file.path(out.dir, projections_file))
+if(adm.flag) dth.dat <- adm.sam %>% rename(age = ages, value = admissions)
 dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
+dta.text <- ifelse(deaths.flag, "deaths", "admissions")
+Dta.text <- ifelse(deaths.flag, "Deaths", "Admissions")
+str.hover <- ifelse(deaths.flag, "Observed deaths", "Observed admissions")
 ```
 
 ### Infection incidence {.tabset}
@@ -19,16 +23,16 @@ make.plots(infections, by = "region", project.forwards = TRUE)
 make.plots(infections, by = "age", project.forwards = TRUE)
 ```
 
-### Deaths {.tabset}
+### `r Dta.text` {.tabset}
 
 #### By region
 ```{r reg-medterm-death}
-make.plots(deaths, by = "region", x.label = "Date of death", project.forwards = TRUE, data = dth.dat)
+make.plots(deaths, by = "region", x.label = paste("Date of", dta.text), project.forwards = TRUE, data = dth.dat)
 ```
 
 #### By age
 ```{r age-medterm-death}
-make.plots(deaths, by = "age", x.label = "Date of death", project.forwards = TRUE, data = dth.dat)
+make.plots(deaths, by = "age", x.label = paste("Date of", dta.text), project.forwards = TRUE, data = dth.dat)
 ```
 
 ```{r eval=exists("prevalence"), child='prev-proj-report.Rmd'}

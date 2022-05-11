@@ -160,6 +160,8 @@ adaptive.phase <- burnin / 2
 thin.outputs <- 100## After how many iterations to output each set of NNI, deaths etc.
 thin.params <- 50 ## After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
+stored.covar <- 0
+global.per.iter <- ifelse(adm.flag, 15, 10)
 
 
 

@@ -248,6 +248,8 @@ struct mcmcPars{
   int adaptive_phase;
   int adapt_every;
   int burn_in;
+  int read_covar;
+  int global_updates;
   int num_progress_reports;
   double mixing_threshold_ub;
   double mixing_threshold_lb;

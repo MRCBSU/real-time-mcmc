@@ -14,7 +14,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=0,1
+#SBATCH --array=4,12
 #SBATCH --output=submit_save_endstates_%a_%j.out
 #SBATCH --error=submit_save_endstates_%a_%j.err
 

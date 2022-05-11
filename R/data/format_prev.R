@@ -170,6 +170,19 @@ prev.dat <- prev.dat %>%
     get.region() %>%
     filter(region %in% regions)
 
+
+print(prev.dat %>%
+      filter(lsd > 0) %>%
+      distinct(day, region) %>%
+	  nrow())
+
+print(prev.dat %>%
+      filter(lsd > 0) %>%
+      distinct(day, region), n=386)
+
+print(length(prev.lik.days) * nr)
+print(length(prev.lik.days))
+print(max(prev.lik.days))
 # Check correct number of days
 stopifnot(
   (
