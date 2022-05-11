@@ -6,7 +6,6 @@ require(parallel)
 require(knitr)
 
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
-print(out.dir)
 QUANTILES <- c(0.025, 0.5, 0.975)
 ## out.dir <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 if (!is.na(out.dir)) setwd(out.dir)
@@ -21,7 +20,6 @@ counterfactual <- FALSE
 
 projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
 projections.basedir <- file.path(out.dir, projections.basename)
-print(projections.basedir)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
 ## ## Forecast projection
@@ -31,17 +29,7 @@ if(projections.basename == "projections_snapshot"){
 } else nweeks.ahead <- 9
 
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
-# print("Got here 0.5")
-# print(start.date)
-# print(as.numeric(max(cm.breaks)))
-# print((1:nforecast.weeks * days(7)))
-# print(start.date + as.numeric( -1 + as.numeric(max(cm.breaks))))
-# print(1 + as.numeric(max(cm.breaks)) + (1:nforecast.weeks * days(7)))
-# print(start.date + (1:nforecast.weeks * days(7)))
-mm.breaks <- start.date - 1 + as.numeric(max(cm.breaks)) + (1:nforecast.weeks * days(7))
-# print("Got here 1")
-google.data.date.str <- google.data.date
-print(google.data.date.str)
+mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
 google.data.date <- ymd(google.data.date)
 mult.order <- rep(1, length(mm.breaks))
 sero.flag <- 0 ## Are we interested in simulating serological outputs? Switched off for the moment.
@@ -85,18 +73,14 @@ bank.holiday.days.new <- NULL
 
 ## ## ## FUNCTION DEFINITIONS
 repeat.last.row <- function(real.fl, dummy.fl){
-    # print("run_repeat_last_row_1")
     tmpdata <- read_tsv(real.fl, col_names = FALSE)
-    # print("run_repeat_last_row_2")
     dummy.fl <- file.path(projections.basedir, paste0(dummy.fl, ".txt"))
-    # print("run_repeat_last_row_3")
     tmpdata <- bind_rows(tmpdata,
                          tmpdata[rep(nrow(tmpdata), ndays - nrow(tmpdata)), ]) %>%
             mutate(Date = start.date - 1 + (1:ndays)) %>%
             select(-X1) %>%
             select(Date, everything()) %>%
             write_tsv(dummy.fl, col_names = FALSE)
-    # print("run_repeat_last_row_4")
     return(dummy.fl)
 }
 symlink.design <- function(design)
@@ -122,23 +106,21 @@ end.hosp <- ifelse(hosp.flag | adm.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
 end.vac <- ifelse(vacc.flag, ndays, 1)
-# print("Got here 2a")
+
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date_and_suff.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
                  file.path(matrix.dir, tail(cm.lockdown.fl, length(mm.breaks))))
-# print("Got here 2b")
 ## Get the new contract matrix modifiers to use
 cm.mults <- c(cm.mults,
               file.path(proj.dir,
                         "contact_mats",
                         paste0("ag", nA, "_mult_mod", ifelse(contact.model != 6, contact.model, "All"), "Levels", mult.order, ".txt"))
               )
-# print("Got here 3a")
 if(counterfactual){
     cm.dates <- start.date + cm.breaks - 1
     future.mats <- cm.dates > google.data.date
@@ -147,7 +129,6 @@ if(counterfactual){
     cm.mults <- cm.mults[c(TRUE, !future.mats)]
 }
 ## Write to file any contact matrix that doesn't already exist.
-# print("Got here 3b")
 if(!all(file.exists(cm.bases)) || overwrite.matrices){
     idx.miss <- which(!file.exists(cm.bases))
     if(overwrite.matrices) idx.miss <- 2:length(cm.bases)
@@ -157,10 +138,9 @@ if(!all(file.exists(cm.bases)) || overwrite.matrices){
             write_tsv(cm.bases[idx], col_names = FALSE)
     }
 }
-# print("Got here 3c")
 if(!all(file.exists(cm.mults)))
     stop("Specified multiplier matrix doesn't exist")
-# print("Got here 3d")
+
 ## Need some dummy data files padded to the right number of rows
 if(gp.flag)
     for(reg in regions){
@@ -190,7 +170,6 @@ burnin <- 0
 num.threads <- 1
 if(projections.basename == "projections_snapshot") mcmc.outs <- smc.outs <- 1 else mcmc.outs <- smc.outs <- 0
 
-print(inputs.template.loc)
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
 knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_inputs.txt"))
@@ -198,30 +177,20 @@ knit(input = inputs.template.loc, output = file.path(projections.basedir, "mod_i
 ## ## ## ------------------------------------------------------------
 
 ## ## ## CHANGES TO VARIABLES BASED ON mod_pars.txt-LIKE SPECIFICATIONS
-# print("Got here 3g")
+
 ## Extend the breakpoints for the day of week effects
 if(gp.flag){
     require(Matrix)
     bank.holiday.days <- c(bank.holiday.days, bank.holiday.days.new)
-    # print("Got here 4")
     ll.days <- start.date + days(0:(ndays-1))
-    # print("Got here 5")
     DAYS <- wday(ll.days, label = TRUE)
     DAYS[ll.days %in% bank.holiday.days] <- "Sun"
     lm.mat <- model.matrix(~DAYS, contrasts = list(DAYS = "contr.sum"))[, -1] %>%
         as.data.frame() %>%
         write_tsv(file.path(projections.basedir, "d_o_w_design_file.txt"), col_names = FALSE)
 }
-# print("Got here 5a")
 
 ## Copy to projection directory other design matrices
-out.dir.tmp <- out.dir 
-#! Modified needs fix
-out.dir <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/model_runs/20210924/Prev508_cm6ons_ONS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210924_timeuse_household_deaths"
-print("Symlink locs")
-print(out.dir)
-print(projections.basedir)
-
 if(gp.flag)
     symlink.design("icr.design.txt")
 if(rw.flag)
@@ -233,11 +202,17 @@ if(!single.ifr)
     symlink.design("ifr.design.txt")
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
-    symlink.design("vac.pin.design.txt")
     symlink.design("vac.alpha1.design.txt")
-    symlink.design("vac.alphan.design.txt")
+    if(vac.n_doses == 3){
+        symlink.design("vac.pi2.design.txt")
+        symlink.design("vac.alpha2.design.txt")
+    } else {
+        symlink.design("vac.pin.design.txt")
+        symlink.design("vac.alphan.design.txt")
+    }
 }
-out.dir <- out.dir.tmp
+if(!is.null(design.wr))
+    symlink.design("wr_design_file.txt")
 ## ## ## --------------------------------------------------------------
 
 ## ## ## MAIN PROJECTION LOOP
@@ -252,15 +227,7 @@ if(Sys.info()["user"] %in% c("jbb50", "pjb51", "joel.kandiah@phe.gov.uk")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")
-cat("full file path = ", file.path(proj.dir, paste0("rtm_", exe)), "\n")
-
-# xtmp1 <- sim_rtm(1, rtm.exe = exe)
-# print(names(xtmp1)) 
-# print(xtmp1)
-# print("starting parallel region")
 xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1, rtm.exe = exe)
-print("ending parallel region")
-# print(xtmp)
 NNI <- lapply(xtmp, function(x) x$NNI)
 if(smc.outs){
     state <- lapply(xtmp, function(x) x$state)

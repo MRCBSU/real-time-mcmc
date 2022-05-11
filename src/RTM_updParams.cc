@@ -17,8 +17,10 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "r1_period", AR1 },
   { "vacc_1st_disease", VAC1_DISEASE },
   { "vacc_nth_disease", VACN_DISEASE },  //10
+  { "vacc_boost_disease", VACB_DISEASE },
   { "vacc_1st_infect", VAC1_INFECT },
   { "vacc_nth_infect", VACN_INFECT },
+  { "vacc_boost_infect", VACB_INFECT },
   { "relative_infectiousness", REL_INFECT },
   { "prop_symptomatic", PROP_SYMP },
   { "contact_parameters", CONTACT },  // 15
@@ -38,7 +40,8 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "test_specificity", SPEC },
   { "day_of_week_effects", DOW_EFFECTS },  // 30
   { "sero_test_sensitivity", SSENS },
-  { "sero_test_specificity", SSPEC }
+  { "sero_test_specificity", SSPEC },
+  { "immunity_period", IWAN }
 };
 
 
@@ -364,10 +367,26 @@ void updParamSet::init(const string& covarin, const string& dir) {
       std::cerr << "Error: Unable to open input file " << covarin << "\n";
       exit(1);
     }
-    for (auto &block : blocks) {
-      string line;
+
+    // First two lines are debugging info
+    string line;
+    stringstream linestr;
+    for (int i = 0; i < 2; i++)
       getline(infile, line);
-      stringstream linestr(line);
+    
+    for (auto &block : blocks) {
+      getline(infile, line);
+      linestr.str(line);
+
+      // First line contains beta then mu vector
+      linestr >> block.beta;
+      for (int i = 0; i < block.mu.size(); i++) {
+	linestr >> block.mu[i];
+      }
+
+      // Second line is sigma matrix
+      getline(infile, line);
+      linestr.str(line);
       for (int i = 0; i < block.values.size(); i++) {
 	for (int j = 0; j < block.values.size(); j++) {
 	  linestr >> block.sigma[i][j];
@@ -375,6 +394,18 @@ void updParamSet::init(const string& covarin, const string& dir) {
       }
     }
   }
+
+  // Add an epsilon to the diagonal of the sigma for each block
+  double global_epsilon = 0;
+  double local_epsilon = 0;
+  
+  for (int i = 0; i < blocks[0].values.size(); i++)
+    blocks[0].sigma[i][i] += global_epsilon;
+
+  for (int b = 1; b < blocks.size(); b++)
+    for (int i = 0; i < blocks[b].values.size(); i++)
+      blocks[b].sigma[i][i] += local_epsilon;
+
 }
 
 
@@ -619,20 +650,20 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   if (global) {
     blockflags.regional_update_flags[2] = true;
     blockflags.regional_update_flags[4] = true;
-    blockflags.regional_update_flags[12] = true;
     blockflags.regional_update_flags[14] = true;
-    blockflags.regional_update_flags[15] = true;
-    blockflags.regional_update_flags[18] = true;
-    blockflags.regional_update_flags[27] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[17] = true;
+    blockflags.regional_update_flags[20] = true;
     blockflags.regional_update_flags[29] = true;
-    blockflags.regional_update_flags[30] = true;
+    blockflags.regional_update_flags[31] = true;
+    blockflags.regional_update_flags[32] = true;
   } else {
-    blockflags.regional_update_flags[10] = true;
-    blockflags.regional_update_flags[11] = true;
     blockflags.regional_update_flags[12] = true;
+    blockflags.regional_update_flags[13] = true;
     blockflags.regional_update_flags[14] = true;
-    blockflags.regional_update_flags[15] = true;
-    blockflags.regional_update_flags[22] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[17] = true;
+    blockflags.regional_update_flags[24] = true;
   }
   
   // Copy proposal to paramSet to evaluate region
@@ -839,13 +870,17 @@ void updParamBlock::adaptiveUpdate(int iter) {
   }
 
   double betastart = beta;
-  
-  double eta = pow(iter - 199 + 1, -0.6);
+
+  // Warning: Hardcoded start point. Assumes adaptation starts at 1000 iters.
+  // Add 2, as per AMGS algorithm, to ensure that eta is always < 1.
+  // (Otherwise 0^(-p) = inf, 1^(-p) = 1)
+  double eta = pow(((iter - 1000) / (double) adapt_every) + 2, -0.6);
+
   // if (global)
   beta = beta + eta * (acceptLastMove - 0.234);
     // else
     // beta = beta + eta * (updParamBlock::regacceptLastMove - 0.234);
-  
+
   for (int i = 0; i < mu.size(); i++)
     mu[i] = (1 - eta) * mu[i] + eta * transform(values[i], dist[i]);
   

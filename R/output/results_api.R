@@ -25,26 +25,11 @@ if(!exists("proj.dir")){
   file.loc <- dirname(thisFile())
   proj.dir <- dirname(dirname(file.loc))
 }
-## Do we need to re-run all the calculations?
-if (!exists("infections")) {
-  if (!exists("out.dir")) {
-	  warning("Importing config.R as no out.dir found")
-	  source(file.path(proj.dir, "config.R"))
-  }
-  output.required <- file.path(out.dir, "output_matrices.RData")
-  if (file.exists(output.required)) {
-    load(file.path(out.dir, "mcmc.RData"))
-    load(output.required)
-    int_iter <- 0:(num.iterations - 1)
-    parameter.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.params)) & int_iter >= burnin]
-    outputs.iterations <- int_iter[(!((int_iter + 1 - burnin) %% thin.outputs)) & int_iter >= burnin]
-    parameter.to.outputs <- which(parameter.iterations %in% outputs.iterations)
-    iterations.for.Rt <- parameter.to.outputs[seq(from = 1, to = length(parameter.to.outputs), length.out = 500)]
-    stopifnot(length(parameter.to.outputs) == length(outputs.iterations)) # Needs to be subset
-  } else {
-    source(file.path(proj.dir, "R/output/tidy_output.R"))
-  }
-}
+load(file.path(out.dir, "mcmc.RData"))
+output.required <- file.path(out.dir, "output_matrices.RData")
+stopifnot(file.exists(output.required))
+load(output.required)
+
 
 ################################################################
 

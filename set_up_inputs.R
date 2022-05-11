@@ -4,7 +4,7 @@ require(lubridate)
 #######################################################################
 ## INPUT SETTINGS
 #######################################################################
-if(gp.flag){
+if(gp.flag) {
     start.gp <- ll.start.date - start.date + 1			## What day to start running the likelihood on
     end.gp <- lubridate::as_date(date.data) - ll.reporting.delay - start.date + 1 ## Total days of data, or NULL to infer from length of file
 } else {
@@ -17,7 +17,7 @@ if(!exists("hosp.flag") & !exists("adm.flag")) hosp.flag <- deaths.flag <- adm.f
 if(deaths.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
-    end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+    end.hosp <- ifelse(use_deaths_up_to_now_flag, lubridate::as_date(date.data) - reporting.delay - start.date + 1, custom_deaths_end_date - start.date + 1)
     if(grepl("adjusted", data.desc)) end.hosp <- end.hosp + date.adj.data - lubridate::as_date(date.data)
 } else if(adm.flag) {
     start.hosp <- 1
@@ -26,6 +26,7 @@ if(deaths.flag){
     start.hosp <- 1
     end.hosp <- 1
 }
+
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 ## if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
@@ -154,14 +155,19 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 100000
-burnin <- 30000
-adaptive.phase <- burnin / 2
-thin.outputs <- 100## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 50 ## After how many iterations to output each set of parameters
+num.iterations <- 3.5e6L
+burnin <- 2.5e6L
+adaptive.phase <- 2.5e6L
+thin.outputs <- 400L ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 200L ## After how many iterations to output each set of parameters
+# num.iterations <- 1e6L
+# burnin <- 5e5L
+# adaptive.phase <- 5e5L
+# thin.outputs <- 500L ## After how many iterations to output each set of NNI, deaths etc.
+# thin.params <- 250L ## After how many iterations to output each set of parameters
 stopifnot(thin.outputs %% thin.params == 0) # Need parameters on iterations we have outputs
 stored.covar <- 0
-global.per.iter <- ifelse(adm.flag, 15, 10)
+global.per.iter <- 1L
 
 
 
@@ -261,3 +267,15 @@ if (grepl("adjusted", data.desc)) {
 
 ## DO WE WANT MCMC-STYLE CHAINS (0), OR SMC-STYLE PARTICLES (1)
 mcmc.outs <- 0
+
+# if(vacc.flag == 1) {
+#     if(vac.n_doses == 2) {
+#                     if(!all(file.exists(vac1.files)) || !all(file.exists(vacn.files))) {
+#                 stop("One of the specified vaccination data files does not exist")
+#             }
+#     } else if(vac.n_doses == 3) {
+#             if(!all(file.exists(vac1.files)) || !all(file.exists(vac2.files)) || !all(file.exists(vac3.files))) {
+#                 stop("One of the specified vaccination data files does not exist")
+#             }
+#     }
+# }

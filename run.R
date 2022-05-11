@@ -1,5 +1,9 @@
 library(rmarkdown)
 
+# print(commandArgs(trailingOnly = FALSE))
+
+# stop()
+
 ## Location of this script
 thisFile <- function() {
         cmdArgs <- commandArgs(trailingOnly = FALSE)
@@ -23,7 +27,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 
 system(paste("mkdir -p", out.dir))
 ## do we need to do formatting?
-format.inputs <- TRUE
+format.inputs <- T
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -56,8 +60,16 @@ if (region.type == "NHS") {
 # Moved serology calls to the top of the run script
 if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
-    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
-    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
+    if(!format.inputs) {
+        # Copy files but take into account possible name differences due to custom cutoff
+        file.copy(file.path(data.dirs["sero"], paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
+        file.rename(file.path(out.dir, paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_samples_data.csv"))
+        file.copy(file.path(data.dirs["sero"], paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
+        file.rename(file.path(out.dir, paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_positives_data.csv"))
+        names(serosam.files) <- names(seropos.files) <- regions
+    }
 } else {
   serosam.files <- seropos.files <- NULL
 }
@@ -70,7 +82,10 @@ if(deaths.flag){
                          regions, "_",
                          nA, "ag",
                          ifelse(flg.confirmed, "CONF", ""),
-                         reporting.delay, "delay")
+                         reporting.delay, "delay",
+                         # Take into account possible name differences due to custom cutoff
+                         ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date))
+                         )
     if (exists("flg.cutoff")){
         if(flg.cutoff)
             data.files <- paste0(data.files, "cutoff", str.cutoff)
@@ -89,19 +104,47 @@ if(prev.flag){
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             paste(min(prev.lik.days), "every_day", max(prev.lik.days), sep = "_"),
                             paste0(prev.lik.days, collapse = "_"))
-    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev_", prev.file.txt, "_")
+    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev", "_")
+    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) {
+        prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
+    }
     if (exclude.eldest.prev) prev.file.prefix <- paste0(prev.file.prefix, "no_elderly_")
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
-    prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) names(prev.mean.files) <- names(prev.sd.files) <- regions
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
-    vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
-} else vac1.files <- vacn.files <- NULL
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+     
+    if(vac.n_doses == 3) {
+        vac2.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_2ndvaccinations_", regions, ".txt"))
+        vac3.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_3rdvaccinations_", regions, ".txt"))
+    } else {
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+    }
+    if(!format.inputs) {                                                                                                              
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
+        if(vac.n_doses ==3)  {
+                 names(vac1.files) <- names(vac2.files) <- names(vac3.files) <- regions
+          } else {
+              names(vac1.files) <- names(vacn.files) <- regions
+          }
+    }
+} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
+if(adm.flag){
+    if(!format.inputs) {
+        adm_csv_fname <- ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")
+        adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
+        file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
+        file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""),".txt")
+    }
+}
+
 if(format.inputs){
     if(deaths.flag){
         if(data.desc == "reports") {
@@ -121,7 +164,6 @@ if(format.inputs){
             source(file.path(proj.dir, "R/data/format_wales_deaths.R"))
         }
     }
-    print("After Deaths Flag")
     if(adm.flag) {
         source(file.path(proj.dir, "R/data/format_hosp_admissions.R"))
     }
@@ -133,16 +175,14 @@ if(format.inputs){
         source(file.path(proj.dir, "R/data/format_sero.R"))
     }
     if(vacc.flag){
+        print("pre_Vacc")
         source(file.path(proj.dir, "R", "data", "format_vaccinations.R"))
+        print("post_Vacc")
     }
     if(gp.flag){
         source(file.path(proj.dir, "R/data/format_linelist.R"))
     }
-} else {
-    if(adm.flag) {
-        file.copy(file.path("data", "RTM_format", region.type, "admissions", "admissions_data.csv"), out.dir)
-    }
-}
+} 
 
 ## Set up the model specification.
 source(file.path(proj.dir, "set_up.R"))
@@ -152,6 +192,7 @@ if(compile.code) {
     system("make rtm_hpc2")
 }
 
+print("finished chain 1")
 ## Set up a requisite number of chains
 startwd <- getwd()
 setwd(out.dir)

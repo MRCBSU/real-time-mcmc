@@ -13,7 +13,9 @@
 
 #SBATCH --output=model_runs_20210120regjobs_%a_%j.out
 #SBATCH --error=model_runs_20210120regjobs_%a_%j.err
+#SBATCH --array=0-15
 
+#SBATCH --partition=standard-wp
 
 # module load gcc R openmp intel_compiler OpenBLAS openmpi slurm
 
@@ -33,9 +35,9 @@ echo "= No. CPUs"
 # module list
 # echo $LD_LIBRARY_PATH
 
-# dirs=(*/)
-# cd ${dirs[SLURM_ARRAY_TASK_ID]}
-# pwd
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
 
 
 ~/real-time-mcmc/rtm_htc_con_login

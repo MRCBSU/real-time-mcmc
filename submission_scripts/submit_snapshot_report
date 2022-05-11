@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH --job_name=testrunRTM
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=91
+#SBATCH --time=96:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL,TIME_LIMIT,END
+#SBATCH --mail-user=joel.kandiah@phe.gov.uk
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --output=model_runs_20210120regjobs_%a_%j.out
+#SBATCH --error=model_runs_20210120regjobs_%a_%j.err
+#SBATCH --array=14,15
+
+#SBATCH --partition=standard-wp
+
+module load gcc/gcc-9.4.0 R openmp intel_compiler OpenBLAS openmpi slurm
+
+
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
+
+application="Rscript"
+
+options="~/mcmc/real-time-mcmc/R/output/SnapshotReportRender.R"
+
+CMD="$application $options"
+
+echo "Current directory: `pwd`"
+
+eval $CMD
+
+

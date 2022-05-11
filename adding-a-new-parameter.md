@@ -21,8 +21,14 @@
 
 - in the function ``flagclass::UPItoRMP`` in the ``RTM_flagclass.cc`` files, add a case for the new parameter's index name. This should return a " : " delimited list of the regional parameters that will need modifying when you change the new parameter.
 
+- add a line to the nameMap at the top of ``RTM_updParams.cc``, and choose a short constant name (in all caps).
+
+- add the above constant name to the `paramIndex` enum (in the same order as in `nameMap`) further down ``RTM_updParams.cc``.
+
 - if this parameter is a variance or overdispersion parameter that relates directly to data, re-size the relevant structures in the ``regional_model_params`` 
 
 - add a call to the mapping function ``regional_matrix_parameter`` or ``regional_vector_parameter`` or modify exsiting ones as appropriate within the ``evaluate_regional_parameters``. This describes how the updateable model parameter is mapped into the regions.
+
+- the above function is deprecated and is updated for consistency. Noting the change in format for the function arguments, enter similar blocks of code into the `block_regional_parameters` function.
 
 - modify the likelihood functions to accommodate the new model parameter.

@@ -38,6 +38,8 @@ rtmData::~rtmData()
     gsl_matrix_free(denoms);
   if(popn_weights != NULL)
     gsl_vector_free(popn_weights);
+  if(data_population != NULL)
+    gsl_vector_free(data_population);
 }
 data_type rtmData::get_likelihood_type()
 {

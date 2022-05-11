@@ -8,7 +8,7 @@ require(knitr)
 out.dir <- commandArgs(trailingOnly = TRUE)[1]
 setwd(out.dir)
 out.ind <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-Rscenario <- c(0.9, 1.1, 1.3, 1.4)[out.ind]
+Rscenario <- c(0.7, 0.9, 1.1, 1.3)[out.ind]
 ## Rscenario <- 0.8
 QUANTILES <- c(0.025, 0.5, 0.975)
 
@@ -103,7 +103,7 @@ ndays <- lubridate::as_date(date.data) - start.date + (7 * nweeks.ahead) + 1
 start.hosp <- 1
 start.gp <- 1
 start.prev <- 1
-end.hosp <- ifelse(hosp.flag, ndays, 1)
+end.hosp <- ifelse(hosp.flag | adm.flag, ndays, 1)
 end.gp <- ifelse(gp.flag, ndays, 1)
 end.prev <- ifelse(prev.flag, ndays, 1)
 end.vac <- ifelse(vacc.flag, ndays, 1)
@@ -111,7 +111,7 @@ end.vac <- ifelse(vacc.flag, ndays, 1)
 ## Get the new contact matrices to use
 cm.breaks <- c(cm.breaks, mm.breaks - start.date + 1)
 cm.files <- c(cm.files,
-              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date.str, ".txt"))
+              paste0("england_8ag_contact_projwk", 1:length(mm.breaks), "_", google.data.date_and_suff.str, ".txt"))
 cm.bases <- file.path(proj.dir, "contact_mats", cm.files)
 cm.lockdown.fl <- c(cm.lockdown.fl, paste0("England", mm.breaks, "all.csv"))
 cm.lockdown <- c(cm.lockdown,
@@ -148,7 +148,7 @@ if(gp.flag)
         cases.files[reg] <- repeat.last.row(cases.files[reg], paste0("dummy_cases_", reg))
         denoms.files[reg] <- repeat.last.row(denoms.files[reg], paste0("dummy_denoms_", reg))
     }
-if(hosp.flag)
+if(hosp.flag | adm.flag)
     for(reg in regions)
         hosp.data[reg] <- repeat.last.row(hosp.data[reg], paste0("dummy_deaths_", reg))
 if(prev.flag){
@@ -169,6 +169,7 @@ thin.outputs <- 1
 adaptive.phase <- 0
 burnin <- 0
 num.threads <- 1
+smc.outs <- 0
 
 ## The mod_inputs.txt file wont change with each projections so can render it now
 ## render(inputs.template.loc, output_dir = file.path(out.dir, "projections"), output_format = "plain_document")
@@ -201,7 +202,7 @@ if(vacc.flag){
 }
 ## The matrix for the random-walks will need changing to account for an extra breakpoint
 ## Place the new break-point now
-today.break <- ymd("20211206") - start.date + 1
+today.break <- ymd("20220126") - start.date + 1
 beta.breaks <- c(beta.breaks, today.break)
 beta.block <- beta.design[1:nbetas, 1:nbetas] %>%
     rbind(rep(1, nbetas)) %>%
@@ -284,7 +285,7 @@ if(vacc.flag) {
     save.list <- c(save.list, "vacc.infections")
     dimnames(vacc.infections) <- dim.list
 }
-if(hosp.flag) {
+if(hosp.flag | adm.flag) {
     deaths <- melt.list(Deaths);rm(Deaths)
     save.list <- c(save.list, "deaths")
     dimnames(deaths) <- dim.list

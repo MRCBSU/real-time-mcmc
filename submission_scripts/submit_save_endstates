@@ -6,7 +6,7 @@
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=2
 #! How much wallclock time will be required?
-#SBATCH --time=0:20:00
+#SBATCH --time=0:30:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL,TIME_LIMIT,END
 #SBATCH --mail-user=joel.kandiah@phe.gov.uk
@@ -14,11 +14,13 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=4,12
+#SBATCH --array=0-15
 #SBATCH --output=submit_save_endstates_%a_%j.out
 #SBATCH --error=submit_save_endstates_%a_%j.err
+#SBATCH --partition=standard-wp
+#SBATCH --mem=50G
 
-module load R gcc openmp intel_compiler OpenBLAS openmpi slurm
+module load R gcc/gcc-9.4.0 openmp intel_compiler OpenBLAS openmpi slurm
 
 dirs=(*/)
 pwd

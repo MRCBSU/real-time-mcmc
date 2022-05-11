@@ -7,7 +7,7 @@ suppressMessages(library(tidyverse))
 
 
 if(!exists("date.data"))
-    date.data <- (today() - days(2)) %>% format("%Y%m%d")
+    date.data <- (today() - days(3)) %>% format("%Y%m%d")
 
 ## Where to find the data, if NULL use command line argument
 if(!exists("deaths.loc")) {
@@ -105,7 +105,10 @@ if(!exists("data.files"))
                                       regions,
                                       "_",
                                       nA,
-                                      "ages.txt")
+                                      "ages",
+                                      # Rename files with custom cutoff due to changes in format
+                                      ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date)),
+                                      ".txt")
 
 ## Which columns are we interested in?
 death.col.args <- list()
@@ -162,7 +165,7 @@ if (!all(dth.dat$plausible_death_date)) {
 	implausible.dates <- dth.dat %>% filter(!plausible_death_date)
 	print("WARNING: The following rows have implausible death dates and have been excluded: ")
 	(x.out <- implausible.dates %>% select(c(finalid, Date, Onset, death_type))) %>% print(n=1000) ## %>% write_csv("bad_onset_dates.csv")
-	dth.dat <- dth.dat %>% filter(plausible_death_date)
+	## dth.dat <- dth.dat %>% filter(plausible_death_date)
 }
 
 print("WARNING: the following rows have had onset and/or death date changed to become plausible: ")
@@ -186,7 +189,8 @@ dth.dat %>%
     #mutate(Date = x)
 ## ## 
 
-latest.date <- ymd(date.data) ## - reporting.delay
+# Modify latest date calculation to use custom end date
+latest.date <- ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date)
 dth.dat <- dth.dat %>%
     filter(Date <= latest.date) %>%
     filter(Date >= earliest.date) %>%
@@ -254,7 +258,8 @@ if(write.deaths){
     rtm.dat %>%
         group_by(Date, Region) %>%
         summarise(count = sum(n)) %>%
-        mutate(ignore = !(Date <= (latest.date - reporting.delay))) -> rtm.dat.plot
+        # Modify the dates to use based on whether or not early cutoff is in the data
+        mutate(ignore = !(Date <= ifelse(use_deaths_up_to_now_flag, ymd(date.data) - reporting.delay, custom_deaths_end_date))) -> rtm.dat.plot
     
     gp <- ggplot(rtm.dat.plot, aes(x = Date, y = count, color = Region)) +
         geom_line(aes(linetype = ignore)) +

@@ -349,8 +349,4 @@ dev.off()
     
 ##   }
 
-print(out.dir)
-print(file.path(out.dir, "mcmc.RData"))
-
-
 save.image(file.path(out.dir, "mcmc.RData"))

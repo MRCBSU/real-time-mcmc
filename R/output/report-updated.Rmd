@@ -12,7 +12,6 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
-message(external.bak)
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
 knitr::opts_chunk$set(error=TRUE)
 
@@ -22,15 +21,10 @@ suppressMessages(library(lubridate))
 suppressMessages(library(plotly))
 suppressMessages(library(tidyverse))
 suppressMessages(extract <- R.utils::extract)
-cat(Rfile.loc)
-if(exists("Rfile.loc")) {
-  source(file.path(Rfile.loc, "results_api.R"))
-  source(file.path(Rfile.loc, "plot_funcs.R"))
-} else {
-  proj.dir <- "~/RTM"
-  source("results_api.R")
-  source("plot_funcs.R")
-}
+
+source(file.path(Rfile.loc, "results_api.R"))
+source(file.path(Rfile.loc, "plot_funcs.R"))
+
 results_hash = tools::md5sum(file.path(out.dir, "output_matrices.RData"))
 if (external && exists("dth.dat") && !is.null(dth.dat)) {
 	dth.dat <- filter(dth.dat, date <= ymd(date.data) - reporting.delay)
@@ -89,7 +83,6 @@ Data are stratified into eight age groups: <1, 1-4, 5-14, 15-24, 25-44, 45-64, 6
 Value of $R_t$, the average number of secondary infections due to a typical infection today.
 
 ```{r Rt-table}
-
 get.aggregated.quantiles(Rt, "region", QUANTILES) %>%
   pivot_wider(names_from = quantile) %>%
   filter(date == ymd(date.data)) %>%
@@ -168,45 +161,73 @@ The percentage of a given group that has been infected.
 #### By region
 
 ```{r attack-region}
-bind_rows(
-  tbl_ar_Eng,
-  tbl_pop %>%
-    left_join(tbl_cum_inf_region, by = c('region' = 'region'))
-  ) %>%
-  select(Region = region, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`, population) %>%
-  mutate(
-    Median = Median / population,
-    `95% CrI (lower)` = `95% CrI (lower)` / population,
-    `95% CrI (upper)` = `95% CrI (upper)` / population
-    ) %>%
-  select(-population) %>%
-  datatable() %>%
-  formatPercentage(2:4)
+df.AR <- as.tbl_cube(AR, met_name = "value") %>%
+      as_tibble() %>%
+      mutate(date = lubridate::as_date(date)) %>%
+      filter(date == lubridate::as_date(date.data)) %>%
+      left_join(population, by = c('age' = 'age', 'region' = 'region')) %>%
+      rename(AR = value.x, population = value.y)
+df.AR.Eng <- df.AR %>%
+	  group_by(age, iteration) %>%
+	  summarise(AR = weighted.mean(AR, w = population), population = sum(population)) %>%
+	  mutate(region = "England")
+
+tbl.AR.by.region <- bind_rows(df.AR %>%
+      group_by(iteration, region) %>%
+      summarise(AR = weighted.mean(AR, w = population)),
+      df.AR.Eng %>%
+      group_by(iteration, region) %>%
+      summarise(AR = weighted.mean(AR, w = population))
+      ) %>%
+      group_by(region) %>%
+      summarise(value = quantile(AR, probs = c(0.025, 0.5, 0.975))) %>%
+      mutate(quantile = c(0.025, 0.5, 0.975), value = paste0(signif(100 * value, 3), "%")) %>%
+      pivot_wider(region, names_from = quantile) %>%
+      rename(Region = region) %>%
+      transmute(`Attack rate` = paste0(`0.5`, "(", `0.025`, "--", `0.975`, ")"))
+
+bind_rows(filter(tbl.AR.by.region, Region == "England"), filter(tbl.AR.by.region, Region != "England")) %>%
+		 datatable()
 ```
 
 
 #### By age
 
 ```{r attack-age}
-tbl_cum_inf_age <-
-  get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
-  pivot_wider(names_from = quantile) %>%
-  filter(date == ymd(date.data)) %>%
-  select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+tbl.AR.by.age <- df.AR %>%
+	      group_by(iteration, age) %>%
+	      summarise(AR = weighted.mean(AR, w = population)) %>%
+	      group_by(age) %>%
+	      summarise(value = quantile(AR, probs = c(0.025, 0.5, 0.975))) %>%
+      	      mutate(quantile = c(0.025, 0.5, 0.975), value = paste0(signif(100 * value, 3), "%")) %>%
+      	      pivot_wider(age, names_from = quantile) %>%
+      	      transmute(`Attack rate` = paste0(`0.5`, "(", `0.025`, "--", `0.975`, ")")) %>%
+	      mutate(Age = factor(age, levels = age.labs, labels = age.labs, ordered = TRUE)) %>%
+	      ungroup() %>%
+	      select(Age, `Attack rate`) %>%
+	      arrange(Age)
 
-population %>%
-  group_by(age) %>%
-  summarise(population = sum(value)) %>%
-  left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
-  mutate(
-    Median = Median / population,
-    `95% CrI (lower)` = `95% CrI (lower)` / population,
-    `95% CrI (upper)` = `95% CrI (upper)` / population
-    ) %>%
-  select(-population) %>%
-  arrange(match(age, age.labs)) %>%
-  datatable() %>%
-  formatPercentage(2:4)
+datatable(tbl.AR.by.age)	      
+
+## tbl_cum_inf_age <-
+##   get.aggregated.quantiles(cum_infections, "age", c(0.025, 0.5, 0.975)) %>%
+##   pivot_wider(names_from = quantile) %>%
+##   filter(date == ymd(date.data)) %>%
+##   select(age, Median = `0.5`, `95% CrI (lower)` = `0.025`, `95% CrI (upper)` = `0.975`) 
+
+## population %>%
+##   group_by(age) %>%
+##   summarise(population = sum(value)) %>%
+##   left_join(tbl_cum_inf_age, by = c('age' = 'age')) %>%
+##   mutate(
+##     Median = Median / population,
+##     `95% CrI (lower)` = `95% CrI (lower)` / population,
+##     `95% CrI (upper)` = `95% CrI (upper)` / population
+##     ) %>%
+##   select(-population) %>%
+##   arrange(match(age, age.labs)) %>%
+##   datatable() %>%
+##   formatPercentage(2:4)
 ```
 
 ### Current `r severity.measure`
@@ -405,19 +426,17 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-# infections.growth.rates <- calc.growth.rate(infections)
+## infections.growth.rates <- calc.growth.rate(infections)
 if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
 infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
 						Egt,
 						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
-
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 
 NB: negative growth rates are rates of decline. Values are daily changes.
 
 `r knitr::kable(infections.growth.rates, digits = 2, align = 'lccc')`
-
 
 #### Halving times
 

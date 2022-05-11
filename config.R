@@ -9,7 +9,7 @@ vacc.loc <- "/shared/home/phe.gov.uk/joel.kandiah/real-time-mcmc/data/raw/vaccin
 str.date.vacc <- "20220120"
 
 # Either ONS or NHS
-region.type <- "ONS"
+region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(4)) %>% format("%Y%m%d"))
@@ -43,10 +43,25 @@ if (args[2] == "All")  {
 NHSBT.flag <- 1
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
-## Assumed number of days between infection and developing the antibody response
-serology.delay <- 25
-## Last date for which serology is used
-sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+
+
+# Determine whether or not to run the model with the serology being dropped from a certain date onwards
+# (Note: False -> doesn't drop the data)
+sero_cutoff_flag <- F
+
+if(sero_cutoff_flag) {
+    #If dropping serology
+    ## As date chosen, assumed to be chosen at a complete date
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(20211030) + 25 ## ymd(20200522) ## ymd(20210920)
+} else {
+    #If not dropping serology
+    ## Assumed number of days between infection and developing the antibody response
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+}
 ## Last date for which first wave serology is used
 sero.end.1stwv <- ymd(20200522)
 ## Format of dates used in the serology data
@@ -54,12 +69,20 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
+# Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
+# Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
+admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
+date.adm_seb <- ymd(20220506)
+date.adm_sus <- ymd(20210930)
+date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
+                                                  date.adm_seb - adm_seb.strip_days,
+                                                  date.adm_sus - adm_sus.strip_days))
 
 ## ## file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
@@ -69,21 +92,33 @@ adm.seb.geog_link.loc <- "utility_files/trust lookup for paul.xlsx"
 adm.seb.geog_link <- "Trust_code"
 adm.seb.region_col <- "phec_nm"
 
-# File names for files in
-preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
+## ## File names of pre-processed SUS data if it is to be used.
+if(!admissions_only.flag) { ## Settings for preprocessed all hospitalisations
+    preprocessed_sus_names <- paste0("2022-01-02_", regions, "_6ag_counts.txt")
+    sus_old_tab_sep <- T
+    preprocessed_sus_csv_name <- "admissions_data_all_hosp.csv"
+    adm_sus.end.date <- ymd(20201014)
+} else { ## Settings for admissions_only
+    preprocessed_sus_names <- paste0("2022-03-09_", regions, "_6ag_counts.txt")
+    sus_old_tab_sep <- F
+    preprocessed_sus_csv_name <- "admissions_data_admissions_only.csv"
+    adm_sus.end.date <- ymd(20210505)
+}
+
 names(preprocessed_sus_names) <- regions
 print(preprocessed_sus_names)
-preprocessed_sus_csv_name <- "admissions_data.csv"
 
-## ##Admissions flags/dates
+## ## Admissions flags/dates
 ## adm.end.date <- date.data - adm_seb.strip_days ## Set this value if we want to truncate the data before its end.
-adm_sus.end.date <- ymd(20201014)
+ ## New date breakpoint
+
+
 ## adm_seb.start.date <- ymd(20201014)
 ## ## IF THE BELOW ARE NOT SPECIFIED, THE MOST RECENT FILE WILL BE CHOSEN
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220114"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220506"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -151,7 +186,7 @@ deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by 
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 619
+num.prev.days <- 732
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -159,6 +194,10 @@ exclude.eldest.prev <- FALSE
 vacc.flag <- 1
 ## Format used for dates in the vaccination file
 vac.date.fmt <- "%d%b%Y"
+
+## Deaths Flags
+use_deaths_up_to_now_flag <- T
+custom_deaths_end_date <- lubridate::ymd("20211030")
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", num.prev.days)
@@ -175,17 +214,19 @@ contact.prior <- "ons"
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- ifelse(deaths.flag, "60", "")
+	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "60"), "")
+	# str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "6bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "7bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
-scenario.name <- paste0(scenario.name, "_", time.to.last.breakpoint, "wk", break.window)
+scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""),
+                    "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -206,15 +247,15 @@ use.previous.run.for.start <- T
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
         if(str.cutoff == "60")
-            previous.run.to.use <- file.path(proj.dir, "model_runs", "20211119", paste0(c("Prev564SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119",
-                                                                                          "Prev564SeroNHSBT_All_NHS60cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211119"), matrix.suffix, "_", data.desc, c("_chain2", ""))
-                                             )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220107", paste0(c("Prev610SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107_timeuse_household_deaths_chain2_long",
-                                                                                           "Prev610SeroNHSBT_All_NHS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107_timeuse_household_deaths_chain2_long"))
+            previous.run.to.use <- file.path(proj.dir, "model_runs", "20220506",paste0(c("copy_Prev732SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_deaths",
+                                                                                         "copy_Prev732SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_deaths_chain2"))
+                                              )
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220506",paste0(c("Prev732SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_admissions_no_deaths_chain1_original",
+                                                                                          "Prev732SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220506_stable_household_admissions_no_deaths_chain2_original"))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20211231", c("Prev606SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_timeuse_household_admissions_no_deaths_chain2", # _stable_household_deaths_chain2",
-                                                                                      "Prev606SeroNHSBT_All_ONS28cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20211231_timeuse_household_admissions_no_deaths_chain2") # _stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304", c("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_copy", # _stable_household_deaths_chain2",
+                                                                               "Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_chain2_copy") # _stable_household_deaths")
                                                                                 #   , matrix.suffix, "_", data.desc, c("_chain2", "")
                                                                             
                                          )
@@ -253,10 +294,10 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 3
+prev.cutoff.days <- 4L
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220119")
+date.prev <- lubridate::ymd("20220503")
 prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -274,12 +315,36 @@ scenario.name <- paste0(scenario.name, efficacies)
 ## ## temporary line - for adding ad hoc names to the scenario
 ## scenario.name <- paste0(scenario.name, "_manufacturer")
 
+########### VACCINATION OPTIONS ###########
+vacc.flag <- 1 ## Do we have any vaccination data
+str.date.vacc <- "20220505" ## Optional: if not specified will take the most recent data file.
+vacc.lag <- 21
+vac.overwrite <- FALSE
+if(vacc.flag){
+    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
+    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
+}
+vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
+## How many vaccinations can we expect in the coming weeks
+## - this is mostly set for the benefit of projections rather than model fitting.
+future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
+future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
+
+## Approximate date at which delta became dominant strain (- one week)
+delta.date <- ymd("20210503")
+## Approximate date at which omicron became dominant strain (- one week)
+omicron.date <- ymd("20211205")
+
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
                      date.data,
                      paste0(
                          scenario.name,
+                         ## Modified to rename the runs if cutting off the data early
+                         ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
+                         ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          "_matrices2_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
@@ -287,19 +352,4 @@ if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 1
 
-########### VACCINATION OPTIONS ###########
-vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220120" ## Optional: if not specified will take the most recent data file.
-vacc.lag <- 21
-vac.overwrite <- F
-if(vacc.flag){
-    start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
-    end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
-}
-vac.n_doses <- 2L ## Number of doses in preprocessed data (Either 3 or 2)
-## How many vaccinations can we expect in the coming weeks
-## - this is mostly set for the benefit of projections rather than model fitting.
-future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
-future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
-## Approximate data at which delta became dominant strain
-delta.date <- ymd("20210510")
+adapt.every <- 100

@@ -52,14 +52,14 @@ public:
     EGR_HYPER, LPL0_HYPER, PROP_SUS_HYPER,
     LBETA_RW_SD, GP_OVERDISP, HOSP_OVERDISP,
     ALP, AIP, AR1,
-    VAC1_DISEASE, VACN_DISEASE, VAC1_INFECT, VACN_INFECT,
+    VAC1_DISEASE, VACN_DISEASE, VACB_DISEASE, VAC1_INFECT, VACN_INFECT, VACB_INFECT,
     REL_INFECT, PROP_SYMP, CONTACT,
     LBETA_RW, R0_AMP, R0_PEAKDAY,
     EGR, LPL0, PROP_SUS,
     PROP_HI_GEQ_32, PROP_GP, PROP_HOSP,
     PROP_DEATH, IMPORTATION, BGR,
     SENS, SPEC, DOW_EFFECTS,
-    SSENS, SSPEC,
+    SSENS, SSPEC, IWAN,
     // This must always be last. It gives total number of params.
     UMP_FINAL_NUM_PARAMS
   };
@@ -180,6 +180,9 @@ public:
   double laccept;   // Acceptance score
   int numAccept;    // Acceptance rate
   int numProposed;
+
+  bool doAdaptation;  // Whether to adapt the covariance using AMGS
+  int adapt_every;    // Local copy of global setting used for calculating AMGS eta
 
   // Extract the number of components in block
   int size() const;

@@ -31,9 +31,6 @@ if(!exists("prev.loc")){ ## Set to default format for the filename
     }
 }
 
-print(date.prev)
-print(input.loc)
-
 ## What is the date of publication of these data? If not specified, try to extract from filename
 if(date.prev != lubridate::ymd(strapplyc(input.loc, "[0-9/]{8,}", simplify = TRUE))) stop("Specified date.prev does not match the most recent prevalence data file.")
 ## Substitute this date into the output file names
@@ -170,20 +167,7 @@ prev.dat <- prev.dat %>%
     get.region() %>%
     filter(region %in% regions)
 
-
-print(prev.dat %>%
-      filter(lsd > 0) %>%
-      distinct(day, region) %>%
-	  nrow())
-
-print(prev.dat %>%
-      filter(lsd > 0) %>%
-      distinct(day, region), n=386)
-
-print(length(prev.lik.days) * nr)
-print(length(prev.lik.days))
-print(max(prev.lik.days))
-# Check correct number of days
+## Check correct number of days
 stopifnot(
   (
     prev.dat %>%
@@ -223,16 +207,16 @@ for(reg in regions){
                              mutate(!!age.labs[1] := 0)
                            )
 
-    print(paste("Writing to",
-                prev.mean.files[reg],
-                "."))
+    # print(paste("Writing to",
+    #             prev.mean.files[reg],
+    #             "."))
 
     region.mean %>%
         write_tsv(prev.mean.files[reg], col_names = FALSE)
 
-    print(paste("Writing to",
-                prev.sd.files[reg],
-                "."))
+    # print(paste("Writing to",
+    #             prev.sd.files[reg],
+    #             "."))
 
     region.sd %>%
         write_tsv(prev.sd.files[reg], col_names = FALSE)
