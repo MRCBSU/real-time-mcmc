@@ -49,10 +49,25 @@ if (args[2] == "All")  {
 NHSBT.flag <- 1
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
-## Assumed number of days between infection and developing the antibody response
-serology.delay <- 25
-## Last date for which serology is used
-sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+
+
+# Determine whether or not to run the model with the serology being dropped from a certain date onwards
+# (Note: False -> doesn't drop the data)
+sero_cutoff_flag <- T
+
+if(sero_cutoff_flag) {
+    #If dropping serology
+    ## As date chosen, assumed to be chosen at a complete date
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(20220301) + 25 ## ymd(20200522) ## ymd(20210920)
+} else {
+    #If not dropping serology
+    ## Assumed number of days between infection and developing the antibody response
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+}
 ## Last date for which first wave serology is used
 sero.end.1stwv <- ymd(20200522)
 ## Format of dates used in the serology data
@@ -189,7 +204,11 @@ use.INLA.prev <- TRUE
 ## Any inputs here for the vaccination data (or even if there is any)
 vacc.flag <- 1
 ## Format used for dates in the vaccination file
-vac.date.fmt <- "%Y-%m-%d"
+vac.date.fmt <- "%d%b%Y"
+
+## Deaths Flags
+use_deaths_up_to_now_flag <- F
+custom_deaths_end_date <- lubridate::ymd("20220501")
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
@@ -350,6 +369,9 @@ out.dir <- file.path(proj.dir,
                      paste0(
                          scenario.name,
                          "_matrices_", google.data.date, matrix.suffix,
+                         ## Modified to rename the runs if cutting off the data early
+                         ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
+                         ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
