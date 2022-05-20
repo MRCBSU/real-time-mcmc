@@ -12,6 +12,7 @@ data/**
 outputs/**
 .vscode
 model_runs/**
+model_runs_old/**
 **/.Rhistory
 Emulation/**
 spi-forecasts/**

@@ -1,0 +1,43 @@
+#!/bin/bash
+#SBATCH --job_name=testrunRTM
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=2:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=FAIL,TIME_LIMIT,END
+#SBATCH --mail-user=joel.kandiah@phe.gov.uk
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --output=model_runs_20210120regjobs_%a_%j.out
+#SBATCH --error=model_runs_20210120regjobs_%a_%j.err
+#SBATCH --array=0-15
+
+#SBATCH --partition=standard-wp
+
+module load gcc/gcc-9.4.0 R openmp intel_compiler OpenBLAS openmpi slurm
+
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/OpenBLAS/0.3.17/lib64"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/openmp/12.0.1/lib"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/gsl/2.7/lib"
+
+# sintr -N1 -n1 -c4 -t 1:0:0 --qos=INTR
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+
+# ls -a
+# module list
+# echo $LD_LIBRARY_PATH
+
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
+
+
+~/mcmc/real-time-mcmc/rtm_intel_debug
+
+  # sbatch ../../../submit_post_process_correct_dir
+
