@@ -598,6 +598,9 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
   // so far, have assumed that all infections are symptomatic. not so. multiply by the proportion of symptomatics
   gsl_matrix_mul_elements(NNI_rep_model_input, prop_symp);
 
+  // similarly, multiply by proportion of individuals who will experience the severe event
+  gsl_matrix_mul_elements(NNI_rep_model_input, severity_ratio);
+  
   gsl_matrix* modelled_events = gsl_matrix_calloc(in_gmip.l_reporting_time_steps_per_day * in_gmip.l_duration_of_runs_in_days, NUM_AGE_GROUPS);
 
   // convolve the number of new infections over the (already calculated) delay distribution ##### NEED TO ADD A NUMBER OF THREADS CLAUSE!!!!!!
@@ -609,7 +612,7 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
 	  double modelled_out = 0;
 	  for (int m = 0; m <= FN_MIN(distribution_function->size - 1, k); ++m)
 	    {
-	      modelled_out += gsl_matrix_get(severity_ratio, k - m, j) * gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
+	      modelled_out += gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
 	      // gsl_matrix_set(modelled_events,
 	      // 		     k,
 	      // 		     j,
