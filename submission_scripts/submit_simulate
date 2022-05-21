@@ -28,17 +28,17 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=17,22
+#SBATCH --array=17
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_snapshot_20220325_%a.out
-#SBATCH --error=simulate_snapshot_20220325_%a.err
+#SBATCH --output=simulate_midterm_20220325_%a.out
+#SBATCH --error=simulate_midterm_20220325_%a.err
 
-forecast_switch="snapshot"
+forecast_switch="midterm"
 
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
