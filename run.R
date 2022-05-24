@@ -137,11 +137,12 @@ if(vacc.flag){
 } else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
-        adm_csv_fname <- ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")
+        adm_csv_fname <- ifelse(admissions_only.flag, paste0("admissions_data_admissions_only", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"),
+                                                     paste0("admissions_data_all_hosp", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"))
         adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
         file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
         file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
-        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""),".txt")
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""), ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".txt")
     }
 }
 

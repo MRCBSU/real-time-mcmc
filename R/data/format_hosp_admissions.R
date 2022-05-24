@@ -90,6 +90,12 @@ if(exists("adm.end.date")){
     latest.date <- date.adm_seb - adm_seb.strip_days
 }
 
+if(cutoff_hosps_early & !deaths.flag & !hosp.flag) {
+    latest.date <- date_early_cutoff_hosps
+    if((sus_seb_combination == 1 | sus_seb_combination == 3) & date_early_cutoff_hosps <= adm_sus.end.date) {
+        stop("Pick a date after the end of the sus data has been used or change to a different sus_seb_combination variable")
+    }
+}
 ## Define an age-grouping (the final age groupings note these can be modified in config.r this is just a default)
 if(!exists("age_adm.agg")){
     age_adm.agg <- c(0, 25, 45, 65, 75, Inf)
@@ -203,7 +209,7 @@ if(!exists("admsam.files")){
                                                   date.adm_sus - adm_sus.strip_days))
     } else date.adm.str <- adm.end.date
     ## Change file_names if admissions only
-    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts", ifelse(admissions_only.flag, "_adm_only", ""), ".txt")
+    admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""), ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".txt")
 }
 
 ## Construct the sus data into a useful format if necessary (date, age, region, admissions)
@@ -558,7 +564,8 @@ if(sus_seb_combination == 3) {
 
 # Save the data
 write_csv(adm.sam, file.path(out.dir, "admissions_data.csv"))
-write_csv(adm.sam, file.path(data.dirs["adm"], ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")))
+write_csv(adm.sam, file.path(data.dirs["adm"], ifelse(admissions_only.flag, paste0("admissions_data_admissions_only", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"),
+                                                     paste0("admissions_data_all_hosp", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"))))
 
 
 ## Create a quick plot of the data

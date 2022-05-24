@@ -25,6 +25,8 @@ if(!exists("sero.loc")){ ## Set to default format for the filename
 }
 csv.flag <- grepl("*csv$", input.loc)
 
+print(input.loc)
+
 ## Set the max and min dates for the data
 earliest.date <- start.date
 latest.date <- sero.end.date
@@ -68,6 +70,7 @@ if(region.type == "ONS") possible.col.names$ONS_region = "ONS_Region"
 
 if(csv.flag){
     input.col.names <- suppressMessages(names(read_csv(input.loc, n_max = 0)))
+    print(input.col.names)
 } else input.col.names <- suppressMessages(names(read_xlsx(input.loc,sheet = 1, n_max = 0)))
 is.valid.col.name <- function(name) {name %in% input.col.names}
 first.valid.col.name <- function(names) {first.where.true(names, is.valid.col.name)}

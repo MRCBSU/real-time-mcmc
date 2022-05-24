@@ -40,3 +40,5 @@ contact_mats/**/*.html
 git**txt
 spi-forecasts
 model_runs
+Outputs_profiling
+Outputs_profiling/**

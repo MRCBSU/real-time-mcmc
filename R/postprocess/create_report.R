@@ -50,12 +50,16 @@ Rfile.loc <- file.path(file.loc, "R/output")
 #   source("plot_funcs.R")
 # }
 
+dir.create(file.path(out.dir, 'tmp'), showWarnings = FALSE)
+dir.exists(file.path(out.dir, 'tmp'))
+
+print(file.path(out.dir, 'tmp'))
 
 render(
     file.path(Rfile.loc, 'report-updated.Rmd'),
     html_document(pandoc_args = "--self-contained"),
     output_dir = out.dir,
-    intermediates_dir = "~/scratch/tmp"
+    intermediates_dir = file.path(out.dir, 'tmp')
 )
 
 # ## Return back to initial directory

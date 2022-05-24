@@ -18,6 +18,8 @@
         - Modified serology to filter to the right cutoff and write to custom filenames
     - R/data/format_deaths.R
         - Modified deaths to filter to the right cutoff and write to custom filenames
+    - set_up_inputs.R
+        - Modified code to ensure the correct end dates are selected
 
 
 2) To run the model using the admissions only model the differences in the config file will be:

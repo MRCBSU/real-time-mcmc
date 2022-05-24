@@ -19,9 +19,15 @@ if(!exists("file.loc")){
     file.loc <- dirname(thisFile())
     proj.dir <- file.loc
 }
+
+print("in set_up.R")
 ## ## Load required functions for reading in data
 source(file.path(proj.dir, "set_up_inputs.R"))
+
+print("After set_up.inputs")
 source(file.path(proj.dir, "set_up_pars.R"))
+
+print("After set_up.pars")
 
 ## Make the output directory if necessary
 flg.createfile <- !file.exists(out.dir)

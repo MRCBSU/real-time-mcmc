@@ -22,6 +22,9 @@ if(deaths.flag){
 } else if(adm.flag) {
     start.hosp <- 1
     end.hosp <- date.adm.str - start.date + 1
+    if(cutoff_hosps_early & !deaths.flag & !hosp.flag) {
+        end.hosp<- date_early_cutoff_hosps - start.date + 1
+    }
 } else {
     start.hosp <- 1
     end.hosp <- 1
@@ -156,10 +159,10 @@ cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
 num.iterations <- 3.5e6L
-burnin <- 2.5e6L
-adaptive.phase <- 2.5e6L
-thin.outputs <- 400L ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 200L ## After how many iterations to output each set of parameters
+adaptive.phase <- 2e6L
+burnin <- 2e6L
+thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 300L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
 # burnin <- 5e5L
 # adaptive.phase <- 5e5L
