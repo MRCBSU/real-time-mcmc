@@ -18,6 +18,8 @@
         - Modified serology to filter to the right cutoff and write to custom filenames
     - R/data/format_deaths.R
         - Modified deaths to filter to the right cutoff and write to custom filenames
+    - R/data/format_hosp_admissions.R
+        - Modified deaths to filter to the right cutoff and write to custom filenames
     - set_up_inputs.R
         - Modified code to ensure the correct end dates are selected
 
@@ -37,7 +39,14 @@
     - ```r
         ## Deaths Flags
         use_deaths_up_to_now_flag <- F ## modified to false to use deaths cutoff
-        custom_deaths_end_date <- lubridate::ymd("20211030") ## Modified to use cutoff date
+        custom_deaths_end_date <- lubridate::ymd("20211030") + 25 ## Modified to use cutoff date
+        ```
+        - Note that the cutoff is applied when use_deaths_up_to_now_flag is set to False
+    - ```r
+        ## Admissions Flags
+        # Flag to determine whether to cutoff the hospitalisation datastream early (T => use cutoff)
+cutoff_hosps_early <- T
+        date_early_cutoff_hosps <- ymd(20211030) ## Modified to use cutoff date
         ```
         - Note that the cutoff is applied when use_deaths_up_to_now_flag is set to False
 

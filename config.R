@@ -69,7 +69,7 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
-# Flag to determine whether to cutoff the hospitalisation datastream early
+# Flag to determine whether to cutoff the hospitalisation datastream early (T => use cutoff)
 cutoff_hosps_early <- F
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
