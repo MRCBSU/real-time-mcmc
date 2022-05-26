@@ -76,11 +76,14 @@ sero.date.fmt <- "%d%b%Y"
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 google.data.date <- format(ymd("2022-05-20"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household_new_base"
-#matrix.suffix <- "_stable_household_new_base"
+#matrix.suffix <- "_timeuse_household_new_base"
+matrix.suffix <- "_stable_household_new_base"
 
 #matrix.suffix_paul <- "_stable_household"
 
+# Flag to determine whether to cutoff the hospitalisation datastream early
+cutoff_hosps_early <- T
+date_early_cutoff_hosps <- ymd(20220228)
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
 admissions_only.flag <- F
@@ -95,6 +98,7 @@ date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
                                                   date.adm_sus - adm_sus.strip_days))
+
 
 ## ## file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
@@ -185,12 +189,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -235,7 +239,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- 60
+	str.cutoff <- 28
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -360,8 +364,6 @@ delta.date <- ymd("20210503")
 ## Approximate date at which omicron became dominant strain (- one week)
 omicron.date <- ymd("20211205")
 
-scenario.name <- paste0(scenario.name, "_new_mprior")
-
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,
                      "model_runs",
@@ -371,18 +373,11 @@ out.dir <- file.path(proj.dir,
                          "_matrices_", google.data.date, matrix.suffix,
                          ## Modified to rename the runs if cutting off the data early
                          ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
+                         ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")
 
 threads.per.regions <- 1
-
-
-
-
-
-
-
-
 

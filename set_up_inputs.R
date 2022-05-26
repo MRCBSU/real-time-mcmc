@@ -22,10 +22,14 @@ if(deaths.flag){
 } else if(adm.flag) {
     start.hosp <- 1
     end.hosp <- date.adm.str - start.date + 1
+    if(cutoff_hosps_early & !deaths.flag & !hosp.flag) {
+        end.hosp<- date_early_cutoff_hosps - start.date + 1
+    }
 } else {
     start.hosp <- 1
     end.hosp <- 1
 }
+
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 ## if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
