@@ -28,7 +28,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=17
+#SBATCH --array=8,12,16
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
