@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -J trial_hpc_batch
-#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH -A MRC-BSU-SL3-CPU
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=14
-#SBATCH --time=36:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:02:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-type=TIME_LIMIT
@@ -13,31 +13,70 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=1-2
-#SBATCH -p skylake
-#SBATCH --qos=covid0
+#SBATCH --array=0-19
+#SBATCH -p icelake
 
+#SBATCH --output=new_iterations%a.out
+#SBATCH --error=new_iterations%a.err
 
-#SBATCH --output=model_runs_20201120prevjobs_%a.out
-#SBATCH --error=model_runs_20201120prevjobs_%a.err
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
+#! Insert additional module load commands after this line if needed:
+# module load pandoc                         # Need this to generate the STAN model code
+# # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
-workdir="$SLURM_SUBMIT_DIR/model_runs/20201120/NoPrev_relax_shortsero_fix_cm4_latestart_ifr_"
+# module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
+module load rhel8/default-icl
 
-if (( $SLURM_ARRAY_TASK_ID % 2 == 0 )); then
-    workdir="${workdir}28"
+# Navigate to the correct working directory
+dirs=(*/)
+# echo ${dirs[SLURM_ARRAY_TASK_ID]}
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
+
+application="Rscript"
+
+options="../../../R/output/tmp.R"
+
+# #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
+# #! safe value to no more than 16:
+# export OMP_NUM_THREADS=1
+# export R_PROFILE=$RMPI_RPROFILE
+
+# #! The following variables define a sensible pinning strategy for Intel MPI tasks
+
+# #! this should be suitable for both pure MPI and hybrid MPI/OpenMP jobs:
+# export I_MPI_PIN_DOMAIN=omp:compact # Domains are $OMP_NUM_THREADS cores in size
+# export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches/sockets
+# #! Notes:
+# #! 1. These variables influence Intel MPI only.
+# #! 2. Domains are non-overlapping sets of cores which map 1-1 to MPI tasks.
+# #! 3. I_MPI_PIN_PROCESSOR_LIST is ignored if I_MPI_PIN_DOMAIN is set.
+# #! 4. If MPI tasks perform better when sharing caches/sockets, try I_MPI_PIN_ORDER=compact.
+
+# # Get array ID
+# i=${SLURM_ARRAY_TASK_ID}
+
+#! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
+
+#! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
+
+# You can use any arbitrary set of Linux commands here
+
+CMD="$application $options"
+
+JOBID=$SLURM_JOB_ID
+
+echo -e "JobID: $JOBID\n======"
+echo "Time: `date`"
+if [ $SLURM_JOB_NUM_NODES -gt 1 ]; then
+        echo "Running on nodes: $SLURM_JOB_NODELIST"
 else
-    workdir="${workdir}60"
+        echo "Running on node: `hostname`"
 fi
-workdir="${workdir}cutoff_matrices_20201120_adjusted_mean"
 
-module load gcc/9 intel/compilers/2020.2
+echo "Current directory: `pwd`"
+echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_THREADS = $OMP_NUM_THREADS"
+echo -e "\nExecuting command:\n==================\n$CMD\n"
+echo -e "\nIn working directory\n${workdir}\n"
 
-echo $workdir
-
-cd $workdir
-
-if [ -f "posterior_report10" ]; then
-    echo "existing output found"
-else
-    ../../../rtm_hpc
-fi
+eval $CMD

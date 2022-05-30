@@ -28,15 +28,15 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=16
+#SBATCH --array=8,12,16
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
-#SBATCH --output=simulate_icelake_20211203_%a.out
-#SBATCH --error=simulate_icelake_20211203_%a.err
+#SBATCH --output=simulate_midterm_20220325_%a.out
+#SBATCH --error=simulate_midterm_20220325_%a.err
 
 forecast_switch="midterm"
 
