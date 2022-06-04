@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -52,7 +52,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Initially uses a Naive implementation
-admissions_only.flag <- TRUE
+admissions_only.flag <- FALSE
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -92,7 +92,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20220527"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -150,12 +150,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "admissions"
+data.desc <- "deaths"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -214,11 +214,12 @@ if (data.desc == "all") {
 use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220520", paste0("Prev746SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220520", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))                                      )
+        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(data.desc == "deaths", "20220527", "20220528"), paste0("Prev751SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220527", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))                                      )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220520", paste0("Prev746SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR7bp_", ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""), "11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220520", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(data.desc == "deaths", "20220527", "20220528"), paste0("Prev751SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR7bp_", ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""), "11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220527", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
+
 iteration.number.to.start.from <- 1 ## 6400
 
 ## From where will the various datasets be sourced?
@@ -276,7 +277,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220519" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20220530" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
