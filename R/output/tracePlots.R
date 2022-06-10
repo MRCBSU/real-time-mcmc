@@ -63,7 +63,11 @@ regions.total.population <- t(matrix(get.variable.value(out.dir, "regions_popula
 ## ## DEFINE PRIOR MODEL ###################################
 
 ### WHICH VARIABLES ARE STOCHASTIC?
-var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "r1_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw", "log_beta_rw_sd")
+var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion",
+                "latent_period", "infectious_period", "r1_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday",
+                 "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation",
+                  "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity",
+                   "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw", "log_beta_rw_sd")
 ### PRIOR INFORMATION
 if(gp.flag & nA>1){
     pars.pgp <- matrix(pars.pgp, nrow = floor(sqrt(length(pars.pgp))), ncol = ceiling(sqrt(length(pars.pgp))), byrow = T)

@@ -41,6 +41,9 @@ sens_spec <- sens %>%
     as.tbl_cube(met_name = "sens") %>% as_tibble() %>% mutate(date = as_date(date)) %>% inner_join(spec %>%
                                                                                                    as.tbl_cube(met_name = "spec") %>% as_tibble() %>% mutate(date = as_date(date)))
 
+# write_rds(qsens, "qsens_seeroprev.rds", "xz", compression = 9L)
+# write_rds(qspec, "qspec_seeroprev.rds", "xz", compression = 9L)
+# stop()
 ## get the data - filtering only to times of non-zero samples
 sero.dat <- left_join(rtm.sam, rtm.pos, by = c("date", "region", "age.grp")) %>%
     rename(n = n.x,
@@ -93,6 +96,8 @@ df_infections_region = df_infections %>%
               samp_hi = quantile(samp, 0.975))
 
 ## ## Plotting
+
+write_rds(df_infections_region, "seroprev_plot.rds", "xz", compression = 9L)
 
 ## By age
 df_infections_early_age <- df_infections_age %>% filter(date < sero.end.1stwv)
