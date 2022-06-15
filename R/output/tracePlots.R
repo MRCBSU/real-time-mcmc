@@ -105,7 +105,8 @@ var.priors <- list(distribution = list(NULL,
                                        rep(list(dbeta), sero.param.length),
                                        rep(switch(gp.flag + 1, NULL, list(dnorm)), 6),
                                        rep(lapply(1:nbetas, function(j) {if(j != 1) return(dnorm) else return(NULL)}), nr),
-                                       list(NULL, dgamma)), ## informative prior specification
+                                       list(NULL, dgamma)
+                                       ), ## informative prior specification
                    parameters = list(NA,
                                      NA,
                                      NA,
@@ -113,18 +114,18 @@ var.priors <- list(distribution = list(NULL,
                                      pars.eta.h,
                                      NA,
                                      pars.dI,
-                                     ifelse(prev.flag, pars.r1, NA),
+                                     `if`(prev.flag, pars.r1, NA),
                                      NA,
                                      NA,
                                      as.vector(contact.pars),
                                      NA,
                                      NA,
-                                     pars.egr,
+                                     rep(pars.egr, r),
                                      rep(pars.nu, r),
                                      NA,
                                      NA,
-                                     ifelse(gp.flag, pars.pgp, NA),
-                                     ifelse(hosp.flag, pars.ifr, NA),
+                                     `if`(gp.flag, pars.pgp, NA),
+                                     `if`((hosp.flag | adm.flag), pars.ifr, NA),
                                      NA,
                                      NA,
                                      NA,
@@ -139,6 +140,9 @@ var.priors <- list(distribution = list(NULL,
 ## save the prior specification for use elsewhere.
 save(var.names, var.priors, file = file.path(out.dir, "prior.spec.RData"))
 ## ## ######################################################
+
+print(pars.ifr)
+print(hosp.flag)
 
 ## ###### READ IN THE MCMC CHAIN from binary output files
 source(file.path(Rfile.loc, "readingbinaryfiles.R"))
@@ -180,6 +184,9 @@ fninvit <- function(p) exp(p) / (1 + exp(p))
 for(var.string in var.names[stochastic.flags])
     params[[var.string]] <- as.mcmc(t(params[[var.string]]))
 
+
+
+# out.dens <- prior.density(x, temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)]) * 0
 ## ## DRAW CODA PLOTS
 pdf(file.path(out.dir, "codas.pdf"))
 par(mfrow = c(1, 2))
@@ -194,17 +201,39 @@ for(inti in 1:npar)
           {
             plot(params[[inti]][, intj], main = paste(parameter.names[inti], intj, sep = "\n"))
             
-            ## superimpose the prior densities
             end.index <- start.index + increment.parameters(temp.dist)
+            tmp.dens <- prior.density(params[[inti]][, intj], temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)])
             curve(prior.density(x, temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)]),
                   min(params[[inti]][, intj]), max(params[[inti]][, intj]), lty = 4, lwd = 1.5, add = TRUE, col = "red"
                   )
+        
+        # print("Temp Dens: ")
+        # print(tmp.dens)
+        # print("Out Dens: ")
+
+        print(paste0(parameter.names[inti], " ",  intj))
+        print(var.priors$parameters[[inti]][start.index:(end.index - 1)])
         start.index <- end.index
+
+        print(any(is.na(tmp.dens)))
+            if(parameter.names[inti] != "log_beta_rw") {
+              if(inti == 1 & intj == 1) {
+                out.dens <- log(tmp.dens)
+                # print(out.dens)
+              } else {
+                out.dens <- out.dens + log(tmp.dens)
+                # print(out.dens)
+              }
+            }
           }
         
       }
     
   }
+
+print(out.dens)
+
+# write_rds(out.dens, "Prior_density.rds", "xz", compression = 9L)
 
 ## ADD A PLOT FOR THE CHAIN OF R0
 R0.func <- function(egr, aip, lp)

@@ -22,8 +22,8 @@ thisFile <- function() {
 }
 Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
-colcode.fl <- "./Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_drophosp_20220430_matrices2_20220527_timeuse_household_admissions_no_deaths"
-oldcode.fl <- "./Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_drophosp_20220430_matrices2_20220527_timeuse_household_admissions_no_deaths_chain2"
+colcode.fl <- "./Prev746SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220520_stable_household_admissions_no_deaths"
+oldcode.fl <- "./Prev746SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220520_stable_household_admissions_no_deaths_chain2"
 
 ## load("mcmc.RData")
 load(file.path(colcode.fl, "tmp.RData"))
@@ -114,6 +114,7 @@ combine.rtm.output <- function(x, strFld){
 ## ## ## MAIN PROJECTION LOOP
 new.params <- new.env()
 load(file.path(colcode.fl, "mcmc.RData"), envir = new.params)
+out.dens <- new.params$out.dens
 params <- new.params$params
 
 ## ## Get number of iterations
@@ -203,6 +204,8 @@ oldcode.params <- old.params$params
 ## oldcode.lfx <- unlist(oldcode.lfx)
 oldcode.lfx <- old.params$lfx
 
+oldcode.out.dens <- old.params$out.dens
+
 oldcode.lrw <- mclapply(1:niter, drw, pars = oldcode.params, nc = 2, mc.cores = detectCores() - 1)
 oldcode.lrw <- unlist(oldcode.lrw)
 
@@ -252,8 +255,8 @@ dim.list <- list(region = regions,
 require(ggplot2)
 ## require(hrbrthemes)
 
-data.p <- data.frame(likelihood = as.vector(paul.lfx), rw = paul.lrw, total = as.vector(paul.lfx) + paul.lrw, code = "chain1", iteration = 1:length(paul.lrw))
-data.s <- data.frame(likelihood = as.vector(oldcode.lfx), rw = oldcode.lrw, total = as.vector(oldcode.lfx) + oldcode.lrw, code = "chain2", iteration = 1:length(oldcode.lrw))
+data.p <- data.frame(likelihood = as.vector(paul.lfx), priors = as.vector(out.dens), rw = paul.lrw, total = as.vector(paul.lfx) + paul.lrw, code = "chain1", iteration = 1:length(paul.lrw))
+data.s <- data.frame(likelihood = as.vector(oldcode.lfx), priors = as.vector(oldcode.out.dens), rw = oldcode.lrw, total = as.vector(oldcode.lfx) + oldcode.lrw, code = "chain2", iteration = 1:length(oldcode.lrw))
 
 df.lik.test <- bind_rows(data.p, data.s) %>% pivot_longer(-c(iteration, code), names_to = "type")
 
@@ -310,3 +313,12 @@ gchain <- df.lik.test %>% filter(type == "likelihood") %>% ## mutate(code = fct_
 
 ggsave(filename=file.path(colcode.fl, "lfx.trace.pdf"), plot=gchain, width = 12, height = 10)
     
+gchain2 <- df.lik.test %>% filter(type == "priors") %>% ## mutate(code = fct_reorder(code, desc(code))) %>% ## for re-ordering the plotting order to inspect overlapping traces.
+    ggplot(aes(x=iteration, y=value, group=code, color=code)) +
+    geom_line() +
+    ## facet_wrap(~code) +
+    theme_minimal() +
+    scale_colour_manual(values=c("#69b3a2", "#404080")) +
+    ggtitle("Prior traces")
+
+ggsave(filename=file.path(colcode.fl, "prior.trace.pdf"), plot=gchain2, width = 12, height = 10)
