@@ -30,7 +30,7 @@
 #SBATCH --verbose
 #SBATCH --array=5
 
-#SBATCH -p icelake-himem
+#SBATCH -p skylake-himem
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
