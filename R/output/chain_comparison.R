@@ -255,13 +255,15 @@ dim.list <- list(region = regions,
 require(ggplot2)
 ## require(hrbrthemes)
 
-data.p <- data.frame(likelihood = as.vector(paul.lfx), priors = as.vector(out.dens), rw = paul.lrw, total = as.vector(paul.lfx) + paul.lrw, code = "chain1", iteration = 1:length(paul.lrw))
-data.s <- data.frame(likelihood = as.vector(oldcode.lfx), priors = as.vector(oldcode.out.dens), rw = oldcode.lrw, total = as.vector(oldcode.lfx) + oldcode.lrw, code = "chain2", iteration = 1:length(oldcode.lrw))
+data.p <- tibble(likelihood = as.vector(paul.lfx), `prior density` = as.vector(out.dens), rw = paul.lrw, `likelihood + rw` = as.vector(paul.lfx) + paul.lrw, code = "chain1", iteration = 1:length(paul.lrw))
+data.s <- tibble(likelihood = as.vector(oldcode.lfx), `prior density` = as.vector(oldcode.out.dens), rw = oldcode.lrw, `likelihood + rw` = as.vector(oldcode.lfx) + oldcode.lrw, code = "chain2", iteration = 1:length(oldcode.lrw))
 
-df.lik.test <- bind_rows(data.p, data.s) %>% pivot_longer(-c(iteration, code), names_to = "type")
+
+df.lik.test <- bind_rows(data.p, data.s) %>% mutate(`likelihood + rw + prior density` = `likelihood + rw` + `prior density`) %>% pivot_longer(-c(iteration, code), names_to = "type")
 
 
 glfx <- df.lik.test %>% ## filter(iteration > 3240) %>%
+    mutate(type = factor(type, ordered = T, levels = c("likelihood", "rw", "prior density", "likelihood + rw", "likelihood + rw + prior density"))) %>%
     ggplot(aes(x=value, after_stat(density), fill = code)) +
     geom_histogram(color="#e9ecef", alpha=0.6, position = "identity") +
     scale_fill_manual(values=c("#69b3a2", "#404080")) +
@@ -313,7 +315,7 @@ gchain <- df.lik.test %>% filter(type == "likelihood") %>% ## mutate(code = fct_
 
 ggsave(filename=file.path(colcode.fl, "lfx.trace.pdf"), plot=gchain, width = 12, height = 10)
     
-gchain2 <- df.lik.test %>% filter(type == "priors") %>% ## mutate(code = fct_reorder(code, desc(code))) %>% ## for re-ordering the plotting order to inspect overlapping traces.
+gchain2 <- df.lik.test %>% filter(type == "prior density") %>% ## mutate(code = fct_reorder(code, desc(code))) %>% ## for re-ordering the plotting order to inspect overlapping traces.
     ggplot(aes(x=iteration, y=value, group=code, color=code)) +
     geom_line() +
     ## facet_wrap(~code) +
