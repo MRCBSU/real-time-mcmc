@@ -1,6 +1,6 @@
 ## Steps to prepare snapshot report
 
-This means that you will need to checkout the following files from this branch for use:
+This means that you will need to checkout the following files from this branch (SMED_Test_JK_Branch) for use:
 
 - {repo}/R/outputs/SnapshotReport.Rmd
 

@@ -54,7 +54,7 @@ if(sero_cutoff_flag) {
     ## As date chosen, assumed to be chosen at a complete date
     serology.delay <- 25
     ## Last date for which serology is used
-    sero.end.date <- ymd(20211030) + 25 ## ymd(20200522) ## ymd(20210920)
+    sero.end.date <- ymd(20220301) + 25 ## ymd(20200522) ## ymd(20210920)
 } else {
     #If not dropping serology
     ## Assumed number of days between infection and developing the antibody response
@@ -225,7 +225,7 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "7bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "8bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""),
