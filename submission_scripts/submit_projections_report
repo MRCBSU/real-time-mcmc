@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
 #SBATCH --cpus-per-task=16
-#SBATCH --array=4
+#SBATCH --array=13
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?
@@ -30,7 +30,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH -p skylake
+#SBATCH -p icelake
 #!SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
