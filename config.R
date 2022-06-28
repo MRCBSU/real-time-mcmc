@@ -4,7 +4,7 @@
 library(lubridate)
 library(tidyr)
 
-deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20220624 COVID19 Deaths.csv"
+deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20220627 COVID19 Deaths.csv"
 vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20220624 immunisations SPIM.csv"
 str.date.vacc <- "20220624"
 
@@ -47,6 +47,9 @@ RocheS.flag <- 0
 
 # Determine whether or not to run the model with the serology being dropped from a certain date onwards
 # (Note: False -> doesn't drop the data)
+Use_preprocessed_serology <- T
+preprocessed_sero_date <- ymd("20220627")
+
 sero_cutoff_flag <- T
 
 if(sero_cutoff_flag) {
@@ -54,7 +57,8 @@ if(sero_cutoff_flag) {
     ## As date chosen, assumed to be chosen at a complete date
     serology.delay <- 25
     ## Last date for which serology is used
-    sero.end.date <- ymd(20220301) + 25 ## ymd(20200522) ## ymd(20210920)
+    sero.end.date <- ymd(20220301) ## ymd(20200522) ## ymd(20210920)
+
 } else {
     #If not dropping serology
     ## Assumed number of days between infection and developing the antibody response
@@ -122,7 +126,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20220624"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -180,12 +184,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "admissions"
+data.desc <- "deaths"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 1	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -201,6 +205,8 @@ vac.date.fmt <- "%d%b%Y"
 ## Deaths Flags
 use_deaths_up_to_now_flag <- F
 custom_deaths_end_date <- lubridate::ymd("20220430")
+
+Use_preprocessed_deaths <- T
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", num.prev.days)
