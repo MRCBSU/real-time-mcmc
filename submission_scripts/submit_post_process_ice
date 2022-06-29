@@ -28,11 +28,11 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
-#SBATCH --array=16
+#SBATCH --array=0-19
 
 #SBATCH -p icelake-himem
 
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 

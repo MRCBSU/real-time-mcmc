@@ -15,7 +15,7 @@
 
 #SBATCH --array=0-19
 #SBATCH -p icelake
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 
 #SBATCH --output=restart_pars_%a.out
