@@ -52,11 +52,18 @@ if (region.type == "NHS") {
 	source(file.path(proj.dir, "R/data/get_ONS_pop.R"))
 } else stop("Unknown region type for population")
 
+
 # Moved serology calls to the top of the run script
 if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
-    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples.txt")
-    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives.txt")
+    serosam.files <- paste0(data.dirs["sero"], "/", data.table::fifelse(Use_preprocessed_serology, preprocessed_sero_date, sero.end.date), "_", regions, "_", nA, "ag_", str.collect, "samples", ".txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", data.table::fifelse(Use_preprocessed_serology, preprocessed_sero_date, sero.end.date), "_", regions, "_", nA, "ag_", str.collect, "positives", ".txt")
+    if(!format.inputs) {
+        # Copy files but take into account possible name differences due to custom cutoff
+        file.copy(file.path(data.dirs["sero"], paste0("sero_samples_data",".csv")), out.dir)
+        file.copy(file.path(data.dirs["sero"], paste0("sero_positives_data",".csv")), out.dir)
+        names(serosam.files) <- names(seropos.files) <- regions
+    }
 } else {
   serosam.files <- seropos.files <- NULL
 }
@@ -94,27 +101,38 @@ if(prev.flag){
     prev.mean.files <- paste0(prev.file.prefix, regions, "ons_meanlogprev2.txt")
     prev.sd.files <- paste0(prev.file.prefix, regions, "ons_sdlogprev2.txt")
     prev.dat.file <- paste0(prev.file.prefix, "ons_dat2.csv")
+    if(!format.inputs) names(prev.mean.files) <- names(prev.sd.files) <- regions
 } else {
     prev.mean.files <- NULL
     prev.sd.files <- NULL
 }
 if(vacc.flag){
-    vac1.files <- file.path(data.dirs["vacc"], paste0("date.vacc_1stvaccinations_", regions, ".txt"))
+    vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
+     
     if(vac.n_doses == 3) {
-        vac2.files <- file.path(data.dirs["vacc"], paste0("date.vacc_2ndvaccinations_", regions, ".txt"))
-        vac3.files <- file.path(data.dirs["vacc"], paste0("date.vacc_3rdvaccinations_", regions, ".txt"))
+        vac2.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_2ndvaccinations_", regions, ".txt"))
+        vac3.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_3rdvaccinations_", regions, ".txt"))
     } else {
-        vacn.files <- file.path(data.dirs["vacc"], paste0("date.vacc_nthvaccinations_", regions, ".txt"))
+        vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
+    }
+    if(!format.inputs) {                                                                                                              
+        load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
+        if(vac.n_doses ==3)  {
+                 names(vac1.files) <- names(vac2.files) <- names(vac3.files) <- regions
+          } else {
+              names(vac1.files) <- names(vacn.files) <- regions
+          }
     }
 } else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
-        adm_csv_fname <- ifelse(admissions_only.flag, "admissions_data_admissions_only.csv", "admissions_data_all_hosp.csv")
+        adm_csv_fname <- ifelse(admissions_only.flag, paste0("admissions_data_admissions_only", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"),
+                                                     paste0("admissions_data_all_hosp", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"))
         adm.sam <- read_csv(file.path(data.dirs["adm"], adm_csv_fname))
         file.copy(file.path(data.dirs["adm"], adm_csv_fname), out.dir)
-        file.rename(file.path(data.dirs["adm"], adm_csv_fname), file.path(data.dirs["adm"], "admissions_data.csv"))
-        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts.txt")
-    }   
+        file.rename(file.path(out.dir, adm_csv_fname), file.path(out.dir, "admissions_data.csv"))
+        admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""), ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".txt")
+    }
 }
 if(format.inputs){
     if(deaths.flag){

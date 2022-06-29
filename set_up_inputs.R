@@ -17,15 +17,20 @@ if(!exists("hosp.flag") & !exists("adm.flag")) hosp.flag <- deaths.flag <- adm.f
 if(deaths.flag){
     start.hosp <- ifelse(data.desc == "reports", 35, 1) ## 35 # Day number on which to start likelihood calculation
     ## Total days of data, or NULL to infer from length of file
-    end.hosp <- lubridate::as_date(date.data) - reporting.delay - start.date + 1
+    end.hosp <- ifelse(use_deaths_up_to_now_flag, lubridate::as_date(date.data) - reporting.delay - start.date + 1, custom_deaths_end_date - start.date + 1)
+    print(end.hosp)
     if(grepl("adjusted", data.desc)) end.hosp <- end.hosp + date.adj.data - lubridate::as_date(date.data)
 } else if(adm.flag) {
     start.hosp <- 1
     end.hosp <- date.adm.str - start.date + 1
+    if(cutoff_hosps_early & !deaths.flag & !hosp.flag) {
+        end.hosp<- date_early_cutoff_hosps - start.date + 1
+    }
 } else {
     start.hosp <- 1
     end.hosp <- 1
 }
+
 ## The 'sero' stream in the code
 if(!exists("sero.flag")) sero.flag <- 1
 ## if(sero.flag){ ## Need to remove dependency  on rtm.plot as it may not necessarily be defined.
@@ -226,10 +231,13 @@ if (sero.flag == 1) {
             filter(value > 0)
         ## Find the date of the earliest and latest samples.
         start.sero <- min(sero.lims$X1) - start.date + 1
-        end.sero <- max(sero.lims$X1) - start.date + 1
+        end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(sero.lims$X1) - start.date + 1)
     } else if(exists("rtm.plot")) {
         start.sero <- min(rtm.plot$date) - start.date + 1
-        end.sero <- max(rtm.plot$date) - start.date + 1
+        end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(rtm.plot$date) - start.date + 1)
+    } else if(exists("rtm.sam")) {
+        start.sero <- min(rtm.sam$date) - start.date + 1
+        end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(rtm.sam$date) - start.date + 1)
     } else {
         warning('Running sero likelihood from day 1 to end\n')
         start.sero <- 1

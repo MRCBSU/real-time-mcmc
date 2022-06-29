@@ -39,10 +39,29 @@ if (args[2] == "All")  {
 NHSBT.flag <- 1
 ## Do we want to use Roche N (0) or Roche S (1) data
 RocheS.flag <- 0
-## Assumed number of days between infection and developing the antibody response
-serology.delay <- 25
-## Last date for which serology is used
-sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+
+
+# Determine whether or not to run the model with the serology being dropped from a certain date onwards
+# (Note: False -> doesn't drop the data)
+Use_preprocessed_serology <- FALSE
+preprocessed_sero_date <- ymd("20220627")
+
+sero_cutoff_flag <- TRUE
+
+if(sero_cutoff_flag) {
+    #If dropping serology
+    ## As date chosen, assumed to be chosen at a complete date
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(20220301) ## ymd(20200522) ## ymd(20210920)
+
+} else {
+    #If not dropping serology
+    ## Assumed number of days between infection and developing the antibody response
+    serology.delay <- 25
+    ## Last date for which serology is used
+    sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
+}
 ## Last date for which first wave serology is used
 sero.end.1stwv <- ymd(20200522)
 ## Format of dates used in the serology data
@@ -50,8 +69,10 @@ sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
 fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 
+# Flag to determine whether to cutoff the hospitalisation datastream early (T => use cutoff)
+cutoff_hosps_early <- FALSE
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
-# Initially uses a Naive implementation
+# Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
 admissions_only.flag <- TRUE
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
@@ -59,6 +80,12 @@ sus_seb_combination <- 3L
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
+date.adm_seb <- ymd(20220624)
+date.adm_sus <- ymd(20210930)
+date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
+                                                  date.adm_seb - adm_seb.strip_days,
+                                                  date.adm_sus - adm_sus.strip_days))
+date_early_cutoff_hosps <- ymd(20220430)
 
 ## ## file.locs for admissions for geography linkers (with colname links)
 adm.sus.geog_link.loc <- "utility_files/lad_to_region.csv"
@@ -166,7 +193,13 @@ exclude.eldest.prev <- FALSE
 ## Any inputs here for the vaccination data (or even if there is any)
 vacc.flag <- 1
 ## Format used for dates in the vaccination file
-vac.date.fmt <- "%Y-%m-%d"
+vac.date.fmt <- "%d%b%Y"
+
+## Deaths Flags
+use_deaths_up_to_now_flag <- FALSE
+custom_deaths_end_date <- lubridate::ymd("20220430")
+
+Use_preprocessed_deaths <- FALSE
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("Prev", num.prev.days)
@@ -304,7 +337,11 @@ out.dir <- file.path(proj.dir,
                      date.data,
                      paste0(
                          scenario.name,
-                         "_matrices_", google.data.date, matrix.suffix,
+                         ## Modified to rename the runs if cutting off the data early
+                         ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
+                         ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
+                         ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
+                         "_matrices2_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")
 if (gp.flag) out.dir <- paste0(out.dir, "_with_linelist")

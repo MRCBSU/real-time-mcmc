@@ -63,7 +63,11 @@ regions.total.population <- t(matrix(get.variable.value(out.dir, "regions_popula
 ## ## DEFINE PRIOR MODEL ###################################
 
 ### WHICH VARIABLES ARE STOCHASTIC?
-var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion", "latent_period", "infectious_period", "r1_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday", "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation", "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity", "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw", "log_beta_rw_sd")
+var.names <- c("exponential_growth_rate_hyper", "l_p_lambda_0_hyper", "prop_susceptible_hyper", "gp_negbin_overdispersion", "hosp_negbin_overdispersion",
+                "latent_period", "infectious_period", "r1_period", "relative_infectiousness", "prop_symptomatic", "contact_parameters", "R0_amplitude_kA", "R0_seasonal_peakday",
+                 "exponential_growth_rate", "log_p_lambda_0", "prop_susceptible", "prop_HI_32_to_HI_8", "prop_case_to_GP_consultation",
+                  "prop_case_to_hosp", "prop_case_to_death", "importation_rates", "background_GP", "test_sensitivity", "test_specificity",
+                   "sero_test_sensitivity", "sero_test_specificity", "day_of_week_effects", "log_beta_rw", "log_beta_rw_sd")
 ### PRIOR INFORMATION
 if(gp.flag & nA>1){
     pars.pgp <- matrix(pars.pgp, nrow = floor(sqrt(length(pars.pgp))), ncol = ceiling(sqrt(length(pars.pgp))), byrow = T)
@@ -109,18 +113,18 @@ var.priors <- list(distribution = list(NULL,
                                      pars.eta.h,
                                      NA,
                                      pars.dI,
-                                     ifelse(prev.flag, pars.r1, NA),
+                                     `if`(prev.flag, pars.r1, NA),
                                      NA,
                                      NA,
                                      as.vector(contact.pars),
                                      NA,
                                      NA,
-                                     pars.egr,
+                                     rep(pars.egr, r),
                                      rep(pars.nu, r),
                                      NA,
                                      NA,
-                                     ifelse(gp.flag, pars.pgp, NA),
-                                     ifelse(hosp.flag, pars.ifr, NA),
+                                     `if`(gp.flag, pars.pgp, NA),
+                                     `if`((hosp.flag | adm.flag), pars.ifr, NA),
                                      NA,
                                      NA,
                                      NA,
@@ -190,17 +194,39 @@ for(inti in 1:npar)
           {
             plot(params[[inti]][, intj], main = paste(parameter.names[inti], intj, sep = "\n"))
             
-            ## superimpose the prior densities
             end.index <- start.index + increment.parameters(temp.dist)
+            tmp.dens <- prior.density(params[[inti]][, intj], temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)])
             curve(prior.density(x, temp.dist, var.priors$parameters[[inti]][start.index:(end.index - 1)]),
                   min(params[[inti]][, intj]), max(params[[inti]][, intj]), lty = 4, lwd = 1.5, add = TRUE, col = "red"
                   )
+        
+        # print("Temp Dens: ")
+        # print(tmp.dens)
+        # print("Out Dens: ")
+
+        print(paste0(parameter.names[inti], " ",  intj))
+        print(var.priors$parameters[[inti]][start.index:(end.index - 1)])
         start.index <- end.index
+
+        print(any(is.na(tmp.dens)))
+            if(parameter.names[inti] != "log_beta_rw") {
+              if(inti == 1 & intj == 1) {
+                out.dens <- log(tmp.dens)
+                # print(out.dens)
+              } else {
+                out.dens <- out.dens + log(tmp.dens)
+                # print(out.dens)
+              }
+            }
           }
         
       }
     
   }
+
+print(out.dens)
+
+# write_rds(out.dens, "Prior_density.rds", "xz", compression = 9L)
 
 ## ADD A PLOT FOR THE CHAIN OF R0
 R0.func <- function(egr, aip, lp)
