@@ -74,9 +74,11 @@ if(Use_preprocessed_serology) {
 
     print(input.loc)
 
+    date.data.use <- ymd(date.data)
+
     ## Set the max and min dates for the data
     earliest.date <- start.date
-    latest.date <- date.data
+    latest.date <- date.data.use
 
     ## What is the date of publication of these data? If not specified, try to extract from filename
     if(!exists("date.sero")){
@@ -253,8 +255,10 @@ if(Use_preprocessed_serology) {
     }
 
     ## Apply filters to get only the data we want.
+
+   
     sero.dat <- sero.dat %>%
-        filter(!is.na(region), SDate <= date.data) %>%
+        filter(!is.na(region), SDate <= date.data.use) %>%
         filter((assay == "Eoutcome" & as_date(SDate) < sero.end.1stwv) | (assay == roche & as_date(SDate) >= sero.end.1stwv)) %>% 
         mutate(region = get.region(.),
             age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
