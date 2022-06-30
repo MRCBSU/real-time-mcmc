@@ -53,14 +53,18 @@ RocheS.flag <- 0
 
 # Determine whether or not to run the model with the serology being dropped from a certain date onwards
 # (Note: False -> doesn't drop the data)
-sero_cutoff_flag <- F
+Use_preprocessed_serology <- T
+preprocessed_sero_date <- ymd("20220627")
+
+sero_cutoff_flag <- T
 
 if(sero_cutoff_flag) {
     #If dropping serology
     ## As date chosen, assumed to be chosen at a complete date
     serology.delay <- 25
     ## Last date for which serology is used
-    sero.end.date <- ymd(20220301) + 25 ## ymd(20200522) ## ymd(20210920)
+    sero.end.date <- ymd(20220301) ## ymd(20200522) ## ymd(20210920)
+
 } else {
     #If not dropping serology
     ## Assumed number of days between infection and developing the antibody response
@@ -213,6 +217,8 @@ vac.date.fmt <- "%d%b%Y"
 ## Deaths Flags
 use_deaths_up_to_now_flag <- T
 custom_deaths_end_date <- lubridate::ymd("20220430")
+
+Use_preprocessed_deaths <- T
 
 ## Give the run a name to identify the configuratio
 if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)

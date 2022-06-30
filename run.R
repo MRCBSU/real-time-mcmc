@@ -58,14 +58,12 @@ if (region.type == "NHS") {
 # Moved serology calls to the top of the run script
 if(sero.flag){
     str.collect <- ifelse(NHSBT.flag, "NHSBT", "RCGP")
-    serosam.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "samples", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
-    seropos.files <- paste0(data.dirs["sero"], "/", sero.end.date, "_", regions, "_", nA, "ag_", str.collect, "positives", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".txt")
+    serosam.files <- paste0(data.dirs["sero"], "/", data.table::fifelse(Use_preprocessed_serology, preprocessed_sero_date, sero.end.date), "_", regions, "_", nA, "ag_", str.collect, "samples", ".txt")
+    seropos.files <- paste0(data.dirs["sero"], "/", data.table::fifelse(Use_preprocessed_serology, preprocessed_sero_date, sero.end.date), "_", regions, "_", nA, "ag_", str.collect, "positives", ".txt")
     if(!format.inputs) {
         # Copy files but take into account possible name differences due to custom cutoff
-        file.copy(file.path(data.dirs["sero"], paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
-        file.rename(file.path(out.dir, paste0("sero_samples_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_samples_data.csv"))
-        file.copy(file.path(data.dirs["sero"], paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), out.dir)
-        file.rename(file.path(out.dir, paste0("sero_positives_data", ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))), ".csv")), file.path(out.dir, "sero_positives_data.csv"))
+        file.copy(file.path(data.dirs["sero"], paste0("sero_samples_data",".csv")), out.dir)
+        file.copy(file.path(data.dirs["sero"], paste0("sero_positives_data",".csv")), out.dir)
         names(serosam.files) <- names(seropos.files) <- regions
     }
 } else {
@@ -80,9 +78,9 @@ if(deaths.flag){
                          regions, "_",
                          nA, "ag",
                          ifelse(flg.confirmed, "CONF", ""),
-                         reporting.delay, "delay",
+                         reporting.delay, "delay"
                          # Take into account possible name differences due to custom cutoff
-                         ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date))
+                        #  ifelse(use_deaths_up_to_now_flag, "", paste0("_", custom_deaths_end_date))
                          )
     if (exists("flg.cutoff")){
         if(flg.cutoff)
