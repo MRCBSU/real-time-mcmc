@@ -29,12 +29,12 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=22,30,31
+#SBATCH --array=20-37,39
 
 
 #SBATCH -p icelake-himem
 
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 

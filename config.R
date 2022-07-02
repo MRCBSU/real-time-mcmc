@@ -215,7 +215,7 @@ use_deaths_up_to_now_flag <- T
 custom_deaths_end_date <- lubridate::ymd("20220430")
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
@@ -239,7 +239,7 @@ scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
-	str.cutoff <- 28
+	str.cutoff <- 60
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -277,7 +277,7 @@ if(use.previous.run.for.start){
         else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220325", paste0("Prev690SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220325", paste0("Prev690SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220624", paste0("PrevINLA781SeroNHSBT_All_cm6ons_IFR8bp_ONS60cutoff_IFR8bp_11wk2_prev14-0PHE_3dose_matrices_20220624", matrix.suffix, "_dropsero_20220326_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 3000

@@ -16,7 +16,7 @@
 
 
 
-#SBATCH --array=16,17,22,23
+#SBATCH --array=38
 
 #SBATCH -p icelake
 #!SBATCH --qos=covid0
