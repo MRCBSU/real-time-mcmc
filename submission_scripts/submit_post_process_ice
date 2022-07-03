@@ -32,7 +32,7 @@
 
 #SBATCH -p icelake-himem
 
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 #! sbatch directives end here (put any additional directives above this line)
 
