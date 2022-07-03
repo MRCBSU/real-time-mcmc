@@ -317,11 +317,12 @@ if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
-vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
+vac.n_doses <- 4L ## Number of doses in preprocessed data (Either 4, 3 or 2)
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
 future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+future.fourth.n: "c(1, 1, 1, 0.5, 0.5, rep(0.1, 6))* 10 ^ 6  * 55.98 / 66.65"
 scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
 ## Approximate date at which delta became dominant strain (- one week)

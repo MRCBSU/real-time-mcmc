@@ -15,22 +15,65 @@ require(tidyverse)
 require(cubelyr)
 require(lubridate)
 
+if(!exists("vacc.loc")){ ## Set to default format for the filename
+    ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list"
+    input.loc <- "~/Documents/PHE/stats/Wuhan_2019_Coronavirus/Data/Vaccination"
+    ## List the possible files in the directory
+    vacc.loc <- file.info(file.path(input.loc,
+                                    list.files(path = input.loc,
+                                               pattern=glob2rx(paste("202", "immunisations SPIM", "zip", sep = "*")))
+                                    )
+                          )
+    ## Has a particular date's data been specified
+    rnames <- rownames(vacc.loc)
+    if(exists("str.date.vacc")){
+        input.loc <- rnames[grepl(str.date.vacc, rnames)]
+    } else {
+        ## Pick up the most recently added
+        input.loc <- rnames[which.max(vacc.loc$ctime)]
+        ## input.loc <- "~/CoVID-19/Data streams/Vaccine line list/20210212 immunisations SPIM.csv"
+        str.date.vacc <- strapplyc(input.loc, "[0-9]{8,}", simplify = TRUE)
+    }
+} else {
+    if(is.null(vacc.loc)){
+        input.loc <- commandArgs(trailingOnly = TRUE)[1]
+    } else {
+        if(startsWith(vacc.loc, "/")) input.loc <- vacc.loc
+        else input.loc <- build.data.filepath(subdir = "raw", "vaccination", vacc.loc)
+    }
+}
+
+## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
+vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
+
 run.all <- TRUE
+
 if(exists("str.date.vacc")){
     ## Substitute this into the names of the intended data file names
     vac1.files <- gsub("date.vacc", str.date.vacc, vac1.files, fixed = TRUE)
-    if(vac.n_doses == 3) {
+    if(vac.n_doses >= 3) {
         vac2.files <- gsub("date.vacc", str.date.vacc, vac2.files, fixed = TRUE)
         vac3.files <- gsub("date.vacc", str.date.vacc, vac3.files, fixed = TRUE)
-    } else {
+    }
+    if(vac.n_doses >= 4) {
+        vac4.files <- gsub("date.vacc", str.date.vacc, vac4.files, fixed = TRUE)
+    }
+    if(vac.n_doses == 2) {
         vacn.files <- gsub("date.vacc", str.date.vacc, vacn.files, fixed = TRUE)
     }
     ## Where will outputs be stored, to avoid repeat accessing of the remote COVID directory
     vacc.rdata <- build.data.filepath(file.path("RTM_format", region.type, "vaccination"), region.type, "vacc", str.date.vacc, ".RData")
-
-    if(vac.n_doses == 3) {
+    if(vac.n_doses >= 3) {
         if(all(file.exists(c(vac1.files, vac2.files, vac3.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
-    } else {
+    } 
+    if(vac.n_doses >= 4) {
+        if(all(file.exists(c(vac4.files))) && !vac.overwrite && !run.all) {
+             run.all <- FALSE
+        } else {
+            run.all <- T
+        }
+    }
+    if(vac.n_doses == 2) {
         if(all(file.exists(c(vac1.files, vacn.files, vacc.rdata))) && !vac.overwrite) run.all <- FALSE
     }
 }
@@ -114,6 +157,30 @@ if(run.all){
         }
         df
     }
+    ## stop()
+    ## ## vacc.dat <- vacc.dat %>%
+    ## ##     mutate(sdate = fuzzy_date_parse(sdate))
+    ## ## fdp_wrapper <- function(x) fuzzy_date_parse(vacc.dat$sdate[x])
+    ## ## newdat <- mclapply(1:nrow(vacc.dat), fdp_wrapper, mc.cores = detectCores() - 1)
+    ## ## vacc.dat <- vacc.dat %>% mutate(sdate = newdat)
+    ## ## for(i in 1:nrow(vacc.dat))
+    ## ##     vacc.dat$sdate[i] <- fuzzy_date_parse(vacc.dat$sdate[i])
+    cat("Got here 2b\n")
+    vacc.dat <- vacc.dat %>%
+        mutate(age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T))
+    cat("Got here3\n")
+    ## Remove rows with missing key information
+    n.vaccs <- nrow(vacc.dat)
+    vacc.dat <- vacc.dat %>% filter(region != "Unknown",
+                                    !is.na(type),
+                                    !is.na(sdate),
+                                    !is.na(dose),
+                                    !is.na(age.grp))
+    n.vaccs.complete <- nrow(vacc.dat)
+    cat("Got here 4\n")
+    ## r.even <- function(vaccs, len) rmultinom(1, vaccs, rep(1, len))
+    
+    ## ## ====== DATA ON FIRST VACCINATION
     
     ## Function to format aggregated counts of vaccinations into the cross-tabulated datasets required for the rtm.
     fn.region.crosstab <- function(dat, reg_r, dose_d, ndays = ndays){
