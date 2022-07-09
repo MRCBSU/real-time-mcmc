@@ -98,7 +98,7 @@ prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
 if(efficacies == "PHE"){
-    if(vac.n_doses == 3) {
+    if(vac.n_doses >= 3) {
         v2.design <- cbind(v2.design, 0, 0, 0, 0)
         v2.design[delta, 3:4] <- v2.design[delta, 1:2]
         v2.design[delta, 1:2] <- 0

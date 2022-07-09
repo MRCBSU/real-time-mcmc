@@ -31,9 +31,9 @@ if(Use_preprocessed_deaths) {
     }
 
     if(!use_deaths_up_to_now_flag) {
-        dth.dat <- dth.dat |>
+        dth.dat <- dth.dat %>%
             filter(Date <= custom_deaths_end_date)
-        rtm.dat <- rtm.dat |>
+        rtm.dat <- rtm.dat %>%
             filter(Date <= custom_deaths_end_date)
     }
 
@@ -288,9 +288,9 @@ if(Use_preprocessed_deaths) {
         }
 
         if(!use_deaths_up_to_now_flag) {
-            dth.dat <- dth.dat |>
+            dth.dat <- dth.dat %>%
                 filter(Date <= custom_deaths_end_date)
-            rtm.dat <- rtm.dat |>
+            rtm.dat <- rtm.dat %>%
                 filter(Date <= custom_deaths_end_date)
         }
         

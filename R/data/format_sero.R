@@ -28,9 +28,9 @@ if(Use_preprocessed_serology) {
     }
 
     if(!use_deaths_up_to_now_flag) {
-        rtm.sam <- rtm.sam |>
+        rtm.sam <- rtm.sam %>%
             filter(date <= sero.end.date)
-        rtm.pos <- rtm.pos |>
+        rtm.pos <- rtm.pos %>%
             filter(date <= sero.end.date)
     }
 
