@@ -25,7 +25,7 @@ source(file.path(proj.dir, "R/data/utils.R"))
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
-format.inputs <- FALSE
+format.inputs <- TRUE
 
 ## Will code need to be recompiled?
 compile.code <- FALSE
@@ -102,8 +102,8 @@ if(prev.flag){
 #    prev.file.prefix <- paste0(data.dirs["prev"], "/date_prev", "_")
     prev.file.txt <- ifelse(all(diff(prev.lik.days) == 1),
                             #paste(min(prev.lik.days), "every_day", max(prev.lik.days)-300, sep = "_"),
-                            paste(min(prev.lik.days), "every_day",496, sep = "_"),
-                            paste0(prev.lik.days[c(1:which(prev.lik.days==496))], collapse = "_"))
+                            paste(min(prev.lik.days), "every_day",503, sep = "_"),
+                            paste0(prev.lik.days[c(1:which(prev.lik.days==503))], collapse = "_"))
  #                           paste0(prev.lik.days, collapse = "_"))
     if (exists("date.prev")) {
 		prev.file.prefix <- paste0(data.dirs["prev"], "/", date.prev, "_", prev.file.txt, "_")
