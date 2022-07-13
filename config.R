@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -53,7 +53,7 @@ RocheS.flag <- 0
 
 # Determine whether or not to run the model with the serology being dropped from a certain date onwards
 # (Note: False -> doesn't drop the data)
-sero_cutoff_flag <- T
+sero_cutoff_flag <- F
 
 if(sero_cutoff_flag) {
     #If dropping serology
@@ -82,11 +82,11 @@ matrix.suffix <- "_stable_household_new_base"
 #matrix.suffix_paul <- "_stable_household"
 
 # Flag to determine whether to cutoff the hospitalisation datastream early
-cutoff_hosps_early <- F
+cutoff_hosps_early <- T
 date_early_cutoff_hosps <- ymd(20220228)
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- F
+admissions_only.flag <- T
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -189,12 +189,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -215,7 +215,7 @@ use_deaths_up_to_now_flag <- T
 custom_deaths_end_date <- lubridate::ymd("20220430")
 
 ## Give the run a name to identify the configuratio
-if (prev.flag) scenario.name <- paste0("PrevINLAnew", num.prev.days)
+if (prev.flag) scenario.name <- paste0("PrevINLA", num.prev.days)
 if (!prev.flag) scenario.name <- "NoPrev"
 if (fix.sero.test.spec.sens) scenario.name <- paste0(scenario.name, "_fixedSero")
 scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP"), "_", ifelse(sero.end.date == sero.end.1stwv, "1stwv", "All"))
@@ -274,10 +274,10 @@ if(use.previous.run.for.start){
 
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20220325", paste0("Prev690SeroNHSBT_All_NHS", "28", "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                              )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220325", paste0("Prev690SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220325", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220705", paste0("PrevINLAnew793SeroNHSBT_All_cm6ons_IFR8bp_NHS28cutoff_IFR8bp_11wk2_prev14-0PHE_3dose_matrices_20220708", matrix.suffix, "_dropsero_20220326_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220624", paste0("PrevINLA781SeroNHSBT_All_cm6ons_IFR8bp_ONS60cutoff_IFR8bp_11wk2_prev14-0PHE_3dose_matrices_20220624", matrix.suffix, "_dropsero_20220326_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220705", paste0("PrevINLAnew793SeroNHSBT_All_cm6ons_IFR8bp_ONS28cutoff_IFR8bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices_20220708", matrix.suffix, "_drophosp_20220228_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 iteration.number.to.start.from <- 3000
@@ -314,7 +314,7 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 2
+prev.cutoff.days <- 4
 prev.days.to.lose <- 0
 ## Convert that to an analysis day number
 date.prev <- lubridate::ymd("20220705")

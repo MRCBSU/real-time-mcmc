@@ -29,7 +29,7 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=20-37,39
+#SBATCH --array=0-13
 
 
 #SBATCH -p icelake-himem
