@@ -115,7 +115,7 @@ prior_distribution = `r prior.vac.alpha2`;
 
 `r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.alpha.bps, paste0("regression_design = ", ifelse(vac.n_doses == 3, "vac.alpha2.design.txt", "vac.alphan.design.txt"), ";"), "")`
+`r ifelse(vacc.flag & vacc.alpha.bps, paste0("regression_design = ", ifelse(vac.n_doses >= 3, "vac.alpha2.design.txt", "vac.alphan.design.txt"), ";"), "")`
 
 }
 
@@ -187,7 +187,7 @@ prior_distribution = `r prior.vac.pi2`;
 
 `r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.pi.bps, paste0("regression_design = ", ifelse(vac.n_doses == 3, "vac.pi2.design.txt", "vac.pin.design.txt"), ";"), "")`
+`r ifelse(vacc.flag & vacc.pi.bps, paste0("regression_design = ", ifelse(vac.n_doses >= 3, "vac.pi2.design.txt", "vac.pin.design.txt"), ";"), "")`
 
 }
 
