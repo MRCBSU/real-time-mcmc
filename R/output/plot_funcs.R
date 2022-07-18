@@ -126,6 +126,26 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 		opacity = 0.06,
         hoverinfo = "Third national lockdown"
     )
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210517), 
+        x1 = ymd(20210517), 
+        line = list(color = "green"),
+        hoverinfo = "Step three of roadmap"
+	),
+    list(
+        type = "line", 
+        y0 = 0, 
+        y1 = 1, 
+        yref = "paper",
+        x0 = ymd(20210719), 
+        x1 = ymd(20210719), 
+        line = list(color = "green"),
+        hoverinfo = "Step four of roadmap"
+	)
   )
   lines <- lines[sapply(lines, function(x) x$x0 %in% data$date)]
   plot.height <- num.rows * 420 + 150

@@ -26,7 +26,7 @@ projections.basedir <- file.path(out.dir, projections.basename)
 ## Number of weeks to forecast ahead - depends on aim of simulation
 if(projections.basename == "projections_snapshot"){
     nweeks.ahead <- 0
-} else nweeks.ahead <- 9
+} else nweeks.ahead <- 8
 
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
@@ -203,7 +203,7 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
     symlink.design("vac.alpha1.design.txt")
-    if(vac.n_doses == 3){
+    if(vac.n_doses >= 3){
         symlink.design("vac.pi2.design.txt")
         symlink.design("vac.alpha2.design.txt")
     } else {
