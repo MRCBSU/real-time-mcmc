@@ -1,14 +1,16 @@
 ## Get the variables as they were saved on the original computer
 setup.env <- new.env()
-Rfile <- "tmp"
+Rfile <- "mcmc"
 load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
 in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
+in.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
 ## in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 if(Sys.info()["user"] == "jbb50") out.root <- "/home/jbb50/rds/hpc-work"
+if(Sys.info()["user"] == "paulb") out.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
 
 ## Change location of repo
 out.repo <- "Prev611SeroNHSBT_All_ONS60cutoff_IFR6bp_18wk2_prev14-0PHE_matrices_20220107_stable_household_deaths"
@@ -28,8 +30,8 @@ vbl.names <- names(var.list)[unlist(var.list) == "character"]
 with(setup.env, {
     for(vars in vbl.names){
         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
-        assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
-        assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
+        ## assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
+        ## assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
     }
 })
 ## Added exception for prev.data
