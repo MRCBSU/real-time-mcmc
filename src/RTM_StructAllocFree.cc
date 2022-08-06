@@ -209,9 +209,11 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
   new_rmp.l_vacc1_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_vaccn_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_vaccb_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+  new_rmp.l_vacc4_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_vacc1_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_vaccn_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vaccb_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);  
+  new_rmp.l_vaccb_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+  new_rmp.l_vacc4_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   new_rmp.l_latent_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// THE SAME GOES FOR MANY OF THE OTHER MATRICES
   new_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); // VARIATION NOT EXPECTED TO BE USED HERE
   new_rmp.l_lbeta_rw = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
@@ -250,9 +252,11 @@ void regional_model_params_alloc(regional_model_params& dest_rmp,
   dest_rmp.l_vacc1_disease = gsl_matrix_calloc(src_rmp.l_vacc1_disease->size1, src_rmp.l_vacc1_disease->size2);
   dest_rmp.l_vaccn_disease = gsl_matrix_calloc(src_rmp.l_vaccn_disease->size1, src_rmp.l_vaccn_disease->size2);
   dest_rmp.l_vaccb_disease = gsl_matrix_calloc(src_rmp.l_vaccb_disease->size1, src_rmp.l_vaccb_disease->size2);
+  dest_rmp.l_vacc4_disease = gsl_matrix_calloc(src_rmp.l_vacc4_disease->size1, src_rmp.l_vacc4_disease->size2);  
   dest_rmp.l_vacc1_infect = gsl_matrix_calloc(src_rmp.l_vacc1_infect->size1, src_rmp.l_vacc1_infect->size2);
   dest_rmp.l_vaccn_infect = gsl_matrix_calloc(src_rmp.l_vaccn_infect->size1, src_rmp.l_vaccn_infect->size2);
   dest_rmp.l_vaccb_infect = gsl_matrix_calloc(src_rmp.l_vaccb_infect->size1, src_rmp.l_vaccb_infect->size2);
+  dest_rmp.l_vacc4_infect = gsl_matrix_calloc(src_rmp.l_vacc4_infect->size1, src_rmp.l_vacc4_infect->size2);
   dest_rmp.l_latent_period = gsl_matrix_calloc(src_rmp.l_latent_period->size1, src_rmp.l_latent_period->size2);
   dest_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(src_rmp.l_relative_infectiousness_I2_wrt_I1->size1, src_rmp.l_relative_infectiousness_I2_wrt_I1->size2);
   dest_rmp.l_lbeta_rw = gsl_vector_calloc(src_rmp.l_lbeta_rw->size);
@@ -286,9 +290,11 @@ void regional_model_params_free(regional_model_params& old_rmp)
   gsl_matrix_free(old_rmp.l_vacc1_disease);
   gsl_matrix_free(old_rmp.l_vaccn_disease);
   gsl_matrix_free(old_rmp.l_vaccb_disease);
+  gsl_matrix_free(old_rmp.l_vacc4_disease);
   gsl_matrix_free(old_rmp.l_vacc1_infect);
   gsl_matrix_free(old_rmp.l_vaccn_infect);
   gsl_matrix_free(old_rmp.l_vaccb_infect);
+  gsl_matrix_free(old_rmp.l_vacc4_infect);
   gsl_matrix_free(old_rmp.l_latent_period);
   gsl_matrix_free(old_rmp.l_relative_infectiousness_I2_wrt_I1);
   gsl_vector_free(old_rmp.l_lbeta_rw);
@@ -326,12 +332,16 @@ void regional_model_params_memcpy(regional_model_params& rmp_dest, const regiona
     gsl_matrix_memcpy(rmp_dest.l_vaccn_disease, rmp_src.l_vaccn_disease);
   if(update_flags.getFlag("l_vaccb_disease"))
     gsl_matrix_memcpy(rmp_dest.l_vaccb_disease, rmp_src.l_vaccb_disease);
+  if(update_flags.getFlag("l_vacc4_disease"))
+    gsl_matrix_memcpy(rmp_dest.l_vacc4_disease, rmp_src.l_vacc4_disease);
   if(update_flags.getFlag("l_vacc1_infect"))
     gsl_matrix_memcpy(rmp_dest.l_vacc1_infect, rmp_src.l_vacc1_infect);
   if(update_flags.getFlag("l_vaccn_infect"))
     gsl_matrix_memcpy(rmp_dest.l_vaccn_infect, rmp_src.l_vaccn_infect);
   if(update_flags.getFlag("l_vaccb_infect"))
     gsl_matrix_memcpy(rmp_dest.l_vaccb_infect, rmp_src.l_vaccb_infect);
+  if(update_flags.getFlag("l_vacc4_infect"))
+    gsl_matrix_memcpy(rmp_dest.l_vacc4_infect, rmp_src.l_vacc4_infect);
   if(update_flags.getFlag("l_latent_period"))
     gsl_matrix_memcpy(rmp_dest.l_latent_period, rmp_src.l_latent_period);
   if(update_flags.getFlag("l_relative_infectious_period"))
@@ -474,6 +484,8 @@ void Region_alloc(Region& new_reg,
   else new_reg.Vaccination_data = 0;
   if(src_gmip.l_VBoost_data_flag) new_reg.VBoosting_data = new rtmData(src_gmip.l_VBoost_date_range, cNO_LIK);
   else new_reg.VBoosting_data = 0;
+  if(src_gmip.l_VFourth_data_flag) new_reg.VFourth_data = new rtmData(src_gmip.l_VFourth_date_range, cNO_LIK);
+  else new_reg.VFourth_data = 0;
   
   // FUNCTIONS ALLOCATING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
   regional_model_params_alloc(new_reg.det_model_params, rtmData::ndays, num_ages, src_gmip.l_transmission_time_steps_per_day, src_gmip.l_reporting_time_steps_per_day, src_mixmod);
@@ -504,6 +516,7 @@ void Region_free(Region& old_reg, const global_model_instance_parameters src_gmi
     if(src_gmip.l_Prev_data_flag) delete old_reg.Prevalence_data;
     if(src_gmip.l_Vacc_data_flag) delete old_reg.Vaccination_data;
     if(src_gmip.l_VBoost_data_flag) delete old_reg.VBoosting_data;
+    if(src_gmip.l_VFourth_data_flag) delete old_reg.VFourth_data;
   }
   // FUNCTIONS FREEING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
   regional_model_params_free(old_reg.det_model_params);
@@ -532,6 +545,8 @@ void Region_memcpy(Region& reg_dest, const Region& reg_src, flagclass& update_fl
   reg_dest.Vaccination_data = reg_src.Vaccination_data;
   // if(reg_src.VBoosting_data != 0)
   reg_dest.VBoosting_data = reg_src.VBoosting_data;
+  // if(reg_src.VFourth_data != 0)
+  reg_dest.VFourth_data = reg_src.VFourth_data;
   
   regional_model_params_memcpy(reg_dest.det_model_params, reg_src.det_model_params, update_flags);
   model_statistics_memcpy(reg_dest.region_modstats, reg_src.region_modstats);

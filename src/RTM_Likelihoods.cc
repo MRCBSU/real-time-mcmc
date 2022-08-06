@@ -170,7 +170,8 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 					 const global_model_instance_parameters& gmip,
 					 const mixing_model& l_MIXMOD_ADJUSTED2,
 					 const rtmData* Vaccination,
-					 const rtmData* VBooster)
+					 const rtmData* VBooster,
+					 const rtmData* VFourth)
 {
   // FUNCTION DEFINITION 
   int timestepsperday = gmip.l_transmission_time_steps_per_day;
@@ -277,22 +278,30 @@ void Deterministic_S_E1_E2_I1_I2_R_AG_RF(					 // THE MODEL MODIFIES ALL THE PAR
 	    {
 	      double pi = (v == 0) ? 0 :
 		((v == 1) ? gsl_matrix_get(in_dmp.l_vacc1_infect, t, a) :
-		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) : gsl_matrix_get(in_dmp.l_vaccb_infect, t, a)
+		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_infect, t, a) :
+		  ((v == 3) ? gsl_matrix_get(in_dmp.l_vaccb_infect, t, a) : gsl_matrix_get(in_dmp.l_vacc4_infect, t, a)
+		   )
 		  )
 		 );
 	      double alpha = (v == 0) ? 0 :
 		((v == 1) ? gsl_matrix_get(in_dmp.l_vacc1_disease, t, a) :
-		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_disease, t, a) : gsl_matrix_get(in_dmp.l_vaccb_disease, t, a)
+		 ((v == 2) ? gsl_matrix_get(in_dmp.l_vaccn_disease, t, a) :
+		  ((v == 3) ? gsl_matrix_get(in_dmp.l_vaccb_disease, t, a) : gsl_matrix_get(in_dmp.l_vacc4_disease, t, a)
+		   )
 		  )
 		 );
 	      double vacc_in = ((v == 0) ? 0 :
 				((v == 1) ? Vaccination->getCount(nday, a) :
-				 ((v == 2) ? Vaccination->getDenom(nday, a) : VBooster->getCount(nday, a)
+				 ((v == 2) ? Vaccination->getDenom(nday, a) :
+				  ((v == 3) ? VBooster->getCount(nday, a) : VFourth->getCount(nday, a)
+				   )
 				  )
 				 )) / timestepsperday;
 	      double vacc_out = ((v == 0) ? Vaccination->getCount(nday, a) :
 				 ((v == 1) ? Vaccination->getDenom(nday, a) :
-				  ((v == 2) ? VBooster->getCount(nday, a) : 0
+				  ((v == 2) ? VBooster->getCount(nday, a) :
+				   ((v == 3) ? VFourth->getCount(nday, a) : 0
+				    )
 				   )
 				  )) / timestepsperday;
 
@@ -461,7 +470,8 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 		      gsl_matrix* d_NNI, gsl_matrix* d_Delta_Dis, gsl_matrix* d_Seropositivity, gsl_matrix* d_internal_AR, gsl_matrix* d_Prevalence,
 		      model_state* d_end_state,
 		      const rtmData* vaccination,
-		      const rtmData* vbooster)
+		      const rtmData* vbooster,
+		      const rtmData* vfourth)
 {
   int num_days = global_params.l_duration_of_runs_in_days, step_size = global_params.l_transmission_time_steps_per_day;
 
@@ -505,7 +515,8 @@ void propagate_SEEIIR(regional_model_params in_dmp, const gsl_vector* regional_p
 				      global_params,
 				      l_MIXMOD_ADJUSTED2,
 				      vaccination,
-				      vbooster);
+				      vbooster,
+				      vfourth);
 
   gsl_matrix_free(S);
   gsl_matrix_free(E_1);
@@ -523,7 +534,8 @@ void fn_transmission_model(regional_model_params in_dmp,
 			   const gsl_vector* regional_population_by_age,
 			   model_statistics& mod_stats,
 			   const rtmData* vaccination,
-			   const rtmData* vbooster)
+			   const rtmData* vbooster,
+			   const rtmData* vfourth)
 {
 
   // WRITE DOWN THE FLUCTUATION IN R_0 OVER TIME
@@ -558,7 +570,8 @@ void fn_transmission_model(regional_model_params in_dmp,
 		   mod_stats.d_prevalence,
 		   mod_stats.d_end_state,
 		   vaccination,
-		   vbooster);
+		   vbooster,
+		   vfourth);
 
   ///////////////////////////////////////////////
   // free whatever isn't kept
@@ -877,7 +890,8 @@ void fn_log_likelihood_region(rlikelihood& llhood,
 			  meta_region[int_region].population,
 			  meta_region[int_region].region_modstats,
 			  meta_region[int_region].Vaccination_data,
-			  meta_region[int_region].VBoosting_data);
+			  meta_region[int_region].VBoosting_data,
+			  meta_region[int_region].VFourth_data);
       
   // Having evaluated the transmission model, do we need to evaluate the seropositivity likelihood
   if(gmip.l_Sero_data_flag &&

@@ -39,7 +39,7 @@
 
 // GLOBAL CONSTANTS
 #define NUM_AGE_GROUPS (8)
-#define MAX_VAX_DOSES (3)
+#define MAX_VAX_DOSES (4)
 #define DAYS_IN_YEAR 365.25
 
 #define STATE_DIM (MAX_VAX_DOSES + 1) * NUM_AGE_GROUPS

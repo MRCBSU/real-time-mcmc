@@ -127,19 +127,19 @@ if(vac.n_doses >= 3){
             value.vac.alpha3 <- c(2/3,6/7)
         } else if(efficacies == "PHE"){
             ## value.vac.alpha3 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
-            value.vac.alpha3 <- c(4/5, 2/5, 27/35) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+            value.vac.alpha3 <- c(4/5, 2/5, 27/35, 13/16) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
         } else {
             value.vac.alpha3 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
         }
     } else if(adm.flag){
-        value.vac.alpha3 <- c(4/5, 2/5, 9/14)
+        value.vac.alpha3 <- c(4/5, 2/5, 9/14, 5/8)
     }
     prior.vac.alpha3 <- rep(1, length(value.vac.alpha3)) ## ifelse(vacc.flag, 3, 1)
     prior.alpha3 <- max(prior.vac.alpha3)
     if(vacc.flag & (prior.alpha3 > 1)) pars.alpha3 <- c(4, 1)
     vacb.r.breaks <- NULL
     vacb.a.breaks <- NULL
-    vacb.t.breaks <- c(delta.date, omicron.date) - start.date
+    vacb.t.breaks <- c(delta.date, omicron.date, omicronBA5.date) - start.date
     vacb.design <- NULL
 
     # vac3.design <- v3.design[include, ]
@@ -149,25 +149,18 @@ if(vac.n_doses >= 3){
 ## Efficacy against disease from fourth vaccine dose
 if(vac.n_doses >= 4){
     if(deaths.flag){
-        if(efficacies == "Nick"){
-            value.vac.alpha4 <- c(0.95, 0.70)
-        } else if(efficacies == "Jamie"){
-            value.vac.alpha4 <- c(2/3,6/7)
-        } else if(efficacies == "PHE"){
-            ## value.vac.alpha3 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
-            value.vac.alpha4 <- c(4/5, 2/5, 27/35) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
-        } else {
-            value.vac.alpha4 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
+        if(efficacies == "PHE"){
+            value.vac.alpha4 <- c(4/5, 2/5, 27/35, 13/15) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
         }
     } else if(adm.flag){
-        value.vac.alpha4 <- c(4/5, 2/5, 9/14)
+        value.vac.alpha4 <- c(4/5, 2/5, 9/14, 11/16)
     }
     prior.vac.alpha4 <- rep(1, length(value.vac.alpha4)) ## ifelse(vacc.flag, 3, 1)
     prior.alpha4 <- max(prior.vac.alpha4)
     if(vacc.flag & (prior.alpha4 > 1)) pars.alpha4 <- c(4, 1)
     vac4.r.breaks <- NULL
     vac4.a.breaks <- NULL
-    vac4.t.breaks <- c(delta.date, omicron.date) - start.date
+    vac4.t.breaks <- vacb.t.breaks
     vac4.design <- NULL
 
     # vac4.design <- v4.design[include, ]
@@ -217,15 +210,8 @@ if(vacc.pi.bps)
 
 ## Efficacy against infection from three vaccine doses - can be derived from vaccine surveillance report ??
 if(vac.n_doses >= 3) {
-    if(efficacies == "Nick"){
-        value.vac.pi3 <- 0.6
-    } else if(efficacies == "Jamie"){
-        value.vac.pi3 <- c(0.85, 0.65)
-    } else if(efficacies == "PHE"){
-        value.vac.pi3 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
-    } else {
-        value.vac.pi3 <- 0.6
-    }
+    value.vac.pi3 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
+    value.vac.pi3 <- c(value.vac.pi3, 1/5) ## Based on Nick Andrews' e-mail dated 20220705
     prior.vac.pi3 <- rep(1, length(value.vac.pi3))
     prior.pi3 <- max(prior.vac.pi3)
     if(vacc.flag & (prior.pi3 > 1)) pars.pi3 <- c(4, 1)
@@ -234,15 +220,7 @@ if(vac.n_doses >= 3) {
 }
 ## Efficacy against infection from four vaccine doses - can be derived from vaccine surveillance report ??
 if(vac.n_doses >= 4) {
-    if(efficacies == "Nick"){
-        value.vac.pi4 <- 0.6
-    } else if(efficacies == "Jamie"){
-        value.vac.pi4 <- c(0.85, 0.65)
-    } else if(efficacies == "PHE"){
-        value.vac.pi4 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
-    } else {
-        value.vac.pi4 <- 0.6
-    }
+    value.vac.pi4 <- c(19/20, 19/20, 13/20, 13/25) ## Keeping it the same as dose 3 until Omicron BA.5 wave. Based on NA e-mail as above
     prior.vac.pi4 <- rep(1, length(value.vac.pi4))
     prior.pi4 <- max(prior.vac.pi4)
     if(vacc.flag & (prior.pi4 > 1)) pars.pi4 <- c(4, 1)
@@ -689,9 +667,12 @@ omi.wr <- optim(500, fn = opfunc, prob = 0.81, method = "Brent", lower = 0, uppe
 omi.wr <- optim(500, fn = opfunc, prob = 1 - (omi.wr + 2) / (mean.wr + 2), method = "Brent", days = 10, lower = 0, upper = 99999)$par - 2
 ## First omicron case detected Nov 27. Assume this was an infection on Nov 20.
 ## Heightened waning of immunity is then from Nov 20 to Nov 30
+
+## Waning before BA.5. From Nick Andrews doc circulated on 20220705
+omi.wr.2 <- optim(500, fn = opfunc, prob = 0.09, days = 365.25 * 5 / 24, method = "Brent", lower = 0, upper = 99999)$par - 2
 breaks.wr <- ymd("20211120") - start.date + c(1, 11)
-value.wr <- c(mean.wr, omi.wr)
-fac.wr <- as.factor(c(1, 2, 1))
+value.wr <- c(mean.wr, omi.wr, omi.wr.2)
+fac.wr <- as.factor(c(1, 2, 3))
 prior.wr <- 0
 pars.wr <- NULL
 (design.wr <- model.matrix(~0+fac.wr) %>% as_tibble()) %>%

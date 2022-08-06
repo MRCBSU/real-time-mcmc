@@ -62,12 +62,16 @@ string flagclass::UPItoRMP(const int& iUPI_index)
     return "l_vaccn_disease";
   case VACB_DISEASE_INDEX :
     return "l_vaccb_disease";
+  case VAC4_DISEASE_INDEX :
+    return "l_vacc4_disease";
   case VAC1_INFECT_INDEX :
     return "l_vacc1_infect";
   case VACN_INFECT_INDEX :
     return "l_vaccn_infect";
   case VACB_INFECT_INDEX :
     return "l_vaccb_infect";
+  case VAC4_INFECT_INDEX :
+    return "l_vacc4_infect";
   case REL_INFECT_INDEX :
     return "l_relative_infectiousness_I2_wrt_I1";
   case LBETA_RW_INDEX :
@@ -120,6 +124,10 @@ bool flagclass::getFlag(const string& reg_varname)
     if(reg_varname.compare(rmp_member_names[int_i]) == 0)
       return regional_update_flags[int_i];
   return true;
+}
+unsigned int flagclass::getSize()
+{
+  return iSize;
 }
 void flagclass::switchFlag(const string& match_string)
 {

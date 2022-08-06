@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(5)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -73,14 +73,14 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 cutoff_hosps_early <- FALSE
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- FALSE
+admissions_only.flag <- TRUE
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220729)
+date.adm_seb <- ymd(20220804)
 ## date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -118,7 +118,7 @@ print(preprocessed_sus_names)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220729"), format = "%Y%m%d")
+google.data.date <- format(ymd("20220805"), format = "%Y%m%d")
 matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
@@ -177,16 +177,16 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0			# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 814
+num.prev.days <- 821
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -247,9 +247,9 @@ if (data.desc == "all") {
 use.previous.run.for.start <- TRUE
 if(use.previous.run.for.start){
     if(region.type == "NHS"){
-        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220712", "20220716"), paste0("Prev800SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR8bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220715", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))                                      )
+        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220726", "20220729"), paste0("Prev814SeroNHSBT_All_NHS", str.cutoff, "cutoff_IFR8bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220729", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))                                      )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220712", "20220716"), paste0("Prev800SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR8bp_", ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""), "11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220715", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
+        previous.run.to.use <- file.path(proj.dir, "model_runs", ifelse(hosp.flag, "20220726", "20220729"), paste0("Prev814SeroNHSBT_All_ONS", str.cutoff, "cutoff_IFR8bp_", ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""), "11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220729", matrix.suffix, "_", ifelse(hosp.flag, "deaths", "admissions_no_deaths"), c("_chain2", ""))
                                          )
 }
 
@@ -290,7 +290,7 @@ if(gp.flag){
 prev.cutoff.days <- 2
 prev.days.to.lose <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220725")
+date.prev <- lubridate::ymd("20220801")
 prev.end.day <- date.prev - start.date + 1 - prev.cutoff.days ## day number of last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- (date.prev - num.prev.days - start.date)
@@ -326,9 +326,11 @@ future.fourth.n <- "c(1, 1, 1, 0.5, 0.5, rep(0.1, 6))* 10 ^ 6  * 55.98 / 66.65"
 scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
 ## Approximate date at which delta became dominant strain (- one week)
-delta.date <- ymd("20210503")
+delta.date <- ymd(20210503)
 ## Approximate date at which omicron became dominant strain (- one week)
-omicron.date <- ymd("20211205")
+omicron.date <- ymd(20211205)
+## Approximate date at which omicron BA.5 overtook omicron BA.2 as the dominant strain ( - one week)
+omicronBA5.date <- ymd(20220601)
 
 scenario.name <- paste0(scenario.name, "_new_mprior")
 
