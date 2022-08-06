@@ -23,6 +23,7 @@ public:
   flagclass();
   string UPItoRMP(const int&);
   bool getFlag(const string&);
+  unsigned int getSize();
   void switchFlag(const string&);
   flagclass(const int&);
   ~flagclass();

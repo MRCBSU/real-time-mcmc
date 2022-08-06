@@ -644,10 +644,10 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   // Default is all flags set to true
 
   // flagclass has a member iSize, but it is private
-  for (int i = 0; i < 31; i++)
+  for (int i = 0; i < blockflags.getSize(); i++)
     blockflags.regional_update_flags[i] = false;
 
-  if (global) {
+  if (global) { // indices correspond to position in the REGIONAL_MODEL_PARAMS_MEMBERS string.
     blockflags.regional_update_flags[2] = true;
     blockflags.regional_update_flags[4] = true;
     blockflags.regional_update_flags[14] = true;

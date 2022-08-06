@@ -121,6 +121,10 @@ bool flagclass::getFlag(const string& reg_varname)
       return regional_update_flags[int_i];
   return true;
 }
+unsigned int flagclass::getSize()
+{
+  return iSize;
+}
 void flagclass::switchFlag(const string& match_string)
 {
   for(int int_i = 0; int_i < iSize; int_i++)

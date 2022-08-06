@@ -7,7 +7,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.5
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -42,7 +42,7 @@ save.text <- "MTP"
 ## projections.file <- "projections_R1.4.RData"
 ## scen.text <- "MTP R1.4"
 ## save.text <- "MTP_R_1.4"
-mtp.filter.date <- lubridate::ymd("20220617") ## ymd(date.data)
+mtp.filter.date <- lubridate::ymd("20220708") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
@@ -393,7 +393,7 @@ trim_forecast_days <- function(arrIn){
 
 ### MEDIUM-TERM FORECASTING ###
 if(med.term.flag){
-    mtp.filter.day.no <- mtp.filter.date - start.date + 1
+    mtp.filter.day.no <- as.integer(mtp.filter.date - start.date + 1)
     fl.proj <- file.path(out.dir, projections.file)
     if(!file.exists(fl.proj))
         stop("Missing projections file")
