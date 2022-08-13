@@ -7,7 +7,7 @@ load("tmp.RData")
 here <- here()
 
 # Snapshot analysis to use
-str.date <- "2022-03-04"
+str.date <- "2022-08-02"
 
 ## Location of this script
 thisFile <- function() {
@@ -42,5 +42,5 @@ load(files)
 if(map_flag) {
         rmarkdown::render(file.path(file.loc, "SnapshotReportMaps.Rmd"), output_dir = here, output_file = paste0(str.date, '_snapshot_report.html'), envir = globalenv())
 } else {
-        rmarkdown::render(file.path(file.loc, "SnapshotReport.Rmd"), output_dir = here, output_file = paste0(str.date, '_snapshot_report.html'), envir = globalenv())
+        rmarkdown::render(file.path(file.loc, "SnapshotReport_temp.Rmd"), output_dir = here, output_file = paste0(str.date, '_snapshot_report.html'), envir = globalenv())
 }

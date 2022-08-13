@@ -1,11 +1,11 @@
 ## Get the variables as they were saved on the original computer
 setup.env <- new.env()
-Rfile <- "mcmc"
+Rfile <- "tmp"
 load(paste0(Rfile, ".RData"), envir = setup.env)
 
 ## Want to change file locations from in.root to out.root
 in.root <- "/home/phe.gov.uk/paul.birrell/Documents/PHE/stats/Wuhan_2019_Coronavirus"
-in.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
+## in.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"
 ## in.root <- "/project/pandemic_flu/Wuhan_Coronavirus"
 ## in.root <- "/rds/user/aa995/hpc-work"
 if(Sys.info()["user"] == "pjb51") out.root <- "/rds/user/pjb51/hpc-work/project/pandemic_flu/Wuhan_Coronavirus"

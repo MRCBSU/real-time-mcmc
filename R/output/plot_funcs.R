@@ -125,7 +125,7 @@ create.base.subplot <- function(data, num.rows, subplot_title) {
 		fillcolor = "black",
 		opacity = 0.06,
         hoverinfo = "Third national lockdown"
-    ),
+	),
     list(
         type = "line", 
         y0 = 0, 

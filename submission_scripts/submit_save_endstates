@@ -13,9 +13,9 @@
 #SBATCH --no-requeue
 #SBATCH --verbose
 
-#SBATCH --array=0-19
+#SBATCH --array=0-11
 #SBATCH -p icelake
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 
 #SBATCH --output=model_runs_20210120regjobs_%a.out

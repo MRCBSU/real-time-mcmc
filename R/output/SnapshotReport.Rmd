@@ -94,15 +94,15 @@ state.levels <- c(
   )
 
 with.doses <- c(
-  paste0(" with ", c(0,1,2,3), " vaccine doses")
+  paste0(" with ", c(0,"1-2",3,4), " vaccine doses")
 )
 
-state_colours <- c(  "Fully susceptible" = "#3cb44b",
-  "Susceptible, previously infected" = "#ffe119",
-  "Latent infection" = "#4363d8",
-  "Prevalent infection" = "#f58231",
-  "Infection-acquired immunity" = "#fabed4"
-)
+## state_colours <- c(  "Fully susceptible" = "#3cb44b",
+##   "Susceptible, previously infected" = "#ffe119",
+##   "Latent infection" = "#4363d8",
+##   "Prevalent infection" = "#f58231",
+##   "Infection-acquired immunity" = "#fabed4"
+## )
 
 combined_levels <- crossing(
   state_levels = names(state.levels),
@@ -137,14 +137,22 @@ state_colours <- c(
 "#ffd4ee"
 )
 
+dose_aggregation <- function(dose){
+  idx <- which(dose %in% 1:2)
+  dose[idx] <- "1-2"
+  dose
+}
+
 names(state_colours) <- combined_levels$levels
 
 summary_simple_state_ages <- state |> 
   filter(!is.na(state.names), state.names != "plambda") |> 
-  mutate(state_text_old = state.text, dose.numbers_old = dose.numbers, state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+  mutate(state_text_old = state.text, dose.numbers = dose_aggregation(dose.numbers), dose.numbers_old = dose.numbers, state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
   unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
   mutate(state.text = paste0(state.text, " vaccine doses")) |> 
-  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |> 
+  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |>
+  group_by(age.labs, region, iteration, state.names, state.text, state_text_old, dose.numbers_old, popn) |>
+  summarise(value = sum(value)) |>
   group_by(age.labs, iteration, state.names, state.text, state_text_old, dose.numbers_old) |> 
   summarise(value = sum(value), popn = sum(popn)) |> 
   group_by(age.labs, popn, state.text, iteration, state_text_old, dose.numbers_old) |> 
@@ -179,10 +187,12 @@ plotly::ggplotly(p1, tooltip = "text") |>
 ```{r}
 summary_simple_state_ages <- state |> 
   filter(!is.na(state.names), state.names != "plambda") |> 
-  mutate(state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
-    unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
+  mutate(state_text_old = state.text, dose.numbers = dose_aggregation(dose.numbers), dose.numbers_old = dose.numbers, state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+  unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
   mutate(state.text = paste0(state.text, " vaccine doses")) |> 
-  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |> 
+  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |>
+  group_by(age.labs, region, iteration, state.names, state.text, state_text_old, dose.numbers_old, popn) |>
+  summarise(value = sum(value)) |>
   mutate(region = str_replace_all(region, "_", " ")) |> 
   group_by(region, iteration, state.names, state.text) |> 
   summarise(value = sum(value), popn = sum(popn)) |> 
@@ -221,10 +231,12 @@ plotly::ggplotly(p1, tooltip = "text")|>
 ```{r, fig.height=16}
 summary_simple_state_ages <- state |> 
   filter(!is.na(state.names), state.names != "plambda") |> 
-  mutate(state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
+  mutate(state_text_old = state.text, dose.numbers = dose_aggregation(dose.numbers), dose.numbers_old = dose.numbers, state.text = factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> 
   unite(col = "state.text", state.text, dose.numbers, sep = " with ") |> 
   mutate(state.text = paste0(state.text, " vaccine doses")) |> 
-  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |> 
+  mutate(state.text = factor(state.text, levels = combined_levels$levels, ordered = T)) |>
+  group_by(age.labs, region, iteration, state.names, state.text, state_text_old, dose.numbers_old, popn) |>
+  summarise(value = sum(value)) |>
   mutate(region = str_replace_all(region, "_", " ")) |> 
   group_by(age.labs, region, iteration, state.names, state.text) |> 
   summarise(value = sum(value), popn = sum(popn)) |> 
@@ -276,7 +288,7 @@ summary_simple_state_ages <- state |>
   filter(!is.na(state.names)) |> 
   group_by(state.names, state.text,age.labs, iteration, dose.numbers) |> 
   summarise(value = sum(value), popn = sum(popn)) |> 
-  mutate(value = value / popn * 100) |> 
+  mutate(value = ifelse(popn > 0, value / popn * 100, 0)) |> 
   group_by(state.names, state.text, age.labs, dose.numbers) |> 
   summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
   mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
@@ -306,7 +318,8 @@ combined_state_levels <- c(
 p1 <- summary_simple_state_ages |> 
   filter(state.names %in% susceptible_list) |> 
   mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |> 
-  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> arrange(state.names, dose.numbers) |> 
+  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |>
+  arrange(state.names, dose.numbers) |> 
   mutate(ce = ce, low_ci95 = low_ci95, upp_ci95 = upp_ci95) |> 
   # unite("state.names", state.names, dose.numbers, sep = " ") |> 
   # mutate(state.names = factor(state.names, levels = combined_state_levels, ordered = T)) |> 
@@ -331,7 +344,7 @@ summary_simple_state_region <- state |>
   filter(!is.na(state.names)) |> 
   group_by(state.names, state.text, region, iteration, dose.numbers) |> 
   summarise(value = sum(value), popn = sum(popn)) |> 
-  mutate(value = value / popn * 100) |> 
+  mutate(value = ifelse(popn > 0, value / popn * 100, 0)) |> 
   group_by(state.names, state.text, region, dose.numbers) |> 
   summarise(v = quantile(value, c(0.025, 0.5, 0.975)), q = c(0.025, 0.5, 0.975)) |> 
   mutate(q = factor(q, levels = c(0.025, 0.5, 0.975), labels = c("low_ci95", "ce", "upp_ci95"))) |> 
@@ -341,7 +354,8 @@ summary_simple_state_region <- state |>
 p1 <- summary_simple_state_region |> 
   filter(state.names %in% susceptible_list) |> 
   mutate(dose.numbers = factor(dose.numbers, levels = vacc_levels, labels = names(vacc_levels), ordered = T)) |> 
-  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |> arrange(state.names, dose.numbers) |> 
+  mutate(state.names= factor(state.text, levels = state.levels, labels = names(state.levels), ordered = T)) |>
+  arrange(state.names, dose.numbers) |> 
   mutate(ce = ce, low_ci95 = low_ci95, upp_ci95 = upp_ci95) |> 
   # unite("state.names", state.names, dose.numbers, sep = " ") |> 
   # mutate(state.names = factor(state.names, levels = combined_state_levels, ordered = T)) |> 

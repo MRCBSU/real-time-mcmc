@@ -99,7 +99,7 @@ prior_distribution = `r paste(rep(1, length(value.vac.alpha2)), collapse = ", ")
 
 `r ifelse(vacc.flag & vacc.alpha.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.alpha.bps, paste0("regression_design = ", ifelse(vac.n_doses == 3, "vac.alpha2.design.txt", "vac.alphan.design.txt"), ";"), "")`
+`r ifelse(vacc.flag & vacc.alpha.bps, paste0("regression_design = ", ifelse(vac.n_doses >= 3, "vac.alpha2.design.txt", "vac.alphan.design.txt"), ";"), "")`
 
 }
 
@@ -116,6 +116,23 @@ prior_distribution = `r paste(rep(1, length(value.vac.alpha3)), collapse = ", ")
 `r ifelse(vacc.flag & !is.null(vacb.design), "regression_design = vac.alpha3.design.txt;", "")`
 
 }
+
+vacc_4th_disease = { param_value = `r ifelse(exists("value.vac.alpha4"), paste(value.vac.alpha4, collapse = ", "), 1.0)`;
+
+prior_distribution = `r ifelse(exists("value.vac.alpha4"), paste(rep(1, length(value.vac.alpha4)), collapse = ", "), 1)`;
+
+`r ifelse(exists("value.vac.alpha4"), ifelse(vacc.flag & (prior.alpha4 > 1), "proposal_variance = 0.01;", ""), "")`
+
+`r ifelse(exists("value.vac.alpha4"), ifelse(vacc.flag & !is.null(vac4.r.breaks), "region_breakpoints = true;", ""), "")`
+
+`r ifelse(exists("value.vac.alpha4"), ifelse(vacc.flag & !is.null(vac4.a.breaks), "age_breakpoints = true;", ""), "")`
+
+`r ifelse(exists("value.vac.alpha4"), ifelse(vacc.flag & !is.null(vac4.t.breaks), paste("time_breakpoints =", paste(vac4.t.breaks, collapse = ", "), ";"), ""), "")`
+
+`r ifelse(exists("value.vac.alpha4"), ifelse(vacc.flag & !is.null(vac4.design), "regression_design = vac.alpha4.design.txt;", ""), "")`
+
+}
+
 
 vacc_1st_infect = { param_value = `r value.vac.pi1`;
 
@@ -141,7 +158,7 @@ prior_distribution = `r paste(rep(1, length(value.vac.pi2)), collapse = ", ")`;
 
 `r ifelse(vacc.flag & vacc.pi.bps, paste("time_breakpoints = ", paste(vac.effec.bp, collapse = ", "), ";"), "")`
 
-`r ifelse(vacc.flag & vacc.pi.bps, paste0("regression_design = ", ifelse(vac.n_doses == 3, "vac.pi2.design.txt", "vac.pin.design.txt"), ";"), "")`
+`r ifelse(vacc.flag & vacc.pi.bps, paste0("regression_design = ", ifelse(vac.n_doses >= 3, "vac.pi2.design.txt", "vac.pin.design.txt"), ";"), "")`
 
 }
 
@@ -156,6 +173,22 @@ prior_distribution = `r paste(rep(1, length(value.vac.pi3)), collapse = ", ")`;
 `r ifelse(vacc.flag & !is.null(vacb.t.breaks), paste("time_breakpoints = ", paste(vacb.t.breaks, collapse = ", "), ";"), "")`
 
 `r ifelse(vacc.flag & !is.null(vacb.design), "regression_design = vac.pi3.design.txt;", "")`
+
+}
+
+vacc_4th_infect = { param_value = `r ifelse(exists("value.vac.pi4"), paste(value.vac.pi4, collapse = ", "), 1.0)`;
+
+prior_distribution = `r ifelse(exists("value.vac.pi4"), paste(rep(1, length(value.vac.pi4)), collapse = ", "), 1)`;
+
+`r ifelse(exists("value.vac.pi4"), ifelse(vacc.flag & (prior.pi4 > 1), "proposal_variance = 0.01;", ""), "")`
+
+`r ifelse(exists("value.vac.pi4"), ifelse(vacc.flag & !is.null(vac4.r.breaks), "region_breakpoints = true;", ""), "")`
+
+`r ifelse(exists("value.vac.pi4"), ifelse(vacc.flag & !is.null(vac4.a.breaks), "age_breakpoints = true;", ""), "")`
+
+`r ifelse(exists("value.vac.pi4"), ifelse(vacc.flag & !is.null(vac4.t.breaks), paste("time_breakpoints = ", paste(vac4.t.breaks, collapse = ", "), ";"), ""), "")`
+
+`r ifelse(exists("value.vac.pi4"), ifelse(vacc.flag & !is.null(vac4.design), "regression_design = vac.pi4.design.txt;", ""), "")`
 
 }
 

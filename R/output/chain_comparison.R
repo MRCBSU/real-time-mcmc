@@ -22,8 +22,8 @@ thisFile <- function() {
 }
 Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
-colcode.fl <- "Prev781SeroNHSBT_All_NHS28cutoff_IFR8bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220624_stable_household_deaths"
-oldcode.fl <- "Prev781SeroNHSBT_All_NHS28cutoff_IFR8bp_11wk2_prev14-0PHE_3dose_new_mprior_matrices_20220624_stable_household_deaths_chain2"
+colcode.fl <- "Prev821SeroNHSBT_All_ONScutoff_IFR8bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220805_timeuse_household_admissions_no_deaths"
+oldcode.fl <- "Prev821SeroNHSBT_All_ONScutoff_IFR8bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20220805_timeuse_household_admissions_no_deaths_chain2"
 
 ## load("mcmc.RData")
 load(file.path(colcode.fl, "tmp.RData"))
@@ -216,8 +216,8 @@ oldcode.lrw <- unlist(oldcode.lrw)
 ## sg.lrw <- unlist(sg.lrw)
 
 ## sg.total.lfx <- sg.lfx + sg.lrw
-paul.total.lfx <- paul.lfx + paul.lrw
-oldcode.total.lfx <- oldcode.lfx + oldcode.lrw
+paul.total.lfx <- paul.lfx + paul.lrw + out.dens
+oldcode.total.lfx <- oldcode.lfx + oldcode.lrw + oldcode.out.dens
 
 ## names(NNI) <- regions
 ## if(dths.flag) names(Deaths) <- regions
