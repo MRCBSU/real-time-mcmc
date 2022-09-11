@@ -19,7 +19,6 @@ file.loc <- dirname(thisFile())
 proj.dir <- file.loc
 source(file.path(proj.dir, "config.R"))
 source(file.path(proj.dir, "R/data/utils.R"))
-
 system(paste("mkdir -p", out.dir))
 
 ## do we need to do formatting?
