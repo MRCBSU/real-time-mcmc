@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
@@ -80,7 +80,7 @@ sus_seb_combination <- 3L
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220922)
+date.adm_seb <- ymd(20220930)
 ## date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -224,7 +224,7 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "8bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "9bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
 scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""), "_", time.to.last.breakpoint, "wk", break.window)
