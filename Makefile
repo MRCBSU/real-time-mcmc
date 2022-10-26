@@ -14,7 +14,7 @@ RTM_HPC_OBJS3 = $(SRC:src/%.cc=build/rtm_hpc3/%.o)
 RTM_HPC_OBJS4 = $(SRC:src/%.cc=build/rtm_hpc4/%.o)
 RTM_HPC_OBJS5 = $(SRC:src/%.cc=build/rtm_hpc5/%.o)
 
-LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/usr/local/packages/gsl/2.7/lib -lgsl -lgslcblas -lgfortran -lm -lpthread
+LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/home/phe.gov.uk/joel.kandiah/gsl/usr/lib64 -lgsl -lgslcblas -lgfortran -lm -lpthread
 ## LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
 CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
 
@@ -105,7 +105,7 @@ build/rtm_hpc3/%.o: src/%.cc
 
 build/rtm_hpc4/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc4
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -march=core-avx2 -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++11 -Ofast -I/home/phe.gov.uk/joel.kandiah/gsl/usr/include/ -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 build/rtm_hpc5/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc5
