@@ -12,7 +12,7 @@ str.date.vacc <- "20220624"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(2)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(121)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -50,7 +50,7 @@ RocheS.flag <- 0
 Use_preprocessed_serology <- T
 preprocessed_sero_date <- ymd("20220627")
 
-sero_cutoff_flag <- T
+sero_cutoff_flag <- F
 
 if(sero_cutoff_flag) {
     #If dropping serology
@@ -77,7 +77,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 cutoff_hosps_early <- F
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- T
+admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -126,7 +126,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20220624"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -135,7 +135,9 @@ earliest.date <- ymd("2020-02-17")
 nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
-cm.breaks <- seq(from = 36, to = ndays, by = 7) ## Day numbers where breaks happen
+flag.earlier_cm <- TRUE
+
+cm.breaks <- `if`(flag.earlier_cm, seq(from = 1, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 sdpar <- 100
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
@@ -184,12 +186,12 @@ region.code <- "Eng"
 ## all: all deaths, by date of death
 ## adjusted_median: reporting-delay adjusted deaths produced by Pantelis, using medians
 ## adjusted_mean: reporting-delay adjusted deaths produced by Pantelis, using means
-data.desc <- "deaths"
+data.desc <- "admissions"
 
 ## The 'gp' stream in the code is linked to the pillar testing data
 gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
-deaths.flag <- hosp.flag <- 1	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
+deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
@@ -203,7 +205,7 @@ vacc.flag <- 1
 vac.date.fmt <- "%d%b%Y"
 
 ## Deaths Flags
-use_deaths_up_to_now_flag <- F
+use_deaths_up_to_now_flag <- T
 custom_deaths_end_date <- lubridate::ymd("20220430")
 
 Use_preprocessed_deaths <- T
@@ -259,8 +261,8 @@ if(use.previous.run.for.start){
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_deaths", paste0(c("Prev751SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_dropdeaths_20220430_matrices2_20220527_timeuse_household_deaths",
                                                                                                  "Prev751SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_dropdeaths_20220430_matrices2_20220527_timeuse_household_deaths_chain2"))
                                               )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_admissions", paste0(c("Prev751SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths",
-                                                                                                      "Prev751SeroNHSBT_All_NHScutoff_IFR7bp_admissions_only_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths_chain2"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_admissions", paste0(c("Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths",
+                                                                                                      "Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths_chain2"))
                                               )
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304", c("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_copy", # _stable_household_deaths_chain2",
@@ -355,6 +357,7 @@ out.dir <- file.path(proj.dir,
                          ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
                          ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
+                         ifelse(flag.earlier_cm, "_earliercm", ""),
                          "_matrices2_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")

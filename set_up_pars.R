@@ -548,7 +548,10 @@ if(rw.flag){
 ## ## End of contact model ##
 
 ## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - time.to.last.breakpoint)][-1] ## Josh's version
+print(seq(from = 1, to = ndays, by = 7))
+print(cm.breaks)
 beta.breaks.full <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
+print(beta.breaks.full)
 beta.breaks <- beta.breaks.full[rev(seq(length(beta.breaks.full), 1, by = -break.window))]
 beta.inds <- beta.breaks.full %in% beta.breaks
 
