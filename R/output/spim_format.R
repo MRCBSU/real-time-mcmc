@@ -7,7 +7,7 @@ suppressMessages(extract <- R.utils::extract)
 
 mod.version.no <- 1.4
 med.term.flag <- TRUE
-nowcast.flag <- TRUE
+nowcast.flag <- FALSE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)

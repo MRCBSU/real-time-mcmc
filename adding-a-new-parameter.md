@@ -27,7 +27,7 @@
 
 - if this parameter is a variance or overdispersion parameter that relates directly to data, re-size the relevant structures in the ``regional_model_params`` 
 
-- add a call to the mapping function ``regional_matrix_parameter`` or ``regional_vector_parameter`` or modify exsiting ones as appropriate within the ``evaluate_regional_parameters``. This describes how the updateable model parameter is mapped into the regions.
+- add a call to the mapping function ``regional_matrix_parameter`` or ``regional_vector_parameter`` or modify exsiting ones as appropriate within the ``evaluate_regional_parameters`` function. This describes how the updateable model parameter is mapped into the regions.
 
 - the above function is deprecated and is updated for consistency. Noting the change in format for the function arguments, enter similar blocks of code into the `block_regional_parameters` function.
 

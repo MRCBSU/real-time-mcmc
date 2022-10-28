@@ -32,8 +32,8 @@ vbl.names <- names(var.list)[unlist(var.list) == "character"]
 with(setup.env, {
     for(vars in vbl.names){
         assign(vars, gsub(in.root, out.root, get(vars), fixed = TRUE))
-        assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
-        assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
+        ## assign(vars, gsub(in.repo, out.repo, get(vars), fixed = TRUE))
+        ## assign(vars, gsub(in.base, out.base, get(vars), fixed = TRUE))
     }
 })
 ## Added exception for prev.data

@@ -686,12 +686,16 @@ void block_regional_parameters(regional_model_params& out_rmp,
     regional_matrix_parameter(out_rmp.l_vaccn_disease, updPars.lookup(upd::VACN_DISEASE, region_index), updPars[upd::VACN_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccb_disease"))
     regional_matrix_parameter(out_rmp.l_vaccb_disease, updPars.lookup(upd::VACB_DISEASE, region_index), updPars[upd::VACB_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vacc4_disease"))
+    regional_matrix_parameter(out_rmp.l_vacc4_disease, updPars.lookup(upd::VAC4_DISEASE, region_index), updPars[upd::VAC4_DISEASE].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vacc1_infect"))
     regional_matrix_parameter(out_rmp.l_vacc1_infect, updPars.lookup(upd::VAC1_INFECT, region_index), updPars[upd::VAC1_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccn_infect"))
     regional_matrix_parameter(out_rmp.l_vaccn_infect, updPars.lookup(upd::VACN_INFECT, region_index), updPars[upd::VACN_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
-  if(update_flags.getFlag("l_vaccB_infect"))
+  if(update_flags.getFlag("l_vaccb_infect"))
     regional_matrix_parameter(out_rmp.l_vaccb_infect, updPars.lookup(upd::VACB_INFECT, region_index), updPars[upd::VACB_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vacc4_infect"))
+    regional_matrix_parameter(out_rmp.l_vacc4_infect, updPars.lookup(upd::VAC4_INFECT, region_index), updPars[upd::VAC4_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, updPars.lookup(upd::REL_INFECT, region_index), updPars[upd::REL_INFECT].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
@@ -867,12 +871,16 @@ void evaluate_regional_parameters(regional_model_params& out_rmp, const updateab
     regional_matrix_parameter(out_rmp.l_vaccn_disease, in_umps[VACN_DISEASE_INDEX].param_value, in_umps[VACN_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccb_disease"))
     regional_matrix_parameter(out_rmp.l_vaccb_disease, in_umps[VACB_DISEASE_INDEX].param_value, in_umps[VACB_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vacc4_disease"))
+    regional_matrix_parameter(out_rmp.l_vacc4_disease, in_umps[VAC4_DISEASE_INDEX].param_value, in_umps[VAC4_DISEASE_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vacc1_infect"))
     regional_matrix_parameter(out_rmp.l_vacc1_infect, in_umps[VAC1_INFECT_INDEX].param_value, in_umps[VAC1_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccn_infect"))
  regional_matrix_parameter(out_rmp.l_vaccn_infect, in_umps[VACN_INFECT_INDEX].param_value, in_umps[VACN_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_vaccb_infect"))
  regional_matrix_parameter(out_rmp.l_vaccb_infect, in_umps[VACB_INFECT_INDEX].param_value, in_umps[VACB_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
+  if(update_flags.getFlag("l_vacc4_infect"))
+ regional_matrix_parameter(out_rmp.l_vaccb_infect, in_umps[VAC4_INFECT_INDEX].param_value, in_umps[VAC4_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_relative_infectiousness_I2_wrt_I1"))
     regional_matrix_parameter(out_rmp.l_relative_infectiousness_I2_wrt_I1, in_umps[REL_INFECT_INDEX].param_value, in_umps[REL_INFECT_INDEX].map_to_regional, region_index, in_gmip.l_transmission_time_steps_per_day);
   if(update_flags.getFlag("l_lbeta_rw")){

@@ -98,7 +98,7 @@ prior.vac.alpha2 <- rep(1, length(value.vac.alpha2)) ## ifelse(vacc.flag, 3, 1)
 prior.alpha2 <- max(prior.vac.alpha2)
 if(vacc.flag & (prior.alpha2 > 1)) pars.alpha2 <- c(4, 1)
 if(efficacies == "PHE"){
-    if(vac.n_doses == 3) {
+    if(vac.n_doses >= 3) {
         v2.design <- cbind(v2.design, 0, 0, 0, 0)
         v2.design[delta, 3:4] <- v2.design[delta, 1:2]
         v2.design[delta, 1:2] <- 0
@@ -110,7 +110,7 @@ if(efficacies == "PHE"){
         vn.design[delta, 1:2] <- 0
     }
 }
-if(vac.n_doses == 3) {
+if(vac.n_doses >= 3) {
     v2.design <- v2.design[include, ]
     write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.alpha2.design.txt"), col_names = FALSE)
 } else {
@@ -119,7 +119,7 @@ if(vac.n_doses == 3) {
 }
 
 ## Efficacy against disease from third vacccine dose
-if(vac.n_doses == 3){
+if(vac.n_doses >= 3){
     if(deaths.flag){
         if(efficacies == "Nick"){
             value.vac.alpha3 <- c(0.95, 0.70)
@@ -127,23 +127,44 @@ if(vac.n_doses == 3){
             value.vac.alpha3 <- c(2/3,6/7)
         } else if(efficacies == "PHE"){
             ## value.vac.alpha3 <- c(17/20, 51/57, 17/20, 17/20)  ## Based on vaccine surveillance report wk 26
-            value.vac.alpha3 <- c(4/5, 2/5, 27/35) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+            value.vac.alpha3 <- c(4/5, 2/5, 27/35, 13/16) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
         } else {
             value.vac.alpha3 <- c(0.94, 0.82) ## efficacy against disease of Pfizer and AZ vaccines respectively.
         }
     } else if(adm.flag){
-        value.vac.alpha3 <- c(4/5, 2/5, 9/14)
+        value.vac.alpha3 <- c(4/5, 2/5, 9/14, 5/8)
     }
     prior.vac.alpha3 <- rep(1, length(value.vac.alpha3)) ## ifelse(vacc.flag, 3, 1)
     prior.alpha3 <- max(prior.vac.alpha3)
     if(vacc.flag & (prior.alpha3 > 1)) pars.alpha3 <- c(4, 1)
     vacb.r.breaks <- NULL
     vacb.a.breaks <- NULL
-    vacb.t.breaks <- c(delta.date, omicron.date) - start.date
+    vacb.t.breaks <- c(delta.date, omicron.date, omicronBA5.date) - start.date
     vacb.design <- NULL
 
-    # v3.design <- v3.design[include, ]
+    # vac3.design <- v3.design[include, ]
     # write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.alpha3.design.txt"), col_names = FALSE)
+}
+
+## Efficacy against disease from fourth vaccine dose
+if(vac.n_doses >= 4){
+    if(deaths.flag){
+        if(efficacies == "PHE"){
+            value.vac.alpha4 <- c(4/5, 2/5, 27/35, 13/15) ## Based on a combination of vaccine surveillance reports, wks 26, 36, 46
+        }
+    } else if(adm.flag){
+        value.vac.alpha4 <- c(4/5, 2/5, 9/14, 11/16)
+    }
+    prior.vac.alpha4 <- rep(1, length(value.vac.alpha4)) ## ifelse(vacc.flag, 3, 1)
+    prior.alpha4 <- max(prior.vac.alpha4)
+    if(vacc.flag & (prior.alpha4 > 1)) pars.alpha4 <- c(4, 1)
+    vac4.r.breaks <- NULL
+    vac4.a.breaks <- NULL
+    vac4.t.breaks <- vacb.t.breaks
+    vac4.design <- NULL
+
+    # vac4.design <- v4.design[include, ]
+    # write_tsv(as.data.frame(v4.design), file.path(out.dir, "vac.alpha4.design.txt"), col_names = FALSE)
 }
 
 ## Efficacy against infection from one vaccine dose - can be derived from vaccine surveillance report 26 (alpha)
@@ -181,28 +202,30 @@ prior.vac.pi2 <- rep(1, length(value.vac.pi2)) ## ifelse(vacc.flag, 3, 1)
 prior.pi2 <- max(prior.vac.pi2)
 if(vacc.flag & (prior.pi2 > 1)) pars.pi2 <- c(4, 1)
 if(vacc.pi.bps)
-    if(vac.n_doses == 3){
+    if(vac.n_doses >= 3){
         write_tsv(as.data.frame(v2.design), file.path(out.dir, "vac.pi2.design.txt"), col_names = FALSE)
     } else {
         write_tsv(as.data.frame(vn.design), file.path(out.dir, "vac.pin.design.txt"), col_names = FALSE)
     }
 
 ## Efficacy against infection from three vaccine doses - can be derived from vaccine surveillance report ??
-if(vac.n_doses == 3) {
-    if(efficacies == "Nick"){
-        value.vac.pi3 <- 0.6
-    } else if(efficacies == "Jamie"){
-        value.vac.pi3 <- c(0.85, 0.65)
-    } else if(efficacies == "PHE"){
-        value.vac.pi3 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
-    } else {
-        value.vac.pi3 <- 0.6
-    }
+if(vac.n_doses >= 3) {
+    value.vac.pi3 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
+    value.vac.pi3 <- c(value.vac.pi3, 1/5) ## Based on Nick Andrews' e-mail dated 20220705
     prior.vac.pi3 <- rep(1, length(value.vac.pi3))
     prior.pi3 <- max(prior.vac.pi3)
     if(vacc.flag & (prior.pi3 > 1)) pars.pi3 <- c(4, 1)
 
     # if(vacc.pi.bps) write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.pi3.design.txt"), col_names = FALSE)
+}
+## Efficacy against infection from four vaccine doses - can be derived from vaccine surveillance report ??
+if(vac.n_doses >= 4) {
+    value.vac.pi4 <- c(19/20, 19/20, 13/20, 13/25) ## Keeping it the same as dose 3 until Omicron BA.5 wave. Based on NA e-mail as above
+    prior.vac.pi4 <- rep(1, length(value.vac.pi4))
+    prior.pi4 <- max(prior.vac.pi4)
+    if(vacc.flag & (prior.pi4 > 1)) pars.pi4 <- c(4, 1)
+
+    # if(vacc.pi.bps) write_tsv(as.data.frame(v4.design), file.path(out.dir, "vac.pi4.design.txt"), col_names = FALSE)
 }
 
 ## Exponential growth rate
@@ -365,7 +388,7 @@ if(single.ifr){
         }; rm(grad.samp)
         value.ifr <- c(value.ifr, rep(0, (length(pars.ifr) / 2) - length(value.ifr)))
         var.ifr <- c(var.ifr, rep(0.00036, length(value.ifr) - length(var.ifr)))
-        tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June
+        tbreaks.ifr <- ((ymd("20200531") - start.date):(ymd("20200629") - start.date)) + 1 ## breakpoints from 31st May to 29th June, 2020
         ## Put together the model matrix.
         times <- c(tbreaks.ifr, max(tbreaks.ifr) + 1) - min(tbreaks.ifr)
         ages <- 1:(nA - 1)
@@ -647,9 +670,12 @@ omi.wr <- optim(500, fn = opfunc, prob = 0.81, method = "Brent", lower = 0, uppe
 omi.wr <- optim(500, fn = opfunc, prob = 1 - (omi.wr + 2) / (mean.wr + 2), method = "Brent", days = 10, lower = 0, upper = 99999)$par - 2
 ## First omicron case detected Nov 27. Assume this was an infection on Nov 20.
 ## Heightened waning of immunity is then from Nov 20 to Nov 30
+
+## Waning before BA.5. From Nick Andrews doc circulated on 20220705
+omi.wr.2 <- optim(500, fn = opfunc, prob = 0.09, days = 365.25 * 5 / 24, method = "Brent", lower = 0, upper = 99999)$par - 2
 breaks.wr <- ymd("20211120") - start.date + c(1, 11)
-value.wr <- c(mean.wr, omi.wr)
-fac.wr <- as.factor(c(1, 2, 1))
+value.wr <- c(mean.wr, omi.wr, omi.wr.2)
+fac.wr <- as.factor(c(1, 2, 3))
 prior.wr <- 0
 pars.wr <- NULL
 (design.wr <- model.matrix(~0+fac.wr) %>% as_tibble()) %>%

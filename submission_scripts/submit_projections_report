@@ -15,8 +15,13 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How many CPUs will each task require
+<<<<<<< HEAD
 #SBATCH --cpus-per-task=15
 #SBATCH --array=0-15
+=======
+#SBATCH --cpus-per-task=16
+#SBATCH --array=13
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 #! How much wallclock time will be required?
 #SBATCH --time=2:00:00
 #! What types of email messages do you wish to receive?
@@ -28,6 +33,11 @@
 #SBATCH --mem-per-cpu=8g
 #SBATCH -p standard-wp
 
+<<<<<<< HEAD
+=======
+#SBATCH -p icelake
+#!SBATCH --qos=covid0
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -53,8 +63,15 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 #! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
 # . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
+<<<<<<< HEAD
 module load R gcc/gcc-9.4.0 intel_compiler OpenBLAS openmpi slurm                       # Need this to generate the STAN model code
 # if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
+=======
+module load rhel8/default-icl
+module load pandoc                         # Need this to generate the STAN model code
+
+if [ "$(whoami)" == "jbb" ]; then module load R/3.6; fi
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 
 

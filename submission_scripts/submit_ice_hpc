@@ -15,7 +15,7 @@
 
 #SBATCH --array=0-7
 #SBATCH -p icelake
-#!SBATCH --qos=covid0
+#SBATCH --qos=covid0
 
 
 #SBATCH --output=model_runs_20210120regjobs_%a.out
@@ -33,6 +33,6 @@ pwd
 if [ -f "posterior_report10" ]; then
     echo "existing output found"
 else
-  ../../../rtm_hpc2
-  # sbatch ../../../submit_post_process_correct_dir
+    ../../../rtm_hpc2
+    ## sbatch ../../../submit_post_process_correct_dir
 fi

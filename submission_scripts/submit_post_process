@@ -21,12 +21,16 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+<<<<<<< HEAD
 #SBATCH --array=0-15
 #SBATCH --output=post_process_model_runs_20201206_%a_%j.out
 #SBATCH --error=post_process_model_runs_20201206_%a_%j.err
 #SBATCH --mem-per-cpu=12G
 #SBATCH --partition=standard-wp
 #! sbatch directives end here (put any additional directives above this line)
+=======
+#SBATCH --array=0-7
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 
 module load gcc/gcc-9.4.0 R openmp intel_compiler OpenBLAS openmpi slurm
 
@@ -127,6 +131,9 @@ echo -e "\nNum tasks = $SLURM_NTASKS, Num nodes = $SLURM_JOB_NUM_NODES, OMP_NUM_
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 echo -e "\nIn working directory\n${workdir}\n"
 if [ -f "posterior_report10" ]; then
+    if [ -f "mcmc.RData" ]; then
+	rm mcmc.RData output_matrices.RData
+    fi
     eval $CMD
 fi
 

@@ -19,7 +19,7 @@ sim_rtm <- function(iter, rtm.exe = Sys.info()["nodename"]){
     } else {
         state <- state.files <- vector("list", nr)
         state.names <- c("S", "E1", "E2", "I1", "I2", "R+", "R-", "W", "WS", "plambda")
-        if(!exists("dose.numbers")) dose.numbers <- 0:3
+        if(!exists("dose.numbers")) dose.numbers <- 0:4
     }
     
     ## Set-up output objects

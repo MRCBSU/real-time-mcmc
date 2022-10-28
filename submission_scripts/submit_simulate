@@ -24,6 +24,7 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 #SBATCH --verbose
+<<<<<<< HEAD
 #SBATCH --array=0-15
 #SBATCH --output=simulate_process_model_runs_20201206_%a_%j.out
 #SBATCH --error=simulate_process_model_runs_20201206_%a_%j.err
@@ -37,6 +38,17 @@ module load gcc/gcc-9.4.0 R openmp intel_compiler OpenBLAS openmpi slurm
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/OpenBLAS/0.3.17/lib64"
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/openmp/12.0.1/lib"
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/gsl/2.7/lib"
+=======
+#SBATCH --array=4
+
+#SBATCH -p icelake
+#SBATCH --qos=covid0
+
+#! sbatch directives end here (put any additional directives above this line)
+
+#SBATCH --output=simulate_midterm_20220802_%a.out
+#SBATCH --error=simulate_midterm_20220802_%a.err
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 
 forecast_switch="midterm"
 
@@ -57,9 +69,19 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 
 #! Optionally modify the environment seen by the application
 #! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
+<<<<<<< HEAD
 # . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 #! Insert additional module load commands after this line if needed:
 # module load pandoc                         # Need this to generate the STAN model code
+=======
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
+# module purge ## remove if not using icelake
+# module load rhel8/default-icl ## remove if not using icelake
+
+#! Insert additional module load commands after this line if needed:
+# module load rhel8/default-icl
+module load pandoc
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 
 # PATH=$PATH:$HOME/bin:$HOME/myPython/bin    # Get access to the html2text function needed by the Rscript.
 # module load gcc/9 intel/compilers/2020.2 gsl-2.4-intel-17.0.4-etauzbm
@@ -67,12 +89,17 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 # # Navigate to the correct working directory
 dirs=(*/)
 workdir=${dirs[SLURM_ARRAY_TASK_ID]}
+<<<<<<< HEAD
 # # workdir="Prev487_cm6ons_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20210903_timeuse_household_deaths"
 # echo $workdir
 
 pwd
 # workdir="Prev550SeroNHSBT_All_NHS28cutoff_IFR5bp_18wk2_prev14-0PHE_matrices_20211105_timeuse_household_deaths_chain2"
 # echo $workdir
+=======
+# workdir="Prev683SeroNHSBT_All_NHS28cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices_20220318_stable_household_deaths"
+echo $workdir
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 
 #! Full path to application executable: 
 application="Rscript"

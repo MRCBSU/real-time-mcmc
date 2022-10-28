@@ -18,28 +18,30 @@ const std::map<std::string, upd::paramIndex> updParamSet::nameMap = {
   { "vacc_1st_disease", VAC1_DISEASE },
   { "vacc_nth_disease", VACN_DISEASE },  //10
   { "vacc_boost_disease", VACB_DISEASE },
+  { "vacc_4th_disease", VAC4_DISEASE },
   { "vacc_1st_infect", VAC1_INFECT },
   { "vacc_nth_infect", VACN_INFECT },
-  { "vacc_boost_infect", VACB_INFECT },
+  { "vacc_boost_infect", VACB_INFECT }, //15
+  { "vacc_4th_infect", VAC4_INFECT },
   { "relative_infectiousness", REL_INFECT },
   { "prop_symptomatic", PROP_SYMP },
-  { "contact_parameters", CONTACT },  // 15
-  { "log_beta_rw", LBETA_RW },
+  { "contact_parameters", CONTACT },  
+  { "log_beta_rw", LBETA_RW }, //20
   { "R0_amplitude_kA", R0_AMP },
   { "R0_seasonal_peakday", R0_PEAKDAY },
   { "exponential_growth_rate", EGR },
-  { "log_p_lambda_0", LPL0 },  // 20
-  { "prop_susceptible", PROP_SUS },
+  { "log_p_lambda_0", LPL0 },  
+  { "prop_susceptible", PROP_SUS }, //25
   { "prop_HI_32_to_HI_8", PROP_HI_GEQ_32 },
   { "prop_case_to_GP_consultation", PROP_GP },
   { "prop_case_to_hosp", PROP_HOSP },
-  { "prop_case_to_death", PROP_DEATH },  // 25
-  { "importation_rates", IMPORTATION },
+  { "prop_case_to_death", PROP_DEATH }, 
+  { "importation_rates", IMPORTATION }, //30
   { "background_GP", BGR },
   { "test_sensitivity", SENS },
   { "test_specificity", SPEC },
-  { "day_of_week_effects", DOW_EFFECTS },  // 30
-  { "sero_test_sensitivity", SSENS },
+  { "day_of_week_effects", DOW_EFFECTS },  
+  { "sero_test_sensitivity", SSENS }, //35
   { "sero_test_specificity", SSPEC },
   { "immunity_period", IWAN }
 };
@@ -644,26 +646,26 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   // Default is all flags set to true
 
   // flagclass has a member iSize, but it is private
-  for (int i = 0; i < 31; i++)
+  for (int i = 0; i < blockflags.getSize(); i++)
     blockflags.regional_update_flags[i] = false;
 
-  if (global) {
+  if (global) { // indices correspond to position in the REGIONAL_MODEL_PARAMS_MEMBERS string.
     blockflags.regional_update_flags[2] = true;
     blockflags.regional_update_flags[4] = true;
-    blockflags.regional_update_flags[14] = true;
     blockflags.regional_update_flags[16] = true;
-    blockflags.regional_update_flags[17] = true;
-    blockflags.regional_update_flags[20] = true;
-    blockflags.regional_update_flags[29] = true;
+    blockflags.regional_update_flags[18] = true;
+    blockflags.regional_update_flags[19] = true;
+    blockflags.regional_update_flags[22] = true;
     blockflags.regional_update_flags[31] = true;
-    blockflags.regional_update_flags[32] = true;
+    blockflags.regional_update_flags[33] = true;
+    blockflags.regional_update_flags[34] = true;
   } else {
-    blockflags.regional_update_flags[12] = true;
-    blockflags.regional_update_flags[13] = true;
     blockflags.regional_update_flags[14] = true;
+    blockflags.regional_update_flags[15] = true;
     blockflags.regional_update_flags[16] = true;
-    blockflags.regional_update_flags[17] = true;
-    blockflags.regional_update_flags[24] = true;
+    blockflags.regional_update_flags[18] = true;
+    blockflags.regional_update_flags[19] = true;
+    blockflags.regional_update_flags[26] = true;
   }
   
   // Copy proposal to paramSet to evaluate region

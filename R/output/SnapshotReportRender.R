@@ -7,7 +7,7 @@ load("tmp.RData")
 here <- here()
 
 # Snapshot analysis to use
-str.date <- "2022-03-04"
+str.date <- "2022-08-02"
 
 ## Location of this script
 thisFile <- function() {
@@ -26,7 +26,7 @@ thisFile <- function() {
 file.loc <- dirname(thisFile())
 
 # Flag to determine version of report to generate
-map_flag <- F
+map_flag <- FALSE
 
 ## Map files
 nhs_file <- file.path(file.loc, "..", "..", "maps", "nhs_region_sf.rds")

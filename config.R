@@ -137,7 +137,7 @@ ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 flag.earlier_cm <- TRUE
 
-cm.breaks <- `if`(flag.earlier_cm, seq(from = 1, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
+cm.breaks <- `if`(flag.earlier_cm, seq(from = 0, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 sdpar <- 100
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
@@ -195,7 +195,7 @@ deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by 
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 781
+num.prev.days <- 897
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -233,11 +233,10 @@ if(flg.cutoff) {
 single.ifr <- FALSE
 NHS28.alt.ifr.prior <- (str.cutoff == "60") && (region.type == "NHS")
 if(single.ifr) scenario.name <- paste0(scenario.name, "_constant_ifr")
-if(!single.ifr) ifr.mod <- "8bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
+if(!single.ifr) ifr.mod <- "9bp"   ## 1bp = breakpoint over June, 2bp = breakpoint over June and October, lin.bp = breakpoint in June, linear increase from October onwards.
 ## tbreaks.interval <- 365.25 / 4
 scenario.name <- paste0(scenario.name, "_IFR", ifr.mod, "")
-scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""),
-                    "_", time.to.last.breakpoint, "wk", break.window)
+scenario.name <- paste0(scenario.name, ifelse(admissions_only.flag & data.desc == "admissions", "_admissions_only", ""), "_", time.to.last.breakpoint, "wk", break.window)
 if (data.desc == "all") {
 	reporting.delay <- 18
 } else if (data.desc == "reports") {
@@ -271,7 +270,8 @@ if(use.previous.run.for.start){
                                                                             
                                          )
 }
-iteration.number.to.start.from <- 1 ## 6400
+
+iteration.number.to.start.from <- 1
 
 ## From where will the various datasets be sourced?
 #! Added admissions to data directories
@@ -305,13 +305,13 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 2L
-prev.days.to.lose <- 0
+prev.cutoff.days <- 3
+prev.days.to.lose <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20220622")
-prev.end.day <- date.prev - start.date - (prev.cutoff.days - 1) ## Last date in the dataset
+date.prev <- lubridate::ymd("20221017")
+prev.end.day <- date.prev - start.date + 1 - prev.cutoff.days ## day number of last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
-first.prev.day <- prev.end.day - num.prev.days + 1
+first.prev.day <- (prev.end.day - num.prev.days) + 1
 days.between.prev <- 14
 
 ## Default system for getting the days on which the likelihood will be calculated.
@@ -328,24 +328,29 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20220624" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20221021" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
     start.vac <- 301+vacc.lag ## Gives the day number of the first date for which we have vaccination data
     end.vac <- ndays ## Gives the most recent date for which we have vaccination data - or projected vaccination numbers
 }
-vac.n_doses <- 3L ## Number of doses in preprocessed data (Either 3 or 2)
+vac.n_doses <- 4L ## Number of doses in preprocessed data (Either 4, 3 or 2)
 ## How many vaccinations can we expect in the coming weeks
 ## - this is mostly set for the benefit of projections rather than model fitting.
 future.n <- c(0.04, rep(0.04, 10)) * 10 ^ 6  * 55.98 / 66.65
 future.booster.n <- c(1, 0.5, 0.3, 0.2, rep(0.2, 7)) * 10 ^ 6  * 55.98 / 66.65
+future.fourth.n <- "c(1, 1, 1, 0.5, 0.5, rep(0.1, 6))* 10 ^ 6  * 55.98 / 66.65"
 scenario.name <- paste0(scenario.name, "_", vac.n_doses, "dose")
 
 ## Approximate date at which delta became dominant strain (- one week)
-delta.date <- ymd("20210503")
+delta.date <- ymd(20210503)
 ## Approximate date at which omicron became dominant strain (- one week)
-omicron.date <- ymd("20211205")
+omicron.date <- ymd(20211205)
+## Approximate date at which omicron BA.5 overtook omicron BA.2 as the dominant strain ( - one week)
+omicronBA5.date <- ymd(20220601)
+
+scenario.name <- paste0(scenario.name, "_new_mprior")
 
 ## ## Choose the name of the subdirectory in model_runs to use
 out.dir <- file.path(proj.dir,

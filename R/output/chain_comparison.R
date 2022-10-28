@@ -216,8 +216,8 @@ oldcode.lrw <- unlist(oldcode.lrw)
 ## sg.lrw <- unlist(sg.lrw)
 
 ## sg.total.lfx <- sg.lfx + sg.lrw
-paul.total.lfx <- paul.lfx + paul.lrw
-oldcode.total.lfx <- oldcode.lfx + oldcode.lrw
+paul.total.lfx <- paul.lfx + paul.lrw + out.dens
+oldcode.total.lfx <- oldcode.lfx + oldcode.lrw + oldcode.out.dens
 
 ## names(NNI) <- regions
 ## if(dths.flag) names(Deaths) <- regions

@@ -118,21 +118,29 @@ if(prev.flag){
 if(vacc.flag){
     vac1.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_1stvaccinations_", regions, ".txt"))
      
-    if(vac.n_doses == 3) {
+    if(vac.n_doses >= 3) {
         vac2.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_2ndvaccinations_", regions, ".txt"))
         vac3.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_3rdvaccinations_", regions, ".txt"))
-    } else {
+    }
+    if(vac.n_doses >= 4) {
+        vac4.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_4thvaccinations_", regions, ".txt"))
+    }
+    if (vac.n_doses == 2) {
         vacn.files <- file.path(data.dirs["vacc"], paste0(str.date.vacc, "_nthvaccinations_", regions, ".txt"))
     }
     if(!format.inputs) {                                                                                                              
         load(build.data.filepath(file.path("RTM_format", region.type, "vaccination"), paste0(region.type, "vacc", str.date.vacc, ".RData")))
-        if(vac.n_doses ==3)  {
+        if(vac.n_doses >=3)  {
                  names(vac1.files) <- names(vac2.files) <- names(vac3.files) <- regions
-          } else {
+        }
+        if(vac.n_doses >= 4) {
+            names(vac4.files) <- regions
+        }
+        if(vac.n_doses == 2) {
               names(vac1.files) <- names(vacn.files) <- regions
-          }
+        }
     }
-} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- NULL
+} else vac1.files <- vacn.files <- vac2.files <- vac3.files <- vac4.files <- NULL
 if(adm.flag){
     if(!format.inputs) {
         adm_csv_fname <- ifelse(admissions_only.flag, paste0("admissions_data_admissions_only", ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".csv"),
@@ -143,7 +151,6 @@ if(adm.flag){
         admsam.files <- paste0(data.dirs["adm"], "/", date.adm.str, "_", regions, "_", nA_adm, "ag_counts",ifelse(admissions_only.flag & data.desc == "admissions", "_adm_only", ""), ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),".txt")
     }
 }
-
 if(format.inputs){
     if(deaths.flag){
         if(data.desc == "reports") {

@@ -18,7 +18,7 @@ source(file.path(Rfile.loc, "sim_func.R"))
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
+projections.basename <- "projections_counter" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
@@ -26,7 +26,7 @@ projections.basedir <- file.path(out.dir, projections.basename)
 ## Number of weeks to forecast ahead - depends on aim of simulation
 if(projections.basename == "projections_snapshot"){
     nweeks.ahead <- 0
-} else nweeks.ahead <- 9
+} else nweeks.ahead <- 8
 
 nforecast.weeks <- nweeks.ahead - nforecast.weeks
 mm.breaks <- start.date - 1 + max(cm.breaks) + (1:nforecast.weeks * days(7))
@@ -64,9 +64,14 @@ if(prev.flag & all(prior.r1 == 1)) value.r1 <- 7.18
 if(grepl("projections_counter", projections.basedir, fixed = TRUE))
 {
     value.vac.alpha1 <- rep(0, length(value.vac.alpha1))
-    value.vac.alphan <- rep(0, length(value.vac.alpha2))
+    value.vac.alpha2 <- rep(0, length(value.vac.alpha2))
     value.vac.pi1 <- rep(0, length(value.vac.pi1))
     value.vac.pi2 <- rep(0, length(value.vac.pi2))
+    if(exists("value.vac.alpha3")) value.vac.alpha3 <- rep(0, length(value.vac.alpha3))
+    if(exists("value.vac.alpha4")) value.vac.alpha4 <- rep(0, length(value.vac.alpha4))
+    if(exists("value.vac.pi3")) value.vac.pi3 <- rep(0, length(value.vac.pi3))
+    if(exists("value.vac.pi4")) value.vac.pi4 <- rep(0, length(value.vac.pi4))
+    
 }
 bank.holiday.days.new <- NULL
 ## ## ---------------------------------------------------------------------------------------------
@@ -203,7 +208,11 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
     symlink.design("vac.alpha1.design.txt")
+<<<<<<< HEAD
     if(vac.n_doses == 3){
+=======
+    if(vac.n_doses >= 3){
+>>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
         symlink.design("vac.pi2.design.txt")
         symlink.design("vac.alpha2.design.txt")
     } else {

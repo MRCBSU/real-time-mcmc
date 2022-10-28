@@ -19,7 +19,7 @@ projections.basename <- "projections_snapshot"
 projections.basedir <- file.path(out.dir, projections.basename)
 
 ## Enter the date for which we need the snapshot
-snap.date <- ymd("20220311")
+snap.date <- ymd("20220802")
 
 ## ---------------- IDEALLY CODE BELOW HERE SHOULD NOT BE CHANGED BETWEEN RUNS
 if(!file.exists(projections.basedir))
@@ -152,7 +152,7 @@ if(!single.ifr){
 }
 if(vacc.flag){
     ## Can we use the pre-existing design matrix?
-    if(vac.n_doses == 3){
+    if(vac.n_doses >= 3){
         pi.str <- "vac.pi2.design.txt"
         al.str <- "vac.alpha2.design.txt"
     } else {
