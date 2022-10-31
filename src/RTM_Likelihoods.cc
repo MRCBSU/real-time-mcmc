@@ -627,13 +627,10 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
 	  for (int m = 0; m <= FN_MIN(distribution_function->size - 1, k); ++m)
 	    {
 	      modelled_out += gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m);
-<<<<<<< HEAD
-=======
 	      // gsl_matrix_set(modelled_events,
 	      // 		     k,
 	      // 		     j,
 	      // 		     gsl_matrix_get(modelled_events, k, j) + (gsl_matrix_get(NNI_rep_model_input,k - m, j) * gsl_vector_get(distribution_function, m))); // severity_ratio[k - m, j] HAS BEEN USED IN THE PAST - THIS GIVES THE PROPORTION OF SYMPTOMATIC CASES WHO 
->>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
 	    }// FOR
 	  gsl_matrix_set(modelled_events, k, j, modelled_out);
 	}// FOR

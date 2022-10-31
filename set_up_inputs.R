@@ -139,7 +139,9 @@ if(contact.model == 1){
         })
 } else if(contact.model == 6){ ## Each age group has a unique susceptibility
     cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_modAllLevels", 0:9, ".txt"))
-    mult.order <- c(0, rep(1, length(cm.breaks)))
+    # If using modified contact matrices prior to the lockdown then use modified list to define cm_mults
+    if(flag.earlier_cm) cm.breaks.strat.after.ld <- ifelse(cm.breaks > nday_lockdown_if_earlier_cm, 1, 0)
+    mult.order <- c(0, `if`(flag.earlier_cm, cm.breaks.strat.after.ld, rep(1, length(cm.breaks))))
     mult.mat <- lapply(unique(mult.order), function(x){
         y <- ((nA-2)*x) + (0:(nA - 3))
         matrix(c(rep(y[2], 3 * nA), ## kids

@@ -5,14 +5,14 @@ library(lubridate)
 library(tidyr)
 
 deaths.loc <- "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/data/raw/deaths/20220627 COVID19 Deaths.csv"
-vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20220624 immunisations SPIM.csv"
-str.date.vacc <- "20220624"
+vacc.loc <- "/home/phe.gov.uk/joel.kandiah/vaccination-processing-for-rtm/data/input/20221021 immunisations SPIM.csv"
+str.date.vacc <- "20221021"
 
 # Either ONS or NHS
-region.type <- "NHS"
+region.type <- "ONS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(121)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -47,7 +47,7 @@ RocheS.flag <- 0
 
 # Determine whether or not to run the model with the serology being dropped from a certain date onwards
 # (Note: False -> doesn't drop the data)
-Use_preprocessed_serology <- T
+Use_preprocessed_serology <- F
 preprocessed_sero_date <- ymd("20220627")
 
 sero_cutoff_flag <- F
@@ -84,7 +84,7 @@ sus_seb_combination <- 3L
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20220624)
+date.adm_seb <- ymd(20221027)
 date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -125,8 +125,8 @@ print(preprocessed_sus_names)
 ## date.adm_sus <- ymd()
 ## date.adm_seb <- ymd()
 
-google.data.date <- format(ymd("20220624"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+google.data.date <- format(ymd("20221028"), format = "%Y%m%d")
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -136,8 +136,9 @@ nforecast.weeks <- 3
 ndays <- as.integer(ymd(date.data) - start.date + (7 * nforecast.weeks) + 1)
 
 flag.earlier_cm <- TRUE
+nday_lockdown_if_earlier_cm <- 36
 
-cm.breaks <- `if`(flag.earlier_cm, seq(from = 0, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
+cm.breaks <- `if`(flag.earlier_cm, seq(from = 8, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 11 ## From the current date, when to insert the most recent beta breakpoint.
 sdpar <- 100
 break.window <- 2 ## How many WEEKS between breakpoints in the model for the transmission potential.
@@ -195,7 +196,7 @@ deaths.flag <- hosp.flag <- 0	# 0 = admissions (by default - can be modified by 
 ## Do we want to include prevalence estimates from community surveys in the model?
 prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
-num.prev.days <- 897
+num.prev.days <- 903
 ## Shall we fix the serological testing specificity and sensitivty?
 exclude.eldest.prev <- FALSE
 
@@ -260,12 +261,12 @@ if(use.previous.run.for.start){
             previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_deaths", paste0(c("Prev751SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_dropdeaths_20220430_matrices2_20220527_timeuse_household_deaths",
                                                                                                  "Prev751SeroNHSBT_All_NHS60cutoff_IFR7bp_11wk2_prev14-0PHE_3dose_dropdeaths_20220430_matrices2_20220527_timeuse_household_deaths_chain2"))
                                               )
-        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_admissions", paste0(c("Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths",
-                                                                                                      "Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_timeuse_household_admissions_no_deaths_chain2"))
+        else previous.run.to.use <- file.path(proj.dir, "model_runs", "20220601_admissions", paste0(c("Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_stable_household_admissions_no_deaths",
+                                                                                                      "Prev751SeroNHSBT_All_NHScutoff_IFR7bp_11wk2_prev14-0PHE_3dose_matrices2_20220527_stable_household_admissions_no_deaths_chain2"))
                                               )
     } else if(region.type == "ONS")
-        previous.run.to.use <- file.path(proj.dir, "model_runs", "20220304", c("Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_copy", # _stable_household_deaths_chain2",
-                                                                               "Prev662SeroNHSBT_All_ONS60cutoff_IFR6bp_11wk2_prev14-0PHE_3dose_matrices2_20220304_timeuse_household_deaths_chain2_copy") # _stable_household_deaths")
+        previous.run.to.use <- file.path(proj.dir, "model_runs", "20221019", c("Prev897SeroNHSBT_All_ONScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20221021_timeuse_household_admissions_no_deaths", # _stable_household_deaths_chain2",
+                                                                               "Prev897SeroNHSBT_All_ONScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20221021_timeuse_household_admissions_no_deaths_chain2") # _stable_household_deaths")
                                                                                 #   , matrix.suffix, "_", data.desc, c("_chain2", "")
                                                                             
                                          )
@@ -308,7 +309,7 @@ if(gp.flag){
 prev.cutoff.days <- 3
 prev.days.to.lose <- 2
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20221017")
+date.prev <- lubridate::ymd("20221024")
 prev.end.day <- date.prev - start.date + 1 - prev.cutoff.days ## day number of last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- (prev.end.day - num.prev.days) + 1
