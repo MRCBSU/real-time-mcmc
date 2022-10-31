@@ -6,7 +6,7 @@ load(load.from, env = prev.env)
 prev.params <- prev.env$params
 
 if("hosp_negbin_overdispersion" %in% names(prev.params))
-    value.eta.h <- prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
+    value.eta.h <- 100*prev.params$hosp_negbin_overdispersion[iteration.number.to.start.from,]
 ## value.dl <- latent period value is fixed
 if("infectious_period" %in% names(prev.params))
     value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
