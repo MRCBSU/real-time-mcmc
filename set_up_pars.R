@@ -140,6 +140,7 @@ if(vac.n_doses >= 3){
     vacb.r.breaks <- NULL
     vacb.a.breaks <- NULL
     vacb.t.breaks <- c(delta.date, omicron.date, omicronBA5.date) - start.date
+    vacb.t.breaks <- vacb.t.breaks[vacb.t.breaks < ndays]
     vacb.design <- NULL
 
     # vac3.design <- v3.design[include, ]
