@@ -1,7 +1,7 @@
 ### Prevalence {.tabset}
 
 #### By region
-```{r reg-prevalence, cache=TRUE, cache.extra=results_hash}
+```{r reg-prevalence, cache=FALSE, cache.extra=results_hash}
 dim.id <- which(names(dimnames(prevalence)) == "date")
 ndate.data <- lubridate::as_date(date.data) - start.date + 1
 prev_plot <- R.utils::extract(prevalence, indices = list(start.prev:ndate.data), dims = dim.id)

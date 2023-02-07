@@ -610,7 +610,6 @@ void fn_reporting_model(gsl_matrix* expected_counts, const gsl_matrix* NNI_trans
 
   // so far, have assumed that all infections are symptomatic. not so. multiply by the proportion of symptomatics
   gsl_matrix_mul_elements(NNI_rep_model_input, prop_symp);
-  gsl_matrix_mul_elements(NNI_rep_model_input, severity_ratio);
 
   // similarly, multiply by proportion of individuals who will experience the severe event
   gsl_matrix_mul_elements(NNI_rep_model_input, severity_ratio);

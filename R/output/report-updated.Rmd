@@ -12,7 +12,7 @@ output:
 ```{r preamble, include=FALSE}
 if (!exists("external")) external = T
 external.bak <- external
-knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
+knitr::opts_chunk$set(echo = FALSE, cache.path = file.path(out.dir,"tmp", "cache"))
 knitr::opts_chunk$set(error=TRUE)
 
 suppressMessages(library(knitr))
@@ -523,7 +523,7 @@ cat("The execution of the prevalence code block will proceed if\n prev.dat exist
 
 ## Infections and hospitalisations {.tabset}
 
-The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Governement's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
+The shaded areas show periods of national lockdown, the green lines the dates (once confirmed) of the steps in the roadmap in the [UK Government's COVID-19 Response -- Spring 2021](https://www.gov.uk/government/publications/covid-19-response-spring-2021), and the red line shows the date these results were produced (`r format(ymd(date.data), "%d %b")`).
 
 ```{r opt-prev-report, eval=((!external)&&(!is.null(prev.dat))), child='prev-report.Rmd'}
 ```
@@ -560,7 +560,7 @@ make.plots(cum_infections, by = "age")
 
 ### `r severity.measure`
 
-```{r IFR-plot, cache=TRUE, cache.extra=results_hash}
+```{r IFR-plot, cache=FALSE, cache.extra=results_hash}
 
 source(file.path(Rfile.loc, "ifr_format.R"))
 
@@ -572,7 +572,7 @@ make.plots(ifr.tab, by = "age", y.format = ".2%}", combine.to.England = NULL)
 The figure below shows the probability that $R_t$ is greater than 1 (ie: the number of infections is growing) in each region over time.
 Clicking the regions in the legend allows lines to be added or removed from the figure.
 
-```{r P-R-gt-1, cache=TRUE, cache.extra=results_hash}
+```{r P-R-gt-1, cache=FALSE, cache.extra=results_hash}
 (Rt > 1) %>%
   apply(c("date", "region"), sum) %>%
   `/`(length(dimnames(Rt)$iteration)) %>%
@@ -587,7 +587,7 @@ Clicking the regions in the legend allows lines to be added or removed from the 
 ```
 
 ### $R_t$
-```{r Rt-plot, cache=TRUE, cache.extra=results_hash}
+```{r Rt-plot, cache=FALSE, cache.extra=results_hash}
 make.plots(Rt, by = "region", y.format = ".2f}", combine.to.England = NULL)
 ```
 
