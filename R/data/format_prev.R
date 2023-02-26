@@ -190,7 +190,8 @@ names(prev.mean.files) <- names(prev.sd.files) <- regions
 for(reg in regions){
     region.mean <- bind_rows(add.dates,
                              pivot_wider(prev.dat %>%
-                               filter(region == reg),
+                                         filter(region == reg) %>%
+                                         unique(),
                                id_cols = sample_date,
                                names_from = age,
                                values_from = lmean) %>%
@@ -198,7 +199,8 @@ for(reg in regions){
                              )
     region.sd <- bind_rows(add.dates,
                            pivot_wider(prev.dat %>%
-                               filter(region == reg),
+                                       filter(region == reg) %>%
+                                       unique(),
                                id_cols = sample_date,
                                names_from = age,
                                values_from = lsd) %>%

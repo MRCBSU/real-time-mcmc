@@ -8,7 +8,7 @@ library(tidyr)
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(3)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -73,14 +73,14 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 cutoff_hosps_early <- FALSE
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- TRUE
+admissions_only.flag <- FALSE
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
 adm_sus.strip_days <- 30L
 adm_seb.strip_days <- 2L
 seb_report_delay <- 1L  ## Used within this file, so can't be moved.
-date.adm_seb <- ymd(20230210)
+date.adm_seb <- ymd(20230223)
 ## date.adm_sus <- ymd(20210930)
 date.adm.str <- lubridate::as_date(ifelse(sus_seb_combination > 0,
                                                   date.adm_seb - adm_seb.strip_days,
@@ -119,7 +119,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20230127"), format = "%Y%m%d")
-matrix.suffix <- "_timeuse_household"
+matrix.suffix <- "_stable_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -249,12 +249,12 @@ if(use.previous.run.for.start){
     if(region.type == "NHS"){
         previous.run.to.use <- file.path(proj.dir,
                                          "model_runs",
-                                         ifelse(hosp.flag, "20230125", "20230127"),
-                                         paste0("Prev995SeroNHSBT_All_NHS",
+                                         ifelse(hosp.flag, "20230208", "20230210"),
+                                         paste0("Prev1000SeroNHSBT_All_NHS",
                                                 str.cutoff,
                                                 "cutoff_IFR9bp_",
                                                 ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""),
-                                                "11wk2_prev14-1PHE_4dose_new_mprior_",
+                                                "11wk2_prev14-182PHE_4dose_new_mprior_",
                                                 ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("dropdeaths_", gsub("-", "",toString(custom_deaths_end_date)), "_"), ""),
                                                 ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("drophosp_", gsub("-", "",toString(date_early_cutoff_hosps)), "_"), ""),
                                                 ifelse(!sero_cutoff_flag, "", paste0("dropsero_", gsub("-", "",toString(sero.end.date)), "_")),
@@ -266,12 +266,12 @@ if(use.previous.run.for.start){
     } else if(region.type == "ONS")
         previous.run.to.use <- file.path(proj.dir,
                                          "model_runs",
-                                         ifelse(hosp.flag, "20230125", "20230127"),
-                                         paste0("Prev995SeroNHSBT_All_ONS",
+                                         ifelse(hosp.flag, "20230208", "20230210"),
+                                         paste0("Prev1000SeroNHSBT_All_ONS",
                                                 str.cutoff,
                                                 "cutoff_IFR9bp_",
                                                 ifelse(admissions_only.flag & !hosp.flag, "admissions_only_", ""),
-                                                "11wk2_prev14-1PHE_4dose_new_mprior_",
+                                                "11wk2_prev14-182PHE_4dose_new_mprior_",
                                                  ifelse(!use_deaths_up_to_now_flag & deaths.flag, paste0("_dropdeaths_", gsub("-", "",toString(custom_deaths_end_date))), ""),
                                                 ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
                                                 ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
@@ -316,10 +316,10 @@ if(gp.flag){
 } else case.positivity <- FALSE
 
 ## Get the date of the prevalence data
-prev.cutoff.days <- 4
-prev.days.to.lose <- 0
+prev.cutoff.days <- 3
+prev.days.to.lose <- 183
 ## Convert that to an analysis day number
-date.prev <- lubridate::ymd("20230206")
+date.prev <- lubridate::ymd("20230220")
 prev.end.day <- date.prev - start.date + 1 - prev.cutoff.days ## day number of last date in the dataset
 last.prev.day <- prev.end.day - prev.days.to.lose ## Which is the last date that we will actually use in the likelihood?
 first.prev.day <- prev.end.day - num.prev.days + 1
@@ -339,7 +339,7 @@ scenario.name <- paste0(scenario.name, efficacies)
 
 ########### VACCINATION OPTIONS ###########
 vacc.flag <- 1 ## Do we have any vaccination data
-str.date.vacc <- "20230210" ## Optional: if not specified will take the most recent data file.
+str.date.vacc <- "20230224" ## Optional: if not specified will take the most recent data file.
 vacc.lag <- 21
 vac.overwrite <- FALSE
 if(vacc.flag){
