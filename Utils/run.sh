@@ -19,14 +19,14 @@ export SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null &&
 export ROOT_DIR_OPT_1="`realpath $SCRIPT_DIR/../`"
 export ROOT_DIR_OPT_2="$START_DIR"
 export ROOT_DIR_OPT_3=$(head -n 1 $SCRIPT_DIR/.cache/stored_dir)
-
+export ROOT_DIR_OPT_3="`realpath /home/jlk57/real-time-mcmc/`"
 # Select the root directory
 echo "Select which of these is the root directory for the  real-time-mcmc repository: (May be multiple, in which case pick any correct directory)"
-select ROOT_DIR_SEL in $ROOT_DIR_OPT_1 $ROOT_DIR_OPT_2 $ROOT_DIR_OPT_3 "Other"
+select ROOT_DIR_SEL in $ROOT_DIR_OPT_1 $ROOT_DIR_OPT_2 $ROOT_DIR_OPT_3 $ROOT_DIR_OPT_4 "Other"
 do
     case $ROOT_DIR_SEL in
 
-        $ROOT_DIR_OPT_1 | $ROOT_DIR_OPT_2 | $ROOT_DIR_OPT_3)
+        $ROOT_DIR_OPT_1 | $ROOT_DIR_OPT_2 | $ROOT_DIR_OPT_3 | $ROOT_DIR_OPT_4)
             echo "Selected $ROOT_DIR_SEL as the root directory of the real-time-mcmc repository."
             export ROOT_DIR=$ROOT_DIR_SEL
             break
@@ -84,7 +84,7 @@ done
 # Pick a script to run
 echo "Select an option for a script to run (or select 6 to exit):"
 
-select script_opt in "Pre-process" "Run Model" "Profile Model" "Post-process" "Simulate" "Projections Report" "Save Endstates" "Restart Runs" "Exit to Shell"
+select script_opt in "Pre-process" "Run Model" "Profile Model" "Post-process" "Simulate" "Projections Report" "Save Endstates" "Restart Runs" "Compare Chains" "Exit to Shell"
 do
     case $script_opt in
 
@@ -133,6 +133,12 @@ do
         "Restart Runs")
             export RUN_NAME="Restart Runs"
             export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_restart
+            break
+            ;;
+
+        "Compare Chains")
+            export RUN_NAME="Compare Chains"
+            export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_compare
             break
             ;;
         

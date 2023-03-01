@@ -13,7 +13,7 @@ output:
 if (!exists("external")) external = T
 external.bak <- external
 knitr::opts_chunk$set(echo = FALSE, cache.path = file.path(out.dir,"tmp", "cache"))
-knitr::opts_chunk$set(error=TRUE)
+knitr::opts_chunk$set(error=FALSE)
 
 suppressMessages(library(knitr))
 suppressMessages(library(DT))
@@ -429,11 +429,13 @@ calc.growth.rate <- function(data) {
     select(Region, everything()) %>%
     select(-region)
 }
-## infections.growth.rates <- calc.growth.rate(infections)
+# infections.growth.rates <- calc.growth.rate(infections)
 if(!exists("Egt")) load(file.path(out.dir, "forSPI.RData"))
+
 infections.growth.rates <- calc.infec.growth.rate(extract(Rt, indices = list(as.character(today.int)), dims = "date", drop = FALSE),
 						Egt,
 						extract(infections, indices = list(as.character(today.int)), dims = "date", drop = FALSE))
+
 if (!is.null(deaths)) deaths.growth.rates <- calc.growth.rate(deaths)
 ```
 

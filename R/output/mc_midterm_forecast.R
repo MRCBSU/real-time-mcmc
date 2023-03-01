@@ -18,7 +18,7 @@ source(file.path(Rfile.loc, "sim_func.R"))
 
 counterfactual <- FALSE
 
-projections.basename <- "projections_counter" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
+projections.basename <- "projections_midterm" ## One of c("projections_midterm", "projections_counter", "projections_snapshot")
 projections.basedir <- file.path(out.dir, projections.basename)
 ## ## Enter dates at which it is anticipated that the contact model will change
 ## mm.breaks <- ymd("20201109") + (1:nforecast.weeks * days(7))
@@ -208,11 +208,7 @@ if(!single.ifr)
 if(vacc.flag){
     symlink.design("vac.pi1.design.txt")
     symlink.design("vac.alpha1.design.txt")
-<<<<<<< HEAD
-    if(vac.n_doses == 3){
-=======
     if(vac.n_doses >= 3){
->>>>>>> d57401911579f16086976ff69cbcc365b7cbd93d
         symlink.design("vac.pi2.design.txt")
         symlink.design("vac.alpha2.design.txt")
     } else {
@@ -232,7 +228,7 @@ niter <- min(sapply(params, nrow))
 ## ## For each iteration
 pct <- 0
 ## xtmp <- mclapply(1:niter, sim_rtm, mc.cores = detectCores() - 1)
-if(Sys.info()["user"] %in% c("jbb50", "pjb51", "joel.kandiah@phe.gov.uk")){
+if(Sys.info()["user"] %in% c("jbb50", "pjb51", "jlk57", "joel.kandiah@phe.gov.uk")){
     exe <- "hpc2"
 } else exe <- Sys.info()["nodename"]
 cat("rtm.exe = ", exe, "\n")

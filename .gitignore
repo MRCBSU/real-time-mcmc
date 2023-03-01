@@ -42,3 +42,4 @@ spi-forecasts
 model_runs
 Outputs_profiling
 Outputs_profiling/**
+machine.file.**

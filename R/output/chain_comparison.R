@@ -22,8 +22,8 @@ thisFile <- function() {
 }
 Rfile.loc <- dirname(thisFile())
 source(file.path(Rfile.loc, "drw.R"))
-colcode.fl <- "./Prev909SeroNHSBT_All_NHScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_earliercm_matrices2_20221104_timeuse_household_admissions_no_deaths"
-oldcode.fl <- "./Prev909SeroNHSBT_All_NHScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_earliercm_matrices2_20221104_timeuse_household_admissions_no_deaths_chain2"
+colcode.fl <- "./Prev999SeroNHSBT_All_NHScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20221116_stable_household_admissions_no_deaths"
+oldcode.fl <- "./Prev999SeroNHSBT_All_NHScutoff_IFR9bp_11wk2_prev14-2PHE_4dose_new_mprior_matrices2_20221116_stable_household_admissions_no_deaths_chain2"
 
 ## load("mcmc.RData")
 load(file.path(colcode.fl, "tmp.RData"))
@@ -324,3 +324,8 @@ gchain2 <- df.lik.test %>% filter(type == "prior density") %>% ## mutate(code = 
     ggtitle("Prior traces")
 
 ggsave(filename=file.path(colcode.fl, "prior.trace.pdf"), plot=gchain2, width = 12, height = 10)
+
+print("Paul Lfx")
+print(summary(paul.lfx))
+print("Oldcode Lfx")
+print(summary(oldcode.lfx))

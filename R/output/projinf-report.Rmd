@@ -1,7 +1,7 @@
 ## Mid-term projections {.tabset}
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache.path = "~/tmp/cache")
-if (!exists("projections_file")) projections_file <- "projections.RData"
+if (!exists("projections_file")) projections_file <- "projections_counter.RData"
 if (!exists("make.plots")) source(file.path(Rfile.loc, "plot_funcs.R"))
 load(file.path(out.dir, projections_file))
 if(adm.flag) dth.dat <- adm.sam %>% rename(age = ages, value = admissions)

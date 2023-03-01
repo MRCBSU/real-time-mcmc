@@ -5,9 +5,9 @@ require(lubridate)
 
 suppressMessages(extract <- R.utils::extract)
 
-mod.version.no <- 1.4
+mod.version.no <- 1.5
 med.term.flag <- TRUE
-nowcast.flag <- FALSE
+nowcast.flag <- TRUE
 mod.name <- ifelse(mod.version.no < 1.3, "Regional/age", ifelse(mod.version.no >= 1.4, ifelse(mod.version.no >= 1.5, "admissions/ons", "deaths/ons"), "deaths and pillar2"))
 ## Get rid of any backslashes from, the model name
 mod.fl.name <- gsub("/", "_", mod.name)
@@ -39,17 +39,14 @@ proj.dir <- dirname(dirname(dirname(out.dir)))
 projections.file <- "projections_midterm.RData"
 scen.text <- "MTP"
 save.text <- "MTP"
-## projections.file <- "projections_R1.3.RData"
-## scen.text <- "MTP R1.3"
-## save.text <- "MTP_R_1.3"
-date.data <- "20220520"
-mtp.filter.date <- lubridate::ymd("20220520") ## ymd(date.data)
+## projections.file <- "projections_R1.4.RData"
+## scen.text <- "MTP R1.4"
+## save.text <- "MTP_R_1.4"
+mtp.filter.date <- lubridate::ymd("20230214") ## ymd(date.data)
 dir.string <- file.path(proj.dir, paste0("spi-forecasts/date_", date.data))
 if(!file.exists(dir.string)) system(paste("mkdir", dir.string))
 nweeks.midterm <- 11
 mtype <- ifelse(adm.flag, "Admissions", "Deaths")
-
-print(mtype)
 mtpcode <- ifelse(adm.flag, "hospital_inc", "type28_death_inc_line")
 
 create.spim.table <- function(data, name, by = NULL) {
@@ -386,16 +383,9 @@ if(nowcast.flag){
 }
 
 trim_forecast_days <- function(arrIn){
-    # print(nweeks.midterm)
-    # print(mtp.filter.day.no)
-    # print(end.hosp)
-
     nd <- 1:((nweeks.midterm + 1) * 7)
-    # print(nd)
     nds <- as.integer(min(mtp.filter.day.no-1, end.hosp)) + nd
-    # print(nds)
     arrOut <- extract(arrIn, indices = list(nds[nds <= length(dimnames(arrIn)$date)]), dims = "date", drop = FALSE)
-    # print(arrOut)
     arrOut <- apply(arrOut, c("region", "date", "iteration"), function(x) c(x[1] + x[2], x[-(1:2)]))
     names(dimnames(arrOut))[1] <- "age"
     arrOut
@@ -411,9 +401,7 @@ if(med.term.flag){
     if(exists("prevalence"))
         if(all(dim(prevalence) == dim(infections)))
             prev.flag <- TRUE
-    # print("stop here")
     deaths <- trim_forecast_days(deaths)
-    # print("stop here again")
     infections <- trim_forecast_days(infections)
     tbl_proj <- create.spim.table(infections, "infections_inc", by = "age") %>% mutate(age = recode(age, '<1yr' = "0-4"))
     tbl_dproj <- create.spim.table(deaths,
@@ -421,7 +409,6 @@ if(med.term.flag){
                                    by = "age") %>%
         mutate(age = recode(age, '<1yr' = "0-4"))
     if(prev.flag){
-        # print("finally stop here")
         prevalence <- trim_forecast_days(prevalence)
         tbl_aproj <- create.spim.table(prevalence, "prevalence_mtp", by = "age") %>% mutate(age = recode(age, '<1yr' = "0-4")) %>%
             left_join(population)
