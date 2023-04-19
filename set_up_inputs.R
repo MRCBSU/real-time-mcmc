@@ -120,7 +120,8 @@ if(contact.model == 1){
     })
 } else if(contact.model == 4){
     cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod4levels", 0:9, ".txt"))
-    mult.order <- c(0, rep(1, length(cm.breaks)))
+    if(flag.earlier_cm) cm.breaks.strat.after.ld <- ifelse(cm.breaks >= nday_lockdown_if_earlier_cm, 1, 0)
+    mult.order <- c(0, `if`(flag.earlier_cm, cm.breaks.strat.after.ld, rep(`if`(!flag.fix_scaling_mat_cm,1,0), length(cm.breaks))))
     mult.mat <- lapply(unique(mult.order), function(x){
         y <- (3*x)+(0:2)
         matrix(c(rep(y[2], 3 * nA), ## kids
@@ -141,7 +142,7 @@ if(contact.model == 1){
     cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_modAllLevels", 0:9, ".txt"))
     # If using modified contact matrices prior to the lockdown then use modified list to define cm_mults
     if(flag.earlier_cm) cm.breaks.strat.after.ld <- ifelse(cm.breaks > nday_lockdown_if_earlier_cm, 1, 0)
-    mult.order <- c(0, `if`(flag.earlier_cm, cm.breaks.strat.after.ld, rep(1, length(cm.breaks))))
+    mult.order <- c(0, `if`(flag.earlier_cm, cm.breaks.strat.after.ld, rep(`if`(!flag.fix_scaling_mat_cm,1,0), length(cm.breaks))))
     mult.mat <- lapply(unique(mult.order), function(x){
         y <- ((nA-2)*x) + (0:(nA - 3))
         matrix(c(rep(y[2], 3 * nA), ## kids
@@ -161,11 +162,11 @@ if(!all(file.exists(cm.mults)))
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
-num.iterations <- 5.5e6L
-adaptive.phase <- 2e6L
-burnin <- 4e6L
-thin.outputs <- 600L ## After how many iterations to output each set of NNI, deaths etc.
-thin.params <- 300L ## After how many iterations to output each set of parameters
+num.iterations <- 2.5e6L
+adaptive.phase <- 7.5e5L
+burnin <- 1.5e6L
+thin.outputs <- 400L ## After how many iterations to output each set of NNI, deaths etc.
+thin.params <- 200L ## After how many iterations to output each set of parameters
 # num.iterations <- 1e6L
 # burnin <- 5e5L
 # adaptive.phase <- 5e5L

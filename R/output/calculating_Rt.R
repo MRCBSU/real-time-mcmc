@@ -85,7 +85,6 @@ if(ncol(m) %% r != 0) {
                                          }
                                          )
                       ) ## IxT array
-    
     ## Scale the relative Rt values to give the correct R0s
     Rt[[reg]] <- R0[, ireg] * R.prime / R.star[[ireg]] ## I*T array
   }

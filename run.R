@@ -214,6 +214,7 @@ if(use.previous.run.for.start & length(previous.run.to.use) > 1){
             unlink(new.dir, recursive = TRUE)
         R.utils::copyDirectory(out.dir, new.dir)
         previous.loc <- previous.run.to.use[ichain]
+        alt.previous.loc <- alt.previous.run.to.use[ichain]
         source(file.path(proj.dir, "import_pars.R"))
         source(file.path(proj.dir, "par_check.R"))
         knit(input = pars.template.loc, output = file.path(new.dir, "mod_pars.txt"))

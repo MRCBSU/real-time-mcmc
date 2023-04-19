@@ -542,13 +542,13 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
       updParam& par = paramSet[parIndex[i]];
       gsl_vector* prior = *(par.prior_params[parOffset[i]]);
       if (prior->size == 0) {
-	// Use parent
-	int parent = par.parents[parOffset[i]];
-	prior = *paramSet[parent].values;
+        // Use parent
+        int parent = par.parents[parOffset[i]];
+        prior = *paramSet[parent].values;
       }
       
       laccept += R_univariate_prior_log_density_ratio(
-	proposal[i], values[i], dist[i], prior);
+	                proposal[i], values[i], dist[i], prior);
       
     } else {
       // TODO: Fix

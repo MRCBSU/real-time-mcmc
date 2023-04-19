@@ -10,20 +10,32 @@ if("hosp_negbin_overdispersion" %in% names(prev.params))
 ## value.dl <- latent period value is fixed
 if("infectious_period" %in% names(prev.params))
     value.dI <- prev.params$infectious_period[iteration.number.to.start.from,]
-if (prev.flag && prev.env$prev.flag)
-    value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
+if(exists("prev.env$prev.flag")) {
+    if (prev.flag && prev.env$prev.flag)
+        value.r1 <- prev.params$r1_period[iteration.number.to.start.from,]
+} else {
+    if(prev.flag) {
+        alt.prev.env <- new.env()
+        load.from <- file.path(alt.previous.loc, "tmp.RData")
+        load(load.from, env = alt.prev.env)
+        load.from <- file.path(alt.previous.loc, "endstate.RData")
+        load(load.from, env = alt.prev.env)
+        alt.prev.params <- alt.prev.env$params
+        value.r1 <- alt.prev.params$r1_period[iteration.number.to.start.from,]
+    }
+}
 ## value.pgp GP stream not currently used
 if("contact_parameters" %in% names(prev.params)){
     contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
     if(length(contact.reduction) < (nr * (nm+1)))
-        contact.reduction <- add.extra.vals.per.region(contact.reduction, 0, nm + 1)
+        contact.reduction <- add.extra.vals.per.region(contact.reduction, 0, nm + 1, flag.earlier_cm & flag.hack_match_june2020_runs)
     }
 if("log_beta_rw" %in% names(prev.params)){
     beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
-    beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas)
+    beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas, flag.earlier_cm & flag.hack_match_june2020_runs)
     if(nrow(beta.rw.vals) > nbetas)
         beta.rw.vals <- beta.rw.vals[c(1, 1 + sort(sample.int(nrow(beta.rw.vals)-1, nbetas-1))), ]
-    beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas)
+    beta.rw.props <- add.extra.vals.per.region(prev.env$beta.rw.props, 0.02, nbetas, flag.earlier_cm & flag.hack_match_june2020_runs)
     if(nrow(beta.rw.props) > nbetas)
         beta.rw.props <- beta.rw.props[c(1, 1 + sort(sample.int(nrow(beta.rw.props)-1, nbetas-1))), ]
 }

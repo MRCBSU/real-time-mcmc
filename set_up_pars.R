@@ -5,12 +5,13 @@ beta.params.from.mean.sd <- function(mean, sd){
  a
 }
 
-add.extra.vals.per.region <- function(vec, val, num) {
+add.extra.vals.per.region <- function(vec, val, num, inv_flag) {
   mat <- matrix(vec, ncol = nr)
   rows.to.add <- num - length(vec) / nr
   if(rows.to.add > 0){
     mat.new <- matrix(val, nrow = rows.to.add, ncol = nr)
     } else mat.new <- NULL
+  if(inv_flag) return(rbind(mat.new, mat))
   return(rbind(mat, mat.new))
 }
 
@@ -535,6 +536,7 @@ for(i in 1:nm){
 ##     for(j in 2:nm)
 ##         contact.pars[, j, ] <- prior.list$increments
 ## }
+if(old_contact_mat_flag) {
 contact.proposal <- c(0.001, 0.003462, 0.000018, 0.000463,
                       0.001, 0.000769, 0.000037, 0.001446,
                       0.001, 0.001795, 0.000009, 0.000360,
@@ -542,7 +544,7 @@ contact.proposal <- c(0.001, 0.003462, 0.000018, 0.000463,
                       0.001, 0.003568, 0.000015, 0.000486,
                       0.001, 0.002389, 0.000012, 0.000359,
                       0.001, 0.004945, 0.000047, 0.000871)
-contact.proposal <- c(contact.proposal, rep(c(0.001, 0.004945, 0.000047, 0.000871), nr - 7))
+if(!flag.fix_scaling_mat_cm) contact.proposal <- c(contact.proposal, rep(c(0.001, 0.004945, 0.000047, 0.000871), nr - 7))
 if(contact.model == 4)
     contact.proposal <- as.vector(t(matrix(contact.proposal, nr, length(contact.proposal) / nr, byrow = TRUE)[, c(1, 2, 2, 3, 4, 4)]))
 if(contact.model == 5)
@@ -568,15 +570,41 @@ if(rw.flag){
     m.design <- as.matrix(m.design)
     write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
 }
+} else {
+    contact.proposal <- c(0.0, 0.003313, 0.000031, 0.000564,
+                          0.0, 0.000714, 0.000077, 0.002036,
+                          0.0, 0.001323, 0.000022, 0.000406,
+                          0.0, 0.008052, 0.000020, 0.000216,
+                          0.0, 0.004521, 0.000023, 0.000421,
+                          0.0, 0.001625, 0.000035, 0.000356,
+                          0.0, 0.005989, 0.000097, 0.000872)
+    ## contact.proposal <- rep(c(0, rep(0.0001, nm)), nr)
+    contact.reduction <- rnorm(length(contact.proposal))
+    contact.reduction[1 + ((nm+1)*(0:(nr-1)))] <- 0
+    contact.reduction[contact.reduction != 0] <- c(-0.116541775881024, -0.408980375330183, -0.0156679133877321, -0.0748016516321573, -0.715465768996106, -0.818977354480832, -0.107390822382017, -0.453187349344851, -0.101088273069055, -0.302898386182425, -0.456799393816269, 0.10949140390645, -0.215978158299037, -0.133595830062586, 0.231109645064602, -0.222289432134629, -0.438074600061848, 0.111207936928841, -0.197752353677324, -0.057059948082588, 0.351057759491446)
+    contact.link <- as.integer(any(contact.dist == 4))
+    require(Matrix)
+    if(rw.flag){
+        sub.design <- matrix(1, nm, nm)
+        for(i in 1:(nm-1))
+            for(j in (i+1):nm)
+                sub.design[i,j] <- 0
+    }
+    if(rw.flag){
+        m.design <- lapply(1:nr, function(x) bdiag(1, sub.design))
+        m.design <- bdiag(m.design)
+        m.design <- as.matrix(m.design)
+        write_tsv(as.data.frame(m.design), file.path(out.dir, "m.design.txt"), col_names = FALSE)
+    }
+
+}
 ## ## End of contact model ##
 
 ## beta.breaks <- cm.breaks[cm.breaks <= (ymd(date.data) - start.date - time.to.last.breakpoint)][-1] ## Josh's version
-print(seq(from = 1, to = ndays, by = 7))
-print(cm.breaks)
 beta.breaks.full <- cm.breaks[cm.breaks <= (ndays - (7 * nforecast.weeks) - time.to.last.breakpoint)][-1] ## Paul's version
-print(beta.breaks.full)
 beta.breaks <- beta.breaks.full[rev(seq(length(beta.breaks.full), 1, by = -break.window))]
 beta.inds <- beta.breaks.full %in% beta.breaks
+
 
 nbetas <- length(beta.breaks) + 1
 nbetas.full <- length(beta.breaks.full) + 1
@@ -589,12 +617,17 @@ beta.rw.vals <- c(
     0, 0.0448275470941772, 0.0513151373848244, 0.0120395022862853, 0.0486208080647384, 0.237665958394784, -0.112122908685769, 0.000419907134729215, -0.0739860667978034, -0.143566919550603, -0.182386385950509, 0.250466537490249, -0.0211042287438713, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0, 0.0743603245592828, -0.135251090010906, -0.0360794056507664, 0.110415684736955, 0.109741332977249, 0.155427165123845, -0.0848892480165284, -0.100112415417403, -0.351786922834953, -0.239464175187904, 0.186487858627732, -0.121900557631279, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 )[1:(nbetas.full*nr)]
-beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full)
+beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0.0, nbetas.full, flag.earlier_cm)
 if(length(beta.rw.vals) > nbetas*nr)
     beta.rw.vals <- beta.rw.vals[c(1, 1+sort(sample.int(nbetas.full-1, nbetas-1))),]
 static.zero.beta.locs <- seq(from = 1, by = nbetas, length = nr)
 beta.dist <- rep(4, length(beta.rw.vals))
 beta.dist[static.zero.beta.locs] <- 1
+#If there is an early contact matrix used freeze the values after the first week of lockdown (i.e. set dist to const)
+if(flag.earlier_cm & !flag.fix_scaling_mat_cm) {
+    static.zero.beta.locs.early.cm <- seq(from = 1 + which.max(beta.breaks > nday_lockdown_if_earlier_cm), by = nbetas, length = nr)
+    beta.dist[static.zero.beta.locs.early.cm] <- 1
+}
 beta.update <- TRUE
 beta.rw.flag <- TRUE
 ## beta.rw.props <- rep(c(0, rep(0.0005, nbetas - 1)), nr)
@@ -607,7 +640,7 @@ beta.rw.props <- c(
     0.000000, 0.000012, 0.000015, 0.000022, 0.000034, 0.000033, 0.000079, 0.000138, 0.000316, 0.000654, 0.001155, 0.003663, 0.012773, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
     0.000000, 0.000018, 0.000033, 0.000067, 0.000120, 0.000247, 0.000245, 0.000519, 0.001663, 0.002612, 0.006823, 0.007852, 0.010879, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02
 )
-beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas.full)
+beta.rw.props <- add.extra.vals.per.region(beta.rw.props, 0.02, nbetas.full, TRUE)
 if (length(beta.rw.props) > nbetas.full*nr) beta.rw.props <- beta.rw.props[nbetas.full*nr]
 beta.design <- matrix(1, nbetas, nbetas)
 for(i in 1:(nbetas-1))
@@ -685,6 +718,7 @@ write_tsv(file.path(out.dir, "wr_design_file.txt"), col_names = FALSE)
 
 if(use.previous.run.for.start) {
     previous.loc <- previous.run.to.use[1]
+    alt.previous.loc <- alt.previous.run.to.use[1]
     lv <- length(value.ifr)
     source(file.path(proj.dir, "import_pars.R"))
     value.ifr <- value.ifr[1:lv]
