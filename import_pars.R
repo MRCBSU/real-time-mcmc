@@ -26,10 +26,12 @@ if(exists("prev.env$prev.flag")) {
 }
 ## value.pgp GP stream not currently used
 if("contact_parameters" %in% names(prev.params)){
-    contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
-    if(length(contact.reduction) < (nr * (nm+1)))
-        contact.reduction <- add.extra.vals.per.region(contact.reduction, 0, nm + 1, flag.earlier_cm & flag.hack_match_june2020_runs)
-    }
+    if(!flag.fix_scaling_mat_cm) {
+        contact.reduction <- prev.params$contact_parameters[iteration.number.to.start.from,]
+        if(length(contact.reduction) < (nr * (nm+1)))
+            contact.reduction <- add.extra.vals.per.region(contact.reduction, 0, nm + 1, flag.earlier_cm & flag.hack_match_june2020_runs)
+     }
+}
 if("log_beta_rw" %in% names(prev.params)){
     beta.rw.vals <- prev.params$log_beta_rw[iteration.number.to.start.from,]
     beta.rw.vals <- add.extra.vals.per.region(beta.rw.vals, 0, nbetas, flag.earlier_cm & flag.hack_match_june2020_runs)

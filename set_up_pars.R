@@ -135,12 +135,14 @@ if(vac.n_doses >= 3){
     } else if(adm.flag){
         value.vac.alpha3 <- c(4/5, 2/5, 9/14, 5/8)
     }
+    if(flag.apply_pre_vacc_mod_pars_fix) value.vac.alpha3 <- value.vac.alpha3[1]
     prior.vac.alpha3 <- rep(1, length(value.vac.alpha3)) ## ifelse(vacc.flag, 3, 1)
     prior.alpha3 <- max(prior.vac.alpha3)
     if(vacc.flag & (prior.alpha3 > 1)) pars.alpha3 <- c(4, 1)
     vacb.r.breaks <- NULL
     vacb.a.breaks <- NULL
     vacb.t.breaks <- c(delta.date, omicron.date, omicronBA5.date) - start.date
+    if(flag.apply_pre_vacc_mod_pars_fix) vacb.t.breaks <- NULL
     vacb.design <- NULL
 
     # vac3.design <- v3.design[include, ]
@@ -156,12 +158,14 @@ if(vac.n_doses >= 4){
     } else if(adm.flag){
         value.vac.alpha4 <- c(4/5, 2/5, 9/14, 11/16)
     }
+    if(flag.apply_pre_vacc_mod_pars_fix) value.vac.alpha4 <- value.vac.alpha4[1]
     prior.vac.alpha4 <- rep(1, length(value.vac.alpha4)) ## ifelse(vacc.flag, 3, 1)
     prior.alpha4 <- max(prior.vac.alpha4)
     if(vacc.flag & (prior.alpha4 > 1)) pars.alpha4 <- c(4, 1)
     vac4.r.breaks <- NULL
     vac4.a.breaks <- NULL
     vac4.t.breaks <- vacb.t.breaks
+    if(flag.apply_pre_vacc_mod_pars_fix) vac4.t.breaks <- NULL
     vac4.design <- NULL
 
     # vac4.design <- v4.design[include, ]
@@ -213,15 +217,16 @@ if(vacc.pi.bps)
 if(vac.n_doses >= 3) {
     value.vac.pi3 <- c(19/20, 19/20, 13/20) ## Based on vaccine surveillance report wk 6, 2022.
     value.vac.pi3 <- c(value.vac.pi3, 1/5) ## Based on Nick Andrews' e-mail dated 20220705
+    if(flag.apply_pre_vacc_mod_pars_fix) value.vac.pi3 <- value.vac.pi3[1]
     prior.vac.pi3 <- rep(1, length(value.vac.pi3))
     prior.pi3 <- max(prior.vac.pi3)
     if(vacc.flag & (prior.pi3 > 1)) pars.pi3 <- c(4, 1)
-
     # if(vacc.pi.bps) write_tsv(as.data.frame(v3.design), file.path(out.dir, "vac.pi3.design.txt"), col_names = FALSE)
 }
 ## Efficacy against infection from four vaccine doses - can be derived from vaccine surveillance report ??
 if(vac.n_doses >= 4) {
     value.vac.pi4 <- c(19/20, 19/20, 13/20, 13/25) ## Keeping it the same as dose 3 until Omicron BA.5 wave. Based on NA e-mail as above
+    if(flag.apply_pre_vacc_mod_pars_fix) value.vac.pi4 <- value.vac.pi4[1]
     prior.vac.pi4 <- rep(1, length(value.vac.pi4))
     prior.pi4 <- max(prior.vac.pi4)
     if(vacc.flag & (prior.pi4 > 1)) pars.pi4 <- c(4, 1)
@@ -558,6 +563,19 @@ contact.reduction[zero.contact.elements] <- 0
 contact.proposal[zero.contact.elements] <- 0
 contact.link <- as.integer(any(contact.dist == 4))
 require(Matrix)
+if(length(contact.dist) <= length(contact.proposal) & flag.fix_scaling_mat_cm) {
+    print("contact dist/proposal")
+    print(contact.dist)
+    print(contact.proposal)
+    print(contact.reduction)
+    if(contact.model == 4) {
+        contact.proposal <- contact.proposal[rep(c(1,2,3), 42 / 6) + sort(rep(seq(1, 42, 6) - 1, 3))]
+        contact.proposal[seq(1, 21, 3)] <- 0
+        contact.reduction <- rep(0, 21)
+    }
+    print(contact.reduction)
+}
+
 if(rw.flag){
     sub.design <- matrix(1, nm, nm)
     for(i in 1:(nm-1))
@@ -707,12 +725,15 @@ omi.wr <- optim(500, fn = opfunc, prob = 1 - (omi.wr + 2) / (mean.wr + 2), metho
 ## Waning before BA.5. From Nick Andrews doc circulated on 20220705
 omi.wr.2 <- optim(500, fn = opfunc, prob = 0.09, days = 365.25 * 5 / 24, method = "Brent", lower = 0, upper = 99999)$par - 2
 breaks.wr <- ymd("20211120") - start.date + c(1, 11)
+if(flag.apply_pre_vacc_mod_pars_fix) breaks.wr <- NULL
 value.wr <- c(mean.wr, omi.wr, omi.wr.2)
+if(flag.apply_pre_vacc_mod_pars_fix) value.wr <- 99999
 fac.wr <- as.factor(c(1, 2, 3))
 prior.wr <- 0
 pars.wr <- NULL
 (design.wr <- model.matrix(~0+fac.wr) %>% as_tibble()) %>%
 write_tsv(file.path(out.dir, "wr_design_file.txt"), col_names = FALSE)
+if(flag.apply_pre_vacc_mod_pars_fix) design.wr <- NULL
 ## 
 
 

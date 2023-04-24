@@ -166,7 +166,9 @@ if(ncol(m) %% r != 0) {
     M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
     # Read matrices which select which elements of m to use, add one because R uses 1-based indexing
     # but the model uses 0-based
-    M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
+    M.mult[[idir]] <- as.matrix(read_tsv(
+      # cm.mults[idir]
+      "/home/phe.gov.uk/joel.kandiah/mcmc/real-time-mcmc/contact_mats/ag8_mult_mod4levels0.txt", col_names = FALSE, col_types = cols())) + 1
   }
   # m.levels[t] is the number of breakpoints passed on day t
   m.levels <- cut(1:ndays, c(0, cm.breaks, Inf))

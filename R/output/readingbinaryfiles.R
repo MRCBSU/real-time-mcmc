@@ -132,6 +132,9 @@ if(exists("var.priors")){
       seek(coda.files[[inti]], -8, origin="end")
       num.params <- readBin(coda.files[[inti]], "integer")
       num.samples <- readBin(coda.files[[inti]], "integer")
+      # print(paste0(parameter.names[inti], ":"))
+      # print(parameter.dims[inti])
+      # print(inti)
       if (num.params != parameter.dims[inti]) {
           print(paste("WARNING: Expected", parameter.dims[inti], "chain(s) for", parameter.names[inti],
                       "but", num.params, "found. Discarding extra ones and not plotting missing ones."))

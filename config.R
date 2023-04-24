@@ -12,7 +12,7 @@ str.date.vacc <- "20221104"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1011)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1035)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -52,12 +52,19 @@ preprocessed_sero_date <- ymd("20220627")
 
 sero_cutoff_flag <- T
 
+## Last date for which first wave serology is used
+sero.end.1stwv <- ymd(20200522)
+
 if(sero_cutoff_flag) {
     #If dropping serology
     ## As date chosen, assumed to be chosen at a complete date
     serology.delay <- 25
     ## Last date for which serology is used
     sero.end.date <- ymd(20200619) ## ymd(20200522) ## ymd(20210920)
+    
+    if(sero.end.date <= ymd(20201030)) {
+        sero.end.date <- ymd(20200521)
+    }
 
 } else {
     #If not dropping serology
@@ -66,8 +73,7 @@ if(sero_cutoff_flag) {
     ## Last date for which serology is used
     sero.end.date <- ymd(date.data) ## ymd(20200522) ## ymd(20210920)
 }
-## Last date for which first wave serology is used
-sero.end.1stwv <- ymd(20200522)
+
 ## Format of dates used in the serology data
 sero.date.fmt <- "%d%b%Y"
 ## Fix values at prior means?
@@ -139,6 +145,7 @@ flag.earlier_cm <- TRUE
 nday_lockdown_if_earlier_cm <- 36
 flag.hack_match_june2020_runs <- TRUE
 flag.fix_scaling_mat_cm <- TRUE
+flag.apply_pre_vacc_mod_pars_fix <- TRUE
 
 cm.breaks <- `if`(flag.earlier_cm, seq(from = 8, to = ndays, by = 7), seq(from = 36, to = ndays, by = 7)) ## Day numbers where breaks happen
 time.to.last.breakpoint <- 18 ## From the current date, when to insert the most recent beta breakpoint.
@@ -196,7 +203,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
 deaths.flag <- hosp.flag <- 1	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 0
+prev.flag <- 1
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 num.prev.days <- 312
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -230,7 +237,7 @@ flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
 	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "28"), "")
-	str.cutoff <- "28"
+	str.cutoff <- "60"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?

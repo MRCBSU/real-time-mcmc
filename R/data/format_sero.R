@@ -264,6 +264,7 @@ if(Use_preprocessed_serology) {
             age.grp = cut(age, age.agg, age.labs, right = FALSE, ordered_result = T),
             date = SDate - serology.delay)
     latest.date <- max(sero.dat$date)
+    latest.date.sero <- max(sero.dat$date)
 
     ## ## Get into format for use by the rtm
     ## First denominators

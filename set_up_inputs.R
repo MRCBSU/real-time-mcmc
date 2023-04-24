@@ -120,7 +120,7 @@ if(contact.model == 1){
     })
 } else if(contact.model == 4){
     cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod4levels", 0:9, ".txt"))
-    if(flag.earlier_cm) cm.breaks.strat.after.ld <- ifelse(cm.breaks >= nday_lockdown_if_earlier_cm, 1, 0)
+    if(flag.earlier_cm) cm.breaks.strat.after.ld <- ifelse(cm.breaks >= nday_lockdown_if_earlier_cm, `if`(!flag.fix_scaling_mat_cm,1, 0), 0)
     mult.order <- c(0, `if`(flag.earlier_cm, cm.breaks.strat.after.ld, rep(`if`(!flag.fix_scaling_mat_cm,1,0), length(cm.breaks))))
     mult.mat <- lapply(unique(mult.order), function(x){
         y <- (3*x)+(0:2)
@@ -128,6 +128,9 @@ if(contact.model == 1){
                  rep(y[1], (nA - 4) * nA), ## adults except the very elderly
                  rep(y[3], nA)), nA, nA, byrow = TRUE)
         })
+    print("mult.order")
+    print(mult.order)
+    print(`if`(!flag.fix_scaling_mat_cm,1,0))
 } else if(contact.model == 5){
     cm.mults <- file.path(proj.dir, "contact_mats", paste0("ag", nA, "_mult_mod5levels", 0:9, ".txt"))
     mult.order <- c(0, rep(1, length(cm.breaks)))
@@ -159,6 +162,8 @@ if(!all(file.exists(cm.mults)))
     for(i in 1:length(mult.mat)) write_tsv(as.data.frame(mult.mat[[i]]),
                                        cm.mults[i],
                                        col_names = FALSE)
+print(cm.mults)
+print(mult.order)
 cm.mults <- cm.mults[mult.order+1]
 
 ## MCMC settings
@@ -241,10 +246,10 @@ if (sero.flag == 1) {
         end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(sero.lims$X1) - start.date + 1)
     } else if(exists("rtm.plot")) {
         start.sero <- min(rtm.plot$date) - start.date + 1
-        end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(rtm.plot$date) - start.date + 1)
+        end.sero <- max(rtm.plot$date) - start.date + 1
     } else if(exists("rtm.sam")) {
         start.sero <- min(rtm.sam$date) - start.date + 1
-        end.sero <- ifelse(sero_cutoff_flag, sero.end.date - start.date + 1, max(rtm.sam$date) - start.date + 1)
+        end.sero <- max(rtm.sam$date) - start.date + 1
     } else {
         warning('Running sero likelihood from day 1 to end\n')
         start.sero <- 1
