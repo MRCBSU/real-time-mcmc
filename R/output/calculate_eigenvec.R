@@ -161,9 +161,12 @@ if(ncol(m) %% r != 0) {
   R0 <- posterior.R0[iterations.for.Rt, , drop = F]
   ni <- nrow(R0)
   colnames(R0) <- regions
-  for(idir in 1:length(cm.bases)){
+  num.cm.bp <- as.integer((length(cm.bases) / length(regions)))
+  for(idir in 1:num.cm.bp){
 	# Read the matrices containing the transmission between age groups (from Edwin)
-    M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
+    for(ireg in 1:length(regions)) {
+      M[[((ireg - 1) * (num.cm.bp)) + idir]] <- as.matrix(read_tsv(cm.bases[((ireg - 1) * (num.cm.bp)) + idir], col_names = FALSE, col_types = cols()))
+    }
     # Read matrices which select which elements of m to use, add one because R uses 1-based indexing
     # but the model uses 0-based
     M.mult[[idir]] <- as.matrix(read_tsv(
@@ -180,11 +183,11 @@ if(ncol(m) %% r != 0) {
   pop.total <- all.pop[1, ];names(pop.total) <- regions
   for(reg in regions){
     ireg <- which(regions %in% reg)
-    for(idir in 1:length(cm.bases)){
+    for(idir in 1:num.cm.bp){
         ## M.star[i] <- m[i] * M[i] but select the correct m for the region
         M.star[[idir]] <- array(apply(m, 1,
                                       function(mm) {
-                                          M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
+                                          M[[((ireg - 1) * (num.cm.bp)) + idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
                                       }),
                                 dim = c(nA, nA, nrow(m)))
         if(beta.update)
@@ -229,28 +232,28 @@ if(ncol(m) %% r != 0) {
 
     Contact.eigenvec[[reg]] <- sapply(1:ndays,
                                             function(x) {
-                                             a <- eigen(matrix(M[[m.levels[x]]],nA, nA))
+                                             a <- eigen(matrix(M[[((ireg - 1) * (num.cm.bp)) + as.numeric(m.levels)[x]]],nA, nA))
                                              a$vectors[,which.max(abs(a$values))]
                                          }
                                          )
     
     Contact.eigenval[[reg]] <- sapply(1:ndays,
                                             function(x) {
-                                             a <- eigen(matrix(M[[m.levels[x]]],nA, nA), only.values = TRUE)
+                                             a <- eigen(matrix(M[[((ireg - 1) * (num.cm.bp)) + as.numeric(m.levels)[x]]],nA, nA), only.values = TRUE)
                                              max(abs(a$values))
                                          }
                                          )
     
     alt_Contact.eigenvec[[reg]] <- sapply(1:ndays,
                                             function(x) {
-                                             a <- eigen(sweep(matrix(M[[m.levels[x]]],nA, nA), 1, regions.total.population[ireg, ], `*`))
+                                             a <- eigen(sweep(matrix(M[[((ireg - 1) * (num.cm.bp)) + as.numeric(m.levels)[x]]],nA, nA), 1, regions.total.population[ireg, ], `*`))
                                              a$vectors[,which.max(abs(a$values))]
                                          }
                                          )
     
     alt_Contact.eigenval[[reg]] <- sapply(1:ndays,
                                             function(x) {
-                                             a <- eigen(sweep(matrix(M[[m.levels[x]]],nA, nA), 1, regions.total.population[ireg, ], `*`), only.values = TRUE)
+                                             a <- eigen(sweep(matrix(M[[((ireg - 1) * (num.cm.bp)) + as.numeric(m.levels)[x]]],nA, nA), 1, regions.total.population[ireg, ], `*`), only.values = TRUE)
                                              max(abs(a$values))
                                          }
                                          )

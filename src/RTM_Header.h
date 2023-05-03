@@ -34,6 +34,8 @@
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
 #include <gsl/gsl_sf_trig.h>
+#include <memory>
+
 
 #include <omp.h>
 

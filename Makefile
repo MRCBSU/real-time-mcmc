@@ -4,6 +4,7 @@ HEADERS = $(wildcard src/*.h)
 RTM_OBJS = $(SRC:src/%.cc=build/rtm/%.o)
 RTM_OPTIM_OBJS = $(SRC:src/%.cc=build/rtm_optim/%.o)
 RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
+RTM_DEBUG_OBJS_ALT = $(SRC:src/%.cc=build/rtm_debug_alt/%.o)
 RTM_PROF_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_prof_debug/%.o)
 RTM_INTEL_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_intel_debug/%.o)
 RTM_INTEL_DEBUG_OBJS_O2 = $(SRC:src/%.cc=build/rtm_intel_debug_o2/%.o)
@@ -16,10 +17,13 @@ RTM_HPC_OBJS5 = $(SRC:src/%.cc=build/rtm_hpc5/%.o)
 
 LDFLAGS := $(LDFLAGS) -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -L/usr/local/packages/openmp/12.0.1/lib -L/usr/local/packages/gsl/2.7/lib -lgsl -lgslcblas -lgfortran -lm -lpthread
 ## LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
-CXXFLAGS := $(CXXFLAGS) -g -std=c++11 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
+CXXFLAGS := $(CXXFLAGS) -g -std=c++14 -DHAVE_INLINE -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/openmp/12.0.1/include -L/usr/local/packages/openmp/12.0.1/lib -I/usr/local/packages/OpenBLAS/0.3.17/include 
 
 rtm_debug: $(RTM_DEBUG_OBJS) $(HEADERS)
 	g++ -g $(RTM_DEBUG_OBJS)  -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug
+
+rtm_debug_alt: $(RTM_DEBUG_OBJS_ALT) $(HEADERS)
+	g++ -g $(RTM_DEBUG_OBJS_ALT) -Werror -Wall -pedantic -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-type-limits -Wno-reorder -Wno-unused-but-set-variable -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_debug_alt
 
 rtm_prof_debug: $(RTM_PROF_DEBUG_OBJS) $(HEADERS)
 	g++ -g -pg $(RTM_PROF_DEBUG_OBJS) -I/usr/local/packages/gsl/2.7/include -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/OpenBLAS/0.3.17/include -L/usr/local/packages/OpenBLAS/0.3.17/lib64 -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o rtm_prof_debug
@@ -64,20 +68,24 @@ clean:
 
 build/rtm_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_debug
-	g++ -g -std=c++11 -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
+	g++ -g -std=c++14 -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
+
+build/rtm_debug_alt/%.o: src/%.cc
+	@mkdir -p build/rtm_debug_alt
+	g++ -g -std=c++14 -Werror -Wall -Wextra -pedantic -Wno-sign-compare -Wno-unused-parameter -Wno-type-limits -Wno-reorder -Wno-unused-but-set-variable -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
 
 build/rtm_prof_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_prof_debug
-	g++ -g -std=c++11 -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
+	g++ -g -std=c++14 -L/usr/local/packages/gsl/2.7/lib -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
 
 
 build/rtm_intel_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_intel_debug
-	icpc -pg -g -std=c++11 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
+	icpc -pg -g -std=c++14 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O0 -fopenmp -c -o $@ $< $(CXXFLAGS)
 
 build/rtm_intel_debug_o2/%.o: src/%.cc
 	@mkdir -p build/rtm_intel_debug_o2
-	icpc -pg -g -std=c++11 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O2 -c -o $@ $< $(CXXFLAGS)
+	icpc -pg -g -std=c++14 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -O2 -c -o $@ $< $(CXXFLAGS)
 
 build/rtm/%.o: src/%.cc
 	@mkdir -p build/rtm
@@ -97,16 +105,16 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++14 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 build/rtm_hpc3/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc3
-	icpc -g -std=c++11 -O2 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++14 -O2 -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 
 build/rtm_hpc4/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc4
-	icpc -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
+	icpc -g -std=c++14 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -xHOST -fopenmp -DGSL_RANGE_CHECK_OFF -DNDEBUG -DUSE_THREADS -DHAVE_INLINE  -c -o $@ $<
 	
 build/rtm_hpc5/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc5
-	g++ -g -std=c++11 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<
+	g++ -g -std=c++14 -Ofast -I/usr/local/packages/gsl/2.7/include -I/usr/local/packages/OpenBLAS/0.3.17/include -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

@@ -96,6 +96,7 @@ struct updateable_model_parameter{
 };
 
 // STRUCTURE DEFINED FOR MIXING MODEL
+// TODO: Make this regional or propose vector of structs of mixing model
 struct mixing_model{
   int num_breakpoints;
   gsl_vector_int *breakpoints; // TIMING OF BREAKPOINTS, ASSUMED ORDERED AND INCREASING.
@@ -108,8 +109,11 @@ struct mixing_model{
 };
 
 void mixing_model_alloc(mixing_model&, const int, const int, const int num_strata = NUM_AGE_GROUPS);
+void mixing_model_alloc(std::unique_ptr<mixing_model>, const int, const int, const int num_strata = NUM_AGE_GROUPS);
 void mixing_model_free(mixing_model&);
+void mixing_model_free_unique_ptr(std::unique_ptr<mixing_model>&);
 void mixing_model_memcpy(mixing_model&, const mixing_model&);
+void mixing_model_memcpy(mixing_model&, const std::unique_ptr<mixing_model>&);
 
 // PARAMETERS DEFINING THE GAMMA DISTRIBUTION GOVERNING DELAY TIMES IN THE DISEASE MODEL
 class st_delay{
@@ -157,6 +161,7 @@ void globalModelParams_alloc(globalModelParams&, size_t);
 void globalModelParams_free(globalModelParams&);
 
 // REGION SPECIFIC PARAMETER STRUCTURE, FOR INPUT TO THE TRANSMISSION (AND DISEASE?) MODEL
+// TODO: Check whether the mixing model should be a reference rather than a value?
 #define REGIONAL_MODEL_PARAMS_MEMBERS "l_init_prop_sus, l_init_prop_sus_HI_geq_32, l_average_infectious_period, l_latent_period, l_r1_period, l_vacc1_disease, l_vaccn_disease, l_vaccb_disease, l_vacc4_disease, l_vacc1_infect, l_vaccn_infect, l_vaccb_infect, l_vacc4_infect, l_relative_infectiousness_I2_wrt_I1, l_EGR, l_lbeta_rw, l_R0_Amplitude, l_R0_peakday, l_R0_init, l_I0, l_pr_symp, l_pr_onset_to_GP, l_pr_onset_to_Hosp, l_pr_onset_to_Death, l_importation_rate, d_R0_phase_differences, l_MIXMOD, l_background_gps_counts, l_sensitivity, l_specificity, l_gp_negbin_overdispersion, l_hosp_negbin_overdispersion, l_day_of_week_effect, l_sero_sensitivity, l_sero_specificity, l_waning_period;" 
 struct regional_model_params{
   gsl_vector* l_init_prop_sus; // INITIAL CONDITION, MAKES NO SENSE TO HAVE ANY TEMPORAL VARIATION
@@ -198,6 +203,7 @@ struct regional_model_params{
 };
 
 void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model);
+void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const std::unique_ptr<mixing_model>&);
 void regional_model_params_memcpy(regional_model_params&, const regional_model_params&, flagclass&);
 void regional_model_params_free(regional_model_params&);
 
@@ -247,6 +253,7 @@ struct Region{
 
 void Region_memcpy(Region&, const Region&, flagclass&);
 void Region_alloc(Region&, const global_model_instance_parameters, const mixing_model);
+void Region_alloc_smart_ptr(Region&, const global_model_instance_parameters, const std::unique_ptr<mixing_model>&);
 void Region_alloc(Region&, const Region&);
 void Region_free(Region&, const global_model_instance_parameters);
 

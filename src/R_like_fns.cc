@@ -255,7 +255,7 @@ double R_proposenew(double& newparam,
   // WRAPPER FUNCTION FOR R_proposenew, RETURNS LOG-ACCEPTANCE RATIO CONTRIBUTION
 double random_walk_proposal(double& proposal, const double& currentval, const distribution_type& dist, const double& proposal_var, gsl_rng* r, const double& trunclo, const double& trunchi)
 {
-  int lower_bound, upper_bound;
+  // int lower_bound, upper_bound;
   double out;
   switch(dist) {
   case cMVNORMAL :

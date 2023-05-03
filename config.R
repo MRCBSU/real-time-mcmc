@@ -12,7 +12,7 @@ str.date.vacc <- "20221104"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(1035)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(1044)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -203,7 +203,7 @@ gp.flag <- 0	# 0 = off, 1 = on
 ## Do we want the 'hosp' stream in the code linked to death data or to hospital admission data
 deaths.flag <- hosp.flag <- 1	# 0 = admissions (by default - can be modified by explicitly setting adm.flag), 1 = deaths
 ## Do we want to include prevalence estimates from community surveys in the model?
-prev.flag <- 1
+prev.flag <- 0
 prev.prior <- "Cevik" # "relax" or "long_positive" or "tight
 num.prev.days <- 312
 ## Shall we fix the serological testing specificity and sensitivty?
@@ -228,6 +228,7 @@ scenario.name <- paste0(scenario.name, "Sero", ifelse(NHSBT.flag, "NHSBT", "RCGP
 if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderly_prev")
 
 ## Give the run a name to identify the configuration
+flag.use_regional_cm <- TRUE
 contact.model <- 4
 old_contact_mat_flag <- TRUE
 contact.prior <- "ons"
@@ -237,7 +238,7 @@ flg.confirmed <- (data.desc != "all")
 flg.cutoff <- TRUE
 if(flg.cutoff) {
 	str.cutoff <- ifelse(deaths.flag, ifelse(region.type == "ONS", "60", "28"), "")
-	str.cutoff <- "60"
+	str.cutoff <- "28"
 	scenario.name <- paste0(scenario.name, "_", region.type, str.cutoff, "cutoff")
 }
 ## Does each age group have a single IFR or one that varies over time?
@@ -378,6 +379,8 @@ out.dir <- file.path(proj.dir,
                          ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          ifelse(flag.earlier_cm, "_earliercm", ""),
+                         ifelse(flag.fix_scaling_mat_cm, "_nold", ""),
+                         ifelse(flag.use_regional_cm, "_regcm", ""),
                          "_matrices2_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")

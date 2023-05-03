@@ -30,9 +30,12 @@ if(ncol(m) %% r != 0) {
   R0 <- posterior.R0[iterations.for.Rt, , drop = F]
   ni <- nrow(R0)
   colnames(R0) <- regions
-  for(idir in 1:length(cm.bases)){
+  num.cm.bp <- as.integer((length(cm.bases) / length(regions)))
+  for(idir in 1:num.cm.bp){
 	# Read the matrices containing the transmission between age groups (from Edwin)
-    M[[idir]] <- as.matrix(read_tsv(cm.bases[idir], col_names = FALSE, col_types = cols()))
+    for(ireg in 1:length(regions)) {
+      M[[((ireg - 1) * (num.cm.bp)) + idir]] <- as.matrix(read_tsv(cm.bases[((ireg - 1) * (num.cm.bp)) + idir], col_names = FALSE, col_types = cols()))
+    }
     # Read matrices which select which elements of m to use, add one because R uses 1-based indexing
     # but the model uses 0-based
     M.mult[[idir]] <- as.matrix(read_tsv(cm.mults[idir], col_names = FALSE, col_types = cols())) + 1
@@ -47,11 +50,11 @@ if(ncol(m) %% r != 0) {
   pop.total <- all.pop[1, ];names(pop.total) <- regions
   for(reg in regions){
     ireg <- which(regions %in% reg)
-    for(idir in 1:length(cm.bases)){
+    for(idir in 1:num.cm.bp){
         ## M.star[i] <- m[i] * M[i] but select the correct m for the region
         M.star[[idir]] <- array(apply(m, 1,
                                       function(mm) {
-                                          M[[idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
+                                          M[[((ireg - 1) * (num.cm.bp)) + idir]] * mm[(ireg-1)*m.per.region+M.mult[[idir]]]
                                       }),
                                 dim = c(nA, nA, nrow(m)))
         if(beta.update)

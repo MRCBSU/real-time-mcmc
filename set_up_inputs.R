@@ -77,22 +77,34 @@ if (nA == 1) {
   mat.dates <- start.date + cm.breaks - 1
   lst <- readRDS(file.path(matrix.dir, "base_matrices.rds"))
   lst$England$all$m <- lst$England$all$m * 1e7
-  cm.files <- paste0("england_8ag_contact", google.data.date_and_suff.str, ".txt")
-  for(i in 1:length(cm.breaks))
-      cm.files <- c(cm.files, paste0("england_8ag_contact_ldwk", i, "_", google.data.date_and_suff.str, ifelse(flag.earlier_cm, "_earliercm_", ""), ".txt"))
+  cm.files <- c()
+  for(j in 1:length(regions)) {
+  cm.files <- c(cm.files,(paste0("england_8ag_contact", google.data.date_and_suff.str, ".txt")))
+    for(i in 1:length(cm.breaks))
+        cm.files <- c(cm.files, paste0(`if`(flag.use_regional_cm, regions[j], "england"), "_8ag_contact_ldwk", i, "_", google.data.date_and_suff.str, ifelse(flag.earlier_cm, "_earliercm_", ""), ".txt"))
+  }
+  
   cm.bases <- file.path(proj.dir, "contact_mats", cm.files) ## Base matrices
-  cm.lockdown.fl <- paste0("England", mat.dates, "all.csv")
-  cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
   idx <- 1
-  if(!all(file.exists(cm.bases))){
-      adf <- as.data.frame(lst$England$all$m)
-      write_tsv(adf, cm.bases[idx], col_names = FALSE)
-      for(fl in cm.lockdown){
-          idx <- idx + 1
-          mat <- read_csv(fl) * adf 
-          write_tsv(mat, cm.bases[idx], col_names = FALSE)
-      }
-   }
+  for(j in 1:length(regions)) {
+    cm.lockdown.fl <- paste0(`if`(flag.use_regional_cm, gsub("_", " ", regions[j]), "England"), mat.dates, "all.csv")
+    cm.lockdown <- file.path(matrix.dir, cm.lockdown.fl)
+    print(j)
+    print(cm.lockdown)
+    if(!all(file.exists(cm.bases))){
+        adf <- as.data.frame(lst$England$all$m)
+        write_tsv(adf, cm.bases[idx], col_names = FALSE)
+        for(fl in cm.lockdown){
+            idx <- idx + 1
+            # print(idx)
+            mat <- read_csv(fl) * adf 
+            # print(mat)
+            # print(cm.bases[idx])
+            write_tsv(mat, cm.bases[idx], col_names = FALSE)
+        }
+        idx <- idx + 1
+    }
+  }
 }
 ## Modifiers (which element of contact_parameters to use)
 if(contact.model == 1){
