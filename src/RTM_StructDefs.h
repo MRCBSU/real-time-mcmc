@@ -202,8 +202,8 @@ struct regional_model_params{
   gsl_matrix* l_waning_period;
 };
 
-void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model);
-void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const std::unique_ptr<mixing_model>&);
+void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const mixing_model&);
+// void regional_model_params_alloc(regional_model_params&, const unsigned int, const int, const int, const int, const std::unique_ptr<mixing_model>&);
 void regional_model_params_memcpy(regional_model_params&, const regional_model_params&, flagclass&);
 void regional_model_params_free(regional_model_params&);
 
@@ -252,8 +252,8 @@ struct Region{
 };
 
 void Region_memcpy(Region&, const Region&, flagclass&);
-void Region_alloc(Region&, const global_model_instance_parameters, const mixing_model);
-void Region_alloc_smart_ptr(Region&, const global_model_instance_parameters, const std::unique_ptr<mixing_model>&);
+void Region_alloc(Region&, const global_model_instance_parameters, const mixing_model&);
+// void Region_alloc_smart_ptr(Region&, const global_model_instance_parameters, const std::unique_ptr<mixing_model>&);
 void Region_alloc(Region&, const Region&);
 void Region_free(Region&, const global_model_instance_parameters);
 

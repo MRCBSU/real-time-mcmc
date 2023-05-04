@@ -1557,7 +1557,6 @@ void read_mixmod_structure_inputs_list(std::vector<std::unique_ptr<mixing_model>
     base_mm->evector_MIXMAT_normalised = 0;
 
     // read in the sub-variables base_matrices and multiplier_indices_matrix
-    //TODO this is not right!
     read_filenames_and_data_matrices(base_mm->MIXMAT, base_mm->num_breakpoints + 1,
             "base_matrices", str_var, 0, 0, region_index_counter * (base_mm->num_breakpoints + 1));
     read_filenames_and_data_int_matrices(base_mm->MIXMAT_param, base_mm->num_breakpoints + 1,

@@ -39,7 +39,7 @@ void evaluate_regional_parameters(regional_model_params&, const updateable_model
 				  flagclass&);
 
 // FUNCTIONS IN RTM_MixingMatrices.cc
-int maximal_index(const mixing_model);
+int maximal_index(const mixing_model&);
 int maximal_index(const std::unique_ptr<mixing_model>&);
 void mixing_matrix_scale_and_normalisation(mixing_model&, const gsl_vector*, const bool evec_flag = true);
 int mix_timecat(const int, const gsl_vector_int*, const double);

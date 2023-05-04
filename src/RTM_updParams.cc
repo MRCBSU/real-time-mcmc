@@ -706,7 +706,7 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   }
 }
 
-void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip,const std::vector<std::unique_ptr<mixing_model>> &base_mms, glikelihood& prop_lfx) {
+void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const std::vector<std::unique_ptr<mixing_model>> &base_mms, glikelihood& prop_lfx) {
 
   laccept = 0;
   //if (global)
@@ -870,13 +870,13 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   if (global) {
     // Evaluate all regions
     for (int reg = 0; reg < paramSet.numRegions; reg++) {
-      block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mms.at(reg), blockflags);
+      block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, *base_mms.at(reg), blockflags);
       
     }
   } else {
     // Local. Evaluate only region of this block
     int reg = regionNum;
-    block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, base_mms.at(reg), blockflags);
+    block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, *base_mms.at(reg), blockflags);
   }
   
   // Need to restore original values so that other blocks can run

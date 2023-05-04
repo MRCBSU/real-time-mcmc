@@ -134,7 +134,7 @@ void mixing_model_memcpy(mixing_model &mix_dest, const std::unique_ptr<mixing_mo
 }
 
 
-int maximal_index(const mixing_model src_mix)
+int maximal_index(const mixing_model& src_mix)
 {
   int max_index = 0;
   for(int int_i = 0; int_i <= src_mix.num_breakpoints; int_i++)

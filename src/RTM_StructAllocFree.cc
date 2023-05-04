@@ -199,7 +199,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
 				 const int num_ages,
 				 const int transmission_time_steps_per_day,
 				 const int reporting_time_steps_per_day,
-				 const mixing_model src_mixing_pars)
+				 const mixing_model& src_mixing_pars)
 {
 
   new_rmp.l_init_prop_sus = gsl_vector_calloc(num_ages);
@@ -241,53 +241,55 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
   new_rmp.l_hosp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
   new_rmp.l_day_of_week_effect = gsl_matrix_calloc(num_days, num_ages);
 }
-void regional_model_params_alloc(regional_model_params& new_rmp,
-				 const unsigned int num_days,
-				 const int num_ages,
-				 const int transmission_time_steps_per_day,
-				 const int reporting_time_steps_per_day,
-				 const std::unique_ptr<mixing_model> &src_mixing_pars)
-{
 
-  new_rmp.l_init_prop_sus = gsl_vector_calloc(num_ages);
-  new_rmp.l_init_prop_sus_HI_geq_32 = gsl_vector_calloc(num_ages);
-  new_rmp.l_average_infectious_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// DO I WANT NUM_DAYS AND NUM_AGES? OR THE NUMBER OF TEMPORAL AND AGE BREAKPOINTS.
-  new_rmp.l_r1_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vacc1_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vaccn_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vaccb_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vacc4_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vacc1_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vaccn_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vaccb_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_vacc4_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_latent_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// THE SAME GOES FOR MANY OF THE OTHER MATRICES
-  new_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); // VARIATION NOT EXPECTED TO BE USED HERE
-  new_rmp.l_lbeta_rw = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
-  new_rmp.l_pr_symp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_pr_onset_to_GP = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_pr_onset_to_Hosp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_pr_onset_to_Death = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
-  new_rmp.l_importation_rate = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
-  new_rmp.d_R0_phase_differences = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
-  new_rmp.l_sero_sensitivity = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_sero_specificity = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_waning_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+// void regional_model_params_alloc(regional_model_params& new_rmp,
+// 				 const unsigned int num_days,
+// 				 const int num_ages,
+// 				 const int transmission_time_steps_per_day,
+// 				 const int reporting_time_steps_per_day,
+// 				 const std::unique_ptr<mixing_model> &src_mixing_pars)
+// {
+
+//   new_rmp.l_init_prop_sus = gsl_vector_calloc(num_ages);
+//   new_rmp.l_init_prop_sus_HI_geq_32 = gsl_vector_calloc(num_ages);
+//   new_rmp.l_average_infectious_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// DO I WANT NUM_DAYS AND NUM_AGES? OR THE NUMBER OF TEMPORAL AND AGE BREAKPOINTS.
+//   new_rmp.l_r1_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vacc1_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vaccn_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vaccb_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vacc4_disease = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vacc1_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vaccn_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vaccb_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_vacc4_infect = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_latent_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); /// THE SAME GOES FOR MANY OF THE OTHER MATRICES
+//   new_rmp.l_relative_infectiousness_I2_wrt_I1 = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages); // VARIATION NOT EXPECTED TO BE USED HERE
+//   new_rmp.l_lbeta_rw = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
+//   new_rmp.l_pr_symp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_pr_onset_to_GP = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_pr_onset_to_Hosp = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_pr_onset_to_Death = gsl_matrix_calloc(reporting_time_steps_per_day * num_days, num_ages);
+//   new_rmp.l_importation_rate = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
+//   new_rmp.d_R0_phase_differences = gsl_vector_calloc(transmission_time_steps_per_day * num_days);
+//   new_rmp.l_sero_sensitivity = gsl_matrix_calloc(num_days, num_ages);
+//   new_rmp.l_sero_specificity = gsl_matrix_calloc(num_days, num_ages);
+//   new_rmp.l_waning_period = gsl_matrix_calloc(transmission_time_steps_per_day * num_days, num_ages);
   
-  int num_mix_breakpoints = (src_mixing_pars->breakpoints == 0) ? 0 : src_mixing_pars->breakpoints->size;
+//   int num_mix_breakpoints = (src_mixing_pars->breakpoints == 0) ? 0 : src_mixing_pars->breakpoints->size;
 
-  // GET THE SIZE OF THE PARAMETER VECTOR FROM THE MAXIMAL INDEX FOUND IN THE PARAMETERISATION MATRICES
-  int param_vec_size = maximal_index(src_mixing_pars) + 1;
+//   // GET THE SIZE OF THE PARAMETER VECTOR FROM THE MAXIMAL INDEX FOUND IN THE PARAMETERISATION MATRICES
+//   int param_vec_size = maximal_index(src_mixing_pars) + 1;
 
-  mixing_model_alloc(new_rmp.l_MIXMOD,
-		     num_mix_breakpoints,
-		     param_vec_size);
+//   mixing_model_alloc(new_rmp.l_MIXMOD,
+// 		     num_mix_breakpoints,
+// 		     param_vec_size);
 
-  new_rmp.l_background_gps_counts = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_gp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_hosp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
-  new_rmp.l_day_of_week_effect = gsl_matrix_calloc(num_days, num_ages);
-}
+//   new_rmp.l_background_gps_counts = gsl_matrix_calloc(num_days, num_ages);
+//   new_rmp.l_gp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
+//   new_rmp.l_hosp_negbin_overdispersion = gsl_matrix_calloc(num_days, num_ages);
+//   new_rmp.l_day_of_week_effect = gsl_matrix_calloc(num_days, num_ages);
+// }
+
 void regional_model_params_alloc(regional_model_params& dest_rmp,
 				 const regional_model_params& src_rmp)
 {
@@ -508,7 +510,7 @@ void model_statistics_free(struct model_statistics &ms)
 // ---- Overloaded region allocation function
 void Region_alloc(Region& new_reg,
 		  const global_model_instance_parameters src_gmip,
-		  const mixing_model src_mixmod)
+		  const mixing_model &src_mixmod)
 {
   int num_ages = NUM_AGE_GROUPS;
   rtmData::ndays = src_gmip.l_duration_of_runs_in_days;
@@ -539,38 +541,38 @@ void Region_alloc(Region& new_reg,
   model_statistics_alloc(new_reg.region_modstats, rtmData::ndays, num_ages, src_gmip.l_reporting_time_steps_per_day);
 }
 
-void Region_alloc_smart_ptr(Region& new_reg,
-		  const global_model_instance_parameters src_gmip,
-		  const std::unique_ptr<mixing_model> &src_mixmod)
-{
-  int num_ages = NUM_AGE_GROUPS;
-  rtmData::ndays = src_gmip.l_duration_of_runs_in_days;
+// void Region_alloc_smart_ptr(Region& new_reg,
+// 		  const global_model_instance_parameters src_gmip,
+// 		  const std::unique_ptr<mixing_model> &src_mixmod)
+// {
+//   int num_ages = NUM_AGE_GROUPS;
+//   rtmData::ndays = src_gmip.l_duration_of_runs_in_days;
 
-  new_reg.data_owner = true;
-  new_reg.population = gsl_vector_calloc(num_ages);
-  if(src_gmip.l_GP_consultation_flag) new_reg.GP_data = new rtmData(src_gmip.l_GP_likelihood, src_gmip.l_gp_count_likelihood);
-  else new_reg.GP_data = 0;
-  if(src_gmip.l_Hospitalisation_flag) new_reg.Hospitalisation_data = new rtmData(src_gmip.l_Hosp_likelihood, src_gmip.l_hosp_count_likelihood);
-  else new_reg.Hospitalisation_data = 0;
-  if(src_gmip.l_Deaths_flag) new_reg.Death_data = new rtmData(src_gmip.l_Deaths_likelihood, cPOISSON_LIK);
-  else new_reg.Death_data = 0;
-  if(src_gmip.l_Sero_data_flag) new_reg.Serology_data = new rtmData(src_gmip.l_Sero_likelihood, cBINOMIAL_LIK);
-  else new_reg.Serology_data = 0;
-  if(src_gmip.l_Viro_data_flag) new_reg.Virology_data = new rtmData(src_gmip.l_Viro_likelihood, cBINOMIAL_LIK);
-  else new_reg.Virology_data = 0;
-  if(src_gmip.l_Prev_data_flag) new_reg.Prevalence_data = new rtmData(src_gmip.l_Prev_likelihood, cNORMAL_LIK);
-  else new_reg.Prevalence_data = 0;
-  if(src_gmip.l_Vacc_data_flag) new_reg.Vaccination_data = new rtmData(src_gmip.l_Vacc_date_range, cNO_LIK);
-  else new_reg.Vaccination_data = 0;
-  if(src_gmip.l_VBoost_data_flag) new_reg.VBoosting_data = new rtmData(src_gmip.l_VBoost_date_range, cNO_LIK);
-  else new_reg.VBoosting_data = 0;
-  if(src_gmip.l_VFourth_data_flag) new_reg.VFourth_data = new rtmData(src_gmip.l_VFourth_date_range, cNO_LIK);
-  else new_reg.VFourth_data = 0;
+//   new_reg.data_owner = true;
+//   new_reg.population = gsl_vector_calloc(num_ages);
+//   if(src_gmip.l_GP_consultation_flag) new_reg.GP_data = new rtmData(src_gmip.l_GP_likelihood, src_gmip.l_gp_count_likelihood);
+//   else new_reg.GP_data = 0;
+//   if(src_gmip.l_Hospitalisation_flag) new_reg.Hospitalisation_data = new rtmData(src_gmip.l_Hosp_likelihood, src_gmip.l_hosp_count_likelihood);
+//   else new_reg.Hospitalisation_data = 0;
+//   if(src_gmip.l_Deaths_flag) new_reg.Death_data = new rtmData(src_gmip.l_Deaths_likelihood, cPOISSON_LIK);
+//   else new_reg.Death_data = 0;
+//   if(src_gmip.l_Sero_data_flag) new_reg.Serology_data = new rtmData(src_gmip.l_Sero_likelihood, cBINOMIAL_LIK);
+//   else new_reg.Serology_data = 0;
+//   if(src_gmip.l_Viro_data_flag) new_reg.Virology_data = new rtmData(src_gmip.l_Viro_likelihood, cBINOMIAL_LIK);
+//   else new_reg.Virology_data = 0;
+//   if(src_gmip.l_Prev_data_flag) new_reg.Prevalence_data = new rtmData(src_gmip.l_Prev_likelihood, cNORMAL_LIK);
+//   else new_reg.Prevalence_data = 0;
+//   if(src_gmip.l_Vacc_data_flag) new_reg.Vaccination_data = new rtmData(src_gmip.l_Vacc_date_range, cNO_LIK);
+//   else new_reg.Vaccination_data = 0;
+//   if(src_gmip.l_VBoost_data_flag) new_reg.VBoosting_data = new rtmData(src_gmip.l_VBoost_date_range, cNO_LIK);
+//   else new_reg.VBoosting_data = 0;
+//   if(src_gmip.l_VFourth_data_flag) new_reg.VFourth_data = new rtmData(src_gmip.l_VFourth_date_range, cNO_LIK);
+//   else new_reg.VFourth_data = 0;
   
-  // FUNCTIONS ALLOCATING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
-  regional_model_params_alloc(new_reg.det_model_params, rtmData::ndays, num_ages, src_gmip.l_transmission_time_steps_per_day, src_gmip.l_reporting_time_steps_per_day, src_mixmod);
-  model_statistics_alloc(new_reg.region_modstats, rtmData::ndays, num_ages, src_gmip.l_reporting_time_steps_per_day);
-}
+//   // FUNCTIONS ALLOCATING THE regional_model_params AND model_statistics STRUCTURES NEEDED HERE
+//   regional_model_params_alloc(new_reg.det_model_params, rtmData::ndays, num_ages, src_gmip.l_transmission_time_steps_per_day, src_gmip.l_reporting_time_steps_per_day, src_mixmod);
+//   model_statistics_alloc(new_reg.region_modstats, rtmData::ndays, num_ages, src_gmip.l_reporting_time_steps_per_day);
+// }
 
 // ---- alternate form of the above
 void Region_alloc(Region& new_reg,

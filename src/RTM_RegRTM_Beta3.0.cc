@@ -85,7 +85,6 @@ int main(void){
   // SHOULD BE SPECIFIED IN THE FILE NAMED str_filename_modpars
 
   // FIRST, WANT TO READ IN THE MIXING MODEL
-  // TODO: Read in by region into list of mixing models
   std::vector<std::unique_ptr<mixing_model>> list_mixmod_structs(global_fixedpars.l_num_regions);
   for(auto &elem: list_mixmod_structs) elem = std::make_unique<mixing_model>();
   // mixing_model mixmod_struct;
@@ -117,17 +116,15 @@ int main(void){
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
-  // TODO: Correct the choice of mixmod here
   for (int i = 0; i < global_fixedpars.l_num_regions; i++)
-    Region_alloc_smart_ptr(country2[i], global_fixedpars, list_mixmod_structs.at(i));
+    Region_alloc(country2[i], global_fixedpars, *list_mixmod_structs.at(i));
   read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);
   
-  // TODO: Correct the choice of mixmod here too
   flagclass block_all_true;
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     block_regional_parameters(country2[int_i].det_model_params, paramSet, 
   				 global_fixedpars, int_i, country2[int_i].population,
-  				 country2[int_i].total_population, list_mixmod_structs.at(int_i), block_all_true);
+  				 country2[int_i].total_population, *list_mixmod_structs.at(int_i), block_all_true);
 
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
