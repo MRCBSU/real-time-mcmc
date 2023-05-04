@@ -96,6 +96,7 @@ struct updateable_model_parameter{
 };
 
 // STRUCTURE DEFINED FOR MIXING MODEL
+// TODO: Use this as regional definition so limited changes needed
 struct mixing_model{
   int num_breakpoints;
   gsl_vector_int *breakpoints; // TIMING OF BREAKPOINTS, ASSUMED ORDERED AND INCREASING.

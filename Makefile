@@ -7,6 +7,8 @@ RTM_DEBUG_OBJS = $(SRC:src/%.cc=build/rtm_debug/%.o)
 RTM_HANSON_OBJS = $(SRC:src/%.cc=build/rtm_hanson/%.o)
 RTM_MORRICONE_OBJS = $(SRC:src/%.cc=build/rtm_morricone/%.o)
 RTM_HPC_OBJS = $(SRC:src/%.cc=build/rtm_hpc2/%.o)
+RTM_HPC3_OBJS = $(SRC:src/%.cc=build/rtm_hpc3/%.o)
+RTM_COPY_HPC_OBJS = $(SRC:src/%.cc=build/rtm_copy_hpc2/%.o)
 
 LDFLAGS := $(LDFLAGS) -lgsl -lgslcblas
 CXXFLAGS := $(CXXFLAGS) -g -DHAVE_INLINE -std=c++11
@@ -30,13 +32,19 @@ rtm_morricone: $(RTM_MORRICONE_OBJS) $(HEADERS)
 rtm_hpc2: $(RTM_HPC_OBJS) $(HEADERS)
 	icpc $(RTM_HPC_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc2
 
+rtm_hpc3: $(RTM_HPC3_OBJS) $(HEADERS)
+	icpc $(RTM_HPC3_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc3
+
+rtm_hpc_copy: $(RTM_COPY_HPC_OBJS) $(HEADERS)
+	icpc $(RTM_COPY_HPC_OBJS) -fopenmp $(LDFLAGS) $(LOADLIBES) $(LDLIBS)  -o rtm_hpc_copy
+
 .PHONY: all
-all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2
+all: rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2 rtm_hpc_copy
 
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2
+	rm -f rtm rtm_debug rtm_optim rtm_hanson rtm_morricone rtm_hpc2 rtm_hpc_copy
 
 build/rtm_debug/%.o: src/%.cc
 	@mkdir -p build/rtm_debug
@@ -60,4 +68,12 @@ build/rtm_morricone/%.o: src/%.cc
 
 build/rtm_hpc2/%.o: src/%.cc
 	@mkdir -p build/rtm_hpc2
+	icpc -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<
+
+build/rtm_hpc3/%.o: src/%.cc
+	@mkdir -p build/rtm_hpc3
+	icpc -g -std=c++14 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<
+
+build/rtm_copy_hpc2/%.o: src/%.cc
+	@mkdir -p build/rtm_copy_hpc2
 	icpc -g -std=c++11 -Ofast -xHOST -fopenmp -DUSE_THREADS -DHAVE_INLINE -DGSL_RANGE_CHECK_OFF -DNDEBUG -c -o $@ $<

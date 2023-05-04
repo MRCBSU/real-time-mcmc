@@ -1,0 +1,35 @@
+#!/bin/bash
+#SBATCH -J trial_hpc_batch
+#SBATCH -A MRC-BSU-SL2-CPU
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=7
+#SBATCH --time=35:00:00
+#! What types of email messages do you wish to receive?
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=TIME_LIMIT
+#SBATCH --mail-type=END
+#! Uncomment this to prevent the job from being requeued (e.g. if
+#! interrupted by node failure or system downtime):
+#SBATCH --no-requeue
+#SBATCH --verbose
+
+#SBATCH --array=5
+#SBATCH -p skylake
+
+
+#SBATCH --output=model_runs_20210120regjobs_%a.out
+#SBATCH --error=model_runs_20210120regjobs_%a.err
+
+module load intel/bundles/complib/2020.2 gsl-2.4-intel-17.0.4-etauzbm gcc-5.4.0-gcc-4.8.5-fis24gg
+
+dirs=(*/)
+cd ${dirs[SLURM_ARRAY_TASK_ID]}
+pwd
+
+# if [ -f "posterior_report10" ]; then
+#     echo "existing output found"
+# else
+  /home/jlk57/real-time-mcmc/rtm_hpc_copy
+  # sbatch ../../../submit_post_process_correct_dir
+# fi

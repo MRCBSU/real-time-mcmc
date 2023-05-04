@@ -86,12 +86,16 @@ int main(void){
   // SHOULD BE SPECIFIED IN THE FILE NAMED str_filename_modpars
 
   // FIRST, WANT TO READ IN THE MIXING MODEL
+  // TODO: Read these in by region into list of mixing models (note prefer struct of lists to list of structs, but this is fine for now)
+  //? Idea: Create new function to assign each mixmod simultaneously called "read_mixmod_structure_inputs_regional"
   mixing_model mixmod_struct;
   read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs, global_fixedpars);
 
 #ifdef USE_OLD_CODE
 
   // ALLOCATE MEMORY TO REGIONAL SUBSTRUCTURES
+  // TODO: make sure to read in the correct regional mixmod here
+  //? What is this assigning? as no regional objects are passed in here
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     Region_alloc(country[int_i], global_fixedpars, mixmod_struct);
 
@@ -114,6 +118,7 @@ int main(void){
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
+  // TODO: make sure to read in the correct regional mixmod here
   for (int i = 0; i < global_fixedpars.l_num_regions; i++)
     Region_alloc(country2[i], global_fixedpars, mixmod_struct);
   read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);

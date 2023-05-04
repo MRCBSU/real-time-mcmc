@@ -377,9 +377,9 @@ if(single.ifr){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
         }
         ## expand pars.ifr according to the model
-        if(bp.flag <- !is.na(str_extract(ifr.mod, "[0-9]bp"))){
+        if(bp.flag <- !is.na(str_extract(ifr.mod, "[0-9]+bp"))){
             pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(-zapsmall(mean(x)), sd(x)))))
-            if((num.bp <- as.numeric(str_extract(ifr.mod, "[0-9]"))) > 2){
+            if((num.bp <- as.numeric(str_extract(ifr.mod, "[0-9]+"))) > 2){
                 for(i in num.bp:3)
                     pars.ifr <- c(pars.ifr, as.vector(apply(grad.samp, 2, function(x) c(0, sd(x)))))
             }

@@ -84,7 +84,7 @@ done
 # Pick a script to run
 echo "Select an option for a script to run (or select 6 to exit):"
 
-select script_opt in "Pre-process" "Run Model" "Profile Model" "Post-process" "Simulate" "Projections Report" "Save Endstates" "Restart Runs" "Compare Chains" "Exit to Shell"
+select script_opt in "Pre-process" "Run Model" "Profile Model" "Post-process" "Post-process-icelake" "Simulate" "Projections Report" "Save Endstates" "Restart Runs" "Compare Chains" "Exit to Shell"
 do
     case $script_opt in
 
@@ -109,6 +109,12 @@ do
         "Post-process")
             export RUN_NAME="Post-process outputs"
             export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_post_process
+            break
+            ;;
+        
+        "Post-process-icelake")
+            export RUN_NAME="Post-process outputs"
+            export SLURM_LOC=$ROOT_DIR/submission_scripts/submit_post_process_icelake
             break
             ;;
         
@@ -185,7 +191,7 @@ export options=""
 # For array based scripts set the array variable
 case $script_opt in
 
-    "Run Model" | "Profile Model" | "Post-process" | "Simulate" | "Projections Report" | "Save Endstates" | "Restart Runs")
+    "Run Model" | "Profile Model" | "Post-process" | "Post-process-icelake" | "Simulate" | "Projections Report" | "Save Endstates" | "Restart Runs")
         echo "What should be used as the array inputs? (press Enter to use default args from file)"
         read array
         case $array in
