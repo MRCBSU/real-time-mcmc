@@ -542,13 +542,13 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
       updParam& par = paramSet[parIndex[i]];
       gsl_vector* prior = *(par.prior_params[parOffset[i]]);
       if (prior->size == 0) {
-	// Use parent
-	int parent = par.parents[parOffset[i]];
-	prior = *paramSet[parent].values;
+        // Use parent
+        int parent = par.parents[parOffset[i]];
+        prior = *paramSet[parent].values;
       }
       
       laccept += R_univariate_prior_log_density_ratio(
-	proposal[i], values[i], dist[i], prior);
+	                proposal[i], values[i], dist[i], prior);
       
     } else {
       // TODO: Fix
@@ -706,7 +706,202 @@ void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const glo
   }
 }
 
-void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& reg_lfx) {
+void updParamBlock::calcAccept(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const std::vector<std::unique_ptr<mixing_model>> &base_mms, glikelihood& prop_lfx) {
+
+  laccept = 0;
+  //if (global)
+    acceptLastMove = 0;
+    //else
+    //regacceptLastMove = 0;
+
+  // Get region
+  flagclass update_flags;
+  if (global)
+    for (int r = 0; r < paramSet.numRegions; r++) {
+      regional_model_params_memcpy(propCountry[r].det_model_params, country[r].det_model_params, update_flags);
+    }
+  else {
+    // local
+    regional_model_params_memcpy(propCountry[regionNum].det_model_params, country[regionNum].det_model_params, update_flags);
+  }
+  
+  // Prior densities for components in the block
+  for (int i = 0; i < values.size(); i++) {
+    laccept += jacobianFactor(proposal[i], values[i], dist[i]);
+
+    if (dist[i] != cMVNORMAL) {
+
+      // Get prior from node
+      // If the prior is a parent node, get the parent value.
+      // (Original code used a pointer here so no need for extra logic)
+      updParam& par = paramSet[parIndex[i]];
+      gsl_vector* prior = *(par.prior_params[parOffset[i]]);
+      if (prior->size == 0) {
+        // Use parent
+        int parent = par.parents[parOffset[i]];
+        prior = *paramSet[parent].values;
+      }
+      
+      laccept += R_univariate_prior_log_density_ratio(
+	                proposal[i], values[i], dist[i], prior);
+      
+    } else {
+      // TODO: Fix
+      cout << "ERROR: Multivariate normal code path not implemented\n";
+      exit(1);
+    }
+  }
+  
+  if (laccept == GSL_NEGINF)
+    return;
+
+  for (updParam& par : paramSet.params) {
+
+    // Skip over constant params
+    if (! par.flag_update)
+      continue;
+
+    // If the flags match, the parameter is part of this block
+    if (global == par.global) {
+      
+      if (par.flag_any_child_nodes) {
+	// Find the child node(s)
+	for (int ch = 0; ch < par.flag_child_nodes.size(); ch++) {
+	  if (par.flag_child_nodes[ch]) {
+	    
+	    updParam &child = paramSet[ch];
+	    	    
+	    if (child.global) {
+	      // TODO TODO TODO
+	      // Sum R_univariate_prior_log_density for each component
+	      std::cerr << "calcAccept(): child node is global; not implemented yet\n";
+	      exit(1);
+	    } else {
+
+	      child.proposal_log_prior_dens = 0;
+		
+	      // We assume parent is 2 params, as it is acting as a prior
+	      assert(par.size == 2);
+
+	      // We haven't accepted, so the prior is the relevant proposal components
+
+	      // Difference in child density between proposal and current value
+	      // Caching no longer easy to do, and is inefficient if updating all
+	      // regional blocks per iter
+	      
+	      // WARNING WARNING TOFIX
+	      // Proper way of setting the prior.
+	      // Mix of const and non-const, so can't just subset the proposal vector
+
+	      // Current value
+	      gslVector prevprior(2);
+	      prevprior[0] = par.values[0];
+	      prevprior[1] = values[0];
+	      
+	      child.log_prior_dens = 0;
+	      for (int i = 0; i < child.size; i++) {
+		child.log_prior_dens += R_univariate_prior_log_density(
+		    child.values[i],
+		    child.prior_distribution[i],
+		    *prevprior);
+	      }
+
+	      // Proposed value
+	      gslVector prior(2);
+	      prior[0] = par.values[0];
+	      prior[1] = proposal[0];
+
+	      for (int i = 0; i < child.size; i++) {
+		child.proposal_log_prior_dens += R_univariate_prior_log_density(
+		    child.values[i],
+		    child.prior_distribution[i],
+		    *prior);
+	      }
+
+	      laccept += child.proposal_log_prior_dens - child.log_prior_dens;
+
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  // Do the region update and likelihood for the block as a whole, rather than
+  // param by param
+
+  // TEMPORARY HACK
+  // Global parameters: log_beta_rw_sd, hosp_negbin_overdispersion, infectious_period, r1_period, prop_case_to_hosp, sero_test_sensitivity, sero_test_specificity
+  // Correspond to regional params: l_hosp_negbin_overdispersion, l_average_infectious_period, l_R0_init, l_I0, l_R0_Amplitude, l_pr_onset_to_Hosp, l_sero_sensitivity, l_sero_specificity, l_r1_period
+  
+  // Local: contact_parameters, log_beta_rw, exponential_growth_rate, log_p_lambda_0
+  // Corresponding regional: l_MIXMOD, l_lbeta_rw, l_EGR, l_R0_init, l_I0, l_R0_Amplitude
+
+  flagclass blockflags;
+  // Default is all flags set to true
+
+  // flagclass has a member iSize, but it is private
+  for (int i = 0; i < blockflags.getSize(); i++)
+    blockflags.regional_update_flags[i] = false;
+
+  if (global) { // indices correspond to position in the REGIONAL_MODEL_PARAMS_MEMBERS string.
+    blockflags.regional_update_flags[2] = true;
+    blockflags.regional_update_flags[4] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[18] = true;
+    blockflags.regional_update_flags[19] = true;
+    blockflags.regional_update_flags[22] = true;
+    blockflags.regional_update_flags[31] = true;
+    blockflags.regional_update_flags[33] = true;
+    blockflags.regional_update_flags[34] = true;
+  } else {
+    blockflags.regional_update_flags[14] = true;
+    blockflags.regional_update_flags[15] = true;
+    blockflags.regional_update_flags[16] = true;
+    blockflags.regional_update_flags[18] = true;
+    blockflags.regional_update_flags[19] = true;
+    blockflags.regional_update_flags[26] = true;
+  }
+  
+  // Copy proposal to paramSet to evaluate region
+  for (int i = 0; i < values.size(); i++)
+    paramSet[parIndex[i]].values[parOffset[i]] = proposal[i];
+  
+  if (global) {
+    // Evaluate all regions
+    for (int reg = 0; reg < paramSet.numRegions; reg++) {
+      block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, *base_mms.at(reg), blockflags);
+      
+    }
+  } else {
+    // Local. Evaluate only region of this block
+    int reg = regionNum;
+    block_regional_parameters(propCountry[reg].det_model_params, paramSet, gmip, reg, propCountry[reg].population, propCountry[reg].total_population, *base_mms.at(reg), blockflags);
+  }
+  
+  // Need to restore original values so that other blocks can run
+  for (int i = 0; i < values.size(); i++)
+    paramSet[parIndex[i]].values[parOffset[i]] = values[i];
+
+  // Calculate lhood for global block
+  // Regional blocks done separately to allow loop to be paralleized
+
+  if (global) {
+
+    // For at least one of the updated parameters, all of the flags are set to true
+    fn_log_likelihood_global(prop_lfx, propCountry, -1,
+		    true, true, true, true, true, true, true, 
+		    gmip,
+		    paramSet.gp_delay.distribution_function,
+		    paramSet.hosp_delay.distribution_function
+    );
+
+    laccept += prop_lfx.total_lfx - paramSet.lfx.total_lfx;
+  
+  }
+}
+
+void updParamBlock::calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, rlikelihood& reg_lfx) {
 
   //assert (! global);
   
@@ -871,7 +1066,7 @@ void updParamBlock::adaptiveUpdate(int iter) {
     delta[i] = transform(values[i], dist[i]) - mu[i];
   }
 
-  double betastart = beta;
+  // double betastart = beta;
 
   // Warning: Hardcoded start point. Assumes adaptation starts at 1000 iters.
   // Add 2, as per AMGS algorithm, to ensure that eta is always < 1.

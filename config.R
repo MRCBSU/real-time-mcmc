@@ -12,7 +12,7 @@ str.date.vacc <- "20230427"
 region.type <- "NHS"
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) == 0) args <- c((today() - days(0)) %>% format("%Y%m%d"))
+if (length(args) == 0) args <- c((today() - days(7)) %>% format("%Y%m%d"))
 if (length(args) < 3) args <- c(args, "All", "England")
 
 if (!exists("date.data")) date.data <- args[1]
@@ -77,7 +77,7 @@ fix.sero.test.spec.sens <- FALSE #prev.flag == 1
 cutoff_hosps_early <- F
 # Variable to determine whether or not the admissions (T) or admissions + diagnoses (F) should be used
 # Should nbe selected in combination with sus_seb_combination <- 3L in addition to having the preprocessed sus data
-admissions_only.flag <- T
+admissions_only.flag <- F
 ## ## Value to note which combination of hospital data to use sus (0), sus + sebs (1), sebs only (2) or sus (preprocessed) + sebs (3)
 sus_seb_combination <- 3L
 ## ##Value to note how many days to remove from the end of the dataset
@@ -126,7 +126,7 @@ print(preprocessed_sus_names)
 ## date.adm_seb <- ymd()
 
 google.data.date <- format(ymd("20221116"), format = "%Y%m%d")
-matrix.suffix <- "_stable_household"
+matrix.suffix <- "_timeuse_household"
 
 ## Number of days to run the simulation for.
 ## Including lead-in time, analysis of data and short-term projection
@@ -220,6 +220,7 @@ if (exclude.eldest.prev) scenario.name <- paste0(scenario.name, "_exclude_elderl
 
 ## Give the run a name to identify the configuration
 contact.model <- 6
+flag.use_regional_cm <- TRUE
 contact.prior <- "ons"
 ## if (contact.model != 4)
     ## scenario.name <- paste0(scenario.name, "_cm", contact.model, contact.prior) ## _latestart" ## _morefreq"
@@ -256,8 +257,8 @@ if (data.desc == "all") {
 ## Is there a previous MCMC from which we can take some initial values?
 use.previous.run.for.start <- T
 if(use.previous.run.for.start){
-    previous.run.to.use <- file.path(proj.dir, "model_runs", "20230421", paste0(c("Prev996SeroNHSBT_All_NHScutoff_IFR10bp_admissions_only_11wk2_prev14-5PHE_4dose_new_mprior_matrices2_20221116_stable_household_admissions_no_deaths",
-                                                                                  "Prev996SeroNHSBT_All_NHScutoff_IFR10bp_admissions_only_11wk2_prev14-5PHE_4dose_new_mprior_matrices2_20221116_stable_household_admissions_no_deaths_chain2"))
+    previous.run.to.use <- file.path(proj.dir, "model_runs", "20230421", paste0(c("Prev996SeroNHSBT_All_NHScutoff_IFR10bp_11wk2_prev14-5PHE_4dose_new_mprior_matrices2_20221116_timeuse_household_admissions_no_deaths",
+                                                                                  "Prev996SeroNHSBT_All_NHScutoff_IFR10bp_11wk2_prev14-5PHE_4dose_new_mprior_matrices2_20221116_timeuse_household_admissions_no_deaths_chain2"))
                                               )
 }
 
@@ -353,6 +354,7 @@ out.dir <- file.path(proj.dir,
                          ifelse(cutoff_hosps_early & !deaths.flag & !hosp.flag, paste0("_drophosp_", gsub("-", "",toString(date_early_cutoff_hosps))), ""),
                          ifelse(!sero_cutoff_flag, "", paste0("_dropsero_", gsub("-", "",toString(sero.end.date)))),
                          ifelse(flag.earlier_cm, "_earliercm", ""),
+                         ifelse(flag.use_regional_cm, "_regcm", ""),
                          "_matrices2_", google.data.date, matrix.suffix,
                          "_", data.desc))	# Value actually used
 if (!deaths.flag) out.dir <- paste0(out.dir, "_no_deaths")

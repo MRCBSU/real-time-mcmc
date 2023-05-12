@@ -30,6 +30,6 @@ pwd
 # if [ -f "posterior_report10" ]; then
 #     echo "existing output found"
 # else
-  /home/jlk57/real-time-mcmc/rtm_hpc2
+  /home/jlk57/real-time-mcmc/rtm_hpc3
   # sbatch ../../../submit_post_process_correct_dir
 # fi

@@ -2,7 +2,6 @@
 #include "RTM_StructAssign.h"
 #include "RTM_FunctDefs.h"
 #include "RTM_flagclass.h"
-
 #include "RTM_updParams.h"
 
 using namespace std;
@@ -86,16 +85,15 @@ int main(void){
   // SHOULD BE SPECIFIED IN THE FILE NAMED str_filename_modpars
 
   // FIRST, WANT TO READ IN THE MIXING MODEL
-  // TODO: Read these in by region into list of mixing models (note prefer struct of lists to list of structs, but this is fine for now)
-  //? Idea: Create new function to assign each mixmod simultaneously called "read_mixmod_structure_inputs_regional"
-  mixing_model mixmod_struct;
-  read_mixmod_structure_inputs(mixmod_struct, str_filename_inputs, global_fixedpars);
+  std::vector<std::unique_ptr<mixing_model>> list_mixmod_structs(global_fixedpars.l_num_regions);
+  for(auto &elem: list_mixmod_structs) elem = std::make_unique<mixing_model>();
+  // mixing_model mixmod_struct;
+
+  read_mixmod_structure_inputs_list(list_mixmod_structs, str_filename_inputs, global_fixedpars);
 
 #ifdef USE_OLD_CODE
 
   // ALLOCATE MEMORY TO REGIONAL SUBSTRUCTURES
-  // TODO: make sure to read in the correct regional mixmod here
-  //? What is this assigning? as no regional objects are passed in here
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     Region_alloc(country[int_i], global_fixedpars, mixmod_struct);
 
@@ -118,16 +116,15 @@ int main(void){
   
   // Initialise region again for block code
   // For now, easiest to re-read from file rather than work out how to deep copy
-  // TODO: make sure to read in the correct regional mixmod here
   for (int i = 0; i < global_fixedpars.l_num_regions; i++)
-    Region_alloc(country2[i], global_fixedpars, mixmod_struct);
+    Region_alloc(country2[i], global_fixedpars, *list_mixmod_structs.at(i));
   read_data_inputs(country2, str_filename_inputs, global_fixedpars.l_num_regions);
   
   flagclass block_all_true;
   for(int int_i = 0; int_i < global_fixedpars.l_num_regions; int_i++)
     block_regional_parameters(country2[int_i].det_model_params, paramSet, 
   				 global_fixedpars, int_i, country2[int_i].population,
-  				 country2[int_i].total_population, mixmod_struct, block_all_true);
+  				 country2[int_i].total_population, *list_mixmod_structs.at(int_i), block_all_true);
 
 
   // READ IN THE PARAMETERS OF THE MCMC SIMULATION
@@ -208,7 +205,7 @@ int main(void){
 	      country2,
   	      block_llhood,
   	      global_fixedpars,
-  	      mixmod_struct,
+  	      list_mixmod_structs,
   	      sim_pars.r);
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +217,7 @@ int main(void){
   mcmcPars_free(sim_pars);
 
   // FREE THE MIXING MODEL STRUCTURE INTO WHICH THE MATRICES WERE INITIALLY READ
-  mixing_model_free(mixmod_struct);
+for(auto &mm: list_mixmod_structs) mixing_model_free_unique_ptr(mm);
 
 #ifdef USE_OLD_CODE
   // FREE THE SUBSTRUCTURES WITHIN THE COUNTRY ARRAY

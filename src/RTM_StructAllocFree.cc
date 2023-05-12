@@ -199,7 +199,7 @@ void regional_model_params_alloc(regional_model_params& new_rmp,
 				 const int num_ages,
 				 const int transmission_time_steps_per_day,
 				 const int reporting_time_steps_per_day,
-				 const mixing_model src_mixing_pars)
+				 const mixing_model& src_mixing_pars)
 {
 
   new_rmp.l_init_prop_sus = gsl_vector_calloc(num_ages);
@@ -461,7 +461,7 @@ void model_statistics_free(struct model_statistics &ms)
 // ---- Overloaded region allocation function
 void Region_alloc(Region& new_reg,
 		  const global_model_instance_parameters src_gmip,
-		  const mixing_model src_mixmod)
+		  const mixing_model &src_mixmod)
 {
   int num_ages = NUM_AGE_GROUPS;
   rtmData::ndays = src_gmip.l_duration_of_runs_in_days;

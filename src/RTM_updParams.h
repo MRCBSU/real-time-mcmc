@@ -207,7 +207,8 @@ public:
   // M-H methods
   void calcProposal(updParamSet& paramSet, gsl_rng *rng, int iter);
   void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, glikelihood& prop_lfx);
-  void calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, const mixing_model& base_mix, rlikelihood& prop_lfx);
+  void calcAccept(updParamSet &paramSet, Region* country, const global_model_instance_parameters& gmip, const std::vector<std::unique_ptr<mixing_model>> &base_mms, glikelihood& prop_lfx);
+  void calcRegionLhood(updParamSet& paramSet, Region* country, const global_model_instance_parameters& gmip, rlikelihood& prop_lfx);
   void doAccept(gsl_rng *rng, updParamSet& paramSet, Region* country, int numRegions, const global_model_instance_parameters& gmip, glikelihood& prop_lfx);
   void adaptiveUpdate(int iter);
 };

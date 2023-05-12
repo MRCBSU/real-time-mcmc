@@ -256,7 +256,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 		 Region* country2,
 		 glikelihood& lfx,
 		 const global_model_instance_parameters& gmip,
-		 const mixing_model& base_mix,
+		 const std::vector<std::unique_ptr<mixing_model>> &base_mm_l,
 		 gsl_rng* r)
 {
 
@@ -389,12 +389,12 @@ void metrop_hast(const mcmcPars& simulation_parameters,
       if(paramSet.blocks[1].size() > 0) {
 	for (int reg = 1; reg <= nregions; reg++) {
 	  paramSet.blocks[reg].calcProposal(paramSet, r, int_iter);
-	  paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+	  paramSet.blocks[reg].calcAccept(paramSet, country2, gmip, base_mm_l, prop_lfx);
 	}
 
 #pragma omp parallel for default(shared) schedule(static)
 	for (int reg = 1; reg <= nregions; reg++) {
-	  paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, base_mix, prop_lfx.rlik[reg-1]);
+	  paramSet.blocks[reg].calcRegionLhood(paramSet, country2, gmip, prop_lfx.rlik[reg-1]);
 	}
 
 	for (int reg = 1; reg <= nregions; reg++) {
@@ -424,7 +424,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 
 	for (int giter = 0; giter < simulation_parameters.global_updates; giter++) {
 	  paramSet.blocks[0].calcProposal(paramSet, r, int_iter);
-	  paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mix, prop_lfx);
+	  paramSet.blocks[0].calcAccept(paramSet, country2, gmip, base_mm_l, prop_lfx);
 	  paramSet.blocks[0].doAccept(r, paramSet, country2, nregions, gmip, prop_lfx);
 	}
 	
@@ -661,8 +661,7 @@ void metrop_hast(const mcmcPars& simulation_parameters,
 			  gsl_vector* tempvec = theta_i->param_value;
 			  theta_i->param_value = theta_i->proposal_value; // temporarily switch the value of the pointer
 			  for(int int_reg = 0; int_reg < nregions; ++int_reg)
-    
-			    evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, base_mix, update_flags);
+			    evaluate_regional_parameters(prop_country[int_reg].det_model_params, theta.param_list, gmip, int_reg, prop_country[int_reg].population, prop_country[int_reg].total_population, *base_mm_l->at(int_reg), update_flags);
 			    
 			  theta_i->param_value = tempvec; // and then re-set to the original address
 

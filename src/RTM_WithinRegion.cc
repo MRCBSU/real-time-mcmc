@@ -456,7 +456,7 @@ void Seasonal_R0_phase_difference(
 }
 
 // SPECIAL CASE FOR THE MIXING MODEL'S PARAMETERISATION
-void regional_mixmod_parameter(mixing_model& out_mix, const gsl_vector* param_value, const regression_def& map_to_regional, const mixing_model base_mix, const int region_index, const gsl_vector* region_population, const bool evec_flag)
+void regional_mixmod_parameter(mixing_model& out_mix, const gsl_vector* param_value, const regression_def& map_to_regional, const mixing_model& base_mix, const int region_index, const gsl_vector* region_population, const bool evec_flag)
 {
   int dim_r, dim_t, dim_a;
 
@@ -517,7 +517,7 @@ void regional_mixmod_parameter(mixing_model& out_mix, const gsl_vector* param_va
 
 
 // Block update - no need for submatrix
-void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSet, const upd::paramIndex index, const mixing_model base_mix, const int region_index, const gsl_vector* region_population, const bool evec_flag)
+void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSet, const upd::paramIndex index, const mixing_model& base_mix, const int region_index, const gsl_vector* region_population, const bool evec_flag)
 {
   int dim_r, dim_t, dim_a;
 
@@ -582,6 +582,8 @@ void regional_mixmod_parameter(mixing_model& out_mix, const updParamSet &paramSe
   mixing_matrix_scale_and_normalisation(out_mix, region_population, evec_flag);
 
 }
+
+// Block update - no need for submatrix
 
 // Wrapper for actional regional_matrix_parameter that sorts out conversion of view to vector
 /*
@@ -821,9 +823,6 @@ void block_regional_parameters(regional_model_params& out_rmp,
   
 
 }
-
-
-
 
 
 

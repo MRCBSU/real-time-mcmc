@@ -298,11 +298,15 @@ void read_gsl_matrix_int(gsl_matrix_int* out_gslmat_int, const string var_name, 
   gsl_matrix_int_sscanf(var_var_string, out_gslmat_int);
 }
 
-void read_string_array(string* out_strarray, const int n, const string var_name, const string var_string)
+void read_string_array(string* out_strarray, const int n, const string var_name, const string var_string, const int n_skip_filenames = 0)
 {
   string var_var_string;
   read_string_from_instruct(var_var_string, var_name, var_string);
   int indx = 0;
+  if(n_skip_filenames > 0) {
+    for(int i = 0; i < n_skip_filenames; i++) 
+      read_from_delim_string<string>(var_var_string, ",;", indx);
+  };
   for(int i = 0; i < n; i++)
     out_strarray[i].assign(read_from_delim_string<string>(var_var_string, ",;", indx));
 }
@@ -759,7 +763,7 @@ void node_links(updParamSet& paramSet,
 {
 
   int inti, intj;
-  int int_delim_position = 0;
+  // int int_delim_position = 0;
   string temp_param, temp_prior_param;
   
   // FOR EACH PARAMETER, i
@@ -797,14 +801,15 @@ void node_links(updParamSet& paramSet,
 	    // PARAMETER j IS A CHILD NODE OF PARAMETER i
 	    // SET PRIOR_PARAMS OF j TO BE A POINTER TO PARAM_VALUES OF i
 	    for(int intk = 0; intk < child.size; intk++){
-	      if(child.prior_distribution[1] != (int) cCONSTANT)
+	      if(child.prior_distribution[1] != (int) cCONSTANT) {
 		//child.prior_params[intk] = par.init_value;
 
 		// We can't save a pointer here, as the param_value vector
 		// is no longer used. Instead, we save the parent indexes to
 		// be checked later
-		child.prior_params[intk].eraseRealloc(0);
-		child.parents[intk] = inti;
+          child.prior_params[intk].eraseRealloc(0);
+        }
+        child.parents[intk] = inti;
 	    }
 	    par.flag_child_nodes[intj] = true;
 	    par.flag_any_child_nodes = true;
@@ -823,7 +828,7 @@ void node_links(globalModelParams& in_pars,
 {
 
   int inti, intj;
-  int int_delim_position = 0;
+  // int int_delim_position = 0;
   string temp_param, temp_prior_param;
 
   // FOR EACH PARAMETER, i
@@ -1011,11 +1016,13 @@ void read_global_model_parameters(globalModelParams& in_pars,
       }
 
    for (auto &par : paramSet.params)
-     if (par.flag_update)
-       if (par.flag_hyperprior)
+     if (par.flag_update) {
+       if (par.flag_hyperprior) {
 	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density);
-       else
+       } else {
 	 initialise_prior_density(paramSet, par, R_univariate_prior_log_density_nonnorm);
+       }
+     }
 
 
   // NOW TO READ IN THE PARAMETERS OF THE DELAY DISTRIBUTIONS
@@ -1152,7 +1159,7 @@ void data_matrices_fscanf(const string& infilestring,
 { //NEEDS SOME ERROR HANDLING IN HERE.
   int inti, intj;
   char str_row_date[25];
-  double dbl_dummy;
+  // double dbl_dummy;
 
   FILE *infile = fopen(infilestring.c_str(), "r");
 
@@ -1183,7 +1190,7 @@ void data_int_matrices_fscanf(string infilestring,
 { //NEEDS SOME ERROR HANDLING IN HERE.
   int inti, intj;
   char str_row_date[25];
-  double dbl_dummy;
+  // double dbl_dummy;
 
 FILE *infile = fopen(infilestring.c_str(), "r");
 
@@ -1211,7 +1218,8 @@ FILE *infile = fopen(infilestring.c_str(), "r");
 void fetch_filenames(string* out_string,
 		     const int& num_strings,
 		     const string var_name,
-		     const string str_file)
+		     const string str_file,
+         const int skip_filenames = 0)
 {
 
   string var_filenames("");
@@ -1225,23 +1233,25 @@ void fetch_filenames(string* out_string,
     for(int int_i = 0; int_i < num_strings;) // THIS CATERS FOR THE CASE OF NO MATCHING STRING.. WHAT IF THERE ARE INSUFFICIENT FILENAMES SPECIFIED? NEED TO CONSIDER THAT CASE.
       out_string[int_i++] = "";
   } else
-  read_string_array(out_string, num_strings, var_name, str_file);
+  read_string_array(out_string, num_strings, var_name, str_file, skip_filenames);
 
 }
 
 // READ THE FILENAMES TO A TEMP VECTOR
+//TODO select correct files when skipping first few names
 void read_filenames_and_data_matrices(gsl_matrix** data_matrices,
 				      const int num_regions,
 				      const string var_name,
 				      const string var_string,
 				      const int col_skip = 0,
-				      const int row_skip = 0)
+				      const int row_skip = 0,
+              const int filenames_skip = 0)
 {
 
   string* str_vec_filenames = new string[num_regions];
 
   // find the array of filenames
-  fetch_filenames(str_vec_filenames, num_regions, var_name, var_string);
+  fetch_filenames(str_vec_filenames, num_regions, var_name, var_string, filenames_skip);
 
   for(int int_i = 0; int_i < num_regions; int_i++)
 
@@ -1502,5 +1512,56 @@ void read_mixmod_structure_inputs(mixing_model& base_mm, const string str_input_
 				   "base_matrices", str_var);
   read_filenames_and_data_int_matrices(base_mm.MIXMAT_param, base_mm.num_breakpoints + 1,
 				       "multiplier_indices_matrices", str_var);
+
+}
+
+void read_mixmod_structure_inputs_list(std::vector<std::unique_ptr<mixing_model>>& base_mm_l, const string str_input_filename, const global_model_instance_parameters src_gmp)
+{
+
+  // READ THE FILE INTO A FILE CONTENTS STRING
+  string str_file_contents, str_var;
+
+  fn_load_file(&str_file_contents, str_input_filename.c_str());
+
+  // "CUT-OUT" THE RELEVANT VARIABLE
+  int num_strings = cut_out_parameter(str_var, str_file_contents, "mixing_model");
+
+  if(num_strings == 0)
+    {
+      ERROR_FILE_EXIT("Mixing structure not specified in file %s", str_input_filename.c_str());
+    }
+
+  int region_index_counter = 0;
+  for(auto &base_mm: base_mm_l) {
+    // FIRSTLY NEED TO KNOW HOW MANY TEMPORAL BREAKPOINTS THERE ARE - THIS SHOULD ALLOCATE THE MEMORY TO THE BREAKPOINT COMPONENT.
+    base_mm->breakpoints = alloc_and_set_breakpoint_vector(
+            base_mm->num_breakpoints,
+            str_var,
+            "time_breakpoints",
+            str_var.find("time_breakpoints"),
+            src_gmp.l_duration_of_runs_in_days,
+            true);
+
+    base_mm->num_breakpoints--;
+    // MEMORY ALLOCATION
+    base_mm->MIXMAT = new gsl_matrix*[base_mm->num_breakpoints + 1];
+    base_mm->MIXMAT_param = new gsl_matrix_int*[base_mm->num_breakpoints + 1];
+    base_mm->MIXMAT_scaled = new gsl_matrix*[base_mm->num_breakpoints + 1];
+    for(int int_i = 0; int_i <= base_mm->num_breakpoints; )
+      {
+        base_mm->MIXMAT[int_i] = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
+        base_mm->MIXMAT_scaled[int_i] = gsl_matrix_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
+        base_mm->MIXMAT_param[int_i++] = gsl_matrix_int_alloc(NUM_AGE_GROUPS, NUM_AGE_GROUPS);
+      }
+    base_mm->scalants = base_mm->eval_dominant = 0;
+    base_mm->evector_MIXMAT_normalised = 0;
+
+    // read in the sub-variables base_matrices and multiplier_indices_matrix
+    read_filenames_and_data_matrices(base_mm->MIXMAT, base_mm->num_breakpoints + 1,
+            "base_matrices", str_var, 0, 0, region_index_counter * (base_mm->num_breakpoints + 1));
+    read_filenames_and_data_int_matrices(base_mm->MIXMAT_param, base_mm->num_breakpoints + 1,
+                "multiplier_indices_matrices", str_var);
+    region_index_counter++;
+  }
 
 }

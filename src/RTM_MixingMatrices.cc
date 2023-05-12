@@ -27,6 +27,28 @@ void mixing_model_alloc(struct mixing_model &l_MIXMOD,
   }
 
 }
+void mixing_model_alloc(struct std::unique_ptr<mixing_model> l_MIXMOD,
+			const int nbreakpoints,
+			const int num_scalants,
+			const int num_strata)
+{
+
+  l_MIXMOD->num_breakpoints = nbreakpoints;
+  l_MIXMOD->breakpoints = (nbreakpoints > 0) ? gsl_vector_int_alloc(nbreakpoints) : 0;
+  l_MIXMOD->MIXMAT = new gsl_matrix* [nbreakpoints + 1];
+  l_MIXMOD->MIXMAT_scaled = new gsl_matrix* [nbreakpoints + 1];
+  l_MIXMOD->MIXMAT_param = new gsl_matrix_int* [nbreakpoints + 1];
+  l_MIXMOD->scalants = gsl_vector_alloc(num_scalants);
+  l_MIXMOD->eval_dominant = gsl_vector_alloc(nbreakpoints + 1);
+  l_MIXMOD->evector_MIXMAT_normalised = new gsl_vector* [nbreakpoints + 1];
+  for(int inti = 0; inti < nbreakpoints + 1; inti++){
+    l_MIXMOD->MIXMAT[inti] = gsl_matrix_alloc(num_strata, num_strata);
+    l_MIXMOD->MIXMAT_scaled[inti] = gsl_matrix_alloc(num_strata, num_strata);
+    l_MIXMOD->MIXMAT_param[inti] = gsl_matrix_int_alloc(num_strata, num_strata);
+    l_MIXMOD->evector_MIXMAT_normalised[inti] = gsl_vector_alloc(num_strata);
+  }
+
+}
 
 void mixing_model_free(struct mixing_model &l_MIXMOD)
 {
@@ -50,6 +72,28 @@ void mixing_model_free(struct mixing_model &l_MIXMOD)
   if(l_MIXMOD.num_breakpoints > 0) gsl_vector_int_free(l_MIXMOD.breakpoints);
   
 }
+void mixing_model_free_unique_ptr(std::unique_ptr<mixing_model> &l_MIXMOD)
+{
+
+  for(int inti = 0; inti < l_MIXMOD->num_breakpoints + 1; inti++){
+    gsl_matrix_free(l_MIXMOD->MIXMAT[inti]);
+    gsl_matrix_free(l_MIXMOD->MIXMAT_scaled[inti]);
+    gsl_matrix_int_free(l_MIXMOD->MIXMAT_param[inti]);
+    if(l_MIXMOD->evector_MIXMAT_normalised != NULL)
+      gsl_vector_free(l_MIXMOD->evector_MIXMAT_normalised[inti]);
+  }
+  if(l_MIXMOD->evector_MIXMAT_normalised != NULL)
+    delete [] l_MIXMOD->evector_MIXMAT_normalised;
+  if(l_MIXMOD->eval_dominant != NULL)
+    gsl_vector_free(l_MIXMOD->eval_dominant);
+  if(l_MIXMOD->scalants != NULL)
+    gsl_vector_free(l_MIXMOD->scalants);
+  delete [] l_MIXMOD->MIXMAT;
+  delete [] l_MIXMOD->MIXMAT_scaled;
+  delete [] l_MIXMOD->MIXMAT_param;
+  if(l_MIXMOD->num_breakpoints > 0) gsl_vector_int_free(l_MIXMOD->breakpoints);
+  
+}
 
 // SET ONE MIXING_MODEL STRUCTURE TO CONTAIN (PRE-ALLOCATED) POINTERS TO VALUES
 // IDENTICAL TO THOSE POINTED TO BY MEMBERS OF ANOTHER MIXING_MODEL STRUCTURE
@@ -71,12 +115,39 @@ void mixing_model_memcpy(mixing_model &mix_dest, const mixing_model& mix_src)
   }
 }
 
+void mixing_model_memcpy(mixing_model &mix_dest, const std::unique_ptr<mixing_model>& mix_src)
+{
+  // function presumes all memory has been prior allocated
+  if(mix_src->num_breakpoints > 0)
+    gsl_vector_int_memcpy(mix_dest.breakpoints, mix_src->breakpoints);
+  if(mix_src->eval_dominant != 0)
+    gsl_vector_memcpy(mix_dest.eval_dominant, mix_src->eval_dominant);
+  if(mix_src->scalants != 0)
+    gsl_vector_memcpy(mix_dest.scalants, mix_src->scalants);
+  for(int i = 0; i <= mix_src->num_breakpoints; i++){
+    gsl_matrix_memcpy(mix_dest.MIXMAT[i], mix_src->MIXMAT[i]);
+    gsl_matrix_memcpy(mix_dest.MIXMAT_scaled[i], mix_src->MIXMAT_scaled[i]);
+    gsl_matrix_int_memcpy(mix_dest.MIXMAT_param[i], mix_src->MIXMAT_param[i]);
+    if(mix_src->evector_MIXMAT_normalised != 0)
+      gsl_vector_memcpy(mix_dest.evector_MIXMAT_normalised[i], mix_src->evector_MIXMAT_normalised[i]);
+  }
+}
 
-int maximal_index(const mixing_model src_mix)
+
+int maximal_index(const mixing_model& src_mix)
 {
   int max_index = 0;
   for(int int_i = 0; int_i <= src_mix.num_breakpoints; int_i++)
     max_index = FN_MAX(max_index, gsl_matrix_int_max(src_mix.MIXMAT_param[int_i]));
+
+  return max_index;
+}
+
+int maximal_index(const std::unique_ptr<mixing_model> &src_mix)
+{
+  int max_index = 0;
+  for(int int_i = 0; int_i <= src_mix->num_breakpoints; int_i++)
+    max_index = FN_MAX(max_index, gsl_matrix_int_max(src_mix->MIXMAT_param[int_i]));
 
   return max_index;
 }
@@ -134,10 +205,11 @@ void input_mixing_matrix_model(mixing_model &l_MIXMAT, const char* infile, const
   FILE* age_mixing_matrix;
   FILE* age_mixing_matrix_param;
   char temp_string[25];
-  int inti, temp_int;
+  // int inti;
+  int temp_int;
   int nbreakpoints;
   int num_scalants;
-  double evalue; // dummy variable for storing unrequired dominant eigenvalues
+  // double evalue; // dummy variable for storing unrequired dominant eigenvalues
 
   nbreakpoints = count_instances(infile, "breakpoint");
 
